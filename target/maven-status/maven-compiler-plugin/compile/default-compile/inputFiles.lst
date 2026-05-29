@@ -1,1 +1,8 @@
-C:\Users\FPT SHOP\Documents\NetBeansProjects\Hotel-Management\src\main\java\com\mycompany\hotelmanagement\controller\common\HomeController.java
+C:\Users\Admin\Hotel-Management\src\main\java\com\mycompany\hotelmanagement\controller\common\LoginController.java
+C:\Users\Admin\Hotel-Management\src\main\java\com\mycompany\hotelmanagement\controller\common\LogoutController.java
+C:\Users\Admin\Hotel-Management\src\main\java\com\mycompany\hotelmanagement\controller\receptionist\ReceptionistDashboardController.java
+C:\Users\Admin\Hotel-Management\src\main\java\com\mycompany\hotelmanagement\controller\manager\ManagerDashboardController.java
+C:\Users\Admin\Hotel-Management\src\main\java\com\mycompany\hotelmanagement\controller\admin\AdminDashboardController.java
+C:\Users\Admin\Hotel-Management\src\main\java\com\mycompany\hotelmanagement\controller\common\HomeController.java
+C:\Users\Admin\Hotel-Management\src\main\java\com\mycompany\hotelmanagement\controller\customer\CustomerDashboardController.java
+C:\Users\Admin\Hotel-Management\src\main\java\com\mycompany\hotelmanagement\controller\housekeeping\HousekeepingDashboardController.java

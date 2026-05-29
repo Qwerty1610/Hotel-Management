@@ -1,1 +1,8 @@
+com\mycompany\hotelmanagement\controller\housekeeping\HousekeepingDashboardController.class
+com\mycompany\hotelmanagement\controller\customer\CustomerDashboardController.class
+com\mycompany\hotelmanagement\controller\admin\AdminDashboardController.class
+com\mycompany\hotelmanagement\controller\common\LogoutController.class
+com\mycompany\hotelmanagement\controller\manager\ManagerDashboardController.class
+com\mycompany\hotelmanagement\controller\receptionist\ReceptionistDashboardController.class
+com\mycompany\hotelmanagement\controller\common\LoginController.class
 com\mycompany\hotelmanagement\controller\common\HomeController.class

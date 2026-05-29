@@ -1,4 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ include file="../../includes/taglibs.jsp" %>
 <%-- Nhúng Header cấu trúc --%>
 <%@ include file="../../includes/header.jsp" %>
 
@@ -16,7 +17,7 @@
             </ul>
 
             <div class="nav-actions">
-                <a href="#" class="btn-login">Đăng nhập</a>
+                <a href="${pageContext.request.contextPath}/home/login" class="btn-login">Đăng nhập</a>
                 <a href="#" class="btn-register">Đăng ký</a>
             </div>
         </nav>
