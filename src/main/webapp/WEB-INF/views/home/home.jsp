@@ -1,6 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%-- Nhúng Header cấu trúc --%>
-<%@ include file="/WEB-INF/includes/header.jsp" %>
+<%@ include file="../../includes/header.jsp" %>
 
 <body>
 
@@ -22,8 +22,8 @@
         </nav>
 
         <div class="hero-content">
-            <h1>Trải nghiệm kỳ nghỉ<br>thượng lưu tại HotelOps</h1>
-            <p>Nơi sang trọng gặp gỡ sự tinh tế, mang đến cho bạn trải nghiệm nghỉ dưỡng 5 sao đích thực tại trung tâm thành phố.</p>
+            <h1>Trải nghiệm kỳ nghỉ<br>tuyệt vời tại HotelOps</h1>
+            <p>Nơi sang trọng gặp gỡ sự tinh tế, mang đến cho bạn trải nghiệm nghỉ dưỡng đích thực tại trung tâm thành phố.</p>
         </div>
 
     </header>
@@ -35,14 +35,17 @@
         <div class="about-text">
             <span class="sub-title">VỀ HOTELOPS</span>
             <h2>Định nghĩa lại lòng hiếu khách</h2>
-            <p>HotelOps không chỉ cung cấp một nơi lưu trú xa hoa, mà còn là nơi lưu giữ những khoảnh khắc đáng nhớ của bạn. Với dịch vụ quản gia cá nhân phục vụ 24/7 và tiện nghi đẳng cấp thế giới, chúng tôi tự tin làm hài lòng cả những vị khách kỹ tính nhất.</p>
-
+            <p>
+                HotelOps cung cấp không gian lưu trú sạch sẽ, tiện nghi và thoải mái
+                dành cho cá nhân, gia đình và khách du lịch. Chúng tôi luôn cố gắng
+                mang đến trải nghiệm nghỉ ngơi thuận tiện với mức giá phù hợp cho mọi khách hàng.
+            </p>
             <div class="about-features">
                 <div class="feat-item">
                     <i class="fa-solid fa-shield-halved"></i>
                     <div>
                         <h4>An ninh và Bảo mật tối đa</h4>
-                        <p>Đảm bảo sự riêng tư tuyệt đối cho khách hàng cao cấp.</p>
+                        <p>Đảm bảo sự riêng tư tuyệt đối cho khách hàng.</p>
                     </div>
                 </div>
                 <div class="feat-item">
@@ -59,28 +62,41 @@
     <section class="values-section">
         <div class="container text-center">
             <span class="sub-title">TẠI SAO CHỌN CHÚNG TÔI</span>
-            <h2>Giá trị cốt lõi làm nên khác biệt</h2>
+
             <div class="values-grid">
+
                 <div class="value-card">
-                    <i class="fa-solid fa-award"></i>
-                    <h3>Dịch vụ chuẩn 5 sao</h3>
-                    <p>Đội ngũ nhân viên chuẩn quốc tế, tận tâm và chuyên nghiệp.</p>
+                    <i class="fa-solid fa-wallet"></i>
+                    <h3>Giá cả hợp lý</h3>
+                    <p>
+                        Phù hợp với nhu cầu lưu trú phổ thông và tiết kiệm chi phí.
+                    </p>
                 </div>
+
                 <div class="value-card">
-                    <i class="fa-solid fa-gem"></i>
-                    <h3>Sang trọng & Tinh tế</h3>
-                    <p>Kiến trúc tân cổ điển mang lại không gian sống đẳng cấp.</p>
+                    <i class="fa-solid fa-bed"></i>
+                    <h3>Phòng sạch sẽ</h3>
+                    <p>
+                        Không gian nghỉ ngơi được vệ sinh thường xuyên và gọn gàng.
+                    </p>
                 </div>
+
                 <div class="value-card">
                     <i class="fa-solid fa-map-location-dot"></i>
-                    <h3>Vị trí đắc địa</h3>
-                    <p>Nằm ngay tâm điểm, thuận tiện di chuyển đến các khu mua sắm.</p>
+                    <h3>Vị trí thuận tiện</h3>
+                    <p>
+                        Dễ dàng di chuyển đến các khu vực trung tâm và địa điểm du lịch.
+                    </p>
                 </div>
+
                 <div class="value-card">
-                    <i class="fa-solid fa-heart"></i>
-                    <h3>Trải nghiệm cá nhân hóa</h3>
-                    <p>Mỗi dịch vụ đều được thiết kế riêng theo sở thích của bạn.</p>
+                    <i class="fa-solid fa-headset"></i>
+                    <h3>Hỗ trợ thân thiện</h3>
+                    <p>
+                        Nhân viên luôn sẵn sàng hỗ trợ khách hàng nhanh chóng và nhiệt tình.
+                    </p>
                 </div>
+
             </div>
         </div>
     </section>
@@ -146,29 +162,45 @@
 
     <section class="services-section" id="dich-vu">
         <div class="container text-center">
-            <span class="sub-title">DỊCH VỤ ĐẲNG CẤP</span>
-            <h2>Trải nghiệm không giới hạn</h2>
+
+            <span class="sub-title">DỊCH VỤ</span>
+
+            <h2>Các tiện ích cơ bản</h2>
+
             <div class="services-grid">
+
                 <div class="service-card">
                     <i class="fa-solid fa-utensils"></i>
-                    <h3>Nhà hàng 5 sao</h3>
-                    <p>Ẩm thực Á-Âu thượng hạng được chế biến bởi các siêu đầu bếp quốc tế.</p>
+                    <h3>Khu ăn uống</h3>
+                    <p>
+                        Phục vụ đồ ăn và nước uống cơ bản cho khách lưu trú.
+                    </p>
                 </div>
+
                 <div class="service-card">
-                    <i class="fa-solid fa-water"></i>
-                    <h3>Bể bơi vô cực</h3>
-                    <p>Hồ bơi chân mây tầng thượng ngắm trọn bình minh và hoàng hôn thành phố.</p>
+                    <i class="fa-solid fa-tv"></i>
+                    <h3>Khu sinh hoạt chung</h3>
+                    <p>
+                        Không gian thư giãn và nghỉ ngơi dành cho khách hàng.
+                    </p>
                 </div>
+
                 <div class="service-card">
-                    <i class="fa-solid fa-spa"></i>
-                    <h3>Spa & Wellness</h3>
-                    <p>Liệu trình trị liệu cao cấp giúp tái tạo năng lượng hoàn hảo cho cơ thể.</p>
+                    <i class="fa-solid fa-shirt"></i>
+                    <h3>Dịch vụ giặt ủi</h3>
+                    <p>
+                        Hỗ trợ giặt ủi với mức chi phí hợp lý và tiện lợi.
+                    </p>
                 </div>
+
                 <div class="service-card">
-                    <i class="fa-solid fa-dumbbell"></i>
-                    <h3>Trung tâm Gym</h3>
-                    <p>Hệ thống máy tập hiện đại bậc nhất phục vụ 24/24.</p>
+                    <i class="fa-solid fa-square-parking"></i>
+                    <h3>Bãi giữ xe</h3>
+                    <p>
+                        Khu vực giữ xe an toàn dành cho khách lưu trú.
+                    </p>
                 </div>
+
             </div>
         </div>
     </section>
@@ -188,4 +220,4 @@
     </section>
 
     <%-- Nhúng Footer kết thúc trang --%>
-    <%@ include file="/WEB-INF/includes/footer.jsp" %>
+    <%@ include file="../../includes/footer.jsp" %>
