@@ -9,16 +9,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 // Cấu hình khi người dùng truy cập trang chủ qua url "/" hoặc "/home"
-@WebServlet(name = "HomeController", urlPatterns = {"", "/home"})
+@WebServlet(name = "HomeController", urlPatterns = { "", "/home" })
 public class HomeController extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         // Đường dẫn nội bộ tính từ thư mục Web Pages (nhưng ẩn với người dùng)
         String url = "/WEB-INF/views/home/home.jsp";
-        
+
         // Forward yêu cầu và phản hồi tới trang JSP
         request.getRequestDispatcher(url).forward(request, response);
     }
