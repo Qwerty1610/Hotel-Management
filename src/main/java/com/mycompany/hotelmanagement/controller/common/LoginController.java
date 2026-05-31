@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import com.mycompany.hotelmanagement.utils.DBContext;
+import com.mycompany.hotelmanagement.config.DBContext;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;

@@ -17,8 +17,18 @@
             </ul>
 
             <div class="nav-actions">
-                <a href="${pageContext.request.contextPath}/home/login" class="btn-login">Đăng nhập</a>
-                <a href="#" class="btn-register">Đăng ký</a>
+                <c:choose>
+                    <c:when test="${not empty sessionScope.role and sessionScope.role == 'CUSTOMER'}">
+                        <span class="user-greeting" style="color: #ffffff; margin-right: 15px; font-weight: 500; font-size: 14px;">
+                            <i class="fa-solid fa-user-circle"></i> Xin chào, ${sessionScope.user}
+                        </span>
+                        <a href="${pageContext.request.contextPath}/logout" class="btn-login" style="background: transparent; border: 1px solid #ffffff; color: #ffffff;">Đăng xuất</a>
+                    </c:when>
+                    <c:otherwise>
+                        <a href="${pageContext.request.contextPath}/home/login" class="btn-login">Đăng nhập</a>
+                        <a href="#" class="btn-register">Đăng ký</a>
+                    </c:otherwise>
+                </c:choose>
             </div>
         </nav>
 
@@ -108,7 +118,7 @@
                 <span class="sub-title">PHÒNG & SUITES</span>
                 <h2>Không gian sống thoải mái</h2>
             </div>
-            <button class="btn-outline">Xem tất cả phòng</button>
+            <a href="${pageContext.request.contextPath}/rooms" class="btn-outline" style="display: inline-block; text-align: center;">Xem tất cả phòng</a>
         </div>
 
         <div class="rooms-grid">
@@ -123,7 +133,7 @@
                     <div class="room-meta"><span><i class="fa-solid fa-maximize"></i> 45 m²</span> <span><i class="fa-solid fa-bed"></i> 1 Giường đôi lớn</span></div>
                     <div class="room-footer">
                         <span class="room-price">2.950.000đ <span>/ đêm</span></span>
-                        <button class="btn-sm">Chi tiết</button>
+                        <a href="${pageContext.request.contextPath}/rooms" class="btn-sm" style="display: inline-block; text-align: center;">Chi tiết</a>
                     </div>
                 </div>
             </div>
@@ -139,7 +149,7 @@
                     <div class="room-meta"><span><i class="fa-solid fa-maximize"></i> 75 m²</span> <span><i class="fa-solid fa-bed"></i> 1 Giường King size</span></div>
                     <div class="room-footer">
                         <span class="room-price">5.500.000đ <span>/ đêm</span></span>
-                        <button class="btn-sm">Chi tiết</button>
+                        <a href="${pageContext.request.contextPath}/rooms" class="btn-sm" style="display: inline-block; text-align: center;">Chi tiết</a>
                     </div>
                 </div>
             </div>
@@ -154,7 +164,7 @@
                     <div class="room-meta"><span><i class="fa-solid fa-maximize"></i> 180 m²</span> <span><i class="fa-solid fa-bed"></i> 2 Giường King</span></div>
                     <div class="room-footer">
                         <span class="room-price">12.500.000đ <span>/ đêm</span></span>
-                        <button class="btn-sm">Chi tiết</button>
+                        <a href="${pageContext.request.contextPath}/rooms" class="btn-sm" style="display: inline-block; text-align: center;">Chi tiết</a>
                     </div>
                 </div>
             </div>
