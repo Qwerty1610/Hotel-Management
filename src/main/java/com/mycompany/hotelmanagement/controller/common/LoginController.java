@@ -40,7 +40,7 @@ public class LoginController extends HttpServlet {
         String role = null;
         String redirectUrl = null;
         
-        // 1. Authenticate using database first
+        //Authenticate using database first
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(
                  "SELECT a.email, a.password, a.full_name, r.role_name " +
@@ -90,27 +90,6 @@ public class LoginController extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
-        // 2. Fallback to Mock authentication credentials check if database check didn't match
-        if (role == null) {
-            if ("admin".equalsIgnoreCase(username) && "admin123".equals(pass)) {
-                role = "ADMIN";
-                redirectUrl = "/admin/dashboard";
-            } else if ("manager".equalsIgnoreCase(username) && "manager123".equals(pass)) {
-                role = "HOTEL_MANAGER";
-                redirectUrl = "/manager/dashboard";
-            } else if ("housekeeping".equalsIgnoreCase(username) && "housekeeping123".equals(pass)) {
-                role = "HOUSEKEEPING";
-                redirectUrl = "/housekeeping/dashboard";
-            } else if ("receptionist".equalsIgnoreCase(username) && "receptionist123".equals(pass)) {
-                role = "RECEPTIONIST";
-                redirectUrl = "/receptionist/dashboard";
-            } else if ("customer".equalsIgnoreCase(username) && "customer123".equals(pass)) {
-                role = "CUSTOMER";
-                redirectUrl = "/";
-            }
-        }
-        
         if (role != null) {
             // Authentication successful, establish session
             HttpSession session = request.getSession();

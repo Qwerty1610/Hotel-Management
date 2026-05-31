@@ -156,12 +156,7 @@ public class RoomsController extends HttpServlet {
             e.printStackTrace();
         }
 
-        // 3. Fallback to Mock Data if DB failed or has no room types
-        if (!dbSuccess || allRoomTypes.isEmpty()) {
-            allRoomTypes = getMockRoomTypes();
-        }
-
-        // 4. Perform in-memory filtering
+        // Perform in-memory filtering
         List<RoomTypeInfo> filteredRoomTypes = new ArrayList<>();
         for (RoomTypeInfo room : allRoomTypes) {
             // Filter by Room Type ID
@@ -183,7 +178,7 @@ public class RoomsController extends HttpServlet {
             filteredRoomTypes.add(room);
         }
 
-        // 5. Set attributes for view rendering
+        // Set attributes for view rendering
         request.setAttribute("roomTypes", filteredRoomTypes);
         request.setAttribute("allRoomTypesList", allRoomTypes); // For selection dropdown
         request.setAttribute("selectedTypeId", typeIdParam != null ? typeIdParam : "all");
@@ -194,147 +189,5 @@ public class RoomsController extends HttpServlet {
 
         // Forward to rooms.jsp
         request.getRequestDispatcher("/WEB-INF/views/home/rooms.jsp").forward(request, response);
-    }
-
-    private List<RoomTypeInfo> getMockRoomTypes() {
-        List<RoomTypeInfo> list = new ArrayList<>();
-
-        // Standard Room
-        RoomTypeInfo standard = new RoomTypeInfo();
-        standard.setTypeId(1);
-        standard.setTypeName("Phòng Standard");
-        standard.setBasePrice(750000.0);
-        standard.setPricePerHour(100000.0);
-        standard.setDepositPercent(10.0);
-        standard.setCapacity(2);
-        standard.setDescription("Phòng tiêu chuẩn phù hợp cho khách đi công tác hoặc nghỉ ngắn ngày.");
-        standard.setImageUrl("https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80");
-        List<String> standardAm = new ArrayList<>();
-        standardAm.add("Wifi miễn phí");
-        standardAm.add("Điều hòa");
-        standardAm.add("Tivi");
-        standard.setAmenities(standardAm);
-        list.add(standard);
-
-        // Deluxe Room
-        RoomTypeInfo deluxe = new RoomTypeInfo();
-        deluxe.setTypeId(2);
-        deluxe.setTypeName("Phòng Deluxe");
-        deluxe.setBasePrice(1200000.0);
-        deluxe.setPricePerHour(180000.0);
-        deluxe.setDepositPercent(10.0);
-        deluxe.setCapacity(2);
-        deluxe.setDescription("Phòng rộng rãi, nội thất hiện đại, có view thành phố cực kỳ lung linh.");
-        deluxe.setImageUrl("https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&q=80");
-        List<String> deluxeAm = new ArrayList<>();
-        deluxeAm.add("Wifi miễn phí");
-        deluxeAm.add("Điều hòa");
-        deluxeAm.add("Tivi");
-        deluxeAm.add("View thành phố");
-        deluxeAm.add("Mini bar");
-        deluxe.setAmenities(deluxeAm);
-        list.add(deluxe);
-
-        // Family Room
-        RoomTypeInfo family = new RoomTypeInfo();
-        family.setTypeId(3);
-        family.setTypeName("Phòng Family");
-        family.setBasePrice(1800000.0);
-        family.setPricePerHour(250000.0);
-        family.setDepositPercent(10.0);
-        family.setCapacity(4);
-        family.setDescription("Phòng gia đình với không gian lớn, phù hợp nhóm bạn hoặc gia đình nhỏ.");
-        family.setImageUrl("https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80");
-        List<String> familyAm = new ArrayList<>();
-        familyAm.add("Wifi miễn phí");
-        familyAm.add("Điều hòa");
-        familyAm.add("Tivi");
-        familyAm.add("Mini bar");
-        family.setAmenities(familyAm);
-        list.add(family);
-
-        // Suite Room
-        RoomTypeInfo suite = new RoomTypeInfo();
-        suite.setTypeId(4);
-        suite.setTypeName("Phòng Suite");
-        suite.setBasePrice(2800000.0);
-        suite.setPricePerHour(400000.0);
-        suite.setDepositPercent(20.0);
-        suite.setCapacity(3);
-        suite.setDescription("Phòng cao cấp có khu tiếp khách riêng, bồn tắm và ban công.");
-        suite.setImageUrl("https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80");
-        List<String> suiteAm = new ArrayList<>();
-        suiteAm.add("Wifi miễn phí");
-        suiteAm.add("Điều hòa");
-        suiteAm.add("Tivi");
-        suiteAm.add("Bồn tắm");
-        suiteAm.add("View thành phố");
-        suiteAm.add("Mini bar");
-        suiteAm.add("Ban công");
-        suite.setAmenities(suiteAm);
-        list.add(suite);
-
-        // Deluxe City View
-        RoomTypeInfo dcv = new RoomTypeInfo();
-        dcv.setTypeId(6);
-        dcv.setTypeName("Deluxe City View");
-        dcv.setBasePrice(2950000.0);
-        dcv.setPricePerHour(300000.0);
-        dcv.setDepositPercent(10.0);
-        dcv.setCapacity(2);
-        dcv.setDescription("Không gian rộng rãi hướng toàn cảnh thành phố lung linh về đêm.");
-        dcv.setImageUrl("https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=600");
-        List<String> dcvAm = new ArrayList<>();
-        dcvAm.add("Wifi miễn phí");
-        dcvAm.add("Điều hòa");
-        dcvAm.add("Tivi");
-        dcvAm.add("View thành phố");
-        dcvAm.add("Mini bar");
-        dcv.setAmenities(dcvAm);
-        list.add(dcv);
-
-        // Executive Suite
-        RoomTypeInfo exec = new RoomTypeInfo();
-        exec.setTypeId(7);
-        exec.setTypeName("Executive Suite");
-        exec.setBasePrice(5500000.0);
-        exec.setPricePerHour(600000.0);
-        exec.setDepositPercent(15.0);
-        exec.setCapacity(3);
-        exec.setDescription("Tích hợp phòng khách sang trọng và quầy bar nhỏ đẳng cấp cao.");
-        exec.setImageUrl("https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=600");
-        List<String> execAm = new ArrayList<>();
-        execAm.add("Wifi miễn phí");
-        execAm.add("Điều hòa");
-        execAm.add("Tivi");
-        execAm.add("Bồn tắm");
-        execAm.add("View thành phố");
-        execAm.add("Mini bar");
-        execAm.add("Ban công");
-        exec.setAmenities(execAm);
-        list.add(exec);
-
-        // Presidential Suite
-        RoomTypeInfo pres = new RoomTypeInfo();
-        pres.setTypeId(8);
-        pres.setTypeName("Presidential Suite");
-        pres.setBasePrice(12500000.0);
-        pres.setPricePerHour(1500000.0);
-        pres.setDepositPercent(20.0);
-        pres.setCapacity(4);
-        pres.setDescription("Căn hộ Tổng thống xa hoa bậc nhất với lối đi riêng và quản gia phục vụ.");
-        pres.setImageUrl("https://images.unsplash.com/photo-1566665797739-1674de7a421a?q=80&w=600");
-        List<String> presAm = new ArrayList<>();
-        presAm.add("Wifi miễn phí");
-        presAm.add("Điều hòa");
-        presAm.add("Tivi");
-        presAm.add("Bồn tắm");
-        presAm.add("View thành phố");
-        presAm.add("Mini bar");
-        presAm.add("Ban công");
-        pres.setAmenities(presAm);
-        list.add(pres);
-
-        return list;
     }
 }

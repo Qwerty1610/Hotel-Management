@@ -15,7 +15,7 @@ public class BookingController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        // 1. Verify Session & Customer Role
+        //Verify Session & Customer Role
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("user") == null || !"CUSTOMER".equals(session.getAttribute("role"))) {
             // Guest or unauthorized role, redirect to login page
@@ -23,7 +23,6 @@ public class BookingController extends HttpServlet {
             return;
         }
 
-        // 2. Render completely blank page (no HTML or code at all)
         response.setContentType("text/plain;charset=UTF-8");
         response.getWriter().write("");
     }
