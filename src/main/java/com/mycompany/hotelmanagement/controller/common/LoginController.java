@@ -61,7 +61,7 @@ public class LoginController extends HttpServlet {
                             redirectUrl = "/admin/dashboard";
                         } else if ("Customer".equalsIgnoreCase(dbRoleName)) {
                             role = "CUSTOMER";
-                            redirectUrl = "/customer/dashboard";
+                            redirectUrl = "/";
                         } else if ("Manager".equalsIgnoreCase(dbRoleName)) {
                             role = "HOTEL_MANAGER";
                             redirectUrl = "/manager/dashboard";
@@ -107,7 +107,7 @@ public class LoginController extends HttpServlet {
                 redirectUrl = "/receptionist/dashboard";
             } else if ("customer".equalsIgnoreCase(username) && "customer123".equals(pass)) {
                 role = "CUSTOMER";
-                redirectUrl = "/customer/dashboard";
+                redirectUrl = "/";
             }
         }
         
