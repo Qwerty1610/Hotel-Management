@@ -543,19 +543,7 @@
                             <input type="text" id="modalUnit" name="unit" class="modal-input" placeholder="Ví dụ: /khách" required />
                         </div>
                     </div>
-                    
-                    <div class="modal-form-group">
-                        <label for="modalIcon">Biểu tượng</label>
-                        <select id="modalIcon" class="modal-select">
-                            <option value="fa-utensils">Dụng cụ ăn uống (Buffet)</option>
-                            <option value="fa-leaf">Lá cây (Spa/Thư giãn)</option>
-                            <option value="fa-shirt">Quần áo (Giặt ủi)</option>
-                            <option value="fa-car">Xe hơi (Đưa đón)</option>
-                            <option value="fa-mug-hot">Cà phê / Đồ uống</option>
-                            <option value="fa-dumbbell">Tạ tay (Gym)</option>
-                            <option value="fa-water">Sóng nước (Hồ bơi)</option>
-                        </select>
-                    </div>
+
                     
                     <div class="modal-footer-row">
                         <button type="button" class="btn-modal-cancel" onclick="closeModal()">Hủy bỏ</button>
@@ -567,9 +555,8 @@
     </div>
 
     <!-- JavaScript Data and Interactivity Logic -->
-    <script>
-        // Check if tab is services, only then run service management script
-        <c:if test="${currentTab eq 'services'}">
+    <c:if test="${currentTab eq 'services'}">
+        <script>
             
             // Helper to get service icon and background class dynamically from name
             function getServiceIconInfo(name) {
@@ -705,12 +692,7 @@
                     tr.innerHTML = `
                         <td>
                             <div class="service-name-cell">
-                                <div class="service-icon-box \${service.iconClass}">
-                                    <i class="fa-solid \${service.icon}"></i>
-                                </div>
-                                <div>
-                                    <span class="service-title">\${service.name}</span>
-                                </div>
+                                <span class="service-title">\${service.name}</span>
                             </div>
                         </td>
                         <td>
@@ -801,7 +783,6 @@
                     document.getElementById("modalDescription").value = service.description;
                     document.getElementById("modalPrice").value = service.price;
                     document.getElementById("modalUnit").value = service.unit;
-                    document.getElementById("modalIcon").value = service.icon;
                     document.getElementById("serviceModal").style.display = "flex";
                 }
             }
@@ -822,9 +803,11 @@
                 filterServices();
             };
 
-        </c:if>
-        
-        <c:if test="${currentTab eq 'roomtypes'}">
+        </script>
+    </c:if>
+    
+    <c:if test="${currentTab eq 'roomtypes'}">
+        <script>
             // Pagination state for room types
             let roomTypesCurrentPage = 1;
             const roomTypesPageSize = 5;
@@ -999,11 +982,11 @@
                         </td>
                         <td>
                             <div class="table-actions">
-                                <a href="${pageContext.request.contextPath}/rooms/detail?id=\${rt.id}" target="_blank" class="btn-action edit" title="Xem chi tiết" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
-                                    <i class="fa-solid fa-eye" style="font-size: 15px;"></i>
-                                </a>
                                 <button class="btn-action edit" onclick="openEditRoomTypeModal(\${rt.id})" title="Chỉnh sửa">
                                     <i class="fa-solid fa-pencil"></i>
+                                </button>
+                                <button class="btn-action delete" onclick="deleteRoomType(\${rt.id})" title="Xóa">
+                                    <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </div>
                         </td>
@@ -1070,13 +1053,21 @@
                 document.getElementById("roomTypeModal").style.display = "none";
             }
 
+            function deleteRoomType(id) {
+                if (confirm("Bạn có chắc chắn muốn xóa loại phòng này không?\nLưu ý: Hành động này sẽ xóa tất cả phòng thuộc loại phòng này.")) {
+                    window.location.href = `${pageContext.request.contextPath}/manager/roomtypes?action=delete&id=` + id;
+                }
+            }
+
             // Initial load of the table
             window.addEventListener('load', function() {
                 filterRoomTypes();
             });
-        </c:if>
-        
-        <c:if test="${currentTab eq 'rooms'}">
+        </script>
+    </c:if>
+    
+    <c:if test="${currentTab eq 'rooms'}">
+        <script>
             // Hydrate rooms array from database elements
             let rooms = [];
             document.querySelectorAll(".room-data-item").forEach(item => {
@@ -1266,7 +1257,7 @@
 
             // Update room status via background fetch
             function updateRoomStatus(id, newStatus) {
-                const url = `\${pageContext.request.contextPath}/manager/rooms?action=updateStatus&id=` + id + `&status=` + newStatus;
+                const url = `${pageContext.request.contextPath}/manager/rooms?action=updateStatus&id=` + id + `&status=` + newStatus;
                 fetch(url)
                     .then(response => {
                         if (!response.ok) {
@@ -1290,7 +1281,7 @@
             // Delete Room
             function deleteRoom(id) {
                 if (confirm("Bạn có chắc chắn muốn xóa phòng này không?")) {
-                    window.location.href = `\${pageContext.request.contextPath}/manager/rooms?action=delete&id=` + id;
+                    window.location.href = `${pageContext.request.contextPath}/manager/rooms?action=delete&id=` + id;
                 }
             }
 
@@ -1323,8 +1314,8 @@
             window.addEventListener('load', function() {
                 filterRooms();
             });
-        </c:if>
-    </script>
+        </script>
+    </c:if>
 
 </body>
 </html>

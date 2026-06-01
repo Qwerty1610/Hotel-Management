@@ -27,8 +27,8 @@ public class RoomTypeRepository {
         Map<Integer, List<String>> typeImages = new HashMap<>();
         String sql = "SELECT type_id, image_url FROM RoomImage";
         try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             useDatabase(conn);
             while (rs.next()) {
                 int tId = rs.getInt("type_id");
@@ -45,7 +45,7 @@ public class RoomTypeRepository {
         List<String> imageUrls = new ArrayList<>();
         String sql = "SELECT image_url FROM RoomImage WHERE type_id = ?";
         try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setInt(1, typeId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -63,8 +63,8 @@ public class RoomTypeRepository {
         Map<Integer, List<String>> typeAmenities = new HashMap<>();
         String sql = "SELECT ra.type_id, a.name FROM Amenity a JOIN RoomType_Amenity ra ON a.amenity_id = ra.amenity_id";
         try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             useDatabase(conn);
             while (rs.next()) {
                 int tId = rs.getInt("type_id");
@@ -81,7 +81,7 @@ public class RoomTypeRepository {
         List<AmenityInfo> amenityDetails = new ArrayList<>();
         String sql = "SELECT a.name, a.icon_url FROM Amenity a JOIN RoomType_Amenity ra ON a.amenity_id = ra.amenity_id WHERE ra.type_id = ?";
         try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setInt(1, typeId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -101,8 +101,8 @@ public class RoomTypeRepository {
         List<RoomTypeInfo> list = new ArrayList<>();
         String sql = "SELECT type_id, type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type FROM RoomType ORDER BY type_id";
         try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             useDatabase(conn);
             while (rs.next()) {
                 RoomTypeInfo info = new RoomTypeInfo();
@@ -126,7 +126,7 @@ public class RoomTypeRepository {
     public RoomTypeInfo getRoomTypeById(int typeId) {
         String sql = "SELECT type_id, type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type FROM RoomType WHERE type_id = ?";
         try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setInt(1, typeId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -153,7 +153,7 @@ public class RoomTypeRepository {
     public int getAvailableRoomCount(int typeId) {
         String sql = "SELECT COUNT(*) FROM Room WHERE type_id = ? AND status = 'Available'";
         try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setInt(1, typeId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -168,7 +168,7 @@ public class RoomTypeRepository {
     }
 
     // Write operations (transaction-aware)
-    
+
     public int insertRoomType(RoomTypeInfo rt, Connection conn) throws SQLException {
         useDatabase(conn);
         String sql = "INSERT INTO RoomType (type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
@@ -273,6 +273,18 @@ public class RoomTypeRepository {
             ps.setInt(1, typeId);
             ps.setInt(2, amenityId);
             ps.executeUpdate();
+        }
+    }
+
+    public void deleteRoomType(int typeId) {
+        String sql = "DELETE FROM RoomType WHERE type_id = ?";
+        try (Connection conn = DBContext.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            useDatabase(conn);
+            ps.setInt(1, typeId);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
