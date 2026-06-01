@@ -1,5 +1,6 @@
 package com.mycompany.hotelmanagement.controller.housekeeping;
 
+import com.mycompany.hotelmanagement.dal.HousekeepingDAO;
 import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -21,7 +22,28 @@ public class HousekeepingDashboardController extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
             return;
         }
-        
+                HousekeepingDAO dao = new HousekeepingDAO();
+
+        request.setAttribute("cleaningRooms",
+                dao.getCleaningRooms());
+
+        request.setAttribute("maintenanceRooms",
+                dao.getMaintenanceRooms());
+
+        request.setAttribute("cleaningCount",
+                dao.countCleaningRooms());
+
+        request.setAttribute("maintenanceCount",
+                dao.countMaintenanceRooms());
+
+        request.setAttribute("availableCount",
+                dao.countAvailableRooms());
+
+        request.setAttribute("occupiedCount",
+                dao.countOccupiedRooms());
+
+        request.setAttribute("roomList",
+                dao.getAllRooms());
         // Authorized, forward to Housekeeping Dashboard view
         request.getRequestDispatcher("/WEB-INF/views/dashboard/housekeeping.jsp").forward(request, response);
     }
