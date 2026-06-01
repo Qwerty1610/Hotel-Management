@@ -21,9 +21,8 @@ public class CustomerDashboardController extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
             return;
         }
-        
-        // Authorized, forward to Customer Dashboard view
-        request.getRequestDispatcher("/WEB-INF/views/dashboard/customer.jsp").forward(request, response);
+        // Authorized, redirect to homepage instead of forwarding to empty dashboard
+        response.sendRedirect(request.getContextPath() + "/home");
     }
 
     @Override

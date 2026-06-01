@@ -40,6 +40,25 @@
                         </div>
                     </c:if>
 
+                    <c:if test="${not empty param.success}">
+                        <div class="success-alert" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.15); color: #10b981; padding: 12px 16px; border-radius: 12px; font-size: 13.5px; font-weight: 600; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; text-align: left;">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>
+                                <c:choose>
+                                    <c:when test="${param.success eq 'registered'}">
+                                        Đăng ký tài khoản thành công! Vui lòng đăng nhập.
+                                    </c:when>
+                                    <c:when test="${param.success eq 'password_reset'}">
+                                        Đặt lại mật khẩu thành công! Hãy đăng nhập bằng mật khẩu mới.
+                                    </c:when>
+                                    <c:otherwise>
+                                        Thực hiện thành công.
+                                    </c:otherwise>
+                                </c:choose>
+                            </span>
+                        </div>
+                    </c:if>
+
                     <form action="${pageContext.request.contextPath}/home/login" method="POST" id="loginForm">
                         <div class="form-group">
                             <label for="username">Địa chỉ Email</label>
@@ -63,7 +82,7 @@
                             <label class="remember-me">
                                 <input type="checkbox" name="remember" /> Ghi nhớ đăng nhập
                             </label>
-                            <a href="#" class="forgot-password">Quên mật khẩu?</a>
+                            <a href="${pageContext.request.contextPath}/home/forgot-password" class="forgot-password">Quên mật khẩu?</a>
                         </div>
 
                         <button type="submit" class="btn-submit">
@@ -90,7 +109,7 @@
                     </a>
 
                     <div class="signup-prompt">
-                        Chưa có tài khoản? <a href="#">Đăng ký ngay</a>
+                        Chưa có tài khoản? <a href="${pageContext.request.contextPath}/home/register">Đăng ký ngay</a>
                     </div>
 
                     <a href="${pageContext.request.contextPath}/home" class="back-link">
