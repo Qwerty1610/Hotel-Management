@@ -1,5 +1,7 @@
 package com.mycompany.hotelmanagement.filter;
 
+import java.io.IOException;
+
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
@@ -10,7 +12,6 @@ import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import java.io.IOException;
 
 @WebFilter(filterName = "AuthFilter", urlPatterns = {
     "/admin/*", 
@@ -36,8 +37,18 @@ public class AuthFilter implements Filter {
         String contextPath = req.getContextPath();
         String path = uri.substring(contextPath.length());
         
-        boolean loggedIn = (session != null && session.getAttribute("user") != null);
-        String role = loggedIn ? (String) session.getAttribute("role") : null;
+        boolean loggedIn = false;
+        String role = null;
+        if (session != null) {
+            Object userAttr = session.getAttribute("user");
+            if (userAttr != null) {
+                loggedIn = true;
+                Object roleAttr = session.getAttribute("role");
+                if (roleAttr != null) {
+                    role = roleAttr.toString();
+                }
+            }
+        }
         
         boolean authorized = false;
         

@@ -6,3 +6,5 @@ nb-configuration.xml
 /nbproject/
 /.idea/
 *.log
+# Bỏ qua file chứa key bảo mật
+src/main/resources/config.properties

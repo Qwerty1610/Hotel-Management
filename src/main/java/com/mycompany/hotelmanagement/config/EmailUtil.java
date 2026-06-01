@@ -14,11 +14,15 @@ import org.slf4j.LoggerFactory;
 public class EmailUtil {
     private static final Logger logger = LoggerFactory.getLogger(EmailUtil.class);
 
-    // Host configurations - customize as needed or set via System Properties
-    private static final String SMTP_HOST = System.getProperty("smtp.host", "smtp.gmail.com");
-    private static final String SMTP_PORT = System.getProperty("smtp.port", "587");
-    private static final String SMTP_USER = System.getProperty("smtp.user", "your-email@gmail.com");
-    private static final String SMTP_PASSWORD = System.getProperty("smtp.password", "your-app-password");
+    // Host configurations - customize as needed in config.properties or system properties
+    private static final String SMTP_HOST = ConfigUtil.get("smtp.host",
+            System.getProperty("smtp.host", "smtp.gmail.com"));
+    private static final String SMTP_PORT = ConfigUtil.get("smtp.port",
+            System.getProperty("smtp.port", "587"));
+    private static final String SMTP_USER = ConfigUtil.get("smtp.user",
+            System.getProperty("smtp.user", "your-email@gmail.com"));
+    private static final String SMTP_PASSWORD = ConfigUtil.get("smtp.password",
+            System.getProperty("smtp.password", "your-app-password"));
 
     /**
      * Sends an email. If SMTP credentials are not configured, it logs the email to
