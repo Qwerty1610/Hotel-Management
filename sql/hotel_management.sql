@@ -479,10 +479,11 @@ BEGIN
 END
 GO
 
-/* Seed Rooms */
-DELETE FROM dbo.Room WHERE room_number IN (N'101', N'102', N'201', N'202', N'301', N'401', N'204', N'305');
-GO
-
+/* Seed Rooms
+   Lưu ý: KHÔNG xóa phòng trước khi chèn. Các phòng được tham chiếu bởi
+   CustomerRequest (FK_CustomerRequest_Room) nên DELETE sẽ lỗi khóa ngoại khi
+   chạy lại; ngoài ra room_id là IDENTITY, xóa-chèn-lại sẽ làm đổi id và hỏng
+   mọi tham chiếu. Các IF NOT EXISTS bên dưới đã đảm bảo idempotent. */
 IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'101')
     INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'101', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Standard'), N'Available', N'Tầng 1');
 IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'102')
@@ -582,4 +583,264 @@ BEGIN
     INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
     VALUES (NULL, N'Hoàng Văn E', 2, 1, '2026-05-28', '2026-05-30', 2400000, N'CheckedOut', N'Đã hoàn tất thanh toán.');
 END
+GO
+
+/* ============================================================
+   5. CUSTOMER REQUESTS & STAFF WORK TRACKING (Manager)
+   ============================================================ */
+
+/* 5.1 Thêm cột trạng thái làm việc cho nhân viên (Account).
+   Giá trị: Active / OnBreak / Offline. Mặc định Offline. */
+IF COL_LENGTH(N'dbo.Account', N'work_status') IS NULL
+    ALTER TABLE dbo.Account ADD work_status NVARCHAR(30) NOT NULL CONSTRAINT DF_Account_WorkStatus DEFAULT N'Offline';
+GO
+
+/* 5.2 Bảng yêu cầu của khách hàng.
+   - room_id        : phòng phát sinh yêu cầu
+   - title          : nội dung yêu cầu (vd: Thêm khăn tắm)
+   - priority       : Low / Medium / High / Urgent
+   - status         : Pending / InProgress / Completed / Cancelled
+   - assigned_staff_id : nhân viên Housekeeping được giao (NULL = chưa gán)
+   - created_at     : thời gian yêu cầu (dùng để sắp xếp mặc định)
+   - completed_at   : thời điểm hoàn thành (dùng đếm công việc theo ngày/tháng) */
+IF OBJECT_ID(N'dbo.CustomerRequest', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.CustomerRequest (
+        request_id INT IDENTITY(1,1) PRIMARY KEY,
+        room_id INT NULL,
+        title NVARCHAR(200) NOT NULL,
+        description NVARCHAR(500) NULL,
+        priority NVARCHAR(20) NOT NULL DEFAULT N'Medium',
+        status NVARCHAR(20) NOT NULL DEFAULT N'Pending',
+        assigned_staff_id INT NULL,
+        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        updated_at DATETIME2 NULL,
+        completed_at DATETIME2 NULL,
+        CONSTRAINT FK_CustomerRequest_Room FOREIGN KEY (room_id) REFERENCES dbo.Room(room_id),
+        CONSTRAINT FK_CustomerRequest_Staff FOREIGN KEY (assigned_staff_id) REFERENCES dbo.Account(account_id),
+        CONSTRAINT CK_CustomerRequest_Priority CHECK (priority IN (N'Low', N'Medium', N'High', N'Urgent')),
+        CONSTRAINT CK_CustomerRequest_Status CHECK (status IN (N'Pending', N'InProgress', N'Completed', N'Cancelled'))
+    );
+END
+GO
+
+/* 5.3 Seed thêm nhân viên Housekeeping (mật khẩu: housekeeping123) với trạng thái đa dạng */
+IF NOT EXISTS (SELECT 1 FROM dbo.Account WHERE email = N'hk1@hotel.com')
+    INSERT INTO dbo.Account (email, password, full_name, role_id, is_active, work_status)
+    VALUES (N'hk1@hotel.com', N'$2a$10$1bFDXwvgUoDiLV6T08vFTO9S7DXcq4Wbh2Qv31D1BRAemXY3rvKl.', N'Trần Thị Lan',
+            (SELECT role_id FROM dbo.Role WHERE role_name = N'Housekeeping'), 1, N'Active');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Account WHERE email = N'hk2@hotel.com')
+    INSERT INTO dbo.Account (email, password, full_name, role_id, is_active, work_status)
+    VALUES (N'hk2@hotel.com', N'$2a$10$1bFDXwvgUoDiLV6T08vFTO9S7DXcq4Wbh2Qv31D1BRAemXY3rvKl.', N'Nguyễn Văn Hùng',
+            (SELECT role_id FROM dbo.Role WHERE role_name = N'Housekeeping'), 1, N'OnBreak');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Account WHERE email = N'hk3@hotel.com')
+    INSERT INTO dbo.Account (email, password, full_name, role_id, is_active, work_status)
+    VALUES (N'hk3@hotel.com', N'$2a$10$1bFDXwvgUoDiLV6T08vFTO9S7DXcq4Wbh2Qv31D1BRAemXY3rvKl.', N'Lê Thị Mai',
+            (SELECT role_id FROM dbo.Role WHERE role_name = N'Housekeeping'), 1, N'Active');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Account WHERE email = N'hk4@hotel.com')
+    INSERT INTO dbo.Account (email, password, full_name, role_id, is_active, work_status)
+    VALUES (N'hk4@hotel.com', N'$2a$10$1bFDXwvgUoDiLV6T08vFTO9S7DXcq4Wbh2Qv31D1BRAemXY3rvKl.', N'Phạm Văn Nam',
+            (SELECT role_id FROM dbo.Role WHERE role_name = N'Housekeeping'), 1, N'Offline');
+GO
+
+/* Đảm bảo tài khoản housekeeping gốc cũng ở trạng thái Active để demo */
+UPDATE dbo.Account SET work_status = N'Active'
+WHERE email = N'housekeeping@hotel.com' AND work_status = N'Offline';
+GO
+
+/* 5.4 Seed yêu cầu khách hàng mẫu (chỉ thêm nếu bảng đang rỗng) */
+IF NOT EXISTS (SELECT 1 FROM dbo.CustomerRequest)
+BEGIN
+    INSERT INTO dbo.CustomerRequest (room_id, title, description, priority, status, assigned_staff_id, created_at, completed_at)
+    VALUES
+    -- Đang chờ xử lý (chưa gán)
+    ((SELECT room_id FROM dbo.Room WHERE room_number = N'204'), N'Yêu cầu thêm khăn tắm',
+        N'Khách yêu cầu thêm 2 khăn tắm lớn.', N'Medium', N'Pending', NULL,
+        DATEADD(MINUTE, -25, SYSDATETIME()), NULL),
+    ((SELECT room_id FROM dbo.Room WHERE room_number = N'301'), N'Điều hòa không mát',
+        N'Khách phản ánh điều hòa chạy nhưng không mát.', N'High', N'Pending', NULL,
+        DATEADD(MINUTE, -50, SYSDATETIME()), NULL),
+    ((SELECT room_id FROM dbo.Room WHERE room_number = N'101'), N'Nước nóng yếu',
+        N'Vòi sen ra nước nóng rất yếu vào buổi sáng.', N'Urgent', N'Pending', NULL,
+        DATEADD(HOUR, -2, SYSDATETIME()), NULL),
+    ((SELECT room_id FROM dbo.Room WHERE room_number = N'202'), N'Yêu cầu dọn phòng sớm',
+        N'Khách muốn được dọn phòng trước 11h.', N'Low', N'Pending', NULL,
+        DATEADD(HOUR, -3, SYSDATETIME()), NULL),
+    -- Đang thực hiện (đã gán)
+    ((SELECT room_id FROM dbo.Room WHERE room_number = N'102'), N'Thay ga giường',
+        N'Khách yêu cầu thay ga và vỏ gối mới.', N'Medium', N'InProgress',
+        (SELECT account_id FROM dbo.Account WHERE email = N'hk1@hotel.com'),
+        DATEADD(HOUR, -4, SYSDATETIME()), NULL),
+    ((SELECT room_id FROM dbo.Room WHERE room_number = N'305'), N'Bổ sung nước uống',
+        N'Bổ sung 4 chai nước suối trong minibar.', N'Low', N'InProgress',
+        (SELECT account_id FROM dbo.Account WHERE email = N'hk3@hotel.com'),
+        DATEADD(HOUR, -5, SYSDATETIME()), NULL),
+    -- Đã hoàn thành hôm nay (đếm theo ngày)
+    ((SELECT room_id FROM dbo.Room WHERE room_number = N'201'), N'Vệ sinh nhà tắm',
+        N'Khách yêu cầu vệ sinh lại nhà tắm.', N'Medium', N'Completed',
+        (SELECT account_id FROM dbo.Account WHERE email = N'hk1@hotel.com'),
+        DATEADD(HOUR, -8, SYSDATETIME()), DATEADD(HOUR, -6, SYSDATETIME())),
+    ((SELECT room_id FROM dbo.Room WHERE room_number = N'401'), N'Thay bóng đèn',
+        N'Bóng đèn phòng ngủ bị cháy.', N'High', N'Completed',
+        (SELECT account_id FROM dbo.Account WHERE email = N'hk3@hotel.com'),
+        DATEADD(HOUR, -10, SYSDATETIME()), DATEADD(HOUR, -9, SYSDATETIME())),
+    -- Đã hoàn thành trước đó trong tháng (đếm theo tháng)
+    ((SELECT room_id FROM dbo.Room WHERE room_number = N'101'), N'Giặt nhanh quần áo',
+        N'Khách gửi giặt nhanh 1 bộ vest.', N'Medium', N'Completed',
+        (SELECT account_id FROM dbo.Account WHERE email = N'hk1@hotel.com'),
+        DATEADD(DAY, -6, SYSDATETIME()), DATEADD(DAY, -6, SYSDATETIME())),
+    -- Đã huỷ
+    ((SELECT room_id FROM dbo.Room WHERE room_number = N'202'), N'Đặt thêm giường phụ',
+        N'Khách đổi ý, không cần giường phụ nữa.', N'Low', N'Cancelled', NULL,
+        DATEADD(DAY, -1, SYSDATETIME()), NULL);
+END
+GO
+
+/* Test query: danh sách yêu cầu kèm phòng và nhân viên được giao */
+SELECT cr.request_id, rm.room_number, cr.title, cr.priority, cr.status,
+       acc.full_name AS staff_name, cr.created_at, cr.completed_at
+FROM dbo.CustomerRequest cr
+LEFT JOIN dbo.Room rm ON cr.room_id = rm.room_id
+LEFT JOIN dbo.Account acc ON cr.assigned_staff_id = acc.account_id
+ORDER BY cr.created_at DESC;
+GO
+
+/* ============================================================
+   6. INVOICE MANAGEMENT (Manager)
+   ============================================================ */
+
+/* 6.1 Hóa đơn (header).
+   - booking_id     : liên kết tới Booking (NULL nếu hóa đơn lẻ)
+   - room_number    : số phòng (lưu kèm để hiển thị)
+   - status         : Pending / Paid / Refunding / Refunded / Cancelled
+   Tổng tiền hóa đơn = SUM(InvoiceItem.amount), tính khi truy vấn. */
+IF OBJECT_ID(N'dbo.Invoice', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Invoice (
+        invoice_id INT IDENTITY(1,1) PRIMARY KEY,
+        booking_id INT NULL,
+        customer_name NVARCHAR(100) NOT NULL,
+        room_number NVARCHAR(50) NULL,
+        status NVARCHAR(20) NOT NULL DEFAULT N'Pending',
+        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        updated_at DATETIME2 NULL,
+        CONSTRAINT FK_Invoice_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id),
+        CONSTRAINT CK_Invoice_Status CHECK (status IN (N'Pending', N'Paid', N'Refunding', N'Refunded', N'Cancelled'))
+    );
+END
+GO
+
+/* 6.2 Dòng chi tiết hóa đơn.
+   - item_type : Room (tiền phòng) / Service (dịch vụ thêm) / Surcharge (phụ phí) */
+IF OBJECT_ID(N'dbo.InvoiceItem', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.InvoiceItem (
+        item_id INT IDENTITY(1,1) PRIMARY KEY,
+        invoice_id INT NOT NULL,
+        item_type NVARCHAR(20) NOT NULL,
+        description NVARCHAR(200) NOT NULL,
+        quantity INT NOT NULL DEFAULT 1,
+        unit_price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        CONSTRAINT FK_InvoiceItem_Invoice FOREIGN KEY (invoice_id) REFERENCES dbo.Invoice(invoice_id) ON DELETE CASCADE,
+        CONSTRAINT CK_InvoiceItem_Type CHECK (item_type IN (N'Room', N'Service', N'Surcharge'))
+    );
+END
+GO
+
+/* 6.3 Bản ghi hoàn tiền (refund). */
+IF OBJECT_ID(N'dbo.Refund', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Refund (
+        refund_id INT IDENTITY(1,1) PRIMARY KEY,
+        invoice_id INT NOT NULL,
+        amount DECIMAL(18,2) NOT NULL,
+        reason NVARCHAR(500) NULL,
+        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        CONSTRAINT FK_Refund_Invoice FOREIGN KEY (invoice_id) REFERENCES dbo.Invoice(invoice_id) ON DELETE CASCADE,
+        CONSTRAINT CK_Refund_Amount CHECK (amount > 0)
+    );
+END
+GO
+
+/* 6.4 Seed hóa đơn mẫu (chỉ chạy khi bảng rỗng). */
+IF NOT EXISTS (SELECT 1 FROM dbo.Invoice)
+BEGIN
+    DECLARE @id INT;
+
+    /* HĐ1 - Pending - Nguyễn Văn A - phòng 101 */
+    INSERT INTO dbo.Invoice (booking_id, customer_name, room_number, status, created_at)
+    VALUES ((SELECT TOP 1 booking_id FROM dbo.Booking WHERE customer_name = N'Nguyễn Văn A'),
+            N'Nguyễn Văn A', N'101', N'Pending', DATEADD(DAY, -2, SYSDATETIME()));
+    SET @id = SCOPE_IDENTITY();
+    INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount) VALUES
+        (@id, N'Room',    N'Phòng Standard (2 đêm)', 2, 750000, 1500000),
+        (@id, N'Service', N'Bữa sáng Buffet',        2, 150000, 300000);
+
+    /* HĐ2 - Pending - Trần Thị B - phòng 201 */
+    INSERT INTO dbo.Invoice (booking_id, customer_name, room_number, status, created_at)
+    VALUES ((SELECT TOP 1 booking_id FROM dbo.Booking WHERE customer_name = N'Trần Thị B'),
+            N'Trần Thị B', N'201', N'Pending', DATEADD(DAY, -1, SYSDATETIME()));
+    SET @id = SCOPE_IDENTITY();
+    INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount) VALUES
+        (@id, N'Room', N'Phòng Deluxe x2 (2 đêm)', 4, 1200000, 4800000);
+
+    /* HĐ3 - Paid - Customer User - phòng 305 - có phụ phí */
+    INSERT INTO dbo.Invoice (booking_id, customer_name, room_number, status, created_at)
+    VALUES ((SELECT TOP 1 booking_id FROM dbo.Booking WHERE customer_name = N'Customer User'),
+            N'Customer User', N'305', N'Paid', DATEADD(DAY, -4, SYSDATETIME()));
+    SET @id = SCOPE_IDENTITY();
+    INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount) VALUES
+        (@id, N'Room',      N'Phòng Family (3 đêm)', 3, 1800000, 5400000),
+        (@id, N'Service',   N'Đưa đón sân bay',      1, 350000,  350000),
+        (@id, N'Surcharge', N'Trả phòng muộn (late check-out)', 1, 200000, 200000);
+
+    /* HĐ4 - Paid - Ngô Thị F - phòng 102 */
+    INSERT INTO dbo.Invoice (booking_id, customer_name, room_number, status, created_at)
+    VALUES ((SELECT TOP 1 booking_id FROM dbo.Booking WHERE customer_name = N'Ngô Thị F'),
+            N'Ngô Thị F', N'102', N'Paid', DATEADD(DAY, -3, SYSDATETIME()));
+    SET @id = SCOPE_IDENTITY();
+    INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount) VALUES
+        (@id, N'Room',    N'Phòng Standard x2 (3 đêm)', 6, 500000, 3000000),
+        (@id, N'Service', N'Giặt ủi quần áo',           5, 50000,  250000);
+
+    /* HĐ5 - Refunding - Lê Văn C - phòng 401 (booking bị từ chối, phải hoàn cọc) */
+    INSERT INTO dbo.Invoice (booking_id, customer_name, room_number, status, created_at)
+    VALUES ((SELECT TOP 1 booking_id FROM dbo.Booking WHERE customer_name = N'Lê Văn C'),
+            N'Lê Văn C', N'401', N'Refunding', DATEADD(DAY, -5, SYSDATETIME()));
+    SET @id = SCOPE_IDENTITY();
+    INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount) VALUES
+        (@id, N'Room', N'Phòng Suite (2 đêm)', 2, 2800000, 5600000);
+
+    /* HĐ6 - Refunding - Phạm Thị D - phòng 101 (khách huỷ, phải hoàn cọc) */
+    INSERT INTO dbo.Invoice (booking_id, customer_name, room_number, status, created_at)
+    VALUES ((SELECT TOP 1 booking_id FROM dbo.Booking WHERE customer_name = N'Phạm Thị D'),
+            N'Phạm Thị D', N'101', N'Refunding', DATEADD(DAY, -6, SYSDATETIME()));
+    SET @id = SCOPE_IDENTITY();
+    INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount) VALUES
+        (@id, N'Room', N'Phòng Standard (2 đêm)', 2, 750000, 1500000);
+
+    /* HĐ7 - Refunded - Hoàng Văn E - phòng 202 (đã hoàn tiền một phần) */
+    INSERT INTO dbo.Invoice (booking_id, customer_name, room_number, status, created_at)
+    VALUES ((SELECT TOP 1 booking_id FROM dbo.Booking WHERE customer_name = N'Hoàng Văn E'),
+            N'Hoàng Văn E', N'202', N'Refunded', DATEADD(DAY, -7, SYSDATETIME()));
+    SET @id = SCOPE_IDENTITY();
+    INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount) VALUES
+        (@id, N'Room',      N'Phòng Deluxe (2 đêm)', 2, 1200000, 2400000),
+        (@id, N'Surcharge', N'Hư hỏng nội thất (vỡ ấm đun)', 1, 300000, 300000);
+    INSERT INTO dbo.Refund (invoice_id, amount, reason, created_at)
+    VALUES (@id, 500000, N'Hoàn phí dịch vụ khách không sử dụng.', DATEADD(DAY, -6, SYSDATETIME()));
+END
+GO
+
+/* Test query: danh sách hóa đơn kèm tổng tiền và tổng đã hoàn */
+SELECT i.invoice_id, i.customer_name, i.room_number, i.status, i.created_at,
+       (SELECT ISNULL(SUM(amount),0) FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id) AS total_amount,
+       (SELECT ISNULL(SUM(amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id) AS refunded_amount
+FROM dbo.Invoice i
+ORDER BY i.created_at DESC;
 GO

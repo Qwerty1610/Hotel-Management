@@ -865,4 +865,497 @@ input:checked + .slider:before {
     background-color: var(--brand-blue-light);
 }
 
+/* =========================================================
+   OVERVIEW DASHBOARD: doanh thu & công suất phòng
+   ========================================================= */
+
+/* Bộ lọc theo ngày */
+.filter-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 18px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+.date-filter-form {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.date-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.date-field label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.date-field input[type="date"] {
+    height: 40px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0 14px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-navy);
+    background-color: #f8fafc;
+    outline: none;
+}
+
+.date-field input[type="date"]:focus {
+    border-color: var(--brand-blue);
+    background-color: #ffffff;
+}
+
+.quick-ranges {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.btn-quick {
+    height: 40px;
+    padding: 0 14px;
+    border: 1px solid var(--border-color);
+    background: #ffffff;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-quick:hover {
+    border-color: var(--brand-blue);
+    color: var(--brand-blue);
+    background-color: var(--brand-blue-light);
+}
+
+/* Lưới thẻ KPI */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.stat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+.icon-revenue   { background: #e6f0fa; color: #0056b3; }
+.icon-occupancy { background: #ecfdf5; color: #10b981; }
+.icon-bookings  { background: #fef3c7; color: #d97706; }
+.icon-nights    { background: #ede9fe; color: #8b5cf6; }
+
+.stat-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.stat-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.stat-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-navy);
+    line-height: 1.2;
+}
+
+.stat-suffix {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-left: 4px;
+}
+
+/* Thẻ biểu đồ */
+.chart-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 22px 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    margin-bottom: 24px;
+}
+
+.chart-card-header {
+    margin-bottom: 16px;
+}
+
+.chart-card-header h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-navy);
+    margin: 0;
+}
+
+.chart-canvas-wrap {
+    position: relative;
+    height: 320px;
+}
+
+.chart-full .chart-canvas-wrap {
+    height: 360px;
+}
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.chart-grid .chart-card {
+    margin-bottom: 0;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .chart-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+    .stat-grid { grid-template-columns: 1fr; }
+    .quick-ranges { margin-left: 0; }
+}
+
+/* =========================================================
+   CUSTOMER REQUESTS & STAFF TRACKING (Manager)
+   ========================================================= */
+
+/* KPI lưới 3 cột */
+.stat-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.icon-pending  { background: #fffbeb; color: #d97706; }
+.icon-progress { background: #eff6ff; color: #2563eb; }
+
+@media (max-width: 1100px) {
+    .stat-grid-3 { grid-template-columns: 1fr; }
+}
+
+/* Dòng phụ dưới tiêu đề yêu cầu (số phòng + thời gian) */
+.request-sub {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-top: 2px;
+}
+.request-sub i { margin-right: 2px; }
+
+/* Badge mức độ ưu tiên */
+.prio-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+.prio-urgent { background: #fef2f2; color: #dc2626; }
+.prio-high   { background: #fff7ed; color: #ea580c; }
+.prio-medium { background: #eff6ff; color: #2563eb; }
+.prio-low    { background: #f1f5f9; color: #64748b; }
+
+/* Nút hành động bổ sung */
+.btn-action.assign { color: var(--brand-blue); }
+.btn-action.assign:hover { color: var(--brand-blue-hover); transform: scale(1.1); }
+.btn-action.done { color: #10b981; }
+.btn-action.done:hover { color: #059669; transform: scale(1.1); }
+
+/* Badge trạng thái làm việc của nhân viên */
+.wk-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+.wk-badge i { font-size: 7px; }
+.wk-active  { background: #ecfdf5; color: #059669; }
+.wk-break   { background: #fffbeb; color: #d97706; }
+.wk-offline { background: #f1f5f9; color: #94a3b8; }
+
+/* Avatar nhỏ trong bảng nhân viên */
+.staff-avatar-sm {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--brand-blue-light);
+    color: var(--brand-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    flex-shrink: 0;
+    border: 1px solid #d0e3f8;
+}
+
+#staffTableBody tr:hover { background: #f8fafc; }
+
+/* Modal chi tiết nhân viên */
+.staff-detail-head {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+.staff-detail-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--brand-blue-light);
+    color: var(--brand-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 20px;
+    border: 1px solid #d0e3f8;
+}
+.staff-detail-name {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-navy);
+}
+.staff-detail-email {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+.staff-detail-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+.detail-stat {
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.detail-stat-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--brand-blue);
+}
+.detail-stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+.staff-task-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 180px;
+    overflow-y: auto;
+}
+.staff-task-list li {
+    font-size: 13px;
+    color: var(--text-navy-light);
+    padding: 8px 12px;
+    background: var(--bg-light);
+    border-radius: 8px;
+}
+
+/* =========================================================
+   INVOICE MANAGEMENT (Manager)
+   ========================================================= */
+
+.icon-refund { background: #fef2f2; color: #dc2626; }
+
+/* Badge trạng thái hóa đơn */
+.inv-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+.inv-pending   { background: #fffbeb; color: #d97706; }
+.inv-paid      { background: #ecfdf5; color: #059669; }
+.inv-refunding { background: #fff7ed; color: #ea580c; }
+.inv-refunded  { background: #eff6ff; color: #2563eb; }
+.inv-cancelled { background: #f1f5f9; color: #94a3b8; }
+
+/* Nút xem chi tiết trong bảng */
+.btn-detail {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--brand-blue);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+.btn-detail:hover {
+    background: var(--brand-blue-light);
+    border-color: var(--brand-blue);
+}
+
+/* Nút quay lại */
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-decoration: none;
+}
+.btn-back:hover { color: var(--brand-blue); }
+
+/* Bố cục trang chi tiết: 2 cột */
+.invoice-detail-grid {
+    display: grid;
+    grid-template-columns: 1.7fr 1fr;
+    gap: 24px;
+    align-items: start;
+}
+@media (max-width: 1100px) {
+    .invoice-detail-grid { grid-template-columns: 1fr; }
+}
+
+.card-section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-navy);
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.card-section-title i { color: var(--brand-blue); }
+
+/* Badge loại dòng chi tiết */
+.item-type-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+}
+.it-room      { background: #e6f0fa; color: #0056b3; }
+.it-service   { background: #ecfdf5; color: #059669; }
+.it-surcharge { background: #fff7ed; color: #ea580c; }
+
+/* Khối tổng tiền */
+.invoice-totals {
+    padding: 16px 24px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: var(--text-navy-light);
+    font-weight: 600;
+}
+.total-net {
+    border-top: 2px solid var(--border-color);
+    padding-top: 12px;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-navy);
+}
+.total-net span:last-child { color: var(--brand-blue); }
+
+/* Thẻ thao tác (cột phải) */
+.invoice-actions-col {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+.action-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    overflow: hidden;
+}
+.action-card form { padding: 20px 24px; }
+.action-card .modal-form-group { margin-bottom: 16px; }
+
+/* Nút hoàn tiền */
+.btn-refund {
+    background-color: #dc2626;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    height: 44px;
+    padding: 0 20px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(220, 38, 38, 0.15);
+}
+.btn-refund:hover {
+    background-color: #b91c1c;
+    transform: translateY(-1px);
+}
+
 
