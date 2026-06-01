@@ -1,202 +1,45 @@
 package com.mycompany.hotelmanagement.controller.manager;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import com.mycompany.hotelmanagement.config.DBContext;
+
 import com.mycompany.hotelmanagement.entity.HotelService;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import com.mycompany.hotelmanagement.entity.RoomInfo;
+import com.mycompany.hotelmanagement.service.HotelServiceService;
+import com.mycompany.hotelmanagement.service.RoomTypeService;
+import com.mycompany.hotelmanagement.service.RoomService;
 
 @WebServlet(name = "ManagerDashboardController", urlPatterns = {"/manager/dashboard"})
 public class ManagerDashboardController extends HttpServlet {
+
+    private final HotelServiceService hotelServiceService = new HotelServiceService();
+    private final RoomTypeService roomTypeService = new RoomTypeService();
+    private final RoomService roomService = new RoomService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("user") == null || !"HOTEL_MANAGER".equals(session.getAttribute("role"))) {
-            // Unauthorized or wrong role, redirect back to login page with unauthorized error
-            response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
-            return;
-        }
-
         String tab = request.getParameter("tab");
         if ("services".equalsIgnoreCase(tab)) {
-            List<HotelService> servicesList = new ArrayList<>();
-            try (Connection conn = DBContext.getConnection()) {
-                if (conn != null) {
-                    try {
-                        conn.createStatement().execute("USE HotelManagementDB");
-                    } catch (SQLException e) {
-                        // Ignore if USE database fails
-                    }
-
-                    String sql = "SELECT service_id, service_name, description, price, unit, is_active FROM HotelService ORDER BY service_id";
-                    try (PreparedStatement ps = conn.prepareStatement(sql);
-                         ResultSet rs = ps.executeQuery()) {
-                        while (rs.next()) {
-                            HotelService hs = new HotelService();
-                            hs.setServiceId(rs.getInt("service_id"));
-                            hs.setServiceName(rs.getString("service_name"));
-                            hs.setDescription(rs.getString("description"));
-                            hs.setPrice(rs.getDouble("price"));
-                            hs.setUnit(rs.getString("unit"));
-                            hs.setIsActive(rs.getBoolean("is_active"));
-                            servicesList.add(hs);
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            List<HotelService> servicesList = hotelServiceService.getAllServices();
             request.setAttribute("servicesList", servicesList);
         } else if ("roomtypes".equalsIgnoreCase(tab)) {
-            List<RoomTypeInfo> roomTypesList = new ArrayList<>();
-            try (Connection conn = DBContext.getConnection()) {
-                if (conn != null) {
-                    try {
-                        conn.createStatement().execute("USE HotelManagementDB");
-                    } catch (SQLException e) {
-                        // Ignore
-                    }
-
-                    Map<Integer, List<String>> typeImages = new HashMap<>();
-                    Map<Integer, List<String>> typeAmenities = new HashMap<>();
-
-                    // Fetch images
-                    String imgSql = "SELECT type_id, image_url FROM RoomImage";
-                    try (PreparedStatement ps = conn.prepareStatement(imgSql);
-                         ResultSet rs = ps.executeQuery()) {
-                        while (rs.next()) {
-                            int tId = rs.getInt("type_id");
-                            String url = rs.getString("image_url");
-                            typeImages.computeIfAbsent(tId, k -> new ArrayList<>()).add(url);
-                        }
-                    }
-
-                    // Fetch amenities
-                    String amenitySql = "SELECT ra.type_id, a.name FROM Amenity a JOIN RoomType_Amenity ra ON a.amenity_id = ra.amenity_id";
-                    try (PreparedStatement ps = conn.prepareStatement(amenitySql);
-                         ResultSet rs = ps.executeQuery()) {
-                        while (rs.next()) {
-                            int tId = rs.getInt("type_id");
-                            String name = rs.getString("name");
-                            typeAmenities.computeIfAbsent(tId, k -> new ArrayList<>()).add(name);
-                        }
-                    }
-
-                    // Fetch room types
-                    String rtSql = "SELECT type_id, type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type FROM RoomType ORDER BY type_id";
-                    try (PreparedStatement ps = conn.prepareStatement(rtSql);
-                         ResultSet rs = ps.executeQuery()) {
-                        while (rs.next()) {
-                            int tId = rs.getInt("type_id");
-                            RoomTypeInfo info = new RoomTypeInfo();
-                            info.setTypeId(tId);
-                            info.setTypeName(rs.getString("type_name"));
-                            info.setBasePrice(rs.getDouble("base_price"));
-                            info.setPricePerHour(rs.getDouble("price_per_hour"));
-                            info.setDepositPercent(rs.getDouble("deposit_percent"));
-                            info.setCapacity(rs.getInt("capacity"));
-                            info.setDescription(rs.getString("description"));
-                            info.setArea(rs.getString("area"));
-                            info.setBedType(rs.getString("bed_type"));
-
-                            List<String> imgUrls = typeImages.get(tId);
-                            if (imgUrls != null && !imgUrls.isEmpty()) {
-                                info.setImageUrl(imgUrls.get(0));
-                                info.setImageUrls(imgUrls);
-                            } else {
-                                info.setImageUrl("https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=600");
-                                info.setImageUrls(new ArrayList<>());
-                            }
-
-                            List<String> amList = typeAmenities.get(tId);
-                            if (amList != null) {
-                                info.setAmenities(amList);
-                            } else {
-                                info.setAmenities(new ArrayList<>());
-                            }
-
-                            roomTypesList.add(info);
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
+            List<RoomTypeInfo> roomTypesList = roomTypeService.getAllRoomTypes();
             if (roomTypesList.isEmpty()) {
                 roomTypesList = getMockRoomTypes();
             }
             request.setAttribute("roomTypesList", roomTypesList);
         } else if ("rooms".equalsIgnoreCase(tab)) {
-            List<RoomInfo> roomsList = new ArrayList<>();
-            List<RoomTypeInfo> roomTypesList = new ArrayList<>();
-            try (Connection conn = DBContext.getConnection()) {
-                if (conn != null) {
-                    try {
-                        conn.createStatement().execute("USE HotelManagementDB");
-                    } catch (SQLException e) {
-                        // Ignore
-                    }
-
-                    // Fetch RoomTypes (needed for modal types dropdown)
-                    String rtSql = "SELECT type_id, type_name, base_price, capacity, area, bed_type FROM RoomType ORDER BY type_id";
-                    try (PreparedStatement ps = conn.prepareStatement(rtSql);
-                         ResultSet rs = ps.executeQuery()) {
-                        while (rs.next()) {
-                            RoomTypeInfo info = new RoomTypeInfo();
-                            info.setTypeId(rs.getInt("type_id"));
-                            info.setTypeName(rs.getString("type_name"));
-                            info.setBasePrice(rs.getDouble("base_price"));
-                            info.setCapacity(rs.getInt("capacity"));
-                            info.setArea(rs.getString("area"));
-                            info.setBedType(rs.getString("bed_type"));
-                            roomTypesList.add(info);
-                        }
-                    }
-
-                    // Fetch Rooms
-                    String rSql = "SELECT r.room_id, r.room_number, r.type_id, r.status, r.floor, " +
-                                  "rt.type_name, rt.base_price, rt.bed_type, rt.area " +
-                                  "FROM Room r " +
-                                  "JOIN RoomType rt ON r.type_id = rt.type_id " +
-                                  "ORDER BY r.room_number";
-                    try (PreparedStatement ps = conn.prepareStatement(rSql);
-                         ResultSet rs = ps.executeQuery()) {
-                        while (rs.next()) {
-                            RoomInfo room = new RoomInfo();
-                            room.setRoomId(rs.getInt("room_id"));
-                            room.setRoomNumber(rs.getString("room_number"));
-                            room.setTypeId(rs.getInt("type_id"));
-                            room.setStatus(rs.getString("status"));
-                            room.setFloor(rs.getString("floor"));
-                            room.setTypeName(rs.getString("type_name"));
-                            room.setBasePrice(rs.getDouble("base_price"));
-                            room.setBedType(rs.getString("bed_type"));
-                            room.setArea(rs.getString("area"));
-                            roomsList.add(room);
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            List<RoomInfo> roomsList = roomService.getAllRooms();
+            List<RoomTypeInfo> roomTypesList = roomTypeService.getAllRoomTypes();
 
             if (roomsList.isEmpty()) {
                 if (roomTypesList.isEmpty()) {
@@ -209,7 +52,7 @@ public class ManagerDashboardController extends HttpServlet {
             request.setAttribute("roomTypesList", roomTypesList);
         }
         
-        // Authorized, forward to Hotel Manager Dashboard view
+        // Authorized (by AuthFilter), forward to Hotel Manager Dashboard view
         request.getRequestDispatcher("/WEB-INF/views/dashboard/manager.jsp").forward(request, response);
     }
 

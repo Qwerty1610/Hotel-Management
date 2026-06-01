@@ -6,7 +6,6 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
 @WebServlet(name = "HousekeepingDashboardController", urlPatterns = {"/housekeeping/dashboard"})
 public class HousekeepingDashboardController extends HttpServlet {
@@ -14,15 +13,7 @@ public class HousekeepingDashboardController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
-        HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("user") == null || !"HOUSEKEEPING".equals(session.getAttribute("role"))) {
-            // Unauthorized or wrong role, redirect back to login page with unauthorized error
-            response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
-            return;
-        }
-        
-        // Authorized, forward to Housekeeping Dashboard view
+        // Authorized (by AuthFilter), forward to Housekeeping Dashboard view
         request.getRequestDispatcher("/WEB-INF/views/dashboard/housekeeping.jsp").forward(request, response);
     }
 

@@ -6,7 +6,6 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
 @WebServlet(name = "ReceptionistDashboardController", urlPatterns = {"/receptionist/dashboard"})
 public class ReceptionistDashboardController extends HttpServlet {
@@ -14,15 +13,7 @@ public class ReceptionistDashboardController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
-        HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("user") == null || !"RECEPTIONIST".equals(session.getAttribute("role"))) {
-            // Unauthorized or wrong role, redirect back to login page with unauthorized error
-            response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
-            return;
-        }
-        
-        // Authorized, forward to Receptionist Dashboard view
+        // Authorized (by AuthFilter), forward to Receptionist Dashboard view
         request.getRequestDispatcher("/WEB-INF/views/dashboard/receptionist.jsp").forward(request, response);
     }
 
