@@ -1,0 +1,200 @@
+package com.mycompany.hotelmanagement.dal;
+
+import com.mycompany.hotelmanagement.config.DBContext;
+import com.mycompany.hotelmanagement.entity.Booking;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * BookingDAO
+ * Package harmonized to dal for HMS Hotel-Management structure.
+ * Standardized database selection utilizing useDatabase helper.
+ * Date: 01/6/2026
+ * 
+ * @author DUC BINH
+ */
+public class BookingDAO {
+
+    private void useDatabase(Connection conn) {
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("USE HotelManagementDB");
+        } catch (SQLException e) {
+            // Ignore
+        }
+    }
+
+    private static final String BASE_SELECT = "SELECT b.booking_id, b.account_id, b.customer_name, " +
+            "       b.room_type_id, rt.type_name AS room_type_name, " +
+            "       b.room_quantity, b.check_in_date, b.check_out_date, " +
+            "       b.total_amount, b.status, b.note, CAST(b.created_at AS DATE) AS created_at " +
+            "FROM dbo.Booking b " +
+            "LEFT JOIN dbo.RoomType rt ON b.room_type_id = rt.type_id ";
+
+    public List<Booking> getBookings(String statusFilter, String keyword) {
+        List<Booking> list = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder(BASE_SELECT);
+        List<Object> params = new ArrayList<>();
+
+        boolean hasWhere = false;
+
+        // Filter by status
+        if (statusFilter != null && !statusFilter.equalsIgnoreCase("All")) {
+            sql.append("WHERE b.status = ? ");
+            params.add(statusFilter);
+            hasWhere = true;
+        }
+
+        // Filter by keyword (tên khách hoặc mã)
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String kw = "%" + keyword.trim() + "%";
+            if (hasWhere) {
+                sql.append("AND (b.customer_name LIKE ? OR CAST(b.booking_id AS NVARCHAR) LIKE ?) ");
+            } else {
+                sql.append("WHERE (b.customer_name LIKE ? OR CAST(b.booking_id AS NVARCHAR) LIKE ?) ");
+            }
+            params.add(kw);
+            params.add(kw);
+        }
+
+        sql.append("ORDER BY b.created_at DESC, b.booking_id DESC");
+
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+                for (int i = 0; i < params.size(); i++) {
+                    ps.setObject(i + 1, params.get(i));
+                }
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        list.add(mapRow(rs));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public Booking getBookingById(int bookingId) {
+        String sql = BASE_SELECT + "WHERE b.booking_id = ?";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, bookingId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next())
+                        return mapRow(rs);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public boolean updateBookingStatus(int bookingId, String newStatus, String note) {
+        String sql = "UPDATE dbo.Booking " +
+                "SET status = ?, note = ?, updated_at = SYSDATETIME() " +
+                "WHERE booking_id = ?";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, newStatus);
+                ps.setString(2, note != null ? note.trim() : "");
+                ps.setInt(3, bookingId);
+                return ps.executeUpdate() > 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean updateBookingDetails(Booking b) {
+        String sql = "UPDATE dbo.Booking " +
+                "SET customer_name = ?, room_type_id = ?, room_quantity = ?, " +
+                "    check_in_date = ?, check_out_date = ?, total_amount = ?, " +
+                "    note = ?, updated_at = SYSDATETIME() " +
+                "WHERE booking_id = ? AND status = N'Pending'";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, b.getCustomerName());
+                if (b.getRoomTypeId() != null)
+                    ps.setInt(2, b.getRoomTypeId());
+                else
+                    ps.setNull(2, Types.INTEGER);
+                ps.setInt(3, b.getRoomQuantity());
+                ps.setDate(4, b.getCheckInDate());
+                ps.setDate(5, b.getCheckOutDate());
+                ps.setDouble(6, b.getTotalAmount());
+                ps.setString(7, b.getNote());
+                ps.setInt(8, b.getBookingId());
+
+                return ps.executeUpdate() > 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean cancelBooking(int bookingId, String reason) {
+        String sql = "UPDATE dbo.Booking " +
+                "SET status = N'Cancelled', note = ?, updated_at = SYSDATETIME() " +
+                "WHERE booking_id = ? AND status NOT IN (N'CheckedIn', N'CheckedOut')";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, reason != null ? reason.trim() : "Huỷ theo yêu cầu");
+                ps.setInt(2, bookingId);
+                return ps.executeUpdate() > 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public int countByStatus(String status) {
+        String sql = "SELECT COUNT(*) FROM dbo.Booking WHERE status = ?";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, status);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next())
+                        return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    private Booking mapRow(ResultSet rs) throws SQLException {
+        Booking b = new Booking();
+        b.setBookingId(rs.getInt("booking_id"));
+        int accountId = rs.getInt("account_id");
+        if (!rs.wasNull())
+            b.setAccountId(accountId);
+        b.setCustomerName(rs.getString("customer_name"));
+        int typeId = rs.getInt("room_type_id");
+        if (!rs.wasNull())
+            b.setRoomTypeId(typeId);
+        b.setRoomTypeName(rs.getString("room_type_name"));
+        b.setRoomQuantity(rs.getInt("room_quantity"));
+        b.setCheckInDate(rs.getDate("check_in_date"));
+        b.setCheckOutDate(rs.getDate("check_out_date"));
+        b.setTotalAmount(rs.getDouble("total_amount"));
+        b.setStatus(rs.getString("status"));
+        b.setNote(rs.getString("note"));
+        b.setCreatedAt(rs.getDate("created_at"));
+        return b;
+    }
+}

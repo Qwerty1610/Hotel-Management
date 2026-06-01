@@ -501,4 +501,85 @@ IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'401')
     INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'401', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Suite'), N'Maintenance', N'Tầng VIP');
 GO
 
+/* ============================================================
+   4. BOOKING TABLE 
+   ============================================================ */
 
+IF OBJECT_ID(N'dbo.Booking', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Booking (
+        booking_id INT IDENTITY(1,1) PRIMARY KEY,
+        account_id INT NULL,
+        customer_name NVARCHAR(100) NOT NULL,
+        room_type_id INT NULL,
+        room_quantity INT NOT NULL DEFAULT 1,
+        check_in_date DATE NOT NULL,
+        check_out_date DATE NOT NULL,
+        total_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+        status NVARCHAR(50) NOT NULL DEFAULT N'Pending',
+        note NVARCHAR(500) NULL,
+        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        updated_at DATETIME2 NULL,
+        CONSTRAINT FK_Booking_Account FOREIGN KEY (account_id) REFERENCES dbo.Account(account_id),
+        CONSTRAINT FK_Booking_RoomType FOREIGN KEY (room_type_id) REFERENCES dbo.RoomType(type_id)
+    );
+END
+GO
+
+/* Seed Mock Data cho Booking 
+*/
+
+-- 1. Trạng thái PENDING (Chờ xử lý)
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Nguyễn Văn A' AND check_in_date = '2026-06-05')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (NULL, N'Nguyễn Văn A', 1, 1, '2026-06-05', '2026-06-07', 1500000, N'Pending', N'Khách dặn lấy phòng tầng cao, view đẹp.');
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Trần Thị B' AND check_in_date = '2026-06-10')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (NULL, N'Trần Thị B', 2, 2, '2026-06-10', '2026-06-12', 4800000, N'Pending', N'Đoàn khách VIP.');
+END
+GO
+
+-- 2. Trạng thái CONFIRMED (Đã xác nhận)
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Customer User' AND check_in_date = '2026-06-15')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (5, N'Customer User', 3, 1, '2026-06-15', '2026-06-18', 5400000, N'Confirmed', N'Đã đặt cọc 50% qua VNPay.');
+END
+GO
+
+-- 3. Trạng thái REJECTED (Từ chối)
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Lê Văn C' AND check_in_date = '2026-05-20')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (NULL, N'Lê Văn C', 4, 1, '2026-05-20', '2026-05-22', 5600000, N'Rejected', N'Đã hết phòng Suite trong khoảng thời gian này.');
+END
+GO
+
+-- 4. Trạng thái CANCELLED (Đã huỷ)
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Phạm Thị D' AND check_in_date = '2026-05-25')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (NULL, N'Phạm Thị D', 1, 1, '2026-05-25', '2026-05-27', 1500000, N'Cancelled', N'Khách hàng chủ động gọi điện báo huỷ.');
+END
+GO
+
+-- 5. Trạng thái CHECKED IN (Đã nhận phòng)
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Ngô Thị F' AND check_in_date = '2026-05-30')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (NULL, N'Ngô Thị F', 1, 2, '2026-05-30', '2026-06-02', 3000000, N'CheckedIn', N'Khách đang lưu trú.');
+END
+GO
+
+-- 6. Trạng thái CHECKED OUT (Đã trả phòng)
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Hoàng Văn E' AND check_in_date = '2026-05-28')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (NULL, N'Hoàng Văn E', 2, 1, '2026-05-28', '2026-05-30', 2400000, N'CheckedOut', N'Đã hoàn tất thanh toán.');
+END
+GO
