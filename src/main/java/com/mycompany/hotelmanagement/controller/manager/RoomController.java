@@ -1,31 +1,24 @@
 package com.mycompany.hotelmanagement.controller.manager;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import com.mycompany.hotelmanagement.config.DBContext;
+
+import com.mycompany.hotelmanagement.entity.RoomInfo;
+import com.mycompany.hotelmanagement.service.RoomService;
 
 @WebServlet(name = "RoomController", urlPatterns = {"/manager/rooms"})
 public class RoomController extends HttpServlet {
+
+    private final RoomService roomService = new RoomService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        // 1. Authorization check
-        HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("user") == null || !"HOTEL_MANAGER".equals(session.getAttribute("role"))) {
-            response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
-            return;
-        }
-
         String action = request.getParameter("action");
         String idParam = request.getParameter("id");
         int roomId = -1;
@@ -38,35 +31,13 @@ public class RoomController extends HttpServlet {
             return;
         }
 
-        // 2. Perform DB operations based on GET action
-        try (Connection conn = DBContext.getConnection()) {
-            if (conn != null) {
-                try {
-                    conn.createStatement().execute("USE HotelManagementDB");
-                } catch (SQLException e) {
-                    // Ignore
-                }
-
-                if ("delete".equalsIgnoreCase(action) && roomId != -1) {
-                    String deleteSql = "DELETE FROM Room WHERE room_id = ?";
-                    try (PreparedStatement ps = conn.prepareStatement(deleteSql)) {
-                        ps.setInt(1, roomId);
-                        ps.executeUpdate();
-                    }
-                } else if ("updateStatus".equalsIgnoreCase(action) && roomId != -1) {
-                    String status = request.getParameter("status");
-                    if (status != null && !status.trim().isEmpty()) {
-                        String updateSql = "UPDATE Room SET status = ? WHERE room_id = ?";
-                        try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
-                            ps.setString(1, status.trim());
-                            ps.setInt(2, roomId);
-                            ps.executeUpdate();
-                        }
-                    }
-                }
+        if ("delete".equalsIgnoreCase(action) && roomId != -1) {
+            roomService.deleteRoom(roomId);
+        } else if ("updateStatus".equalsIgnoreCase(action) && roomId != -1) {
+            String status = request.getParameter("status");
+            if (status != null && !status.trim().isEmpty()) {
+                roomService.updateRoomStatus(roomId, status.trim());
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
         response.sendRedirect(request.getContextPath() + "/manager/dashboard?tab=rooms");
@@ -76,13 +47,6 @@ public class RoomController extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        // 1. Authorization check
-        HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("user") == null || !"HOTEL_MANAGER".equals(session.getAttribute("role"))) {
-            response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
-            return;
-        }
-
         String action = request.getParameter("action");
         if ("save".equalsIgnoreCase(action)) {
             String roomIdParam = request.getParameter("roomId");
@@ -104,41 +68,22 @@ public class RoomController extends HttpServlet {
                 // keep -1
             }
 
-            try (Connection conn = DBContext.getConnection()) {
-                if (conn != null) {
-                    try {
-                        conn.createStatement().execute("USE HotelManagementDB");
-                    } catch (SQLException e) {
-                        // Ignore
-                    }
+            RoomInfo room = new RoomInfo();
+            room.setRoomNumber(roomNumber);
+            room.setFloor(floor);
+            room.setTypeId(typeId);
+            room.setStatus(status);
 
-                    if (roomIdParam == null || roomIdParam.trim().isEmpty()) {
-                        // Insert new room
-                        String insertSql = "INSERT INTO Room (room_number, floor, type_id, status) VALUES (?, ?, ?, ?)";
-                        try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
-                            ps.setString(1, roomNumber);
-                            ps.setString(2, floor);
-                            ps.setInt(3, typeId);
-                            ps.setString(4, status);
-                            ps.executeUpdate();
-                        }
-                    } else {
-                        // Update existing room
-                        int roomId = Integer.parseInt(roomIdParam.trim());
-                        String updateSql = "UPDATE Room SET room_number = ?, floor = ?, type_id = ?, status = ? WHERE room_id = ?";
-                        try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
-                            ps.setString(1, roomNumber);
-                            ps.setString(2, floor);
-                            ps.setInt(3, typeId);
-                            ps.setString(4, status);
-                            ps.setInt(5, roomId);
-                            ps.executeUpdate();
-                        }
-                    }
+            if (roomIdParam != null && !roomIdParam.trim().isEmpty()) {
+                try {
+                    int roomId = Integer.parseInt(roomIdParam.trim());
+                    room.setRoomId(roomId);
+                } catch (NumberFormatException e) {
+                    // Ignore
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
+
+            roomService.saveRoom(room);
         }
 
         response.sendRedirect(request.getContextPath() + "/manager/dashboard?tab=rooms");
