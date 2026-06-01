@@ -1,6 +1,7 @@
 package com.mycompany.hotelmanagement.controller.common;
 
 import java.io.IOException;
+import com.mycompany.hotelmanagement.config.ConfigUtil;
 import com.mycompany.hotelmanagement.entity.Account;
 import com.mycompany.hotelmanagement.service.AuthService;
 
@@ -20,8 +21,9 @@ public class LoginController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Pass Google Client ID from system properties to JSP
-        String googleClientId = System.getProperty("google.client.id", "your-google-client-id");
+        // Pass Google Client ID from config.properties or system properties to JSP
+        String googleClientId = ConfigUtil.get("google.client.id",
+                System.getProperty("google.client.id", "your-google-client-id"));
         request.setAttribute("googleClientId", googleClientId);
         
         // Forward to standalone login page

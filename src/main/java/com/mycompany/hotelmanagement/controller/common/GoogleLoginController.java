@@ -11,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import com.mycompany.hotelmanagement.config.ConfigUtil;
 import com.mycompany.hotelmanagement.config.DBContext;
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -24,8 +25,10 @@ import jakarta.servlet.http.HttpSession;
 @WebServlet(name = "GoogleLoginController", urlPatterns = {"/login-google"})
 public class GoogleLoginController extends HttpServlet {
 
-    private static final String CLIENT_ID = System.getProperty("google.client.id", "your-google-client-id");
-    private static final String CLIENT_SECRET = System.getProperty("google.client.secret", "your-google-client-secret");
+    private static final String CLIENT_ID = ConfigUtil.get("google.client.id",
+            System.getProperty("google.client.id", "your-google-client-id"));
+    private static final String CLIENT_SECRET = ConfigUtil.get("google.client.secret",
+            System.getProperty("google.client.secret", "your-google-client-secret"));
     private static final String REDIRECT_URI = "http://localhost:8080/HotelManagement/login-google";
 
     @Override
