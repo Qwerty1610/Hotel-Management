@@ -19,11 +19,10 @@ public class RoomTypeService {
 
         for (RoomTypeInfo info : allRoomTypes) {
             int tId = info.getTypeId();
-            
-            // Attach images
+
             List<String> images = typeImages.get(tId);
             if (images != null && !images.isEmpty()) {
-                info.setImageUrl(images.get(0)); // Primary image
+                info.setImageUrl(images.get(0));
                 info.setImageUrls(images);
             } else {
                 info.setImageUrl("https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=600");
@@ -41,10 +40,11 @@ public class RoomTypeService {
         return allRoomTypes;
     }
 
-    public List<RoomTypeInfo> getFilteredRoomTypes(int typeIdFilter, int guestsFilter, double minPriceFilter, double maxPriceFilter) {
+    public List<RoomTypeInfo> getFilteredRoomTypes(int typeIdFilter, int guestsFilter, double minPriceFilter,
+            double maxPriceFilter) {
         List<RoomTypeInfo> allRoomTypes = getAllRoomTypes();
         List<RoomTypeInfo> filteredRoomTypes = new ArrayList<>();
-        
+
         for (RoomTypeInfo room : allRoomTypes) {
             // Filter by Room Type ID
             if (typeIdFilter != -1 && room.getTypeId() != typeIdFilter) {
@@ -125,17 +125,24 @@ public class RoomTypeService {
                     if (amenities != null && amenities.length > 0) {
                         for (String amName : amenities) {
                             int amenityId = roomTypeRepository.getAmenityIdByName(amName, conn);
-                            
+
                             // If amenity doesn't exist, insert it
                             if (amenityId == -1) {
                                 String iconUrl = "fa-wifi"; // Default icon mapping
-                                if (amName.contains("Điều hòa")) iconUrl = "fa-snowflake";
-                                else if (amName.contains("Tivi")) iconUrl = "fa-tv";
-                                else if (amName.contains("View")) iconUrl = "fa-city";
-                                else if (amName.contains("bar")) iconUrl = "fa-glass";
-                                else if (amName.contains("tắm")) iconUrl = "fa-bath";
-                                else if (amName.contains("công")) iconUrl = "fa-door-open";
-                                else if (amName.contains("cà phê")) iconUrl = "fa-mug-hot";
+                                if (amName.contains("Điều hòa"))
+                                    iconUrl = "fa-snowflake";
+                                else if (amName.contains("Tivi"))
+                                    iconUrl = "fa-tv";
+                                else if (amName.contains("View"))
+                                    iconUrl = "fa-city";
+                                else if (amName.contains("bar"))
+                                    iconUrl = "fa-glass";
+                                else if (amName.contains("tắm"))
+                                    iconUrl = "fa-bath";
+                                else if (amName.contains("công"))
+                                    iconUrl = "fa-door-open";
+                                else if (amName.contains("cà phê"))
+                                    iconUrl = "fa-mug-hot";
 
                                 amenityId = roomTypeRepository.insertAmenity(amName, iconUrl, conn);
                             }
@@ -156,5 +163,9 @@ public class RoomTypeService {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void deleteRoomType(int typeId) {
+        roomTypeRepository.deleteRoomType(typeId);
     }
 }

@@ -313,7 +313,7 @@ BEGIN
     CREATE TABLE dbo.RoomImage (
         image_id INT IDENTITY(1,1) PRIMARY KEY,
         type_id INT NOT NULL,
-        image_url NVARCHAR(255) NOT NULL,
+        image_url NVARCHAR(MAX) NOT NULL,
         CONSTRAINT FK_RoomImage_RoomType FOREIGN KEY (type_id) REFERENCES dbo.RoomType(type_id) ON DELETE CASCADE
     );
 END
