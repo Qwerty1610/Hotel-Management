@@ -1,31 +1,24 @@
 package com.mycompany.hotelmanagement.controller.manager;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import com.mycompany.hotelmanagement.config.DBContext;
+
+import com.mycompany.hotelmanagement.entity.HotelService;
+import com.mycompany.hotelmanagement.service.HotelServiceService;
 
 @WebServlet(name = "ServiceController", urlPatterns = {"/manager/services"})
 public class ServiceController extends HttpServlet {
+
+    private final HotelServiceService hotelServiceService = new HotelServiceService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        // 1. Authorization check
-        HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("user") == null || !"HOTEL_MANAGER".equals(session.getAttribute("role"))) {
-            response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
-            return;
-        }
-
         String action = request.getParameter("action");
         String idParam = request.getParameter("id");
         int serviceId = -1;
@@ -38,34 +31,12 @@ public class ServiceController extends HttpServlet {
             return;
         }
 
-        // 2. Perform DB operations based on GET action
-        try (Connection conn = DBContext.getConnection()) {
-            if (conn != null) {
-                try {
-                    conn.createStatement().execute("USE HotelManagementDB");
-                } catch (SQLException e) {
-                    // Ignore
-                }
-
-                if ("delete".equalsIgnoreCase(action) && serviceId != -1) {
-                    String deleteSql = "DELETE FROM HotelService WHERE service_id = ?";
-                    try (PreparedStatement ps = conn.prepareStatement(deleteSql)) {
-                        ps.setInt(1, serviceId);
-                        ps.executeUpdate();
-                    }
-                } else if ("toggle".equalsIgnoreCase(action) && serviceId != -1) {
-                    String statusParam = request.getParameter("status");
-                    boolean isActive = "true".equalsIgnoreCase(statusParam);
-                    String toggleSql = "UPDATE HotelService SET is_active = ?, updated_at = SYSDATETIME() WHERE service_id = ?";
-                    try (PreparedStatement ps = conn.prepareStatement(toggleSql)) {
-                        ps.setBoolean(1, isActive);
-                        ps.setInt(2, serviceId);
-                        ps.executeUpdate();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        if ("delete".equalsIgnoreCase(action) && serviceId != -1) {
+            hotelServiceService.deleteService(serviceId);
+        } else if ("toggle".equalsIgnoreCase(action) && serviceId != -1) {
+            String statusParam = request.getParameter("status");
+            boolean isActive = "true".equalsIgnoreCase(statusParam);
+            hotelServiceService.toggleServiceStatus(serviceId, isActive);
         }
 
         response.sendRedirect(request.getContextPath() + "/manager/dashboard?tab=services");
@@ -75,13 +46,6 @@ public class ServiceController extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        // 1. Authorization check
-        HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("user") == null || !"HOTEL_MANAGER".equals(session.getAttribute("role"))) {
-            response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
-            return;
-        }
-
         String action = request.getParameter("action");
         if ("save".equalsIgnoreCase(action)) {
             String serviceIdParam = request.getParameter("serviceId");
@@ -103,41 +67,22 @@ public class ServiceController extends HttpServlet {
                 // keep 0.0
             }
 
-            try (Connection conn = DBContext.getConnection()) {
-                if (conn != null) {
-                    try {
-                        conn.createStatement().execute("USE HotelManagementDB");
-                    } catch (SQLException e) {
-                        // Ignore
-                    }
+            HotelService service = new HotelService();
+            service.setServiceName(name);
+            service.setDescription(description);
+            service.setPrice(price);
+            service.setUnit(unit);
 
-                    if (serviceIdParam == null || serviceIdParam.trim().isEmpty()) {
-                        // Insert new service
-                        String insertSql = "INSERT INTO HotelService (service_name, description, price, unit, is_active) VALUES (?, ?, ?, ?, 1)";
-                        try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
-                            ps.setString(1, name);
-                            ps.setString(2, description);
-                            ps.setDouble(3, price);
-                            ps.setString(4, unit);
-                            ps.executeUpdate();
-                        }
-                    } else {
-                        // Update existing service
-                        int serviceId = Integer.parseInt(serviceIdParam.trim());
-                        String updateSql = "UPDATE HotelService SET service_name = ?, description = ?, price = ?, unit = ?, updated_at = SYSDATETIME() WHERE service_id = ?";
-                        try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
-                            ps.setString(1, name);
-                            ps.setString(2, description);
-                            ps.setDouble(3, price);
-                            ps.setString(4, unit);
-                            ps.setInt(5, serviceId);
-                            ps.executeUpdate();
-                        }
-                    }
+            if (serviceIdParam != null && !serviceIdParam.trim().isEmpty()) {
+                try {
+                    int serviceId = Integer.parseInt(serviceIdParam.trim());
+                    service.setServiceId(serviceId);
+                } catch (NumberFormatException e) {
+                    // Ignore
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
+
+            hotelServiceService.saveService(service);
         }
 
         response.sendRedirect(request.getContextPath() + "/manager/dashboard?tab=services");
