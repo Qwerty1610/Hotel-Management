@@ -236,6 +236,17 @@ h2 {
     gap: 14px;
 }
 
+.user-greeting {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    font-size: 15px;
+    margin-right: 8px;
+}
+
+.navbar.scrolled .user-greeting {
+    color: var(--text-dark);
+}
+
 /* LOGIN */
 
 .btn-login {
@@ -1025,3 +1036,4 @@ button {
         font-size: 26px;
     }
 }
+
