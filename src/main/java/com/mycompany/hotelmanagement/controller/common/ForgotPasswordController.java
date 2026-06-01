@@ -50,8 +50,7 @@ public class ForgotPasswordController extends HttpServlet {
         try {
             conn = DBContext.getConnection();
 
-            // 1. (Bypassed) Check if email exists in Account database
-            /*
+            // 1. Check if email exists in Account database
             checkPs = conn.prepareStatement("SELECT account_id FROM Account WHERE email = ? AND is_active = 1");
             checkPs.setString(1, email);
             rs = checkPs.executeQuery();
@@ -63,7 +62,6 @@ public class ForgotPasswordController extends HttpServlet {
             }
             rs.close();
             checkPs.close();
-            */
 
             // 2. Generate 6-digit OTP token
             int otpNum = random.nextInt(900000) + 100000; // range 100000 to 999999
