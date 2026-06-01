@@ -20,6 +20,10 @@ public class LoginController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // Pass Google Client ID from system properties to JSP
+        String googleClientId = System.getProperty("google.client.id", "your-google-client-id");
+        request.setAttribute("googleClientId", googleClientId);
+        
         // Forward to standalone login page
         request.getRequestDispatcher("/WEB-INF/views/home/login.jsp").forward(request, response);
     }
