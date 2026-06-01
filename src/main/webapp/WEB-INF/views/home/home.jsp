@@ -18,15 +18,27 @@
 
             <div class="nav-actions">
                 <c:choose>
-                    <c:when test="${not empty sessionScope.role and sessionScope.role == 'CUSTOMER'}">
-                        <span class="user-greeting" style="color: #ffffff; margin-right: 15px; font-weight: 500; font-size: 14px;">
-                            <i class="fa-solid fa-user-circle"></i> Xin chào, ${sessionScope.user}
-                        </span>
-                        <a href="${pageContext.request.contextPath}/logout" class="btn-login" style="background: transparent; border: 1px solid #ffffff; color: #ffffff;">Đăng xuất</a>
+                    <c:when test="${not empty sessionScope.user}">
+                        <span class="user-greeting"><i class="fa-solid fa-user-circle"></i> Xin chào, <strong>${sessionScope.user}</strong></span>
+                        <c:choose>
+                            <c:when test="${sessionScope.role eq 'ADMIN'}">
+                                <a href="${pageContext.request.contextPath}/admin/dashboard" class="btn-login">Dashboard</a>
+                            </c:when>
+                            <c:when test="${sessionScope.role eq 'HOTEL_MANAGER'}">
+                                <a href="${pageContext.request.contextPath}/manager/dashboard" class="btn-login">Dashboard</a>
+                            </c:when>
+                            <c:when test="${sessionScope.role eq 'RECEPTIONIST'}">
+                                <a href="${pageContext.request.contextPath}/receptionist/dashboard" class="btn-login">Dashboard</a>
+                            </c:when>
+                            <c:when test="${sessionScope.role eq 'HOUSEKEEPING'}">
+                                <a href="${pageContext.request.contextPath}/housekeeping/dashboard" class="btn-login">Dashboard</a>
+                            </c:when>
+                        </c:choose>
+                        <a href="${pageContext.request.contextPath}/logout" class="btn-register">Đăng xuất</a>
                     </c:when>
                     <c:otherwise>
                         <a href="${pageContext.request.contextPath}/home/login" class="btn-login">Đăng nhập</a>
-                        <a href="#" class="btn-register">Đăng ký</a>
+                        <a href="${pageContext.request.contextPath}/home/register" class="btn-register">Đăng ký</a>
                     </c:otherwise>
                 </c:choose>
             </div>
