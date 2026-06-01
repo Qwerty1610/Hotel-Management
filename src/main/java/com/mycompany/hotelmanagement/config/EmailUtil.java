@@ -1,4 +1,4 @@
-package com.mycompany.hotelmanagement.utils;
+package com.mycompany.hotelmanagement.config;
 
 import java.util.Properties;
 import jakarta.mail.Authenticator;

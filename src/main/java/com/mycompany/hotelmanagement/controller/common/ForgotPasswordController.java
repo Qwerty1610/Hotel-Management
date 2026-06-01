@@ -7,8 +7,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import com.mycompany.hotelmanagement.utils.DBContext;
-import com.mycompany.hotelmanagement.utils.EmailUtil;
+import com.mycompany.hotelmanagement.config.DBContext;
+import com.mycompany.hotelmanagement.config.EmailUtil;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;

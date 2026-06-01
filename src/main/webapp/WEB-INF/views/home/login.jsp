@@ -41,7 +41,8 @@
                     </c:if>
 
                     <c:if test="${not empty param.success}">
-                        <div class="success-alert" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.15); color: #10b981; padding: 12px 16px; border-radius: 12px; font-size: 13.5px; font-weight: 600; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; text-align: left;">
+                        <div class="success-alert"
+                            style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.15); color: #10b981; padding: 12px 16px; border-radius: 12px; font-size: 13.5px; font-weight: 600; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; text-align: left;">
                             <i class="fa-solid fa-circle-check"></i>
                             <span>
                                 <c:choose>
@@ -82,7 +83,8 @@
                             <label class="remember-me">
                                 <input type="checkbox" name="remember" /> Ghi nhớ đăng nhập
                             </label>
-                            <a href="${pageContext.request.contextPath}/home/forgot-password" class="forgot-password">Quên mật khẩu?</a>
+                            <a href="${pageContext.request.contextPath}/home/forgot-password"
+                                class="forgot-password">Quên mật khẩu?</a>
                         </div>
 
                         <button type="submit" class="btn-submit">
@@ -94,7 +96,8 @@
                         <span>hoặc</span>
                     </div>
 
-                    <a href="https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=http://localhost:8080/HotelManagement/login-google&response_type=code&scope=email%20profile" class="btn-google">
+                    <a href="https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=http://localhost:8080/HotelManagement/login-google&response_type=code&scope=email%20profile"
+                        class="btn-google">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
                             <path fill="#4285F4"
                                 d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v3.92h6.69c-.29 1.5-1.14 2.78-2.4 3.62v3.02h3.87c2.26-2.08 3.58-5.15 3.58-8.49z" />

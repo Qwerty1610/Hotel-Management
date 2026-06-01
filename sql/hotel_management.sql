@@ -1,0 +1,504 @@
+/*
+    HotelManagementDB - Service Management SQL (NO icon_key)
+    Purpose:
+    - Create database HotelManagementDB if missing
+    - Keep/create login tables Role and Account for current project
+    - Add HotelService table for Manager > Service Management
+    - Remove icon_key usage because the group will not implement service icons
+
+    SQL Server
+*/
+
+USE master;
+GO
+
+IF DB_ID(N'HotelManagementDB') IS NULL
+BEGIN
+    CREATE DATABASE HotelManagementDB;
+END
+GO
+
+USE HotelManagementDB;
+GO
+
+/* ============================================================
+   1. LOGIN TABLES - create only if missing
+   ============================================================ */
+
+IF OBJECT_ID(N'dbo.Role', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Role (
+        role_id INT IDENTITY(1,1) PRIMARY KEY,
+        role_name NVARCHAR(50) NOT NULL UNIQUE,
+        description NVARCHAR(255) NULL
+    );
+END
+GO
+
+IF OBJECT_ID(N'dbo.Account', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Account (
+        account_id INT IDENTITY(1,1) PRIMARY KEY,
+        email NVARCHAR(100) NOT NULL UNIQUE,
+        password NVARCHAR(255) NOT NULL,
+        full_name NVARCHAR(100) NOT NULL,
+        role_id INT NOT NULL,
+        is_active BIT NOT NULL DEFAULT 1,
+        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        CONSTRAINT FK_Account_Role FOREIGN KEY (role_id) REFERENCES dbo.Role(role_id)
+    );
+END
+GO
+
+/* Add roles only if they are missing */
+IF NOT EXISTS (SELECT 1 FROM dbo.Role WHERE role_name = N'Admin')
+    INSERT INTO dbo.Role (role_name, description) VALUES (N'Admin', N'System administrator account');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Role WHERE role_name = N'Manager')
+    INSERT INTO dbo.Role (role_name, description) VALUES (N'Manager', N'Hotel manager account');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Role WHERE role_name = N'Receptionist')
+    INSERT INTO dbo.Role (role_name, description) VALUES (N'Receptionist', N'Receptionist/front desk account');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Role WHERE role_name = N'Housekeeping')
+    INSERT INTO dbo.Role (role_name, description) VALUES (N'Housekeeping', N'Housekeeping staff account');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Role WHERE role_name = N'Customer')
+    INSERT INTO dbo.Role (role_name, description) VALUES (N'Customer', N'Customer account');
+GO
+
+/*
+    Test login accounts:
+    admin@hotel.com         / admin123
+    manager@hotel.com       / manager123
+    receptionist@hotel.com  / receptionist123
+    housekeeping@hotel.com  / housekeeping123
+    customer@hotel.com      / customer123
+
+    Passwords are BCrypt hashes because LoginController uses BCrypt.checkpw().
+*/
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Account WHERE email = N'admin@hotel.com')
+BEGIN
+    INSERT INTO dbo.Account (email, password, full_name, role_id, is_active)
+    VALUES (
+        N'admin@hotel.com',
+        N'$2a$10$vlNauaFagl8VNLAmR63Aw.vQhdP/IeCzFlSxSq8qVaTCO9.yWPV9y',
+        N'Admin User',
+        (SELECT role_id FROM dbo.Role WHERE role_name = N'Admin'),
+        1
+    );
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Account WHERE email = N'manager@hotel.com')
+BEGIN
+    INSERT INTO dbo.Account (email, password, full_name, role_id, is_active)
+    VALUES (
+        N'manager@hotel.com',
+        N'$2a$10$uboMc8oQx3w6pJKL09IR/uUJkK0EtSLWkOI5rJ.f.vxB4gqwkpIMK',
+        N'Hotel Manager',
+        (SELECT role_id FROM dbo.Role WHERE role_name = N'Manager'),
+        1
+    );
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Account WHERE email = N'receptionist@hotel.com')
+BEGIN
+    INSERT INTO dbo.Account (email, password, full_name, role_id, is_active)
+    VALUES (
+        N'receptionist@hotel.com',
+        N'$2a$10$Ipfqp4fFVKoRkHueD6lmsuDLjrxE.XC4u.GKU6.DMu1GTBEE2hbIC',
+        N'Receptionist User',
+        (SELECT role_id FROM dbo.Role WHERE role_name = N'Receptionist'),
+        1
+    );
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Account WHERE email = N'housekeeping@hotel.com')
+BEGIN
+    INSERT INTO dbo.Account (email, password, full_name, role_id, is_active)
+    VALUES (
+        N'housekeeping@hotel.com',
+        N'$2a$10$1bFDXwvgUoDiLV6T08vFTO9S7DXcq4Wbh2Qv31D1BRAemXY3rvKl.',
+        N'Housekeeping User',
+        (SELECT role_id FROM dbo.Role WHERE role_name = N'Housekeeping'),
+        1
+    );
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Account WHERE email = N'customer@hotel.com')
+BEGIN
+    INSERT INTO dbo.Account (email, password, full_name, role_id, is_active)
+    VALUES (
+        N'customer@hotel.com',
+        N'$2a$10$NKZuHMq4Tm0LJgtKBK401.FauytTSiIiR0h6BqGve1RFpZXzcjxeC',
+        N'Customer User',
+        (SELECT role_id FROM dbo.Role WHERE role_name = N'Customer'),
+        1
+    );
+END
+GO
+
+/* ============================================================
+   2. SERVICE MANAGEMENT TABLE - NO icon_key
+   ============================================================ */
+
+/*
+    HotelService: main table for Manager > Service Management.
+    Fields match the simplified UI:
+    - service_name: Ten dich vu
+    - description: Mo ta dich vu
+    - price: Don gia
+    - unit: Don vi tinh
+    - is_active: Trang thai bat/tat
+
+    icon_key is intentionally removed.
+*/
+IF OBJECT_ID(N'dbo.HotelService', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.HotelService (
+        service_id INT IDENTITY(1,1) PRIMARY KEY,
+        service_name NVARCHAR(150) NOT NULL,
+        description NVARCHAR(500) NULL,
+        price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        unit NVARCHAR(50) NOT NULL,
+        is_active BIT NOT NULL DEFAULT 1,
+        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        updated_at DATETIME2 NULL,
+        CONSTRAINT CK_HotelService_Price CHECK (price >= 0)
+    );
+END
+GO
+
+/* If an old HotelService table already has icon_key from a previous script, remove it. */
+IF COL_LENGTH(N'dbo.HotelService', N'icon_key') IS NOT NULL
+BEGIN
+    ALTER TABLE dbo.HotelService DROP COLUMN icon_key;
+END
+GO
+
+/* Make sure required columns exist if the table was created manually before. */
+IF COL_LENGTH(N'dbo.HotelService', N'service_name') IS NULL
+    ALTER TABLE dbo.HotelService ADD service_name NVARCHAR(150) NULL;
+GO
+
+IF COL_LENGTH(N'dbo.HotelService', N'description') IS NULL
+    ALTER TABLE dbo.HotelService ADD description NVARCHAR(500) NULL;
+GO
+
+IF COL_LENGTH(N'dbo.HotelService', N'price') IS NULL
+    ALTER TABLE dbo.HotelService ADD price DECIMAL(18,2) NOT NULL CONSTRAINT DF_HotelService_Price DEFAULT 0;
+GO
+
+IF COL_LENGTH(N'dbo.HotelService', N'unit') IS NULL
+    ALTER TABLE dbo.HotelService ADD unit NVARCHAR(50) NOT NULL CONSTRAINT DF_HotelService_Unit DEFAULT N'/lượt';
+GO
+
+IF COL_LENGTH(N'dbo.HotelService', N'is_active') IS NULL
+    ALTER TABLE dbo.HotelService ADD is_active BIT NOT NULL CONSTRAINT DF_HotelService_IsActive DEFAULT 1;
+GO
+
+IF COL_LENGTH(N'dbo.HotelService', N'created_at') IS NULL
+    ALTER TABLE dbo.HotelService ADD created_at DATETIME2 NOT NULL CONSTRAINT DF_HotelService_CreatedAt DEFAULT SYSDATETIME();
+GO
+
+IF COL_LENGTH(N'dbo.HotelService', N'updated_at') IS NULL
+    ALTER TABLE dbo.HotelService ADD updated_at DATETIME2 NULL;
+GO
+
+/* Optional: prevent duplicate service names */
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'UX_HotelService_ServiceName'
+      AND object_id = OBJECT_ID(N'dbo.HotelService')
+)
+BEGIN
+    CREATE UNIQUE INDEX UX_HotelService_ServiceName
+    ON dbo.HotelService(service_name);
+END
+GO
+
+/* Seed sample services for testing */
+IF NOT EXISTS (SELECT 1 FROM dbo.HotelService WHERE service_name = N'Bữa sáng Buffet')
+BEGIN
+    INSERT INTO dbo.HotelService (service_name, description, price, unit, is_active)
+    VALUES (N'Bữa sáng Buffet', N'Buffet sáng tại nhà hàng khách sạn, phục vụ từ 06:30 đến 09:30.', 150000, N'/khách', 1);
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.HotelService WHERE service_name = N'Giặt ủi quần áo')
+BEGIN
+    INSERT INTO dbo.HotelService (service_name, description, price, unit, is_active)
+    VALUES (N'Giặt ủi quần áo', N'Dịch vụ giặt ủi quần áo cho khách lưu trú trong khách sạn.', 50000, N'/kg', 1);
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.HotelService WHERE service_name = N'Đưa đón sân bay')
+BEGIN
+    INSERT INTO dbo.HotelService (service_name, description, price, unit, is_active)
+    VALUES (N'Đưa đón sân bay', N'Dịch vụ xe đưa đón khách từ sân bay về khách sạn hoặc ngược lại.', 350000, N'/chuyến', 1);
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.HotelService WHERE service_name = N'Spa thư giãn')
+BEGIN
+    INSERT INTO dbo.HotelService (service_name, description, price, unit, is_active)
+    VALUES (N'Spa thư giãn', N'Dịch vụ massage và chăm sóc sức khỏe cơ bản cho khách.', 300000, N'/lượt', 1);
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.HotelService WHERE service_name = N'Phòng Gym')
+BEGIN
+    INSERT INTO dbo.HotelService (service_name, description, price, unit, is_active)
+    VALUES (N'Phòng Gym', N'Sử dụng khu vực tập gym trong khách sạn.', 80000, N'/ngày', 1);
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.HotelService WHERE service_name = N'Hồ bơi')
+BEGIN
+    INSERT INTO dbo.HotelService (service_name, description, price, unit, is_active)
+    VALUES (N'Hồ bơi', N'Sử dụng khu vực hồ bơi của khách sạn.', 100000, N'/ngày', 1);
+END
+GO
+
+/* ============================================================
+   3. USEFUL TEST QUERIES
+   ============================================================ */
+
+/* List services for Manager page */
+SELECT
+    service_id,
+    service_name,
+    description,
+    price,
+    unit,
+    is_active,
+    created_at,
+    updated_at
+FROM dbo.HotelService
+ORDER BY service_id;
+GO
+
+/* List accounts for login test */
+SELECT
+    a.account_id,
+    a.email,
+    a.full_name,
+    r.role_name,
+    a.is_active,
+    a.created_at
+FROM dbo.Account a
+JOIN dbo.Role r ON a.role_id = r.role_id
+ORDER BY a.account_id;
+GO
+
+/* ============================================================
+   3. ROOM TYPE AND ROOM TABLES
+   ============================================================ */
+
+IF OBJECT_ID(N'dbo.RoomType', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.RoomType (
+        type_id INT IDENTITY(1,1) PRIMARY KEY,
+        type_name NVARCHAR(100) NOT NULL UNIQUE,
+        base_price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        price_per_hour DECIMAL(18,2) NOT NULL DEFAULT 0,
+        deposit_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
+        capacity INT NOT NULL DEFAULT 2,
+        description NVARCHAR(500) NULL,
+        area NVARCHAR(50) NULL,
+        bed_type NVARCHAR(100) NULL
+    );
+END
+GO
+
+IF OBJECT_ID(N'dbo.RoomImage', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.RoomImage (
+        image_id INT IDENTITY(1,1) PRIMARY KEY,
+        type_id INT NOT NULL,
+        image_url NVARCHAR(255) NOT NULL,
+        CONSTRAINT FK_RoomImage_RoomType FOREIGN KEY (type_id) REFERENCES dbo.RoomType(type_id) ON DELETE CASCADE
+    );
+END
+GO
+
+IF OBJECT_ID(N'dbo.Amenity', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Amenity (
+        amenity_id INT IDENTITY(1,1) PRIMARY KEY,
+        name NVARCHAR(100) NOT NULL UNIQUE,
+        icon_url NVARCHAR(100) NULL
+    );
+END
+GO
+
+IF OBJECT_ID(N'dbo.RoomType_Amenity', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.RoomType_Amenity (
+        type_id INT NOT NULL,
+        amenity_id INT NOT NULL,
+        PRIMARY KEY (type_id, amenity_id),
+        CONSTRAINT FK_RTA_RoomType FOREIGN KEY (type_id) REFERENCES dbo.RoomType(type_id) ON DELETE CASCADE,
+        CONSTRAINT FK_RTA_Amenity FOREIGN KEY (amenity_id) REFERENCES dbo.Amenity(amenity_id) ON DELETE CASCADE
+    );
+END
+GO
+
+IF OBJECT_ID(N'dbo.Room', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Room (
+        room_id INT IDENTITY(1,1) PRIMARY KEY,
+        room_number NVARCHAR(50) NOT NULL UNIQUE,
+        type_id INT NOT NULL,
+        status NVARCHAR(50) NOT NULL DEFAULT N'Available',
+        floor NVARCHAR(50) NOT NULL DEFAULT N'Tầng 1',
+        CONSTRAINT FK_Room_RoomType FOREIGN KEY (type_id) REFERENCES dbo.RoomType(type_id) ON DELETE CASCADE
+    );
+END
+GO
+
+/* If floor column is missing in Room table (due to old table version), add it */
+IF COL_LENGTH(N'dbo.Room', N'floor') IS NULL
+BEGIN
+    ALTER TABLE dbo.Room ADD floor NVARCHAR(50) NOT NULL DEFAULT N'Tầng 1';
+END
+GO
+
+/* Seed Amenities */
+IF NOT EXISTS (SELECT 1 FROM dbo.Amenity WHERE name = N'Wifi miễn phí')
+    INSERT INTO dbo.Amenity (name, icon_url) VALUES (N'Wifi miễn phí', N'fa-wifi');
+IF NOT EXISTS (SELECT 1 FROM dbo.Amenity WHERE name = N'Điều hòa')
+    INSERT INTO dbo.Amenity (name, icon_url) VALUES (N'Điều hòa', N'fa-snowflake');
+IF NOT EXISTS (SELECT 1 FROM dbo.Amenity WHERE name = N'Tivi')
+    INSERT INTO dbo.Amenity (name, icon_url) VALUES (N'Tivi', N'fa-tv');
+IF NOT EXISTS (SELECT 1 FROM dbo.Amenity WHERE name = N'Tivi HD')
+    INSERT INTO dbo.Amenity (name, icon_url) VALUES (N'Tivi HD', N'fa-tv');
+IF NOT EXISTS (SELECT 1 FROM dbo.Amenity WHERE name = N'View thành phố')
+    INSERT INTO dbo.Amenity (name, icon_url) VALUES (N'View thành phố', N'fa-city');
+IF NOT EXISTS (SELECT 1 FROM dbo.Amenity WHERE name = N'Mini bar')
+    INSERT INTO dbo.Amenity (name, icon_url) VALUES (N'Mini bar', N'fa-glass');
+IF NOT EXISTS (SELECT 1 FROM dbo.Amenity WHERE name = N'Bồn tắm')
+    INSERT INTO dbo.Amenity (name, icon_url) VALUES (N'Bồn tắm', N'fa-bath');
+IF NOT EXISTS (SELECT 1 FROM dbo.Amenity WHERE name = N'Ban công')
+    INSERT INTO dbo.Amenity (name, icon_url) VALUES (N'Ban công', N'fa-door-open');
+IF NOT EXISTS (SELECT 1 FROM dbo.Amenity WHERE name = N'Máy pha cà phê')
+    INSERT INTO dbo.Amenity (name, icon_url) VALUES (N'Máy pha cà phê', N'fa-mug-hot');
+GO
+
+/* Seed RoomTypes */
+IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE type_name = N'Phòng Standard')
+BEGIN
+    INSERT INTO dbo.RoomType (type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type)
+    VALUES (N'Phòng Standard', 750000, 100000, 10, 2, N'Phòng tiêu chuẩn phù hợp cho khách đi công tác hoặc nghỉ ngắn ngày.', N'25 m²', N'1 Giường Queen');
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe')
+BEGIN
+    INSERT INTO dbo.RoomType (type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type)
+    VALUES (N'Phòng Deluxe', 1200000, 180000, 10, 2, N'Phòng rộng rãi, nội thất hiện đại, có view thành phố cực kỳ lung linh.', N'45 m²', N'1 Giường đôi lớn');
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE type_name = N'Phòng Family')
+BEGIN
+    INSERT INTO dbo.RoomType (type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type)
+    VALUES (N'Phòng Family', 1800000, 250000, 10, 4, N'Phòng gia đình với không gian lớn, phù hợp nhóm bạn hoặc gia đình nhỏ.', N'60 m²', N'2 Giường đôi');
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE type_name = N'Phòng Suite')
+BEGIN
+    INSERT INTO dbo.RoomType (type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type)
+    VALUES (N'Phòng Suite', 2800000, 400000, 20, 3, N'Phòng cao cấp có khu tiếp khách riêng, bồn tắm và ban công.', N'75 m²', N'1 Giường King');
+END
+GO
+
+/* Seed RoomImages */
+IF NOT EXISTS (SELECT 1 FROM dbo.RoomImage WHERE type_id = (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Standard'))
+BEGIN
+    INSERT INTO dbo.RoomImage (type_id, image_url) VALUES 
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Standard'), N'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80');
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.RoomImage WHERE type_id = (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe'))
+BEGIN
+    INSERT INTO dbo.RoomImage (type_id, image_url) VALUES 
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe'), N'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&q=80');
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.RoomImage WHERE type_id = (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Family'))
+BEGIN
+    INSERT INTO dbo.RoomImage (type_id, image_url) VALUES 
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Family'), N'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80');
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.RoomImage WHERE type_id = (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Suite'))
+BEGIN
+    INSERT INTO dbo.RoomImage (type_id, image_url) VALUES 
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Suite'), N'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80');
+END
+GO
+
+/* Seed RoomType_Amenity mapping */
+-- Standard Amenities
+IF NOT EXISTS (SELECT 1 FROM dbo.RoomType_Amenity WHERE type_id = (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Standard'))
+BEGIN
+    INSERT INTO dbo.RoomType_Amenity (type_id, amenity_id) VALUES
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Standard'), (SELECT amenity_id FROM dbo.Amenity WHERE name = N'Wifi miễn phí')),
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Standard'), (SELECT amenity_id FROM dbo.Amenity WHERE name = N'Điều hòa')),
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Standard'), (SELECT amenity_id FROM dbo.Amenity WHERE name = N'Tivi'));
+END
+
+-- Deluxe Amenities
+IF NOT EXISTS (SELECT 1 FROM dbo.RoomType_Amenity WHERE type_id = (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe'))
+BEGIN
+    INSERT INTO dbo.RoomType_Amenity (type_id, amenity_id) VALUES
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe'), (SELECT amenity_id FROM dbo.Amenity WHERE name = N'Wifi miễn phí')),
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe'), (SELECT amenity_id FROM dbo.Amenity WHERE name = N'Điều hòa')),
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe'), (SELECT amenity_id FROM dbo.Amenity WHERE name = N'Tivi')),
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe'), (SELECT amenity_id FROM dbo.Amenity WHERE name = N'View thành phố')),
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe'), (SELECT amenity_id FROM dbo.Amenity WHERE name = N'Mini bar'));
+END
+
+-- Family Amenities
+IF NOT EXISTS (SELECT 1 FROM dbo.RoomType_Amenity WHERE type_id = (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Family'))
+BEGIN
+    INSERT INTO dbo.RoomType_Amenity (type_id, amenity_id) VALUES
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Family'), (SELECT amenity_id FROM dbo.Amenity WHERE name = N'Wifi miễn phí')),
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Family'), (SELECT amenity_id FROM dbo.Amenity WHERE name = N'Điều hòa')),
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Family'), (SELECT amenity_id FROM dbo.Amenity WHERE name = N'Tivi')),
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Family'), (SELECT amenity_id FROM dbo.Amenity WHERE name = N'Mini bar'));
+END
+
+-- Suite Amenities
+IF NOT EXISTS (SELECT 1 FROM dbo.RoomType_Amenity WHERE type_id = (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Suite'))
+BEGIN
+    INSERT INTO dbo.RoomType_Amenity (type_id, amenity_id) VALUES
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Suite'), (SELECT amenity_id FROM dbo.Amenity WHERE name = N'Wifi miễn phí')),
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Suite'), (SELECT amenity_id FROM dbo.Amenity WHERE name = N'Điều hòa')),
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Suite'), (SELECT amenity_id FROM dbo.Amenity WHERE name = N'Tivi')),
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Suite'), (SELECT amenity_id FROM dbo.Amenity WHERE name = N'Bồn tắm')),
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Suite'), (SELECT amenity_id FROM dbo.Amenity WHERE name = N'View thành phố')),
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Suite'), (SELECT amenity_id FROM dbo.Amenity WHERE name = N'Mini bar')),
+    ((SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Suite'), (SELECT amenity_id FROM dbo.Amenity WHERE name = N'Ban công'));
+END
+GO
+
+/* Seed Rooms */
+DELETE FROM dbo.Room WHERE room_number IN (N'101', N'102', N'201', N'202', N'301', N'401', N'204', N'305');
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'101')
+    INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'101', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Standard'), N'Available', N'Tầng 1');
+IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'102')
+    INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'102', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Standard'), N'Available', N'Tầng 1');
+IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'201')
+    INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'201', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe'), N'Available', N'Tầng 2');
+IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'202')
+    INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'202', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe'), N'Available', N'Tầng 2');
+IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'204')
+    INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'204', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe'), N'Occupied', N'Tầng 2');
+IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'301')
+    INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'301', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Family'), N'Available', N'Tầng 3');
+IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'305')
+    INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'305', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Family'), N'Cleaning', N'Tầng 3');
+IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'401')
+    INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'401', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Suite'), N'Maintenance', N'Tầng VIP');
+GO
+
+

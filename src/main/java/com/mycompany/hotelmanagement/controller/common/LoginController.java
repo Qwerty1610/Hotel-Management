@@ -1,10 +1,8 @@
 package com.mycompany.hotelmanagement.controller.common;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import com.mycompany.hotelmanagement.utils.DBContext;
+import com.mycompany.hotelmanagement.entity.Account;
+import com.mycompany.hotelmanagement.service.AuthService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -16,6 +14,8 @@ import jakarta.servlet.http.Cookie;
 
 @WebServlet(name = "LoginController", urlPatterns = { "/home/login" })
 public class LoginController extends HttpServlet {
+
+    private final AuthService authService = new AuthService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -45,84 +45,61 @@ public class LoginController extends HttpServlet {
 
         String role = null;
         String redirectUrl = null;
+        String displayName = null;
 
-        // 1. Authenticate using database first
-        try (Connection conn = DBContext.getConnection();
-                PreparedStatement ps = conn.prepareStatement(
-                        "SELECT a.email, a.password, a.full_name, r.role_name " +
-                                "FROM Account a JOIN Role r ON a.role_id = r.role_id " +
-                                "WHERE a.email = ? AND a.is_active = 1")) {
+        // 1. Authenticate using database via AuthService
+        Account account = authService.authenticate(username, pass);
+        if (account != null) {
+            String dbRoleName = account.getRoleName();
+            String fullName = account.getFullName();
 
-            ps.setString(1, username);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    String dbPasswordHash = rs.getString("password");
-                    String fullName = rs.getString("full_name");
-                    String dbRoleName = rs.getString("role_name");
-
-                    // Verify the password using BCrypt
-                    if (org.mindrot.jbcrypt.BCrypt.checkpw(pass, dbPasswordHash)) {
-                        if ("Admin".equalsIgnoreCase(dbRoleName)) {
-                            role = "ADMIN";
-                            redirectUrl = "/admin/dashboard";
-                        } else if ("Customer".equalsIgnoreCase(dbRoleName)) {
-                            role = "CUSTOMER";
-                            redirectUrl = "/home";
-                        } else if ("Manager".equalsIgnoreCase(dbRoleName)) {
-                            role = "HOTEL_MANAGER";
-                            redirectUrl = "/manager/dashboard";
-                        } else if ("Receptionist".equalsIgnoreCase(dbRoleName)) {
-                            role = "RECEPTIONIST";
-                            redirectUrl = "/receptionist/dashboard";
-                        } else if ("Housekeeping".equalsIgnoreCase(dbRoleName)
-                                || "Housekeeper".equalsIgnoreCase(dbRoleName)) {
-                            role = "HOUSEKEEPING";
-                            redirectUrl = "/housekeeping/dashboard";
-                        } else if ("Staff".equalsIgnoreCase(dbRoleName)) {
-                            if (username != null && username.toLowerCase().contains("manager")) {
-                                role = "HOTEL_MANAGER";
-                                redirectUrl = "/manager/dashboard";
-                            } else if (username != null && username.toLowerCase().contains("housekeeping")) {
-                                role = "HOUSEKEEPING";
-                                redirectUrl = "/housekeeping/dashboard";
-                            } else {
-                                role = "RECEPTIONIST";
-                                redirectUrl = "/receptionist/dashboard";
-                            }
-                        }
-                        username = (fullName != null && !fullName.trim().isEmpty()) ? fullName : username;
-                    }
+            if ("Admin".equalsIgnoreCase(dbRoleName)) {
+                role = "ADMIN";
+                redirectUrl = "/admin/dashboard";
+            } else if ("Customer".equalsIgnoreCase(dbRoleName)) {
+                role = "CUSTOMER";
+                redirectUrl = "/home";
+            } else if ("Manager".equalsIgnoreCase(dbRoleName)) {
+                role = "HOTEL_MANAGER";
+                redirectUrl = "/manager/dashboard";
+            } else if ("Receptionist".equalsIgnoreCase(dbRoleName)) {
+                role = "RECEPTIONIST";
+                redirectUrl = "/receptionist/dashboard";
+            } else if ("Housekeeping".equalsIgnoreCase(dbRoleName) || "Housekeeper".equalsIgnoreCase(dbRoleName)) {
+                role = "HOUSEKEEPING";
+                redirectUrl = "/housekeeping/dashboard";
+            } else if ("Staff".equalsIgnoreCase(dbRoleName)) {
+                if (username != null && username.toLowerCase().contains("manager")) {
+                    role = "HOTEL_MANAGER";
+                    redirectUrl = "/manager/dashboard";
+                } else if (username != null && username.toLowerCase().contains("housekeeping")) {
+                    role = "HOUSEKEEPING";
+                    redirectUrl = "/housekeeping/dashboard";
+                } else {
+                    role = "RECEPTIONIST";
+                    redirectUrl = "/receptionist/dashboard";
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+            displayName = (fullName != null && !fullName.trim().isEmpty()) ? fullName : username;
         }
 
-        // 2. Fallback to Mock authentication credentials check if database check didn't
-        // match
+        // 2. Fallback to Mock authentication credentials check if database check didn't match
         if (role == null) {
             if ("admin".equalsIgnoreCase(username) && "admin123".equals(pass)) {
                 role = "ADMIN";
                 redirectUrl = "/admin/dashboard";
-            } else if ("manager".equalsIgnoreCase(username) && "manager123".equals(pass)) {
-                role = "HOTEL_MANAGER";
-                redirectUrl = "/manager/dashboard";
-            } else if ("housekeeping".equalsIgnoreCase(username) && "housekeeping123".equals(pass)) {
-                role = "HOUSEKEEPING";
-                redirectUrl = "/housekeeping/dashboard";
-            } else if ("receptionist".equalsIgnoreCase(username) && "receptionist123".equals(pass)) {
-                role = "RECEPTIONIST";
-                redirectUrl = "/receptionist/dashboard";
+                displayName = "Admin User";
             } else if ("customer".equalsIgnoreCase(username) && "customer123".equals(pass)) {
                 role = "CUSTOMER";
                 redirectUrl = "/home";
+                displayName = "Customer User";
             }
         }
-
+        
         if (role != null) {
             // Authentication successful, establish session
             HttpSession session = request.getSession();
-            session.setAttribute("user", username);
+            session.setAttribute("user", displayName);
             session.setAttribute("role", role);
 
             // Remember Me Cookies configuration

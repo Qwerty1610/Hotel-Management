@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
-import com.mycompany.hotelmanagement.utils.DBContext;
+import com.mycompany.hotelmanagement.config.DBContext;
 import org.mindrot.jbcrypt.BCrypt;
 
 import jakarta.servlet.ServletException;
