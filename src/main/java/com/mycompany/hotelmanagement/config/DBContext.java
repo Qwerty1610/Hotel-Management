@@ -1,11 +1,13 @@
 package com.mycompany.hotelmanagement.config;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 public class DBContext {
     private static final Logger logger = LoggerFactory.getLogger(DBContext.class);
@@ -16,7 +18,7 @@ public class DBContext {
             HikariConfig config = new HikariConfig();
             config.setDriverClassName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
             config.setJdbcUrl(
-                    "jdbc:sqlserver://localhost:1433;databaseName=HotelDB;encrypt=true;trustServerCertificate=true;");
+                    "jdbc:sqlserver://localhost:1433;databaseName=HotelManagementDB;encrypt=true;trustServerCertificate=true;");
             config.setUsername("sa");
             config.setPassword("123");
 
