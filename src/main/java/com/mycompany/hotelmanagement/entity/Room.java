@@ -7,7 +7,7 @@ public class Room {
     private String typeName;
     private String status;
     private String floor;
-    private String imageUrl; // ⭐ THÊM MỚI
+    private String imageUrl;
 
     public Room() {
     }
