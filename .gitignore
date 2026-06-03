@@ -1,3 +1,5 @@
 /target/
 /.vscode/
 *.class
+src/main/resources/oauth.properties
+*.zip

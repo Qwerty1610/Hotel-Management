@@ -67,6 +67,13 @@ public class ServiceController extends HttpServlet {
                 // keep 0.0
             }
 
+            if (name == null || name.isEmpty() ||
+                price <= 0 ||
+                unit == null || unit.isEmpty()) {
+                response.sendRedirect(request.getContextPath() + "/manager/dashboard?tab=services&error=invalidData");
+                return;
+            }
+
             HotelService service = new HotelService();
             service.setServiceName(name);
             service.setDescription(description);

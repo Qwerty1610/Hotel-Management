@@ -11,8 +11,8 @@ public class RoomService {
         return roomRepository.getAllRooms();
     }
 
-    public void deleteRoom(int roomId) {
-        roomRepository.deleteRoom(roomId);
+    public boolean deleteRoom(int roomId) {
+        return roomRepository.deleteRoom(roomId);
     }
 
     public void updateRoomStatus(int roomId, String status) {

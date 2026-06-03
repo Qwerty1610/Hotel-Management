@@ -51,24 +51,23 @@
                         <label for="typeId">Loại phòng</label>
                         <select name="typeId" id="typeId">
                             <option value="all" ${selectedTypeId == 'all' ? 'selected' : ''}>Tất cả loại phòng</option>
-                            <c:forEach var="rt" items="${allRoomTypesList}">
-                                <option value="${rt.typeId}" ${selectedTypeId == rt.typeId.toString() ? 'selected' : ''}>
-                                    ${rt.typeName}
-                                </option>
-                            </c:forEach>
+                            <option value="Standard" ${selectedTypeId == 'Standard' ? 'selected' : ''}>Phòng Standard</option>
+                            <option value="Deluxe" ${selectedTypeId == 'Deluxe' ? 'selected' : ''}>Phòng Deluxe</option>
+                            <option value="Family" ${selectedTypeId == 'Family' ? 'selected' : ''}>Phòng Family</option>
+                            <option value="Suite" ${selectedTypeId == 'Suite' ? 'selected' : ''}>Phòng Suite</option>
                         </select>
                     </div>
 
                     <!-- Min Price Input -->
                     <div class="form-group">
                         <label for="minPrice">Giá tối thiểu</label>
-                        <input type="text" name="minPrice" id="minPrice" placeholder="0 VNĐ" value="${selectedMinPrice}" />
+                        <input type="number" name="minPrice" id="minPrice" placeholder="0 VNĐ" value="${selectedMinPrice}" min="0" step="1000" />
                     </div>
 
                     <!-- Max Price Input -->
                     <div class="form-group">
                         <label for="maxPrice">Giá tối đa</label>
-                        <input type="text" name="maxPrice" id="maxPrice" placeholder="Không giới hạn" value="${selectedMaxPrice}" />
+                        <input type="number" name="maxPrice" id="maxPrice" placeholder="Không giới hạn" value="${selectedMaxPrice}" min="0" step="1000" />
                     </div>
 
                     <!-- Guests Dropdown -->
@@ -95,6 +94,44 @@
 
                 </div>
             </form>
+
+            <script>
+                (function () {
+                    var form = document.querySelector('.search-card form');
+                    var minInput = document.getElementById('minPrice');
+                    var maxInput = document.getElementById('maxPrice');
+
+                    // Real-time: clamp to 0 if user somehow types negative
+                    [minInput, maxInput].forEach(function (input) {
+                        input.addEventListener('input', function () {
+                            if (this.value !== '' && parseFloat(this.value) < 0) {
+                                this.value = 0;
+                            }
+                        });
+                    });
+
+                    // On submit: validate and prevent negative values
+                    form.addEventListener('submit', function (e) {
+                        var min = parseFloat(minInput.value);
+                        var max = parseFloat(maxInput.value);
+
+                        if (minInput.value !== '' && min < 0) {
+                            e.preventDefault();
+                            minInput.value = 0;
+                            minInput.focus();
+                            alert('Giá tối thiểu phải lớn hơn hoặc bằng 0.');
+                            return;
+                        }
+                        if (maxInput.value !== '' && max < 0) {
+                            e.preventDefault();
+                            maxInput.value = 0;
+                            maxInput.focus();
+                            alert('Giá tối đa phải lớn hơn hoặc bằng 0.');
+                            return;
+                        }
+                    });
+                })();
+            </script>
         </div>
     </div>
 
@@ -112,7 +149,7 @@
                     <div class="rooms-grid">
                         <c:forEach var="rt" items="${roomTypes}">
                             <!-- Border highlight for Room Deluxe (typeId = 2) -->
-                            <div class="room-card ${rt.typeId == 2 ? 'featured' : ''}">
+                            <div class="room-card">
                                 <div class="card-badges">
                                     <div class="badge-guests">
                                         <i class="fa-solid fa-user-group"></i> ${rt.capacity} khách
