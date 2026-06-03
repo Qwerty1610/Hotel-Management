@@ -32,7 +32,11 @@ public class RoomController extends HttpServlet {
         }
 
         if ("delete".equalsIgnoreCase(action) && roomId != -1) {
-            roomService.deleteRoom(roomId);
+            boolean deleted = roomService.deleteRoom(roomId);
+            if (!deleted) {
+                response.sendRedirect(request.getContextPath() + "/manager/dashboard?tab=rooms&error=deleteError");
+                return;
+            }
         } else if ("updateStatus".equalsIgnoreCase(action) && roomId != -1) {
             String status = request.getParameter("status");
             if (status != null && !status.trim().isEmpty()) {

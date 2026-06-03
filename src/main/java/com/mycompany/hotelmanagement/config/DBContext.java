@@ -29,7 +29,7 @@ public class DBContext {
             config.setConnectionTimeout(5000); // 5 seconds connection timeout
 
             dataSource = new HikariDataSource(config);
-            logger.info("HikariCP Connection Pool initialized successfully for database HotelDB.");
+            logger.info("HikariCP Connection Pool initialized successfully for database HotelManagementDB.");
         } catch (Exception e) {
             logger.error("Failed to initialize HikariCP Connection Pool", e);
             throw new RuntimeException("Error initializing database connection pool", e);

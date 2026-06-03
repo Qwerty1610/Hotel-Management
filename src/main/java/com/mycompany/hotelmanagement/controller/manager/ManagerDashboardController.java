@@ -225,7 +225,7 @@ public class ManagerDashboardController extends HttpServlet {
         r4.setRoomId(4);
         r4.setRoomNumber("401");
         r4.setTypeId(suite != null ? suite.getTypeId() : 4);
-        r4.setFloor("Tầng VIP");
+        r4.setFloor("Tầng 4");
         r4.setStatus("Maintenance");
         r4.setTypeName(suite != null ? suite.getTypeName() : "Phòng Suite");
         r4.setBasePrice(suite != null ? suite.getBasePrice() : 2800000.0);

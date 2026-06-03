@@ -25,18 +25,10 @@ public class RoomsController extends HttpServlet {
         String maxPriceParam = request.getParameter("maxPrice");
         String guestsParam = request.getParameter("guests");
 
-        int typeIdFilter = -1;
+        String typeFilter = (typeIdParam != null && !typeIdParam.trim().isEmpty() && !"all".equalsIgnoreCase(typeIdParam)) ? typeIdParam.trim() : null;
         double minPriceFilter = 0.0;
         double maxPriceFilter = Double.MAX_VALUE;
         int guestsFilter = -1;
-
-        try {
-            if (typeIdParam != null && !typeIdParam.trim().isEmpty() && !"all".equalsIgnoreCase(typeIdParam)) {
-                typeIdFilter = Integer.parseInt(typeIdParam);
-            }
-        } catch (NumberFormatException e) {
-            // keep -1
-        }
 
         try {
             if (minPriceParam != null && !minPriceParam.trim().isEmpty()) {
@@ -64,7 +56,7 @@ public class RoomsController extends HttpServlet {
 
         // 2. Fetch data from Service
         List<RoomTypeInfo> allRoomTypes = roomTypeService.getAllRoomTypes();
-        List<RoomTypeInfo> filteredRoomTypes = roomTypeService.getFilteredRoomTypes(typeIdFilter, guestsFilter, minPriceFilter, maxPriceFilter);
+        List<RoomTypeInfo> filteredRoomTypes = roomTypeService.getFilteredRoomTypes(typeFilter, guestsFilter, minPriceFilter, maxPriceFilter);
 
         // Set attributes for view rendering
         request.setAttribute("roomTypes", filteredRoomTypes);

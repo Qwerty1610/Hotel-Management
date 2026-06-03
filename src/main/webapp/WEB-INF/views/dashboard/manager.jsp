@@ -328,7 +328,7 @@
                                         <option value="Tầng 1">Tầng 1</option>
                                         <option value="Tầng 2">Tầng 2</option>
                                         <option value="Tầng 3">Tầng 3</option>
-                                        <option value="Tầng VIP">Tầng VIP</option>
+                                        <option value="Tầng 4">Tầng 4</option>
                                     </select>
                                 </div>
                                 
@@ -414,18 +414,48 @@
                         <!-- Services Main Table Wrapper -->
                         <div class="table-card">
                             
-                            <!-- Search & Status Filter -->
-                            <div class="table-filter-bar">
-                                <div class="search-wrapper">
-                                    <i class="fa-solid fa-magnifying-glass"></i>
-                                    <input type="text" id="serviceSearch" class="input-search-service" placeholder="Tìm kiếm dịch vụ..." onkeyup="filterServices()" />
+                            <!-- Search, Filter & Statistics on same row (Styled like rooms tab) -->
+                            <div class="table-filter-bar" style="display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr; gap: 16px; align-items: end;">
+                                <div class="modal-form-group" style="margin-bottom: 0;">
+                                    <label>Tìm kiếm dịch vụ</label>
+                                    <div class="search-wrapper" style="max-width: 100%;">
+                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                        <input type="text" id="serviceSearch" class="input-search-service" placeholder="Tìm kiếm dịch vụ..." onkeyup="filterServices()" />
+                                    </div>
                                 </div>
-                                
-                                <select id="statusFilter" class="status-select" onchange="filterServices()">
-                                    <option value="all">Tất cả trạng thái</option>
-                                    <option value="active">Đang kích hoạt</option>
-                                    <option value="inactive">Đang tạm khóa</option>
-                                </select>
+
+                                <div class="modal-form-group" style="margin-bottom: 0;">
+                                    <label>Trạng thái</label>
+                                    <select id="statusFilter" class="status-select" onchange="filterServices()" style="width: 100%;">
+                                        <option value="all">Tất cả trạng thái</option>
+                                        <option value="active">Đang kích hoạt</option>
+                                        <option value="inactive">Đang tạm khóa</option>
+                                    </select>
+                                </div>
+
+                                <!-- Statistic chips styled like room tab elements -->
+                                <div class="modal-form-group" style="margin-bottom: 0;">
+                                    <label>Tổng dịch vụ</label>
+                                    <div style="display: flex; align-items: center; justify-content: center; background: #f1f5f9; border-radius: 8px; border: 1px solid #cbd5e1; height: 40px; box-sizing: border-box;">
+                                        <span id="statTotal" style="font-size: 16px; font-weight: 800; color: #1e293b;">0</span>
+                                    </div>
+                                </div>
+
+                                <div class="modal-form-group" style="margin-bottom: 0;">
+                                    <label style="color: #16a34a;">Kích hoạt</label>
+                                    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; background: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0; height: 40px; box-sizing: border-box;">
+                                        <i class="fa-solid fa-circle-check" style="color: #16a34a; font-size: 14px;"></i>
+                                        <span id="statActive" style="font-size: 16px; font-weight: 800; color: #16a34a;">0</span>
+                                    </div>
+                                </div>
+
+                                <div class="modal-form-group" style="margin-bottom: 0;">
+                                    <label style="color: #dc2626;">Tạm khóa</label>
+                                    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; background: #fef2f2; border-radius: 8px; border: 1px solid #fecaca; height: 40px; box-sizing: border-box;">
+                                        <i class="fa-solid fa-circle-xmark" style="color: #dc2626; font-size: 14px;"></i>
+                                        <span id="statInactive" style="font-size: 16px; font-weight: 800; color: #dc2626;">0</span>
+                                    </div>
+                                </div>
                             </div>
                             
                             <!-- Table Content -->
@@ -483,6 +513,13 @@
     </div>
 
     <!-- ADD / EDIT ROOM MODAL DIALOG -->
+    <c:if test="${param.error eq 'deleteError'}">
+        <script>
+            window.addEventListener('load', function() {
+                alert('Không thể xóa phòng này vì nó đang được liên kết với dữ liệu khác trong hệ thống (ví dụ: booking, hóa đơn). Vui lòng kiểm tra lại.');
+            });
+        </script>
+    </c:if>
     <div class="modal-overlay" id="roomModal">
         <div class="modal-container">
             <div class="modal-header">
@@ -495,7 +532,9 @@
                     
                     <div class="modal-form-group">
                         <label for="modalRoomNumber">Số phòng</label>
-                        <input type="text" id="modalRoomNumber" name="roomNumber" class="modal-input" placeholder="Ví dụ: 101" required />
+                        <input type="text" id="modalRoomNumber" name="roomNumber" class="modal-input" placeholder="Ví dụ: 101" required
+                               oninput="this.value = this.value.replace(/\s/g, '')" />
+                        <small id="roomNumberError" style="color: #e53e3e; font-size: 12px; display: none; margin-top: 4px;"></small>
                     </div>
                     
                     <div class="modal-form-group">
@@ -504,7 +543,7 @@
                             <option value="Tầng 1">Tầng 1</option>
                             <option value="Tầng 2">Tầng 2</option>
                             <option value="Tầng 3">Tầng 3</option>
-                            <option value="Tầng VIP">Tầng VIP</option>
+                            <option value="Tầng 4">Tầng 4</option>
                         </select>
                     </div>
                     
@@ -640,8 +679,8 @@
                     </div>
                     
                     <div class="modal-form-group">
-                        <label for="modalDescription">Mô tả dịch vụ</label>
-                        <textarea id="modalDescription" name="description" class="modal-textarea" placeholder="Nhập mô tả ngắn..." required></textarea>
+                        <label for="modalDescription">Mô tả dịch vụ <span style="font-weight: normal; color: var(--text-muted); font-size: 11px;">(Tùy chọn)</span></label>
+                        <textarea id="modalDescription" name="description" class="modal-textarea" placeholder="Nhập mô tả ngắn..."></textarea>
                     </div>
                     
                     <div class="modal-form-group" style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px;">
@@ -838,6 +877,16 @@
                 renderPaginationControls(totalPages);
             }
 
+            // Update statistics cards
+            function updateServiceStats() {
+                const total = services.length;
+                const active = services.filter(s => s.isActive).length;
+                const inactive = total - active;
+                document.getElementById('statTotal').innerText = total;
+                document.getElementById('statActive').innerText = active;
+                document.getElementById('statInactive').innerText = inactive;
+            }
+
             // Real-time Search and Filter
             function filterServices() {
                 const query = document.getElementById("serviceSearch").value.toLowerCase().trim();
@@ -852,6 +901,7 @@
                 });
                 
                 currentPage = 1;
+                updateServiceStats();
                 renderTable();
             }
 
@@ -867,6 +917,7 @@
                             const service = services.find(s => s.id === id);
                             if (service) {
                                 service.isActive = checked;
+                                updateServiceStats();
                             }
                         }
                     })
@@ -877,8 +928,19 @@
                     });
             }
 
+            // Clear validation errors
+            function clearServiceErrors() {
+                const nameInput = document.getElementById('modalName');
+                const priceInput = document.getElementById('modalPrice');
+                const unitInput = document.getElementById('modalUnit');
+                if (nameInput) nameInput.setCustomValidity("");
+                if (priceInput) priceInput.setCustomValidity("");
+                if (unitInput) unitInput.setCustomValidity("");
+            }
+
             // Modal Handlers
             function openAddModal() {
+                clearServiceErrors();
                 document.getElementById("modalTitle").innerText = "Thêm dịch vụ mới";
                 document.getElementById("serviceId").value = "";
                 document.getElementById("serviceForm").reset();
@@ -888,6 +950,7 @@
             function openEditModal(id) {
                 const service = services.find(s => s.id === id);
                 if (service) {
+                    clearServiceErrors();
                     document.getElementById("modalTitle").innerText = "Chỉnh sửa dịch vụ";
                     document.getElementById("serviceId").value = service.id;
                     document.getElementById("modalName").value = service.name;
@@ -899,6 +962,7 @@
             }
 
             function closeModal() {
+                clearServiceErrors();
                 document.getElementById("serviceModal").style.display = "none";
             }
 
@@ -908,6 +972,56 @@
                     window.location.href = `${pageContext.request.contextPath}/manager/services?action=delete&id=` + id;
                 }
             }
+
+            // Clear validity state as user types
+            document.getElementById('modalName').addEventListener('input', function() {
+                this.setCustomValidity("");
+            });
+            document.getElementById('modalPrice').addEventListener('input', function() {
+                this.setCustomValidity("");
+            });
+            document.getElementById('modalUnit').addEventListener('input', function() {
+                this.setCustomValidity("");
+            });
+
+            // Form Submit Event Handler using native HTML5 validity tooltips
+            document.getElementById('serviceForm').addEventListener('submit', function(e) {
+                clearServiceErrors();
+
+                const nameInput = document.getElementById('modalName');
+                const priceInput = document.getElementById('modalPrice');
+                const unitInput = document.getElementById('modalUnit');
+
+                const nameVal = nameInput.value.trim();
+                const priceVal = parseFloat(priceInput.value);
+                const unitVal = unitInput.value.trim();
+
+                // 1. Tên dịch vụ không được để trống (kể cả chứa toàn dấu cách)
+                if (nameVal === "") {
+                    e.preventDefault();
+                    nameInput.setCustomValidity("Please fill out this field.");
+                    nameInput.reportValidity();
+                    return;
+                }
+
+                // 2. Đơn giá phải > 0
+                if (priceInput.value.trim() === "") {
+                    // Let native browser validation handle empty field
+                } else if (isNaN(priceVal) || priceVal <= 0) {
+                    e.preventDefault();
+                    priceInput.setCustomValidity("Đơn giá phải lớn hơn 0.");
+                    priceInput.reportValidity();
+                    return;
+                }
+
+                // 3. Đơn vị tính không được để trống (kể cả chứa toàn dấu cách)
+                if (unitVal === "") {
+                    e.preventDefault();
+                    unitInput.setCustomValidity("Please fill out this field.");
+                    unitInput.reportValidity();
+                    return;
+                }
+            });
 
             // Initial load of the table
             window.onload = function() {
@@ -1124,8 +1238,28 @@
                 renderRoomTypesTable();
             }
 
+            // Clear validation errors for room types
+            function clearRoomTypeErrors() {
+                const nameInput = document.getElementById('modalRtName');
+                const priceInput = document.getElementById('modalRtPrice');
+                const capacityInput = document.getElementById('modalRtCapacity');
+                const bedTypeInput = document.getElementById('modalRtBedType');
+                const areaInput = document.getElementById('modalRtArea');
+                const imageUrlInput = document.getElementById('modalRtImageUrl');
+                const descriptionInput = document.getElementById('modalRtDescription');
+                
+                if (nameInput) nameInput.setCustomValidity("");
+                if (priceInput) priceInput.setCustomValidity("");
+                if (capacityInput) capacityInput.setCustomValidity("");
+                if (bedTypeInput) bedTypeInput.setCustomValidity("");
+                if (areaInput) areaInput.setCustomValidity("");
+                if (imageUrlInput) imageUrlInput.setCustomValidity("");
+                if (descriptionInput) descriptionInput.setCustomValidity("");
+            }
+
             // Modal Handlers
             function openAddRoomTypeModal() {
+                clearRoomTypeErrors();
                 document.getElementById("roomTypeModalTitle").innerText = "Thêm loại phòng mới";
                 document.getElementById("modalRtId").value = "";
                 document.getElementById("roomTypeForm").reset();
@@ -1141,6 +1275,7 @@
             function openEditRoomTypeModal(id) {
                 const rt = roomTypes.find(item => item.id === id);
                 if (rt) {
+                    clearRoomTypeErrors();
                     document.getElementById("roomTypeModalTitle").innerText = "Chỉnh sửa loại phòng";
                     document.getElementById("modalRtId").value = rt.id;
                     document.getElementById("modalRtName").value = rt.name;
@@ -1161,6 +1296,7 @@
             }
 
             function closeRoomTypeModal() {
+                clearRoomTypeErrors();
                 document.getElementById("roomTypeModal").style.display = "none";
             }
 
@@ -1169,6 +1305,116 @@
                     window.location.href = `${pageContext.request.contextPath}/manager/roomtypes?action=delete&id=` + id;
                 }
             }
+
+            // Clear validity state as user types
+            document.getElementById('modalRtName').addEventListener('input', function() {
+                this.setCustomValidity("");
+            });
+            document.getElementById('modalRtPrice').addEventListener('input', function() {
+                this.setCustomValidity("");
+            });
+            document.getElementById('modalRtCapacity').addEventListener('input', function() {
+                this.setCustomValidity("");
+            });
+            document.getElementById('modalRtBedType').addEventListener('input', function() {
+                this.setCustomValidity("");
+            });
+            document.getElementById('modalRtArea').addEventListener('input', function() {
+                this.setCustomValidity("");
+            });
+            document.getElementById('modalRtImageUrl').addEventListener('input', function() {
+                this.setCustomValidity("");
+            });
+            document.getElementById('modalRtDescription').addEventListener('input', function() {
+                this.setCustomValidity("");
+            });
+
+            // Form Submit Event Handler for Room Type
+            document.getElementById('roomTypeForm').addEventListener('submit', function(e) {
+                clearRoomTypeErrors();
+
+                const nameInput = document.getElementById('modalRtName');
+                const priceInput = document.getElementById('modalRtPrice');
+                const capacityInput = document.getElementById('modalRtCapacity');
+                const bedTypeInput = document.getElementById('modalRtBedType');
+                const areaInput = document.getElementById('modalRtArea');
+                const imageUrlInput = document.getElementById('modalRtImageUrl');
+                const descriptionInput = document.getElementById('modalRtDescription');
+
+                const nameVal = nameInput.value.trim();
+                const priceVal = parseFloat(priceInput.value);
+                const capacityVal = parseFloat(capacityInput.value);
+                const bedTypeVal = bedTypeInput.value.trim();
+                const areaVal = areaInput.value.trim();
+                const imageUrlVal = imageUrlInput.value.trim();
+                const descriptionVal = descriptionInput.value.trim();
+
+                // 1. Tên loại phòng không được để trống (kể cả chứa toàn dấu cách)
+                if (nameVal === "") {
+                    e.preventDefault();
+                    nameInput.setCustomValidity("Please fill out this field.");
+                    nameInput.reportValidity();
+                    return;
+                }
+
+                // 2. Giá cơ bản phải > 0
+                if (priceInput.value.trim() === "") {
+                    // Let native validation handle empty field
+                } else if (isNaN(priceVal) || priceVal <= 0) {
+                    e.preventDefault();
+                    priceInput.setCustomValidity("Giá cơ bản phải lớn hơn 0.");
+                    priceInput.reportValidity();
+                    return;
+                }
+
+                // 3. Sức chứa phải > 0
+                if (capacityInput.value.trim() === "") {
+                    // Let native validation handle empty field
+                } else if (isNaN(capacityVal) || capacityVal <= 0) {
+                    e.preventDefault();
+                    capacityInput.setCustomValidity("Sức chứa phải lớn hơn 0.");
+                    capacityInput.reportValidity();
+                    return;
+                }
+
+                // 4. Loại giường không được để trống
+                if (bedTypeVal === "") {
+                    e.preventDefault();
+                    bedTypeInput.setCustomValidity("Please fill out this field.");
+                    bedTypeInput.reportValidity();
+                    return;
+                }
+
+                // 5. Diện tích phải > 0. Tự động format thành "X m²"
+                if (areaInput.value.trim() === "") {
+                    // Let native validation handle empty field
+                } else {
+                    const numericArea = parseFloat(areaVal);
+                    if (isNaN(numericArea) || numericArea <= 0) {
+                        e.preventDefault();
+                        areaInput.setCustomValidity("Diện tích phải lớn hơn 0.");
+                        areaInput.reportValidity();
+                        return;
+                    }
+                    areaInput.value = numericArea + " m²";
+                }
+
+                // 6. URL hình ảnh không được để trống (kể cả chứa toàn dấu cách)
+                if (imageUrlVal === "") {
+                    e.preventDefault();
+                    imageUrlInput.setCustomValidity("Please fill out this field.");
+                    imageUrlInput.reportValidity();
+                    return;
+                }
+
+                // 7. Mô tả loại phòng không được để trống (kể cả chứa toàn dấu cách)
+                if (descriptionVal === "") {
+                    e.preventDefault();
+                    descriptionInput.setCustomValidity("Please fill out this field.");
+                    descriptionInput.reportValidity();
+                    return;
+                }
+            });
 
             // Initial load of the table
             window.addEventListener('load', function() {
@@ -1424,6 +1670,36 @@
             // Initial load of the table
             window.addEventListener('load', function() {
                 filterRooms();
+            });
+
+            // Room form submit validation
+            document.getElementById('roomForm').addEventListener('submit', function(e) {
+                var roomNumberInput = document.getElementById('modalRoomNumber');
+                var errorEl = document.getElementById('roomNumberError');
+                var val = roomNumberInput.value.trim();
+
+                // Hide previous error
+                errorEl.style.display = 'none';
+                errorEl.innerText = '';
+
+                // Rule 1: contains minus sign → cannot be negative
+                if (val.indexOf('-') !== -1) {
+                    e.preventDefault();
+                    errorEl.innerText = 'Số phòng không thể là số âm.';
+                    errorEl.style.display = 'block';
+                    roomNumberInput.focus();
+                    return;
+                }
+
+                // Rule 2: numeric value must be > 0
+                var numVal = parseFloat(val);
+                if (!isNaN(numVal) && numVal <= 0) {
+                    e.preventDefault();
+                    errorEl.innerText = 'Số phòng phải lớn hơn 0.';
+                    errorEl.style.display = 'block';
+                    roomNumberInput.focus();
+                    return;
+                }
             });
         </script>
     </c:if>

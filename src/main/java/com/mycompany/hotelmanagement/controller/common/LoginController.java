@@ -149,4 +149,5 @@ public class LoginController extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/home/login?error=invalid_credentials");
         }
     }
+
 }
