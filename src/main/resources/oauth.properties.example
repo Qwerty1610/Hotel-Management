@@ -1,5 +1,0 @@
-# Google OAuth2 Configuration
-# Get credentials from: https://console.cloud.google.com/apis/credentials
-google.client.id=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
-google.client.secret=YOUR_GOOGLE_CLIENT_SECRET
-google.redirect.uri=http://localhost:8080/HotelManagement/auth/google-callback
