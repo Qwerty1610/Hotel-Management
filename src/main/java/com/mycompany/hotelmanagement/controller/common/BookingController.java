@@ -22,7 +22,6 @@ public class BookingController extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/home/login");
             return;
         }
-
         response.setContentType("text/plain;charset=UTF-8");
         response.getWriter().write("");
     }
