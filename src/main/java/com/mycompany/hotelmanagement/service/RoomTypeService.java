@@ -40,15 +40,19 @@ public class RoomTypeService {
         return allRoomTypes;
     }
 
-    public List<RoomTypeInfo> getFilteredRoomTypes(int typeIdFilter, int guestsFilter, double minPriceFilter,
+    public List<RoomTypeInfo> getFilteredRoomTypes(String typeFilter, int guestsFilter, double minPriceFilter,
             double maxPriceFilter) {
         List<RoomTypeInfo> allRoomTypes = getAllRoomTypes();
         List<RoomTypeInfo> filteredRoomTypes = new ArrayList<>();
 
         for (RoomTypeInfo room : allRoomTypes) {
-            // Filter by Room Type ID
-            if (typeIdFilter != -1 && room.getTypeId() != typeIdFilter) {
-                continue;
+            // Filter by Room Type Name (contains)
+            if (typeFilter != null && !typeFilter.trim().isEmpty() && !"all".equalsIgnoreCase(typeFilter)) {
+                String roomName = room.getTypeName().toLowerCase();
+                String filterVal = typeFilter.toLowerCase().trim();
+                if (!roomName.contains(filterVal)) {
+                    continue;
+                }
             }
 
             // Filter by Capacity (Guests)

@@ -499,7 +499,11 @@ IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'301')
 IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'305')
     INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'305', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Family'), N'Cleaning', N'Tầng 3');
 IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'401')
-    INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'401', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Suite'), N'Maintenance', N'Tầng VIP');
+    INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'401', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Suite'), N'Maintenance', N'Tầng 4');
+GO
+
+/* Fix existing rows that still have 'Tầng VIP' */
+UPDATE dbo.Room SET floor = N'Tầng 4' WHERE floor = N'Tầng VIP';
 GO
 
 /* ============================================================

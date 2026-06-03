@@ -52,15 +52,17 @@ public class RoomRepository {
         return list;
     }
 
-    public void deleteRoom(int roomId) {
+    public boolean deleteRoom(int roomId) {
         String sql = "DELETE FROM Room WHERE room_id = ?";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setInt(1, roomId);
-            ps.executeUpdate();
+            int rows = ps.executeUpdate();
+            return rows > 0;
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
     }
 
