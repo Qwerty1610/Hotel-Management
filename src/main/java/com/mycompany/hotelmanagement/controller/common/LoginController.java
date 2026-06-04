@@ -13,11 +13,21 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Cookie;
 
+/**
+ * Controller xử lý đăng nhập hệ thống.
+ * Thực hiện xác thực thông tin đăng nhập của tài khoản qua Database thông qua AuthService,
+ * phân vai trò người dùng để điều hướng phù hợp, đồng thời quản lý Cookie Remember Me.
+ * 
+ * @author TùngNQ
+ */
 @WebServlet(name = "LoginController", urlPatterns = { "/home/login" })
 public class LoginController extends HttpServlet {
 
     private final AuthService authService = new AuthService();
 
+    /**
+     * Chuyển hướng người dùng đến trang đăng nhập độc lập và cấu hình ID đăng nhập Google.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -30,6 +40,11 @@ public class LoginController extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/views/home/login.jsp").forward(request, response);
     }
 
+    /**
+     * Thực hiện kiểm tra thông tin tài khoản, mật khẩu nhập vào:
+     * - Nếu khớp trong DB: Tạo Session, lưu thông tin định danh và vai trò, thiết lập Cookie nếu có check "Remember Me".
+     * - Nếu không khớp: Cho phép fallback thử tài khoản Mock (Admin/Customer), hoặc redirect báo lỗi.
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

@@ -14,9 +14,19 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * Controller xử lý việc đặt lại mật khẩu mới.
+ * Kiểm tra tính hợp lệ của mã OTP người dùng nhập vào. Nếu khớp và chưa hết hạn,
+ * tiến hành mã hóa mật khẩu mới bằng BCrypt và cập nhật lại vào Database.
+ * 
+ * @author TùngNQ
+ */
 @WebServlet(name = "ResetPasswordController", urlPatterns = {"/home/reset-password"})
 public class ResetPasswordController extends HttpServlet {
 
+    /**
+     * Chuyển hướng người dùng đến giao diện nhập OTP và mật khẩu mới.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -24,6 +34,10 @@ public class ResetPasswordController extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/views/home/reset-password.jsp").forward(request, response);
     }
 
+    /**
+     * Xác thực thông tin đặt lại mật khẩu: kiểm tra mã OTP trong DB, cập nhật mật khẩu đã hash,
+     * và đánh dấu mã OTP đã được sử dụng (is_used = 1) để tránh tái sử dụng.
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

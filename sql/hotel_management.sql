@@ -50,6 +50,20 @@ BEGIN
 END
 GO
 
+IF OBJECT_ID(N'dbo.PasswordReset', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.PasswordReset (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        email NVARCHAR(100) NOT NULL,
+        token NVARCHAR(20) NOT NULL,
+        expiry_time DATETIME2 NOT NULL,
+        is_used BIT NOT NULL DEFAULT 0,
+        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+    );
+END
+GO
+
+
 /* Add roles only if they are missing */
 IF NOT EXISTS (SELECT 1 FROM dbo.Role WHERE role_name = N'Admin')
     INSERT INTO dbo.Role (role_name, description) VALUES (N'Admin', N'System administrator account');
