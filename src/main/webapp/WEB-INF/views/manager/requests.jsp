@@ -9,59 +9,8 @@
     <div class="dashboard-layout">
 
         <!-- SIDEBAR -->
-        <aside class="dashboard-sidebar">
-            <div class="sidebar-brand">
-                <i class="fa-solid fa-hotel"></i> <span>HotelOps</span>
-            </div>
-
-            <ul class="sidebar-menu">
-                <li class="menu-item">
-                    <a href="${pageContext.request.contextPath}/manager/dashboard?tab=overview">
-                        <i class="fa-solid fa-table-cells-large"></i> <span>Tổng quan</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="${pageContext.request.contextPath}/manager/dashboard?tab=roomtypes">
-                        <i class="fa-solid fa-door-open"></i> <span>Loại phòng</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="${pageContext.request.contextPath}/manager/dashboard?tab=rooms">
-                        <i class="fa-solid fa-bed"></i> <span>Phòng</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="${pageContext.request.contextPath}/manager/dashboard?tab=services">
-                        <i class="fa-solid fa-bell-concierge"></i> <span>Dịch vụ</span>
-                    </a>
-                </li>
-                <li class="menu-item active">
-                    <a href="${pageContext.request.contextPath}/manager/requests">
-                        <i class="fa-solid fa-headset"></i> <span>Yêu cầu &amp; Nhân viên</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="${pageContext.request.contextPath}/manager/invoices">
-                        <i class="fa-solid fa-file-invoice-dollar"></i> <span>Hóa đơn</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="${pageContext.request.contextPath}/manager/dashboard?tab=customers">
-                        <i class="fa-solid fa-user-group"></i> <span>Khách hàng</span>
-                    </a>
-                </li>
-            </ul>
-
-            <div class="sidebar-footer">
-                <div class="user-profile-card">
-                    <div class="profile-avatar">AM</div>
-                    <div class="profile-info">
-                        <span class="profile-name">${not empty sessionScope.user ? sessionScope.user : 'Hotel Manager'}</span>
-                        <span class="profile-role">Hotel Manager</span>
-                    </div>
-                </div>
-            </div>
-        </aside>
+        <c:set var="activePage" value="requests" scope="request" />
+        <jsp:include page="includes/sidebar.jsp" />
 
         <!-- MAIN -->
         <div class="dashboard-main">
