@@ -230,7 +230,7 @@
                 <h3>Thông tin nhân viên</h3>
                 <button class="btn-close-modal" onclick="closeStaffModal()"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="max-height:80vh; overflow-y:auto;">
                 <div class="staff-detail-head">
                     <div class="staff-detail-avatar" id="staffAvatar">NV</div>
                     <div>
@@ -246,6 +246,13 @@
                 </div>
                 <h4 style="margin:18px 0 8px; font-size:14px; color:var(--text-navy);">Công việc đang thực hiện</h4>
                 <ul class="staff-task-list" id="staffTaskList"></ul>
+
+                <h4 style="margin:18px 0 8px; font-size:14px; color:var(--text-navy);">Công việc đã nhận / được gán</h4>
+                <ul class="staff-task-list" id="staffAssignedList" style="max-height:none;"></ul>
+                <div class="table-pagination-bar" style="padding:12px 0 0; border-top:none;">
+                    <div class="pagination-info" id="staffAssignedInfo"></div>
+                    <div class="pagination-controls" id="staffAssignedControls"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -370,7 +377,11 @@
                 if (r.status === "Pending" || r.status === "InProgress") {
                     const assignLabel = r.staffId ? "Đổi NV" : "Gán việc";
                     actions += '<button class="btn-action assign" title="' + assignLabel + '" onclick="openAssignModal(' + r.id + ')"><i class="fa-solid fa-user-plus"></i></button>';
-                    actions += '<button class="btn-action done" title="Hoàn thành" onclick="changeStatus(' + r.id + ', \'Completed\')"><i class="fa-solid fa-check"></i></button>';
+                    if (r.staffId) {
+                        actions += '<button class="btn-action done" title="Hoàn thành" onclick="changeStatus(' + r.id + ', \'Completed\')"><i class="fa-solid fa-check"></i></button>';
+                    } else {
+                        actions += '<button class="btn-action done" title="Cần gán nhân viên trước khi hoàn thành" disabled style="opacity:.35; cursor:not-allowed;"><i class="fa-solid fa-check"></i></button>';
+                    }
                     actions += '<button class="btn-action delete" title="Huỷ" onclick="changeStatus(' + r.id + ', \'Cancelled\')"><i class="fa-solid fa-xmark"></i></button>';
                 } else {
                     actions = '<span style="color:var(--text-muted); font-size:12px;">—</span>';
@@ -458,6 +469,13 @@
 
         // ---------- Status change ----------
         function changeStatus(requestId, status) {
+            if (status === "Completed") {
+                const r = requests.find(x => x.id === requestId);
+                if (r && (r.staffId === null || r.staffId === undefined)) {
+                    alert("Yêu cầu chưa được gán cho nhân viên nào — không thể xác nhận hoàn thành.");
+                    return;
+                }
+            }
             const msg = status === "Completed"
                 ? "Đánh dấu yêu cầu này là ĐÃ HOÀN THÀNH?"
                 : "Bạn có chắc muốn HUỶ yêu cầu này?";
@@ -465,6 +483,69 @@
             document.getElementById("statusRequestId").value = requestId;
             document.getElementById("statusValue").value = status;
             document.getElementById("statusForm").submit();
+        }
+
+        // ---------- Danh sách công việc đã nhận của nhân viên (phân trang 5/trang) ----------
+        let staffAssignedTasks = [];
+        let staffAssignedPage = 1;
+        const staffAssignedPageSize = 5;
+
+        function renderStaffAssigned() {
+            const list = document.getElementById("staffAssignedList");
+            const info = document.getElementById("staffAssignedInfo");
+            const controls = document.getElementById("staffAssignedControls");
+            list.innerHTML = "";
+            controls.innerHTML = "";
+
+            const total = staffAssignedTasks.length;
+            if (total === 0) {
+                list.innerHTML = '<li style="color:var(--text-muted); font-style:italic;">Chưa nhận công việc nào.</li>';
+                info.innerText = "";
+                return;
+            }
+
+            const totalPages = Math.ceil(total / staffAssignedPageSize);
+            if (staffAssignedPage > totalPages) staffAssignedPage = totalPages;
+            const start = (staffAssignedPage - 1) * staffAssignedPageSize;
+            const end = Math.min(start + staffAssignedPageSize, total);
+
+            staffAssignedTasks.slice(start, end).forEach(t => {
+                const p = PRIORITY[t.priority] || PRIORITY.Medium;
+                const st = REQ_STATUS[t.status] || REQ_STATUS.Pending;
+                const li = document.createElement("li");
+                li.innerHTML = '<span class="prio-badge ' + p.cls + '">' + p.text + '</span> ' +
+                    esc(t.title) + ' <span style="color:var(--text-muted);">— Phòng ' + esc(t.room || "?") + '</span>' +
+                    ' <span class="status-pill ' + st.cls + '" style="margin-left:4px;"><i class="fa-solid fa-circle"></i> ' + st.text + '</span>';
+                list.appendChild(li);
+            });
+
+            info.innerText = "Hiển thị " + (start + 1) + "-" + end + " trong số " + total + " công việc";
+
+            // Chỉ hiện điều khiển phân trang khi có nhiều hơn 1 trang (> 5 công việc)
+            if (totalPages > 1) {
+                const prev = document.createElement("button");
+                prev.type = "button";
+                prev.className = "btn-page" + (staffAssignedPage === 1 ? " disabled" : "");
+                prev.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
+                if (staffAssignedPage > 1) prev.onclick = () => { staffAssignedPage--; renderStaffAssigned(); };
+                controls.appendChild(prev);
+
+                for (let i = 1; i <= totalPages; i++) {
+                    const b = document.createElement("button");
+                    b.type = "button";
+                    b.className = "btn-page" + (i === staffAssignedPage ? " active" : "");
+                    b.innerText = i;
+                    b.onclick = () => { staffAssignedPage = i; renderStaffAssigned(); };
+                    controls.appendChild(b);
+                }
+
+                const next = document.createElement("button");
+                next.type = "button";
+                next.className = "btn-page" + (staffAssignedPage === totalPages ? " disabled" : "");
+                next.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+                if (staffAssignedPage < totalPages) next.onclick = () => { staffAssignedPage++; renderStaffAssigned(); };
+                controls.appendChild(next);
+            }
         }
 
         // ---------- Staff detail modal ----------
@@ -496,6 +577,12 @@
                     list.appendChild(li);
                 });
             }
+
+            // Danh sách công việc đã nhận / được gán (mọi trạng thái), phân trang 5/trang
+            staffAssignedTasks = requests.filter(r => r.staffId === staffId);
+            staffAssignedPage = 1;
+            renderStaffAssigned();
+
             document.getElementById("staffModal").style.display = "flex";
         }
         function closeStaffModal() { document.getElementById("staffModal").style.display = "none"; }
