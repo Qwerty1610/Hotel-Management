@@ -159,12 +159,22 @@ public class GoogleLoginController extends HttpServlet {
                     String randomPassword = java.util.UUID.randomUUID().toString();
                     String hashedPassword = BCrypt.hashpw(randomPassword, BCrypt.gensalt(12));
 
+                    int customerRoleId = 5; // default fallback if query fails
+                    try (PreparedStatement rolePs = conn.prepareStatement("SELECT role_id FROM Role WHERE role_name = ?")) {
+                        rolePs.setString(1, "Customer");
+                        try (ResultSet roleRs = rolePs.executeQuery()) {
+                            if (roleRs.next()) {
+                                customerRoleId = roleRs.getInt(1);
+                            }
+                        }
+                    }
+
                     String insertAccountSql = "INSERT INTO Account (email, password, full_name, role_id, is_active, created_at) VALUES (?, ?, ?, ?, ?, ?)";
                     insertAccountPs = conn.prepareStatement(insertAccountSql, Statement.RETURN_GENERATED_KEYS);
                     insertAccountPs.setString(1, email);
                     insertAccountPs.setString(2, hashedPassword);
                     insertAccountPs.setString(3, name);
-                    insertAccountPs.setInt(4, 2); // Role ID 2 is Customer
+                    insertAccountPs.setInt(4, customerRoleId); // Dynamically fetched Customer role ID
                     insertAccountPs.setInt(5, 1); // is_active = 1
                     insertAccountPs.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
 
