@@ -9,6 +9,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import com.mycompany.hotelmanagement.service.RoomTypeService;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 
+/**
+ * RoomDetailController
+ * URL: /rooms/detail
+ *
+ * Xử lý hành động:
+ *   - Xem thông tin chi tiết của loại phòng (View Room Type Detail)
+ * 
+ * Date: 01/6/2026
+ * @author DINH KHANH
+ */
 @WebServlet(name = "RoomDetailController", urlPatterns = {"/rooms/detail"})
 public class RoomDetailController extends HttpServlet {
 
