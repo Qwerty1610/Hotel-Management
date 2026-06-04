@@ -2,7 +2,7 @@
 <%@ include file="../../includes/taglibs.jsp" %>
 <%@ include file="../../includes/header.jsp" %>
 
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/manager.css?v=2" />
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/manager.css?v=3" />
 <fmt:setLocale value="vi_VN" />
 
 <body class="dashboard-body">

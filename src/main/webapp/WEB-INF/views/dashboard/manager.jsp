@@ -2,7 +2,7 @@
 <%@ include file="../../includes/taglibs.jsp" %>
 <%@ include file="../../includes/header.jsp" %>
 
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/manager.css?v=2" />
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/manager.css?v=3" />
 <fmt:setLocale value="vi_VN" />
 
 <body class="dashboard-body">
@@ -1377,16 +1377,18 @@
                     return;
                 }
 
-                // 4. Loại giường không được để trống và không được chứa số
+                // 4. Loại giường không được để trống; số âm không được phép
                 if (bedTypeVal === "") {
                     e.preventDefault();
                     bedTypeInput.setCustomValidity("Please fill out this field.");
                     bedTypeInput.reportValidity();
                     return;
                 }
-                if (/\d/.test(bedTypeVal)) {
+                // Kiểm tra có chứa số âm không (ví dụ: -1, -2 King Bed)
+                // Hoặc bắt đầu bằng số 0 (ví dụ: 0 Queen Bed, 0 giường)
+                if (/-\s*\d/.test(bedTypeVal) || /^\s*-/.test(bedTypeVal) || /^\s*0\s/.test(bedTypeVal) || /^\s*0$/.test(bedTypeVal)) {
                     e.preventDefault();
-                    bedTypeInput.setCustomValidity("Please input the correct format.");
+                    bedTypeInput.setCustomValidity("Incorrect format");
                     bedTypeInput.reportValidity();
                     return;
                 }
