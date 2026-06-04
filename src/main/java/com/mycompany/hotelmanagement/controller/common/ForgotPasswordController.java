@@ -16,11 +16,22 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * Controller xử lý yêu cầu quên mật khẩu.
+ * Nhận email của người dùng, kiểm tra sự tồn tại trong hệ thống,
+ * tạo mã OTP ngẫu nhiên 6 chữ số với thời gian hết hạn 10 phút,
+ * lưu vào cơ sở dữ liệu và gửi email xác minh chứa OTP.
+ * 
+ * @author TùngNQ
+ */
 @WebServlet(name = "ForgotPasswordController", urlPatterns = {"/home/forgot-password"})
 public class ForgotPasswordController extends HttpServlet {
 
     private static final SecureRandom random = new SecureRandom();
 
+    /**
+     * Chuyển hướng người dùng đến giao diện trang quên mật khẩu.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -28,6 +39,10 @@ public class ForgotPasswordController extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/views/home/forgot-password.jsp").forward(request, response);
     }
 
+    /**
+     * Tiếp nhận email yêu cầu khôi phục, kiểm tra tính hợp lệ trong database,
+     * sinh mã OTP, lưu thông tin phiên reset và gửi email thông báo mã OTP.
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

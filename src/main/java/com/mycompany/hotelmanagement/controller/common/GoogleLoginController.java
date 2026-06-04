@@ -22,6 +22,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+/**
+ * Controller xử lý đăng nhập bằng Google OAuth2.
+ * Nhận authorization code, đổi lấy access token, lấy thông tin tài khoản người dùng,
+ * sau đó đăng nhập hoặc tự động đăng ký tài khoản khách hàng mới nếu chưa có trong DB.
+ * 
+ * @author TùngNQ
+ */
 @WebServlet(name = "GoogleLoginController", urlPatterns = {"/login-google"})
 public class GoogleLoginController extends HttpServlet {
 
@@ -31,6 +38,9 @@ public class GoogleLoginController extends HttpServlet {
             System.getProperty("google.client.secret", "your-google-client-secret"));
     private static final String REDIRECT_URI = "http://localhost:8080/HotelManagement/login-google";
 
+    /**
+     * Xử lý callback từ Google sau khi người dùng xác thực và đồng ý cấp quyền.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -70,6 +80,12 @@ public class GoogleLoginController extends HttpServlet {
         }
     }
 
+    /**
+     * Gửi request POST tới Google OAuth2 server để đổi authorization code lấy access token.
+     * 
+     * @param code Mã authorization code nhận từ Google
+     * @return Chuỗi JSON chứa access_token
+     */
     private String exchangeCodeForToken(String code) throws Exception {
         HttpClient client = HttpClient.newHttpClient();
         String requestBody = "code=" + java.net.URLEncoder.encode(code, java.nio.charset.StandardCharsets.UTF_8) +
@@ -88,6 +104,12 @@ public class GoogleLoginController extends HttpServlet {
         return response.body();
     }
 
+    /**
+     * Gửi request GET tới Google API để lấy thông tin hồ sơ của người dùng (email, name).
+     * 
+     * @param accessToken Access token của Google
+     * @return Chuỗi JSON chứa thông tin người dùng
+     */
     private String fetchUserInfo(String accessToken) throws Exception {
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
@@ -100,6 +122,11 @@ public class GoogleLoginController extends HttpServlet {
         return response.body();
     }
 
+    /**
+     * Xác thực người dùng bằng Email:
+     * - Nếu email tồn tại trong DB, xác định vai trò của người dùng và thiết lập Session đăng nhập.
+     * - Nếu email chưa tồn tại, tự động đăng ký một tài khoản mới dưới vai trò Customer trong Database thông qua Transaction.
+     */
     private void authenticateOrRegisterUser(String email, String name, HttpServletRequest request, HttpServletResponse response) throws Exception {
         Connection conn = null;
         PreparedStatement checkPs = null;
@@ -226,6 +253,9 @@ public class GoogleLoginController extends HttpServlet {
         }
     }
 
+    /**
+     * Hàm helper trích xuất giá trị trường JSON đơn giản bằng biểu thức chính quy (Regex).
+     */
     private String extractJsonField(String json, String field) {
         java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\"" + field + "\":\\s*\"([^\"]+)\"");
         java.util.regex.Matcher matcher = pattern.matcher(json);

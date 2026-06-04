@@ -4,11 +4,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+/**
+ * Lớp tiện ích đọc các giá trị cấu hình hệ thống.
+ * Hỗ trợ tìm kiếm khóa cấu hình linh hoạt từ file config.properties,
+ * biến môi trường (Environment Variables) hoặc thuộc tính hệ thống (System Properties).
+ * 
+ * @author TùngNQ
+ */
 public class ConfigUtil {
 
     private static final Properties properties = new Properties();
 
     static {
+        // Tự động tải file config.properties từ resources lúc khởi tạo class
         try (InputStream input = ConfigUtil.class.getClassLoader().getResourceAsStream("config.properties")) {
             if (input != null) {
                 properties.load(input);
@@ -18,6 +26,13 @@ public class ConfigUtil {
         }
     }
 
+    /**
+     * Lấy giá trị cấu hình dựa trên khóa. Nếu không tìm thấy hoặc trống, trả về giá trị mặc định.
+     *
+     * @param key Khóa cấu hình (ví dụ: "smtp.host")
+     * @param defaultValue Giá trị mặc định nếu không có cấu hình nào khớp
+     * @return Giá trị cấu hình tìm được hoặc defaultValue
+     */
     public static String get(String key, String defaultValue) {
         // 1. Try to find the exact key in config.properties
         String value = properties.getProperty(key);
@@ -52,6 +67,12 @@ public class ConfigUtil {
         return value.trim();
     }
 
+    /**
+     * Lấy giá trị cấu hình dựa trên khóa, trả về null nếu không tìm thấy.
+     *
+     * @param key Khóa cấu hình
+     * @return Giá trị cấu hình tìm được hoặc null
+     */
     public static String get(String key) {
         return get(key, null);
     }

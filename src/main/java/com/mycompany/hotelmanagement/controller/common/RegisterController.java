@@ -18,9 +18,19 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * Controller xử lý đăng ký tài khoản khách hàng mới.
+ * Thực hiện kiểm tra tính hợp lệ của thông tin đăng ký (Họ tên, định dạng Email,
+ * Số điện thoại, độ mạnh mật khẩu) và lưu thông tin tài khoản mới vào Database qua Transaction.
+ * 
+ * @author TùngNQ
+ */
 @WebServlet(name = "RegisterController", urlPatterns = {"/home/register"})
 public class RegisterController extends HttpServlet {
 
+    /**
+     * Chuyển hướng người dùng đến giao diện trang đăng ký tài khoản.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -28,6 +38,10 @@ public class RegisterController extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/views/home/register.jsp").forward(request, response);
     }
 
+    /**
+     * Tiếp nhận dữ liệu đăng ký từ Form, thực hiện các bước kiểm tra (validation),
+     * mã hóa mật khẩu, kiểm tra email trùng lặp, sau đó tạo Account và Customer mới trong DB.
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
