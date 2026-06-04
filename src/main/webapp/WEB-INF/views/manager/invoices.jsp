@@ -78,7 +78,6 @@
                             <option value="Pending">Chưa thanh toán</option>
                             <option value="Paid">Đã thanh toán</option>
                             <option value="Refunding">Chờ hoàn</option>
-                            <option value="Refunded">Đã hoàn</option>
                             <option value="Cancelled">Đã huỷ</option>
                         </select>
                     </div>

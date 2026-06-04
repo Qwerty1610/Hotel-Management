@@ -18,7 +18,9 @@ public class Invoice {
     private String status;         // Pending / Paid / Refunding / Refunded / Cancelled
     private Timestamp createdAt;
     private double totalAmount;    // dẫn xuất: tổng các dòng chi tiết
-    private double refundedAmount; // dẫn xuất: tổng đã hoàn
+    private double depositAmount;  // dẫn xuất: tiền cọc = 30% tiền phòng
+    private double refundedAmount; // dẫn xuất: tổng đã hoàn (Refund status = Done)
+    private double pendingRefundAmount; // dẫn xuất: tổng đang chờ hoàn (Refund status = Pending)
 
     public Invoice() {}
 
@@ -44,11 +46,22 @@ public class Invoice {
     public double getTotalAmount()         { return totalAmount; }
     public void setTotalAmount(double v)   { this.totalAmount = v; }
 
+    public double getDepositAmount()       { return depositAmount; }
+    public void setDepositAmount(double v) { this.depositAmount = v; }
+
     public double getRefundedAmount()      { return refundedAmount; }
     public void setRefundedAmount(double v){ this.refundedAmount = v; }
 
-    /** Số tiền còn lại sau khi trừ phần đã hoàn. */
+    public double getPendingRefundAmount()       { return pendingRefundAmount; }
+    public void setPendingRefundAmount(double v) { this.pendingRefundAmount = v; }
+
+    /** Thực thu = tổng cộng − tiền cọc đã trả − phần đã hoàn. */
     public double getNetAmount() {
-        return totalAmount - refundedAmount;
+        return totalAmount - depositAmount - refundedAmount;
+    }
+
+    /** Số tiền còn có thể tạo khoản hoàn = tổng − đã hoàn − đang chờ hoàn. */
+    public double getRefundableAmount() {
+        return totalAmount - refundedAmount - pendingRefundAmount;
     }
 }

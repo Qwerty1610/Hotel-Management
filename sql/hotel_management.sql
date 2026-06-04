@@ -1040,3 +1040,62 @@ SELECT
     (SELECT COUNT(*) FROM dbo.Invoice i
         JOIN dbo.Booking b ON i.booking_id = b.booking_id WHERE b.note = N'SEED30')   AS seed_invoices;
 GO
+
+/* ============================================================
+   8. KHOẢN CHỜ HOÀN DẠNG DANH SÁCH (Refund.status)
+   - Thêm cột status (Pending/Done) + confirmed_at vào Refund.
+   - Bản ghi hoàn cũ -> Done (lịch sử). Khoản chờ hoàn -> Pending.
+   - Sinh khoản Refund(Pending) cho hóa đơn Refunding chưa có khoản nào.
+   - Bỏ 2 cột pending_refund_amount / pending_refund_reason trên Invoice
+     (đã thay bằng danh sách Refund(Pending)).
+   ============================================================ */
+IF COL_LENGTH(N'dbo.Refund', N'status') IS NULL
+    ALTER TABLE dbo.Refund ADD status NVARCHAR(20) NOT NULL CONSTRAINT DF_Refund_Status DEFAULT N'Done';
+GO
+
+IF COL_LENGTH(N'dbo.Refund', N'confirmed_at') IS NULL
+    ALTER TABLE dbo.Refund ADD confirmed_at DATETIME2 NULL;
+GO
+
+/* Bản ghi hoàn cũ coi như đã hoàn xong: gán confirmed_at nếu còn trống. */
+UPDATE dbo.Refund SET confirmed_at = created_at WHERE status = N'Done' AND confirmed_at IS NULL;
+GO
+
+/* Sinh khoản Refund(Pending) cho hóa đơn Refunding chưa có khoản Pending nào.
+   Số tiền chờ hoàn = tổng hóa đơn - phần đã hoàn (Done). (idempotent) */
+INSERT INTO dbo.Refund (invoice_id, amount, reason, status, created_at)
+SELECT i.invoice_id,
+       (SELECT ISNULL(SUM(ii.amount),0) FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id)
+       - (SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Done'),
+       N'Hoàn tiền cọc do đặt phòng bị từ chối hoặc khách huỷ.', N'Pending', SYSDATETIME()
+FROM dbo.Invoice i
+WHERE i.status = N'Refunding'
+  AND NOT EXISTS (SELECT 1 FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Pending')
+  AND (SELECT ISNULL(SUM(ii.amount),0) FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id)
+      - (SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Done') > 0;
+GO
+
+/* Bỏ 2 cột cũ trên Invoice (không còn dùng). */
+IF COL_LENGTH(N'dbo.Invoice', N'pending_refund_amount') IS NOT NULL
+    ALTER TABLE dbo.Invoice DROP COLUMN pending_refund_amount;
+GO
+
+IF COL_LENGTH(N'dbo.Invoice', N'pending_refund_reason') IS NOT NULL
+    ALTER TABLE dbo.Invoice DROP COLUMN pending_refund_reason;
+GO
+
+/* ============================================================
+   9. BỎ TRẠNG THÁI 'Refunded' KHỎI HÓA ĐƠN
+   - Hóa đơn đã hoàn xong nay quay về 'Pending' (chưa thanh toán).
+   - Thu hẹp ràng buộc CHECK: chỉ còn Pending / Paid / Refunding / Cancelled.
+   ============================================================ */
+UPDATE dbo.Invoice SET status = N'Pending', updated_at = SYSDATETIME() WHERE status = N'Refunded';
+GO
+
+IF OBJECT_ID(N'dbo.CK_Invoice_Status', N'C') IS NOT NULL
+    ALTER TABLE dbo.Invoice DROP CONSTRAINT CK_Invoice_Status;
+GO
+
+ALTER TABLE dbo.Invoice ADD CONSTRAINT CK_Invoice_Status
+    CHECK (status IN (N'Pending', N'Paid', N'Refunding', N'Cancelled'));
+GO
