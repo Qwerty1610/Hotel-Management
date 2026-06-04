@@ -15,7 +15,8 @@ public class DBContext {
         try {
             HikariConfig config = new HikariConfig();
             config.setDriverClassName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-            config.setJdbcUrl("jdbc:sqlserver://localhost:1433;databaseName=HotelManagementDB;encrypt=true;trustServerCertificate=true;");
+            config.setJdbcUrl(
+                    "jdbc:sqlserver://localhost:1433;databaseName=HotelManagementDB;encrypt=true;trustServerCertificate=true;");
             config.setUsername("sa");
             config.setPassword("123");
 
@@ -38,17 +39,18 @@ public class DBContext {
     }
 
     /**
-      * Gets a connection from the pool.
-      * @return a database Connection object
-      * @throws SQLException if a connection cannot be obtained
-      */
+     * Gets a connection from the pool.
+     * 
+     * @return a database Connection object
+     * @throws SQLException if a connection cannot be obtained
+     */
     public static Connection getConnection() throws SQLException {
         return dataSource.getConnection();
     }
 
     /**
-      * Closes the connection pool.
-      */
+     * Closes the connection pool.
+     */
     public static void shutdown() {
         if (dataSource != null && !dataSource.isClosed()) {
             dataSource.close();

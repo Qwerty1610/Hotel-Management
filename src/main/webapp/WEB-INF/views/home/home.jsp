@@ -18,15 +18,27 @@
 
             <div class="nav-actions">
                 <c:choose>
-                    <c:when test="${not empty sessionScope.role and sessionScope.role == 'CUSTOMER'}">
-                        <span class="user-greeting" style="color: #ffffff; margin-right: 15px; font-weight: 500; font-size: 14px;">
-                            <i class="fa-solid fa-user-circle"></i> Xin chào, ${sessionScope.user}
-                        </span>
-                        <a href="${pageContext.request.contextPath}/logout" class="btn-login" style="background: transparent; border: 1px solid #ffffff; color: #ffffff;">Đăng xuất</a>
+                    <c:when test="${not empty sessionScope.user}">
+                        <span class="user-greeting"><i class="fa-solid fa-user-circle"></i> Xin chào, <strong>${sessionScope.user}</strong></span>
+                        <c:choose>
+                            <c:when test="${sessionScope.role eq 'ADMIN'}">
+                                <a href="${pageContext.request.contextPath}/admin/dashboard" class="btn-login">Dashboard</a>
+                            </c:when>
+                            <c:when test="${sessionScope.role eq 'HOTEL_MANAGER'}">
+                                <a href="${pageContext.request.contextPath}/manager/dashboard" class="btn-login">Dashboard</a>
+                            </c:when>
+                            <c:when test="${sessionScope.role eq 'RECEPTIONIST'}">
+                                <a href="${pageContext.request.contextPath}/receptionist/dashboard" class="btn-login">Dashboard</a>
+                            </c:when>
+                            <c:when test="${sessionScope.role eq 'HOUSEKEEPING'}">
+                                <a href="${pageContext.request.contextPath}/housekeeping/dashboard" class="btn-login">Dashboard</a>
+                            </c:when>
+                        </c:choose>
+                        <a href="${pageContext.request.contextPath}/logout" class="btn-register">Đăng xuất</a>
                     </c:when>
                     <c:otherwise>
                         <a href="${pageContext.request.contextPath}/home/login" class="btn-login">Đăng nhập</a>
-                        <a href="#" class="btn-register">Đăng ký</a>
+                        <a href="${pageContext.request.contextPath}/home/register" class="btn-register">Đăng ký</a>
                     </c:otherwise>
                 </c:choose>
             </div>
@@ -122,52 +134,65 @@
         </div>
 
         <div class="rooms-grid">
-            <div class="room-card">
-                <div class="room-img-container">
-                    <img src="https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=600" alt="Deluxe City View">
-                    <span class="room-tag">Phổ biến</span>
-                </div>
-                <div class="room-info">
-                    <h3>Deluxe City View</h3>
-                    <p>Không gian rộng rãi hướng toàn cảnh thành phố lung linh về đêm.</p>
-                    <div class="room-meta"><span><i class="fa-solid fa-maximize"></i> 45 m²</span> <span><i class="fa-solid fa-bed"></i> 1 Giường đôi lớn</span></div>
-                    <div class="room-footer">
-                        <span class="room-price">2.950.000đ <span>/ đêm</span></span>
-                        <a href="${pageContext.request.contextPath}/rooms" class="btn-sm" style="display: inline-block; text-align: center;">Chi tiết</a>
-                    </div>
-                </div>
-            </div>
 
-            <div class="room-card">
-                <div class="room-img-container">
-                    <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=600" alt="Executive Suite">
-                    <span class="room-tag premium">Ưu đãi</span>
-                </div>
-                <div class="room-info">
-                    <h3>Executive Suite</h3>
-                    <p>Tích hợp phòng khách sang trọng và quầy bar nhỏ đẳng cấp cao.</p>
-                    <div class="room-meta"><span><i class="fa-solid fa-maximize"></i> 75 m²</span> <span><i class="fa-solid fa-bed"></i> 1 Giường King size</span></div>
-                    <div class="room-footer">
-                        <span class="room-price">5.500.000đ <span>/ đêm</span></span>
-                        <a href="${pageContext.request.contextPath}/rooms" class="btn-sm" style="display: inline-block; text-align: center;">Chi tiết</a>
-                    </div>
-                </div>
-            </div>
+            <c:forEach items="${featuredRooms}" var="room">
 
-            <div class="room-card">
-                <div class="room-img-container">
-                    <img src="https://images.unsplash.com/photo-1566665797739-1674de7a421a?q=80&w=600" alt="Presidential Suite">
-                </div>
-                <div class="room-info">
-                    <h3>Presidential Suite</h3>
-                    <p>Căn hộ Tổng thống xa hoa bậc nhất với lối đi riêng và quản gia phục vụ.</p>
-                    <div class="room-meta"><span><i class="fa-solid fa-maximize"></i> 180 m²</span> <span><i class="fa-solid fa-bed"></i> 2 Giường King</span></div>
-                    <div class="room-footer">
-                        <span class="room-price">12.500.000đ <span>/ đêm</span></span>
-                        <a href="${pageContext.request.contextPath}/rooms" class="btn-sm" style="display: inline-block; text-align: center;">Chi tiết</a>
+                <div class="room-card">
+
+                    <div class="room-img-container">
+
+                        <img src="${room.imageUrl}"
+                             alt="${room.typeName}">
+
+                        <c:if test="${room.availableCount > 0}">
+                            <span class="room-tag">Còn phòng</span>
+                        </c:if>
+
                     </div>
+
+                    <div class="room-info">
+
+                        <h3>${room.typeName}</h3>
+
+                        <p>${room.description}</p>
+
+                        <div class="room-meta">
+
+                            <span>
+                                <i class="fa-solid fa-maximize"></i>
+                                ${room.area}
+                            </span>
+
+                            <span>
+                                <i class="fa-solid fa-bed"></i>
+                                ${room.bedType}
+                            </span>
+
+                        </div>
+
+                        <div class="room-footer">
+
+                            <span class="room-price">
+                                <fmt:formatNumber value="${room.basePrice}"
+                                                  type="number"/>
+                                đ
+                                <span>/ đêm</span>
+                            </span>
+
+                            <a href="${pageContext.request.contextPath}/rooms/detail?id=${room.typeId}"
+                               class="btn-sm"
+                               style="display:inline-block;text-align:center;">
+                                Chi tiết
+                            </a>
+
+                        </div>
+
+                    </div>
+
                 </div>
-            </div>
+
+            </c:forEach>
+
         </div>
     </section>
 

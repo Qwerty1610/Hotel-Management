@@ -1,7 +1,9 @@
 package com.mycompany.hotelmanagement.controller.common;
 
+import com.mycompany.hotelmanagement.dal.RoomTypeRepository;
+import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import java.io.IOException;
-
+import java.util.List;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -16,6 +18,25 @@ public class HomeController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        RoomTypeRepository repo = new RoomTypeRepository();
+
+        List<RoomTypeInfo> roomTypes = repo.getAllRoomTypes();
+
+        // lấy ảnh đại diện
+        roomTypes.forEach(room -> {
+            List<String> images = repo.getRoomImagesByTypeId(room.getTypeId());
+
+            if (images != null && !images.isEmpty()) {
+                room.setImageUrl(images.get(0));
+            }
+        });
+
+        // chỉ hiển thị tối đa 3 phòng ở trang chủ
+        if (roomTypes.size() > 3) {
+            roomTypes = roomTypes.subList(0, 3);
+        }
+
+        request.setAttribute("featuredRooms", roomTypes);
         // Đường dẫn nội bộ tính từ thư mục Web Pages (nhưng ẩn với người dùng)
         String url = "/WEB-INF/views/home/home.jsp";
 
