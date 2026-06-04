@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ include file="../../includes/header.jsp" %>
 <%@ include file="../../includes/taglibs.jsp" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/manager.css">
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/housekeeping.css">
@@ -22,8 +23,8 @@
                 </li>
                 <li class="menu-item ${param.tab == 'task' ? 'active' : ''}">
                     <a href="${pageContext.request.contextPath}/housekeeping/dashboard?tab=task">
-                        <i class="fa-solid fa-list-check"></i>
-                        <span>Công việc</span>
+                        <i class="fa-solid fa-bed-pulse"></i>
+                        <span>Trạng thái phòng</span>
                     </a>
                 </li>
             </ul>
@@ -53,7 +54,7 @@
                     <span class="separator">&gt;</span>
                     <span class="current">
                         <c:choose>
-                            <c:when test="${param.tab == 'task'}">Công việc</c:when>
+                            <c:when test="${param.tab == 'task'}">Trạng thái phòng</c:when>
                             <c:otherwise>Tổng quan</c:otherwise>
                         </c:choose>
                     </span>
@@ -89,34 +90,29 @@
 
                     <div class="quick-filter-wrapper">
                         <span class="filter-title">BỘ LỌC NHANH:</span>
-                        <button type="button" class="btn-filter active"
+                        <button class="btn-filter active" data-status="ALL"
                                 onclick="applyStatusFilter('ALL', event)">
-                            Tất cả
+                            ALL
                         </button>
 
-                        <button type="button" class="btn-filter"
+                        <button class="btn-filter" data-status="Occupied"
                                 onclick="applyStatusFilter('Occupied', event)">
                             OCCUPIED
                         </button>
 
-                        <button type="button" class="btn-filter"
+                        <button class="btn-filter" data-status="Available"
                                 onclick="applyStatusFilter('Available', event)">
                             AVAILABLE
                         </button>
 
-                        <button type="button" class="btn-filter"
+                        <button class="btn-filter" data-status="Cleaning"
                                 onclick="applyStatusFilter('Cleaning', event)">
                             CLEANING
                         </button>
 
-                        <button type="button" class="btn-filter"
+                        <button class="btn-filter" data-status="Maintenance"
                                 onclick="applyStatusFilter('Maintenance', event)">
                             MAINTENANCE
-                        </button>
-
-                        <button type="button" class="btn-filter"
-                                onclick="applyStatusFilter('Completed', event)">
-                            COMPLETED
                         </button>
                     </div>
 
@@ -145,16 +141,15 @@
                                                 <c:when test="${room.status == 'Available'}"><c:set var="colorClass" value="status-available" /></c:when>
                                                 <c:when test="${room.status == 'Cleaning'}"><c:set var="colorClass" value="status-cleaning" /></c:when>
                                                 <c:when test="${room.status == 'Maintenance'}"><c:set var="colorClass" value="status-maintenance" /></c:when>
-                                                <c:when test="${room.status == 'Completed'}"><c:set var="colorClass" value="status-completed" /></c:when>
                                                 <c:otherwise><c:set var="colorClass" value="status-available" /></c:otherwise>
                                             </c:choose>
 
                                             <div class="room-item ${colorClass}"
-                                                 data-room-status="${room.status}"
+                                                 data-room-status="${fn:toLowerCase(room.status)}"
                                                  data-room-id="${room.roomId}"
-                                                 onclick="goTaskDetail(${room.roomId})">
+                                                 onclick="goTaskDetail('${room.roomId}')">
 
-                                                <div class="dirty-dot"></div>
+                                                <div class="maintenance-dot"></div>
                                                 <span class="room-num">${room.roomNumber}</span>
                                                 <span class="room-type">${room.typeName}</span>
                                             </div>

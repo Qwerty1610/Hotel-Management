@@ -81,40 +81,43 @@
                                 </div>
                             </div>
 
-                            <!-- ACTION -->
                             <div class="task-action">
 
-                                <!-- NO WORK -->
-                                <c:if test="${status == 'Occupied' or status == 'Available'}">
-                                    <button class="btn-task disabled" disabled>
-                                        No work yet
+                                <form method="post"
+                                      action="${pageContext.request.contextPath}/housekeeping/task"
+                                      class="task-form">
+
+                                    <input type="hidden" name="roomId" value="${room.roomId}">
+
+                                    <div class="status-update-group">
+                                        <label>Status</label>
+
+                                        <select name="status" class="status-select">
+
+                                            <option value="Available" ${status == 'Available' ? 'selected' : ''}>
+                                                Available
+                                            </option>
+
+                                            <option value="Cleaning" ${status == 'Cleaning' ? 'selected' : ''}>
+                                                Cleaning
+                                            </option>
+
+                                            <option value="Maintenance" ${status == 'Maintenance' ? 'selected' : ''}>
+                                                Maintenance
+                                            </option>
+
+                                            <option value="Occupied" ${status == 'Occupied' ? 'selected' : ''}>
+                                                Occupied
+                                            </option>
+
+                                        </select>
+                                    </div>
+
+                                    <button type="submit" class="btn-task success">
+                                        Save
                                     </button>
-                                </c:if>
 
-                                <!-- CAN COMPLETE -->
-                                <c:if test="${status == 'Cleaning' or status == 'Maintenance'}">
-
-                                    <button type="button"
-                                            class="btn-task success"
-                                            onclick="openConfirmModal()">
-                                        Complete
-                                    </button>
-
-                                    <form id="completeForm"
-                                          method="post"
-                                          action="${pageContext.request.contextPath}/housekeeping/task"
-                                          style="display:none;">
-                                        <input type="hidden" name="roomId" value="${room.roomId}" />
-                                    </form>
-
-                                </c:if>
-
-                                <!-- COMPLETED -->
-                                <c:if test="${status == 'Completed'}">
-                                    <button class="btn-task completed" disabled>
-                                        Completed
-                                    </button>
-                                </c:if>
+                                </form>
 
                             </div>
 
@@ -124,34 +127,6 @@
                 </div>
 
             </main>
-
-        </div>
-    </div>
-
-    <!-- CONFIRM MODAL -->
-    <div id="confirmModal" class="modal-overlay">
-        <div class="modal-container">
-
-            <div class="modal-header">
-                <h3>Confirm Action</h3>
-                <button class="btn-close-modal" onclick="closeConfirmModal()">×</button>
-            </div>
-
-            <div class="modal-body">
-                <p>Are you sure you want to mark this room as <b>Completed</b>?</p>
-            </div>
-
-            <div class="modal-footer-row">
-
-                <button class="btn-modal-cancel" onclick="closeConfirmModal()">
-                    Cancel
-                </button>
-
-                <button class="btn-modal-submit" onclick="submitComplete()">
-                    Yes, Complete
-                </button>
-
-            </div>
 
         </div>
     </div>

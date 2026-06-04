@@ -36,7 +36,7 @@ public class HousekeepingDAO {
                 room.setRoomId(rs.getInt("room_id"));
                 room.setRoomNumber(rs.getString("room_number"));
                 room.setTypeName(rs.getString("type_name"));
-                room.setStatus(rs.getString("status"));
+                room.setStatus(rs.getString("status").trim().toLowerCase());
                 room.setFloor(rs.getString("floor"));
                 room.setImageUrl(rs.getString("image_url"));
 
@@ -140,18 +140,20 @@ public class HousekeepingDAO {
     // =========================
     // UPDATE STATUS
     // =========================
-    public boolean completeCleaning(int roomId) {
+    public boolean updateRoomStatus(int roomId, String status) {
 
         String sql = """
-            UPDATE Room
-            SET status = 'Completed'
-            WHERE room_id = ?
-        """;
+        UPDATE Room
+        SET status = ?
+        WHERE room_id = ?
+    """;
 
         try (
                 Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setInt(1, roomId);
+            ps.setString(1, status);
+            ps.setInt(2, roomId);
+
             return ps.executeUpdate() > 0;
 
         } catch (Exception e) {
