@@ -13,6 +13,9 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * ReceptionistDashboardController
@@ -27,6 +30,11 @@ import java.util.List;
 @WebServlet(name = "ReceptionistDashboardController", urlPatterns = {"/receptionist/dashboard"})
 public class ReceptionistDashboardController extends HttpServlet {
 
+    private static final Logger LOGGER = Logger.getLogger(ReceptionistDashboardController.class.getName());
+
+    private static final Set<String> ALLOWED_TABS = Set.of("bookings", "checkin", "checkout");
+    private static final Set<String> STATUS_WHITELIST = Set.of("All", "Pending", "Confirmed", "Rejected", "Cancelled", "CheckedIn", "CheckedOut");
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -39,18 +47,28 @@ public class ReceptionistDashboardController extends HttpServlet {
             return;
         }
 
-        // 2. Xác định tab hiện tại
-        String tab = request.getParameter("tab");
-        if (tab == null || tab.trim().isEmpty()) tab = "bookings";
+        try {
+            // 2. Xác định tab hiện tại và validate
+            String tab = request.getParameter("tab");
+            if (tab == null || tab.trim().isEmpty() || !ALLOWED_TABS.contains(tab.trim().toLowerCase())) {
+                tab = "bookings";
+            } else {
+                tab = tab.trim().toLowerCase();
+            }
 
-        // 3. Load dữ liệu theo tab
-        if ("bookings".equalsIgnoreCase(tab)) {
-            loadBookingTab(request);
+            // 3. Load dữ liệu theo tab
+            if ("bookings".equals(tab)) {
+                loadBookingTab(request);
+            }
+
+            // 4. Forward to view
+            request.getRequestDispatcher("/WEB-INF/views/dashboard/receptionist.jsp")
+                   .forward(request, response);
+
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in doGet of ReceptionistDashboardController", e);
+            response.sendRedirect(request.getContextPath() + "/home/login?error=unknown");
         }
-
-        // 4. Forward to view
-        request.getRequestDispatcher("/WEB-INF/views/dashboard/receptionist.jsp")
-               .forward(request, response);
     }
 
     @Override
@@ -59,41 +77,48 @@ public class ReceptionistDashboardController extends HttpServlet {
         doGet(request, response);
     }
 
-    /* ------------------------------------------------------------------ */
-
     private void loadBookingTab(HttpServletRequest request) {
-        BookingDAO dao = new BookingDAO();
-        RoomTypeRepository roomTypeRepo = new RoomTypeRepository();
+        try {
+            BookingDAO dao = new BookingDAO();
+            RoomTypeRepository roomTypeRepo = new RoomTypeRepository();
 
-        // Tham số lọc
-        String statusFilter = request.getParameter("status");
-        String keyword      = request.getParameter("keyword");
+            // Tham số lọc
+            String statusFilter = request.getParameter("status");
+            String keyword      = request.getParameter("keyword");
 
-        if (statusFilter == null || statusFilter.trim().isEmpty()) statusFilter = "All";
+            if (statusFilter == null || !STATUS_WHITELIST.contains(statusFilter.trim())) {
+                statusFilter = "All";
+            } else {
+                statusFilter = statusFilter.trim();
+            }
 
-        // Load danh sách
-        List<Booking> bookingList = dao.getBookings(statusFilter, keyword);
+            // Load danh sách
+            List<Booking> bookingList = dao.getBookings(statusFilter, keyword);
 
-        // Load danh sách loại phòng để cập nhật thông tin loại phòng trong modal edit
-        List<RoomTypeInfo> roomTypesList = roomTypeRepo.getAllRoomTypes();
+            // Load danh sách loại phòng để cập nhật thông tin loại phòng trong modal edit
+            List<RoomTypeInfo> roomTypesList = roomTypeRepo.getAllRoomTypes();
 
-        // Thống kê nhanh cho các badge đầu trang
-        int cntAll       = dao.getBookings("All", null).size();
-        int cntPending   = dao.countByStatus("Pending");
-        int cntConfirmed = dao.countByStatus("Confirmed");
-        int cntRejected  = dao.countByStatus("Rejected");
-        int cntCancelled = dao.countByStatus("Cancelled");
+            // Thống kê nhanh cho các badge đầu trang
+            int cntAll       = dao.countAll();
+            int cntPending   = dao.countByStatus("Pending");
+            int cntConfirmed = dao.countByStatus("Confirmed");
+            int cntRejected  = dao.countByStatus("Rejected");
+            int cntCancelled = dao.countByStatus("Cancelled");
 
-        // Đẩy attribute sang JSP
-        request.setAttribute("bookingList",    bookingList);
-        request.setAttribute("roomTypesList",  roomTypesList);
-        request.setAttribute("currentStatus",  statusFilter);
-        request.setAttribute("keyword",        keyword != null ? keyword : "");
-        request.setAttribute("cntAll",         cntAll);
-        request.setAttribute("cntPending",     cntPending);
-        request.setAttribute("cntConfirmed",   cntConfirmed);
-        request.setAttribute("cntRejected",    cntRejected);
-        request.setAttribute("cntCancelled",   cntCancelled);
+            // Đẩy attribute sang JSP
+            request.setAttribute("bookingList",    bookingList);
+            request.setAttribute("roomTypesList",  roomTypesList);
+            request.setAttribute("currentStatus",  statusFilter);
+            request.setAttribute("keyword",        keyword != null ? keyword : "");
+            request.setAttribute("cntAll",         cntAll);
+            request.setAttribute("cntPending",     cntPending);
+            request.setAttribute("cntConfirmed",   cntConfirmed);
+            request.setAttribute("cntRejected",    cntRejected);
+            request.setAttribute("cntCancelled",   cntCancelled);
+
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in loadBookingTab of ReceptionistDashboardController", e);
+            throw e; // Rethrow to be handled by doGet try-catch
+        }
     }
 }
-
