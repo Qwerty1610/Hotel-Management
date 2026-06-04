@@ -89,6 +89,17 @@
                         Thao tác thất bại. Vui lòng kiểm tra lại dữ liệu.
                     </div>
                 </c:if>
+                <c:if test="${not empty param.error}">
+                    <div class="toast-notify toast-error">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                        <c:choose>
+                            <c:when test="${param.error eq 'parse'}">Lỗi định dạng dữ liệu (ngày hoặc số không hợp lệ).</c:when>
+                            <c:when test="${param.error eq 'invalid'}">Mã yêu cầu hoặc trạng thái không hợp lệ.</c:when>
+                            <c:when test="${param.error eq 'validation'}">Thông tin không hợp lệ: vui lòng kiểm tra lại điều kiện nhập liệu.</c:when>
+                            <c:otherwise>Đã có lỗi xảy ra. Vui lòng thử lại sau.</c:otherwise>
+                        </c:choose>
+                    </div>
+                </c:if>
 
                 <%-- Header --%>
                 <div class="content-header-row">
@@ -255,55 +266,56 @@
                                         <td>
                                             <div class="actions-cell">
                                                 <%-- Xem chi tiết (tất cả status) --%>
-                                                <button type="button" class="btn-action-icon btn-edit"
+                                                <button type="button" class="btn-action-icon btn-edit btn-view-detail"
                                                         title="Xem chi tiết"
-                                                        onclick="openDetailModal(
-                                                            ${b.bookingId},
-                                                            '<c:out value="${b.customerName}" escapeXml="false"/>',
-                                                            '<c:out value="${b.roomTypeName}" escapeXml="false"/>',
-                                                            ${b.roomQuantity},
-                                                            '${b.checkInDate}','${b.checkOutDate}',
-                                                            ${b.totalAmount},
-                                                            '<c:out value="${b.status}"/>',
-                                                            '<c:out value="${b.note}" escapeXml="false"/>'
-                                                        )">
+                                                        data-id="${b.bookingId}"
+                                                        data-customer-name="<c:out value="${b.customerName}"/>"
+                                                        data-room-type-name="<c:out value="${b.roomTypeName}"/>"
+                                                        data-room-quantity="${b.roomQuantity}"
+                                                        data-check-in-date="${b.checkInDate}"
+                                                        data-check-out-date="${b.checkOutDate}"
+                                                        data-total-amount="${b.totalAmount}"
+                                                        data-status="<c:out value="${b.status}"/>"
+                                                        data-note="<c:out value="${b.note}"/>">
                                                     <i class="fa-solid fa-eye"></i>
                                                 </button>
 
                                                 <%-- Confirm (chỉ Pending) --%>
                                                 <c:if test="${b.status eq 'Pending'}">
-                                                    <button type="button" class="btn-action-icon btn-confirm"
+                                                    <button type="button" class="btn-action-icon btn-confirm btn-open-confirm"
                                                             title="Xác nhận"
-                                                            onclick="openConfirmModal(${b.bookingId}, '<c:out value="${b.customerName}" escapeXml="false"/>')">
+                                                            data-id="${b.bookingId}"
+                                                            data-customer-name="<c:out value="${b.customerName}"/>">
                                                         <i class="fa-solid fa-check-circle"></i>
                                                     </button>
 
-                                                    <button type="button" class="btn-action-icon btn-reject"
+                                                    <button type="button" class="btn-action-icon btn-reject btn-open-reject"
                                                             title="Từ chối"
-                                                            onclick="openRejectModal(${b.bookingId}, '<c:out value="${b.customerName}" escapeXml="false"/>')">
+                                                            data-id="${b.bookingId}"
+                                                            data-customer-name="<c:out value="${b.customerName}"/>">
                                                         <i class="fa-solid fa-times-circle"></i>
                                                     </button>
 
-                                                    <button type="button" class="btn-action-icon btn-edit"
+                                                    <button type="button" class="btn-action-icon btn-edit btn-open-edit"
                                                             title="Cập nhật thông tin"
-                                                            onclick="openEditModal(
-                                                                ${b.bookingId},
-                                                                '<c:out value="${b.customerName}" escapeXml="false"/>',
-                                                                '${b.roomTypeId}',
-                                                                ${b.roomQuantity},
-                                                                '${b.checkInDate}','${b.checkOutDate}',
-                                                                ${b.totalAmount},
-                                                                '<c:out value="${b.note}" escapeXml="false"/>'
-                                                            )">
+                                                            data-id="${b.bookingId}"
+                                                            data-customer-name="<c:out value="${b.customerName}"/>"
+                                                            data-room-type-id="${b.roomTypeId}"
+                                                            data-room-quantity="${b.roomQuantity}"
+                                                            data-check-in-date="${b.checkInDate}"
+                                                            data-check-out-date="${b.checkOutDate}"
+                                                            data-total-amount="${b.totalAmount}"
+                                                            data-note="<c:out value="${b.note}"/>">
                                                         <i class="fa-solid fa-pen-to-square"></i>
                                                     </button>
                                                 </c:if>
 
                                                 <%-- Huỷ (Pending hoặc Confirmed) --%>
                                                 <c:if test="${b.status eq 'Pending' or b.status eq 'Confirmed'}">
-                                                    <button type="button" class="btn-action-icon btn-cancel"
+                                                    <button type="button" class="btn-action-icon btn-cancel btn-open-cancel"
                                                             title="Huỷ booking"
-                                                            onclick="openCancelModal(${b.bookingId}, '<c:out value="${b.customerName}" escapeXml="false"/>')">
+                                                            data-id="${b.bookingId}"
+                                                            data-customer-name="<c:out value="${b.customerName}"/>">
                                                         <i class="fa-solid fa-ban"></i>
                                                     </button>
                                                 </c:if>
@@ -415,7 +427,7 @@
                 <div class="modal-form-group">
                     <label>Lý do từ chối <span style="color:#ef4444">*</span></label>
                     <textarea id="rejectReason" name="reason" class="modal-textarea"
-                              placeholder="VD: Phòng không còn trống trong khoảng thời gian yêu cầu..."></textarea>
+                              placeholder="VD: Phòng không còn trống trong khoảng thời gian yêu cầu..." maxlength="500" required></textarea>
                 </div>
                 <div class="modal-footer-row">
                     <button type="button" class="btn-modal-cancel" onclick="closeModal('modalReject')">Huỷ</button>
@@ -449,18 +461,18 @@
                 </p>
 
                 <div class="modal-form-group">
-                    <label>Tên khách hàng</label>
-                    <input type="text" id="editCustomerName" name="customerName" class="modal-input" required />
+                    <label>Tên khách hàng <span style="color:#ef4444">*</span></label>
+                    <input type="text" id="editCustomerName" name="customerName" class="modal-input" maxlength="100" required />
                 </div>
 
                 <div class="modal-grid-2">
                     <div class="modal-form-group">
-                        <label>Ngày nhận phòng</label>
+                        <label>Ngày nhận phòng <span style="color:#ef4444">*</span></label>
                         <input type="date" id="editCheckIn" name="checkInDate" class="modal-input"
                                onchange="recalcAmount()" required />
                     </div>
                     <div class="modal-form-group">
-                        <label>Ngày trả phòng</label>
+                        <label>Ngày trả phòng <span style="color:#ef4444">*</span></label>
                         <input type="date" id="editCheckOut" name="checkOutDate" class="modal-input"
                                onchange="recalcAmount()" required />
                     </div>
@@ -483,21 +495,21 @@
                         </select>
                     </div>
                     <div class="modal-form-group">
-                        <label>Số phòng</label>
+                        <label>Số phòng <span style="color:#ef4444">*</span></label>
                         <input type="number" id="editRoomQuantity" name="roomQuantity" class="modal-input"
-                               min="1" max="10" onchange="recalcAmount()" />
+                               min="1" max="100" onchange="recalcAmount()" required />
                     </div>
                 </div>
 
                 <div class="modal-form-group">
-                    <label>Tổng tiền (VND)</label>
-                    <input type="number" id="editTotalAmount" name="totalAmount" class="modal-input" min="0" />
+                    <label>Tổng tiền (VND) <span style="color:#ef4444">*</span></label>
+                    <input type="number" id="editTotalAmount" name="totalAmount" class="modal-input" min="0" required />
                 </div>
 
                 <div class="modal-form-group">
                     <label>Ghi chú</label>
                     <textarea id="editNote" name="note" class="modal-textarea"
-                              placeholder="Ghi chú yêu cầu đặc biệt..."></textarea>
+                              placeholder="Ghi chú yêu cầu đặc biệt..." maxlength="500"></textarea>
                 </div>
 
                 <div class="modal-footer-row">
@@ -587,11 +599,11 @@
                 <div class="modal-form-group">
                     <label>Lý do huỷ (tuỳ chọn)</label>
                     <textarea id="cancelReason" name="reason" class="modal-textarea"
-                              placeholder="VD: Huỷ theo yêu cầu của khách..."></textarea>
+                              placeholder="VD: Huỷ theo yêu cầu của khách..." maxlength="500"></textarea>
                 </div>
                 <div class="modal-footer-row">
                     <button type="button" class="btn-modal-cancel" onclick="closeModal('modalCancel')">Không huỷ</button>
-                    <button type="submit" style="height:40px;padding:0 20px;background:#64748b;border:none;border-radius:8px;font-weight:700;font-size:13px;color:#fff;cursor:pointer;">
+                    <button type="submit" class="btn-modal-save" style="background:#64748b;">
                         <i class="fa-solid fa-ban"></i> Xác nhận huỷ
                     </button>
                 </div>
@@ -600,6 +612,6 @@
     </div>
 </div>
 
-<script src="${pageContext.request.contextPath}/assets/js/receptionist.js?v=1"></script>
+<script src="${pageContext.request.contextPath}/assets/js/receptionist.js?v=4" charset="UTF-8"></script>
 </body>
 </html>
