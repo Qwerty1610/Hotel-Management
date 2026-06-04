@@ -7,8 +7,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
-import com.mycompany.hotelmanagement.config.DBContext;
+
 import org.mindrot.jbcrypt.BCrypt;
+
+import com.mycompany.hotelmanagement.config.DBContext;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -116,15 +118,25 @@ public class RegisterController extends HttpServlet {
 
             // 2. Hash the password with BCrypt
             String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt(12));
+            // 3. Determine role_id for Customer (do not hardcode)
+            int customerRoleId = 2;
+            try (PreparedStatement rolePs = conn.prepareStatement("SELECT role_id FROM Role WHERE role_name = ?")) {
+                rolePs.setString(1, "Customer");
+                try (ResultSet roleRs = rolePs.executeQuery()) {
+                    if (roleRs.next()) {
+                        customerRoleId = roleRs.getInt(1);
+                    }
+                }
+            }
 
-            // 3. Insert into Account
+            // 4. Insert into Account
             String insertAccountSql = "INSERT INTO Account (email, password, full_name, phone, role_id, is_active, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
             insertAccountPs = conn.prepareStatement(insertAccountSql, Statement.RETURN_GENERATED_KEYS);
             insertAccountPs.setString(1, email);
             insertAccountPs.setString(2, hashedPassword);
             insertAccountPs.setString(3, fullName);
             insertAccountPs.setString(4, phone);
-            insertAccountPs.setInt(5, 2); // Role ID 2 is Customer
+            insertAccountPs.setInt(5, customerRoleId);
             insertAccountPs.setInt(6, 1); // is_active = 1
             insertAccountPs.setTimestamp(7, new Timestamp(System.currentTimeMillis()));
 

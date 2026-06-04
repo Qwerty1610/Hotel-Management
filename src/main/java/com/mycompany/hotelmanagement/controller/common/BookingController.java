@@ -8,16 +8,17 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-@WebServlet(name = "BookingController", urlPatterns = {"/booking/start"})
+@WebServlet(name = "BookingController", urlPatterns = { "/booking/start" })
 public class BookingController extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
-        //Verify Session & Customer Role
+
+        // Verify Session & Customer Role
         HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("user") == null || !"CUSTOMER".equals(session.getAttribute("role"))) {
+        if (session == null || session.getAttribute("user") == null
+                || !"CUSTOMER".equals(session.getAttribute("role"))) {
             // Guest or unauthorized role, redirect to login page
             response.sendRedirect(request.getContextPath() + "/home/login");
             return;

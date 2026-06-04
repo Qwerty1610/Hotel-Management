@@ -139,6 +139,34 @@ BEGIN
 END
 GO
 
+/* Ensure Account has phone column required by application */
+IF COL_LENGTH(N'dbo.Account', N'phone') IS NULL
+BEGIN
+    ALTER TABLE dbo.Account ADD phone NVARCHAR(20) NULL;
+END
+GO
+
+/* Create Customer table used by registration flow if missing */
+IF OBJECT_ID(N'dbo.Customer', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Customer (
+        customer_id INT IDENTITY(1,1) PRIMARY KEY,
+        account_id INT NOT NULL UNIQUE,
+        loyalty_points INT NOT NULL DEFAULT 0,
+        membership_level NVARCHAR(50) NOT NULL DEFAULT N'Standard',
+        CONSTRAINT FK_Customer_Account FOREIGN KEY (account_id) REFERENCES dbo.Account(account_id)
+    );
+END
+GO
+
+/* Seed Customer rows for existing seeded accounts if missing */
+IF NOT EXISTS (SELECT 1 FROM dbo.Customer WHERE account_id = (SELECT account_id FROM dbo.Account WHERE email = N'customer@hotel.com'))
+BEGIN
+    INSERT INTO dbo.Customer (account_id, loyalty_points, membership_level)
+    VALUES ((SELECT account_id FROM dbo.Account WHERE email = N'customer@hotel.com'), 0, N'Standard');
+END
+GO
+
 /* ============================================================
    2. SERVICE MANAGEMENT TABLE - NO icon_key
    ============================================================ */
