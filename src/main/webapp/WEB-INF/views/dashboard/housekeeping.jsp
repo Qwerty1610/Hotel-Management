@@ -152,7 +152,7 @@
                                             <div class="room-item ${colorClass}"
                                                  data-room-status="${room.status}"
                                                  data-room-id="${room.roomId}"
-                                                 onclick="goTaskDetail(${room.roomId})">
+                                                 onclick="goTaskDetail('${room.roomId}')">
 
                                                 <div class="dirty-dot"></div>
                                                 <span class="room-num">${room.roomNumber}</span>

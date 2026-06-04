@@ -1,6 +1,7 @@
 package com.mycompany.hotelmanagement.controller.manager;
 
 import java.io.IOException;
+import java.util.List;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -10,6 +11,19 @@ import jakarta.servlet.http.HttpServletResponse;
 import com.mycompany.hotelmanagement.entity.HotelService;
 import com.mycompany.hotelmanagement.service.HotelServiceService;
 
+/**
+ * ServiceController
+ * URL: /manager/services
+ *
+ * Xử lý các hành động (action param):
+ *   - view   : Hiển thị danh sách các dịch vụ khách sạn (Manage Service)
+ *   - save   : Thêm mới hoặc cập nhật thông tin dịch vụ (Manage Service)
+ *   - delete : Xóa dịch vụ khỏi hệ thống (Manage Service)
+ *   - toggle : Kích hoạt hoặc vô hiệu hóa trạng thái của dịch vụ (Manage Service)
+ * 
+ * Date: 01/6/2026
+ * @author DINH KHANH
+ */
 @WebServlet(name = "ServiceController", urlPatterns = {"/manager/services"})
 public class ServiceController extends HttpServlet {
 
@@ -27,19 +41,27 @@ public class ServiceController extends HttpServlet {
                 serviceId = Integer.parseInt(idParam.trim());
             }
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/manager/dashboard?tab=services");
+            response.sendRedirect(request.getContextPath() + "/manager/services");
             return;
         }
 
         if ("delete".equalsIgnoreCase(action) && serviceId != -1) {
             hotelServiceService.deleteService(serviceId);
+            response.sendRedirect(request.getContextPath() + "/manager/services?success=deleted");
+            return;
         } else if ("toggle".equalsIgnoreCase(action) && serviceId != -1) {
             String statusParam = request.getParameter("status");
             boolean isActive = "true".equalsIgnoreCase(statusParam);
             hotelServiceService.toggleServiceStatus(serviceId, isActive);
+            // Since toggle is called via AJAX fetch, we can just return a redirect or 200 OK.
+            // Redirecting to list path works fine and is consistent.
+            response.sendRedirect(request.getContextPath() + "/manager/services");
+            return;
         }
 
-        response.sendRedirect(request.getContextPath() + "/manager/dashboard?tab=services");
+        List<HotelService> servicesList = hotelServiceService.getAllServices();
+        request.setAttribute("servicesList", servicesList);
+        request.getRequestDispatcher("/WEB-INF/views/manager/services/list.jsp").forward(request, response);
     }
 
     @Override
@@ -70,7 +92,7 @@ public class ServiceController extends HttpServlet {
             if (name == null || name.isEmpty() ||
                 price <= 0 ||
                 unit == null || unit.isEmpty()) {
-                response.sendRedirect(request.getContextPath() + "/manager/dashboard?tab=services&error=invalidData");
+                response.sendRedirect(request.getContextPath() + "/manager/services?error=invalidData");
                 return;
             }
 
@@ -89,9 +111,30 @@ public class ServiceController extends HttpServlet {
                 }
             }
 
+            // Duplicate Service Name validation
+            if (name != null && !name.isEmpty()) {
+                List<HotelService> existingServices = hotelServiceService.getAllServices();
+                boolean isDuplicate = false;
+                for (HotelService existing : existingServices) {
+                    if (existing.getServiceName().trim().equalsIgnoreCase(name.trim())) {
+                        if (service.getServiceId() <= 0) {
+                            isDuplicate = true;
+                            break;
+                        } else if (existing.getServiceId() != service.getServiceId()) {
+                            isDuplicate = true;
+                            break;
+                        }
+                    }
+                }
+                if (isDuplicate) {
+                    response.sendRedirect(request.getContextPath() + "/manager/services?error=duplicateName");
+                    return;
+                }
+            }
+
             hotelServiceService.saveService(service);
         }
 
-        response.sendRedirect(request.getContextPath() + "/manager/dashboard?tab=services");
+        response.sendRedirect(request.getContextPath() + "/manager/services?success=saved");
     }
 }

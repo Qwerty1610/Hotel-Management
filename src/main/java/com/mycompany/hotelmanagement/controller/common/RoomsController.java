@@ -10,6 +10,17 @@ import jakarta.servlet.http.HttpServletResponse;
 import com.mycompany.hotelmanagement.service.RoomTypeService;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 
+/**
+ * RoomsController
+ * URL: /rooms
+ *
+ * Xử lý các hành động:
+ *   - Xem danh sách loại phòng (View Room Type)
+ *   - Tìm kiếm phòng trống theo bộ lọc loại phòng, số khách và khoảng giá (Search Available Room)
+ * 
+ * Date: 01/6/2026
+ * @author DINH KHANH
+ */
 @WebServlet(name = "RoomsController", urlPatterns = {"/rooms"})
 public class RoomsController extends HttpServlet {
 

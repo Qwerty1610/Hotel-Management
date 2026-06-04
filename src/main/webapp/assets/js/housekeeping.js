@@ -86,7 +86,7 @@ function applyStatusFilter(status, event) {
                         <div class="room-item ${getStatusClass(r.status)}"
                              data-room-status="${r.status}"
                              data-room-id="${r.id}"
-                             onclick="goTaskDetail(${r.id})">
+                             onclick="goTaskDetail('${r.id}')">
 
                             <div class="dirty-dot"></div>
                             <span class="room-num">${r.number}</span>
