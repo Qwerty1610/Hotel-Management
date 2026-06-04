@@ -15,12 +15,12 @@ public class HouseKeepingTaskController extends HttpServlet {
     protected void doPost(HttpServletRequest request,
             HttpServletResponse response)
             throws ServletException, IOException {
-
+        String status = request.getParameter("status");
         int roomId = Integer.parseInt(request.getParameter("roomId"));
 
         HousekeepingDAO dao = new HousekeepingDAO();
 
-        dao.completeCleaning(roomId);
+        dao.updateRoomStatus(roomId, status);
 
         response.sendRedirect(
             request.getContextPath()

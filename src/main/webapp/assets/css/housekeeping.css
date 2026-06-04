@@ -67,28 +67,98 @@
     gap: 8px;
     transition: all 0.2s ease;
 }
+/* ===================================================
+   SỬA LỖI MẤT CHẤM TRÒN (BEFORE) CHO NÚT ALL & OCCUPIED
+=================================================== */
+
+/* Màu mặc định cho chấm tròn nếu không khớp trạng thái nào */
 .btn-filter::before {
     content: '';
     display: inline-block;
     width: 10px;
     height: 10px;
     border-radius: 50%;
+    background: #cbd5e1; /* Màu xám nhạt mặc định */
 }
-/* Đổ màu chấm tròn nhỏ cho các nút lọc */
-.btn-filter[onclick*="OCCUPIED"]::before { background: #64748b; }
-.btn-filter[onclick*="Available"]::before { background: #2563eb; } /* Vacant Clean */
-.btn-filter[onclick*="Cleaning"]::before { background: #ef4444; } /* Dirty */
-.btn-filter[onclick*="Completed"]::before { background: #10b981; } /* Cleaned */
-.btn-filter[onclick*="Maintenance"]::before { background: #f59e0b; } /* Maintenance */
+
+/* Đổ màu chuẩn xác dựa trên data-status (Thay thế hoàn toàn cấu hình cũ) */
+.btn-filter[data-status="ALL"]::before { background: #111827; }          /* Đen đậm */
+.btn-filter[data-status="Occupied"]::before { background: #64748b; }     /* Xám Đậm */
+.btn-filter[data-status="Available"]::before { background: #2563eb; }    /* Xanh Dương */
+.btn-filter[data-status="Cleaning"]::before { background: #f59e0b; }     /* Vàng Cam */
+.btn-filter[data-status="Maintenance"]::before { background: #ef4444; }  /* Đỏ */
 
 .btn-filter:hover {
     background: #f8fafc;
-    border-color: #cbd5e1;
 }
-.btn-filter.active {
-    background: #1e293b;
+
+.btn-filter[data-status="ALL"]:hover {
+    border-color: #111827;
+    color: #111827;
+    background-color: #f8fafc;
+}
+
+.btn-filter[data-status="Occupied"]:hover {
+    border-color: #64748b;
+    color: #64748b;
+    background-color: #f8fafc;
+}
+
+.btn-filter[data-status="Available"]:hover {
+    border-color: #2563eb;
+    color: #2563eb;
+    background-color: #eff6ff;
+}
+
+.btn-filter[data-status="Cleaning"]:hover {
+    border-color: #f97316;
+    color: #f97316;
+    background-color: #fff7ed;
+}
+
+.btn-filter[data-status="Maintenance"]:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+    background-color: #fef2f2;
+}
+
+.btn-filter.active:hover {
+    color: #ffffff !important;
+}
+.btn-filter.active[data-status="ALL"]:hover { background: #111827; }
+.btn-filter.active[data-status="Occupied"]:hover { background: #64748b; }
+.btn-filter.active[data-status="Available"]:hover { background: #2563eb; }
+.btn-filter.active[data-status="Cleaning"]:hover { background: #f97316; }
+.btn-filter.active[data-status="Maintenance"]:hover { background: #ef4444; }
+
+.btn-filter.active[data-status="ALL"] {
+    background: #111827;
     color: #ffffff;
-    border-color: #1e293b;
+    border-color: #111827;
+}
+
+.btn-filter.active[data-status="Occupied"] {
+    background: #64748b;
+    color: #ffffff;
+    border-color: #64748b;
+}
+
+.btn-filter.active[data-status="Available"] {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+
+.btn-filter.active[data-status="Cleaning"] {
+    background: #f97316;
+    color: #ffffff;
+    border-color: #f97316;
+}
+
+.btn-filter.active[data-status="Maintenance"] {
+    background: #ef4444;
+    color: #ffffff;
+    border-color: #ef4444;
 }
 .btn-filter.active::before {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
@@ -101,6 +171,12 @@
     display: flex;
     flex-direction: column;
     gap: 36px;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.floor-container.is-ready {
+    opacity: 1;
 }
 .floor-card {
     background: transparent;
@@ -189,8 +265,7 @@
     height: 5px;
 }
 
-/* Dot tròn nhỏ ở góc phải (Chỉ hiển thị khi phòng Cần dọn dẹp - DIRTY) */
-.room-item .dirty-dot {
+.room-item .maintenance-dot {
     display: none;
     position: absolute;
     top: 12px;
@@ -198,10 +273,18 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    border: 1px solid #ef4444;
-    background: #ffffff;
+    background: #ef4444;
 }
 
+.room-item.status-maintenance .maintenance-dot {
+    display: block;
+    animation: maintenanceBlink 1.8s ease-in-out infinite;
+}
+
+@keyframes maintenanceBlink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.3; transform: scale(1.25); }
+}
 .room-num {
     font-size: 26px;
     font-weight: 800;
@@ -230,21 +313,15 @@
 .status-available::after { background: #2563eb; }
 .status-available .room-num { color: #2563eb; }
 
-/* DIRTY / CLEANING (Đỏ) */
-.status-cleaning { border-color: #fecaca; }
-.status-cleaning::after { background: #ef4444; }
-.status-cleaning .room-num { color: #ef4444; }
-.status-cleaning .dirty-dot { display: block; } /* Hiện dot tròn đỏ */
-
-/* CLEANED / COMPLETED (Xanh Lá) */
-.status-completed { border-color: #a7f3d0; }
-.status-completed::after { background: #10b981; }
-.status-completed .room-num { color: #059669; }
-
-/* MAINTENANCE (Vàng Gạch) */
-.status-maintenance { border-color: #fde68a; }
-.status-maintenance::after { background: #f59e0b; }
-.status-maintenance .room-num { color: #b45309; }
+/* CLEANING (Cam) */
+.status-cleaning { border-color: #fed7aa;}
+.status-cleaning::after { background: #f97316;}
+.status-cleaning .room-num { color: #ea580c;}
+.status-cleaning .dirty-dot { display: block;  border-color: #f97316; }
+/* MAINTENANCE (Đỏ) */
+.status-maintenance { border-color: #fecaca; }
+.status-maintenance::after { background: #ef4444; }
+.status-maintenance .room-num { color: #dc2626; }
 
 /* =========================
    WORKSPACE GLOBAL MODS
@@ -373,4 +450,64 @@
     color: #fff;
     opacity: 0.85;
     cursor: not-allowed;
+}
+.task-action form.task-form {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    width: 100%;
+}
+.status-update-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.status-select {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    min-width: 200px;
+    font-weight: 600;
+}
+.task-action .btn-task.success {
+    white-space: nowrap;
+    padding: 10px 18px;
+}
+/* =========================
+   PMS FILTER ANIMATION
+========================= */
+
+.room-item {
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* trạng thái ẩn mượt */
+.room-item.is-hiding {
+    opacity: 0;
+    transform: scale(0.85);
+}
+
+/* trạng thái hiện mượt */
+.room-item.is-showing {
+    opacity: 0;
+    transform: scale(0.85);
+    animation: roomFadeIn 0.35s ease forwards;
+}
+
+@keyframes roomFadeIn {
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* floor animation */
+.floor-card {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.floor-card.is-hiding {
+    opacity: 0;
+    transform: translateY(10px);
 }
