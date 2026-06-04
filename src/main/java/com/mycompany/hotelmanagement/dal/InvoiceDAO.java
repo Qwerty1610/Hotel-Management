@@ -20,6 +20,8 @@ import java.util.List;
  * SUM(Refund.amount).
  *
  * Date: 02/6/2026
+ * version 1.0
+ * @author Pham Quoc Quy
  */
 public class InvoiceDAO {
 

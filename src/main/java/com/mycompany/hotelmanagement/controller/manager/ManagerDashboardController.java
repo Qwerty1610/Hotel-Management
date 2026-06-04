@@ -20,6 +20,19 @@ import com.mycompany.hotelmanagement.service.HotelServiceService;
 import com.mycompany.hotelmanagement.service.RoomTypeService;
 import com.mycompany.hotelmanagement.service.RoomService;
 
+/**
+ * ManagerInvoiceController
+ * Trang riêng quản lý hóa đơn của Manager.
+ *
+ * thay số phòng-đêm đã bán bằng tổng số phòng đã trả và nhận trong thời gian đã chọn
+ * tách biểu đồ doanh thu và công suất phòng thành 2 biểu đồ
+ * 
+ *
+ * Date: 05/6/2026
+ * version 1.1
+ * @author Pham Quoc Quy
+ */
+
 @WebServlet(name = "ManagerDashboardController", urlPatterns = {"/manager/dashboard"})
 public class ManagerDashboardController extends HttpServlet {
 

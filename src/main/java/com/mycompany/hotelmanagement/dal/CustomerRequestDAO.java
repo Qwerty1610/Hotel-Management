@@ -16,6 +16,8 @@ import java.util.List;
  * Truy vấn bảng CustomerRequest phục vụ trang quản lý yêu cầu khách hàng của Manager.
  *
  * Date: 02/6/2026
+ * version 1.0
+ * @author Pham Quoc Quy
  */
 public class CustomerRequestDAO {
 
