@@ -16,9 +16,11 @@ import java.util.Map;
  * DashboardRepository
  * Truy vấn số liệu doanh thu và công suất phòng cho trang Tổng quan của Manager.
  * Mọi truy vấn doanh thu chỉ tính các đơn đã ghi nhận (Confirmed / CheckedIn / CheckedOut),
- * loại bỏ Pending / Rejected / Cancelled.
+ * 
  *
  * Date: 02/6/2026
+ * version 1.0
+ * @author Pham Quoc Quy
  */
 public class DashboardRepository {
 
@@ -76,6 +78,40 @@ public class DashboardRepository {
                 "FROM dbo.Booking b " +
                 "WHERE " + REVENUE_STATUS_IN +
                 "  AND b.check_in_date BETWEEN ? AND ?";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setDate(1, from);
+                ps.setDate(2, to);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    /** Tổng số phòng đã nhận (check-in) trong khoảng [from, to]. */
+    public int getCheckInRooms(Date from, Date to) {
+        String sql = "SELECT ISNULL(SUM(b.room_quantity), 0) " +
+                "FROM dbo.Booking b " +
+                "WHERE " + REVENUE_STATUS_IN +
+                "  AND b.check_in_date BETWEEN ? AND ?";
+        return countRoomsByDate(sql, from, to);
+    }
+
+    /** Tổng số phòng đã trả (check-out) trong khoảng [from, to]. */
+    public int getCheckOutRooms(Date from, Date to) {
+        String sql = "SELECT ISNULL(SUM(b.room_quantity), 0) " +
+                "FROM dbo.Booking b " +
+                "WHERE " + REVENUE_STATUS_IN +
+                "  AND b.check_out_date BETWEEN ? AND ?";
+        return countRoomsByDate(sql, from, to);
+    }
+
+    private int countRoomsByDate(String sql, Date from, Date to) {
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {

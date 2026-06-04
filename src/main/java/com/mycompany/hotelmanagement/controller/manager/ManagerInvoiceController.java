@@ -21,6 +21,8 @@ import java.io.IOException;
  * POST /manager/invoices?action=refund    -> hoàn tiền (invoiceId, amount, reason)
  *
  * Date: 02/6/2026
+ * version 1.0
+ * @author Pham Quoc Quy
  */
 @WebServlet(name = "ManagerInvoiceController", urlPatterns = {"/manager/invoices"})
 public class ManagerInvoiceController extends HttpServlet {

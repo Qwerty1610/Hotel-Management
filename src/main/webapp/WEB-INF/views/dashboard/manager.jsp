@@ -75,8 +75,8 @@
                             </form>
                         </div>
 
-                        <!-- THẺ KPI -->
-                        <div class="stat-grid">
+                        <!-- THẺ KPI - hàng 1: doanh thu / công suất / lượt đặt -->
+                        <div class="stat-grid stat-grid-3">
                             <div class="stat-card">
                                 <div class="stat-icon icon-revenue"><i class="fa-solid fa-sack-dollar"></i></div>
                                 <div class="stat-body">
@@ -104,30 +104,52 @@
                                     </span>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- THẺ KPI - hàng 2: phòng đã nhận / đã trả (cùng hàng) -->
+                        <div class="stat-grid stat-grid-2">
                             <div class="stat-card">
-                                <div class="stat-icon icon-nights"><i class="fa-solid fa-bed"></i></div>
+                                <div class="stat-icon icon-checkin"><i class="fa-solid fa-right-to-bracket"></i></div>
                                 <div class="stat-body">
-                                    <span class="stat-label">Số đêm-phòng đã bán</span>
+                                    <span class="stat-label">Phòng đã nhận</span>
                                     <span class="stat-value">
-                                        <fmt:formatNumber value="${stats.roomNightsSold}" type="number" />
-                                        <span class="stat-suffix">/ ${stats.totalRooms} phòng</span>
+                                        <fmt:formatNumber value="${stats.checkInRooms}" type="number" />
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon icon-checkout"><i class="fa-solid fa-right-from-bracket"></i></div>
+                                <div class="stat-body">
+                                    <span class="stat-label">Phòng đã trả</span>
+                                    <span class="stat-value">
+                                        <fmt:formatNumber value="${stats.checkOutRooms}" type="number" />
                                     </span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- BIỂU ĐỒ DOANH THU & CÔNG SUẤT THEO NGÀY -->
-                        <div class="chart-card chart-full">
-                            <div class="chart-card-header">
-                                <h3>Doanh thu &amp; công suất phòng theo ngày</h3>
+                        <!-- BIỂU ĐỒ DOANH THU (CỘT) & CÔNG SUẤT (ĐƯỜNG) - TÁCH RIÊNG -->
+                        <div class="chart-grid">
+                            <div class="chart-card">
+                                <div class="chart-card-header">
+                                    <h3>Doanh thu theo ngày</h3>
+                                </div>
+                                <div class="chart-canvas-wrap">
+                                    <canvas id="revenueChart"></canvas>
+                                </div>
                             </div>
-                            <div class="chart-canvas-wrap">
-                                <canvas id="revenueOccupancyChart"></canvas>
+                            <div class="chart-card">
+                                <div class="chart-card-header">
+                                    <h3>Công suất phòng theo ngày</h3>
+                                </div>
+                                <div class="chart-canvas-wrap">
+                                    <canvas id="occupancyChart"></canvas>
+                                </div>
                             </div>
                         </div>
 
                         <!-- BIỂU ĐỒ PHÂN TÍCH -->
-                        <div class="chart-grid">
+                        <div class="chart-grid" style="margin-top:24px;">
                             <div class="chart-card">
                                 <div class="chart-card-header">
                                     <h3>Doanh thu theo loại phòng</h3>
@@ -201,64 +223,70 @@
                 document.querySelector(".date-filter-form").submit();
             }
 
-            // ----- Biểu đồ doanh thu & công suất theo ngày -----
-            new Chart(document.getElementById("revenueOccupancyChart"), {
+            // ----- Biểu đồ doanh thu theo ngày (CỘT) -----
+            new Chart(document.getElementById("revenueChart"), {
+                type: 'bar',
                 data: {
                     labels: dayLabels,
-                    datasets: [
-                        {
-                            type: 'bar',
-                            label: 'Doanh thu (đ)',
-                            data: dayRevenue,
-                            backgroundColor: 'rgba(0, 86, 179, 0.7)',
-                            borderRadius: 4,
-                            yAxisID: 'yRevenue',
-                            order: 2
-                        },
-                        {
-                            type: 'line',
-                            label: 'Công suất (%)',
-                            data: dayOccupancy,
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                            borderWidth: 2,
-                            tension: 0.35,
-                            fill: true,
-                            yAxisID: 'yOccupancy',
-                            order: 1
-                        }
-                    ]
+                    datasets: [{
+                        label: 'Doanh thu (đ)',
+                        data: dayRevenue,
+                        backgroundColor: 'rgba(0, 86, 179, 0.7)',
+                        borderRadius: 4
+                    }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
                     plugins: {
-                        legend: { position: 'top' },
+                        legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                label: function(ctx) {
-                                    if (ctx.dataset.yAxisID === 'yOccupancy') {
-                                        return ' Công suất: ' + ctx.parsed.y + '%';
-                                    }
-                                    return ' Doanh thu: ' + vnCurrency.format(ctx.parsed.y) + ' đ';
-                                }
+                                label: ctx => ' Doanh thu: ' + vnCurrency.format(ctx.parsed.y) + ' đ'
                             }
                         }
                     },
                     scales: {
-                        yRevenue: {
-                            position: 'left',
+                        y: {
                             beginAtZero: true,
-                            title: { display: true, text: 'Doanh thu (đ)' },
                             ticks: { callback: v => vnCurrency.format(v) }
-                        },
-                        yOccupancy: {
-                            position: 'right',
+                        }
+                    }
+                }
+            });
+
+            // ----- Biểu đồ công suất phòng theo ngày (ĐƯỜNG) -----
+            new Chart(document.getElementById("occupancyChart"), {
+                type: 'line',
+                data: {
+                    labels: dayLabels,
+                    datasets: [{
+                        label: 'Công suất (%)',
+                        data: dayOccupancy,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                        borderWidth: 2,
+                        tension: 0.35,
+                        fill: true,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#10b981'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => ' Công suất: ' + ctx.parsed.y + '%'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
                             beginAtZero: true,
                             max: 100,
-                            title: { display: true, text: 'Công suất (%)' },
-                            grid: { drawOnChartArea: false },
                             ticks: { callback: v => v + '%' }
                         }
                     }
