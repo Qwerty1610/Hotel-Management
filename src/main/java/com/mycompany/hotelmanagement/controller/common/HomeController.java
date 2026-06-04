@@ -2,6 +2,8 @@ package com.mycompany.hotelmanagement.controller.common;
 
 import com.mycompany.hotelmanagement.dal.RoomTypeRepository;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
+import com.mycompany.hotelmanagement.dal.HotelServiceRepository;
+import com.mycompany.hotelmanagement.entity.HotelService;
 import java.io.IOException;
 import java.util.List;
 import jakarta.servlet.ServletException;
@@ -11,7 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 // Cấu hình khi người dùng truy cập trang chủ qua url "/" hoặc "/home"
-@WebServlet(name = "HomeController", urlPatterns = { "", "/home" })
+@WebServlet(name = "HomeController", urlPatterns = {"", "/home"})
 public class HomeController extends HttpServlet {
 
     @Override
@@ -21,6 +23,21 @@ public class HomeController extends HttpServlet {
         RoomTypeRepository repo = new RoomTypeRepository();
 
         List<RoomTypeInfo> roomTypes = repo.getAllRoomTypes();
+
+        HotelServiceRepository serviceRepo = new HotelServiceRepository();
+
+        List<HotelService> services = serviceRepo.getActiveServices();
+        System.out.println("Services count = " + services.size());
+
+        for (HotelService s : services) {
+            System.out.println(s.getServiceName());
+        }
+
+        if (services.size() > 4) {
+            services = services.subList(0, 4);
+        }
+
+        request.setAttribute("services", services);
 
         // lấy ảnh đại diện
         roomTypes.forEach(room -> {

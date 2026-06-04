@@ -9,7 +9,7 @@
 
     <!-- Header Navigation (White Background Premium Style) -->
     <nav class="navbar-rooms">
-        <div class="logo">HotelOps</div>
+        <a href="${pageContext.request.contextPath}/" class="logo">HotelOps</a>
         <ul class="nav-links">
             <li><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
             <li><a href="${pageContext.request.contextPath}/#gioi-thieu">Giới thiệu</a></li>
