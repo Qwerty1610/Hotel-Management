@@ -508,8 +508,8 @@
                     </div>
                     
                     <div class="modal-form-group">
-                        <label for="modalRtDescription">Mô tả loại phòng</label>
-                        <textarea id="modalRtDescription" name="description" class="modal-textarea" placeholder="Nhập mô tả chi tiết..." required></textarea>
+                        <label for="modalRtDescription">Mô tả loại phòng <span style="font-weight: normal; color: var(--text-muted); font-size: 11px;">(Tùy chọn)</span></label>
+                        <textarea id="modalRtDescription" name="description" class="modal-textarea" placeholder="Nhập mô tả chi tiết..."></textarea>
                     </div>
                     
                     <div class="modal-form-group">
@@ -1266,10 +1266,16 @@
                     return;
                 }
 
-                // 4. Loại giường không được để trống
+                // 4. Loại giường không được để trống và không được chứa số
                 if (bedTypeVal === "") {
                     e.preventDefault();
                     bedTypeInput.setCustomValidity("Please fill out this field.");
+                    bedTypeInput.reportValidity();
+                    return;
+                }
+                if (/\d/.test(bedTypeVal)) {
+                    e.preventDefault();
+                    bedTypeInput.setCustomValidity("Please input the correct format.");
                     bedTypeInput.reportValidity();
                     return;
                 }
@@ -1296,13 +1302,7 @@
                     return;
                 }
 
-                // 7. Mô tả loại phòng không được để trống (kể cả chứa toàn dấu cách)
-                if (descriptionVal === "") {
-                    e.preventDefault();
-                    descriptionInput.setCustomValidity("Please fill out this field.");
-                    descriptionInput.reportValidity();
-                    return;
-                }
+                // 7. Mô tả loại phòng - không bắt buộc
             });
 
             // Initial load of the table
