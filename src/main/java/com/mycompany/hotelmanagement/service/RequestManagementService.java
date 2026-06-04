@@ -12,6 +12,8 @@ import java.util.List;
  * Tầng nghiệp vụ cho trang "Quản lý yêu cầu khách hàng & theo dõi công việc nhân viên".
  *
  * Date: 02/6/2026
+ * version 1.0
+ * @author Pham Quoc Quy
  */
 public class RequestManagementService {
 

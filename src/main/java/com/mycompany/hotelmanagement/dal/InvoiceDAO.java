@@ -36,7 +36,9 @@ public class InvoiceDAO {
     private static final String BASE_SELECT =
             "SELECT i.invoice_id, i.booking_id, i.customer_name, i.room_number, i.status, i.created_at, " +
             "  (SELECT ISNULL(SUM(ii.amount),0) FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id) AS total_amount, " +
-            "  (SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id) AS refunded_amount " +
+            "  (SELECT ISNULL(SUM(ii.amount),0) * 0.3 FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id AND ii.item_type = N'Room') AS deposit_amount, " +
+            "  (SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Done') AS refunded_amount, " +
+            "  (SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Pending') AS pending_refund_amount " +
             "FROM dbo.Invoice i ";
 
     /** Toàn bộ hóa đơn, sắp xếp mặc định theo ngày tạo (mới nhất trước). */
@@ -102,14 +104,26 @@ public class InvoiceDAO {
         return list;
     }
 
+    /** Lịch sử hoàn tiền (các khoản đã xác nhận hoàn — status = Done). */
     public List<Refund> getRefunds(int invoiceId) {
+        return getRefundsByStatus(invoiceId, "Done", "confirmed_at");
+    }
+
+    /** Các khoản đang chờ hoàn (status = Pending). */
+    public List<Refund> getPendingRefunds(int invoiceId) {
+        return getRefundsByStatus(invoiceId, "Pending", "created_at");
+    }
+
+    private List<Refund> getRefundsByStatus(int invoiceId, String status, String orderCol) {
         List<Refund> list = new ArrayList<>();
-        String sql = "SELECT refund_id, invoice_id, amount, reason, created_at " +
-                "FROM dbo.Refund WHERE invoice_id = ? ORDER BY created_at DESC, refund_id DESC";
+        String sql = "SELECT refund_id, invoice_id, amount, reason, status, created_at, confirmed_at " +
+                "FROM dbo.Refund WHERE invoice_id = ? AND status = ? " +
+                "ORDER BY " + orderCol + " DESC, refund_id DESC";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setInt(1, invoiceId);
+                ps.setString(2, status);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         Refund rf = new Refund();
@@ -117,7 +131,9 @@ public class InvoiceDAO {
                         rf.setInvoiceId(rs.getInt("invoice_id"));
                         rf.setAmount(rs.getDouble("amount"));
                         rf.setReason(rs.getString("reason"));
+                        rf.setStatus(rs.getString("status"));
                         rf.setCreatedAt(rs.getTimestamp("created_at"));
+                        rf.setConfirmedAt(rs.getTimestamp("confirmed_at"));
                         list.add(rf);
                     }
                 }
@@ -172,11 +188,11 @@ public class InvoiceDAO {
     }
 
     /**
-     * Ghi nhận một khoản hoàn tiền và chuyển hóa đơn sang trạng thái Refunded.
+     * Thêm một khoản CHỜ HOÀN (status = Pending) và chuyển hóa đơn sang trạng thái Refunding.
      */
-    public boolean addRefund(int invoiceId, double amount, String reason) {
-        String insert = "INSERT INTO dbo.Refund (invoice_id, amount, reason) VALUES (?, ?, ?)";
-        String update = "UPDATE dbo.Invoice SET status = N'Refunded', updated_at = SYSDATETIME() WHERE invoice_id = ?";
+    public boolean addPendingRefund(int invoiceId, double amount, String reason) {
+        String insert = "INSERT INTO dbo.Refund (invoice_id, amount, reason, status) VALUES (?, ?, ?, N'Pending')";
+        String update = "UPDATE dbo.Invoice SET status = N'Refunding', updated_at = SYSDATETIME() WHERE invoice_id = ?";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             conn.setAutoCommit(false);
@@ -190,6 +206,61 @@ public class InvoiceDAO {
                 try (PreparedStatement ps = conn.prepareStatement(update)) {
                     ps.setInt(1, invoiceId);
                     ps.executeUpdate();
+                }
+                conn.commit();
+                return true;
+            } catch (SQLException ex) {
+                conn.rollback();
+                throw ex;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Xác nhận đã hoàn cho các khoản chờ hoàn (chuyển status sang Done, ghi confirmed_at).
+     * Sau khi xác nhận, nếu hóa đơn không còn khoản Pending nào thì chuyển về Pending
+     * (chưa thanh toán).
+     */
+    public boolean confirmRefunds(int invoiceId, List<Integer> refundIds) {
+        if (refundIds == null || refundIds.isEmpty()) return false;
+
+        StringBuilder placeholders = new StringBuilder();
+        for (int i = 0; i < refundIds.size(); i++) {
+            placeholders.append(i == 0 ? "?" : ", ?");
+        }
+        String update = "UPDATE dbo.Refund SET status = N'Done', confirmed_at = SYSDATETIME() " +
+                "WHERE invoice_id = ? AND status = N'Pending' AND refund_id IN (" + placeholders + ")";
+        String countPending = "SELECT COUNT(*) FROM dbo.Refund WHERE invoice_id = ? AND status = N'Pending'";
+        String markSettled = "UPDATE dbo.Invoice SET status = N'Pending', updated_at = SYSDATETIME() WHERE invoice_id = ?";
+
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(update)) {
+                    ps.setInt(1, invoiceId);
+                    for (int i = 0; i < refundIds.size(); i++) {
+                        ps.setInt(i + 2, refundIds.get(i));
+                    }
+                    ps.executeUpdate();
+                }
+                int remaining = 0;
+                try (PreparedStatement ps = conn.prepareStatement(countPending)) {
+                    ps.setInt(1, invoiceId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) remaining = rs.getInt(1);
+                    }
+                }
+                if (remaining == 0) {
+                    try (PreparedStatement ps = conn.prepareStatement(markSettled)) {
+                        ps.setInt(1, invoiceId);
+                        ps.executeUpdate();
+                    }
                 }
                 conn.commit();
                 return true;
@@ -223,7 +294,9 @@ public class InvoiceDAO {
         inv.setStatus(rs.getString("status"));
         inv.setCreatedAt(rs.getTimestamp("created_at"));
         inv.setTotalAmount(rs.getDouble("total_amount"));
+        inv.setDepositAmount(rs.getDouble("deposit_amount"));
         inv.setRefundedAmount(rs.getDouble("refunded_amount"));
+        inv.setPendingRefundAmount(rs.getDouble("pending_refund_amount"));
         return inv;
     }
 }

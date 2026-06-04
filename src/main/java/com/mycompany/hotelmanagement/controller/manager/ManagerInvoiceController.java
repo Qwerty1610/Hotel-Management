@@ -10,6 +10,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * ManagerInvoiceController
@@ -46,6 +48,7 @@ public class ManagerInvoiceController extends HttpServlet {
                 request.setAttribute("invoice", invoice);
                 request.setAttribute("items", service.getItems(id));
                 request.setAttribute("refunds", service.getRefunds(id));
+                request.setAttribute("pendingRefunds", service.getPendingRefunds(id));
                 request.getRequestDispatcher("/WEB-INF/views/manager/invoice-detail.jsp")
                         .forward(request, response);
                 return;
@@ -79,7 +82,9 @@ public class ManagerInvoiceController extends HttpServlet {
             } else if ("refund".equalsIgnoreCase(action)) {
                 double amount = parseDoubleOr(request.getParameter("amount"), -1);
                 String reason = request.getParameter("reason");
-                service.addRefund(invoiceId, amount, reason);
+                service.addPendingRefund(invoiceId, amount, reason);
+            } else if ("confirmRefunds".equalsIgnoreCase(action)) {
+                service.confirmRefunds(invoiceId, parseIds(request.getParameter("refundIds")));
             }
         } catch (NumberFormatException e) {
             // Tham số không hợp lệ -> bỏ qua
@@ -98,5 +103,19 @@ public class ManagerInvoiceController extends HttpServlet {
 
     private double parseDoubleOr(String v, double fallback) {
         try { return Double.parseDouble(v.trim()); } catch (Exception e) { return fallback; }
+    }
+
+    /** Tách chuỗi id ngăn cách bởi dấu phẩy (vd "3,5,8") thành danh sách số nguyên. */
+    private List<Integer> parseIds(String csv) {
+        List<Integer> ids = new ArrayList<>();
+        if (csv == null) return ids;
+        for (String part : csv.split(",")) {
+            try {
+                ids.add(Integer.parseInt(part.trim()));
+            } catch (NumberFormatException ignored) {
+                // bỏ qua phần tử không hợp lệ
+            }
+        }
+        return ids;
     }
 }

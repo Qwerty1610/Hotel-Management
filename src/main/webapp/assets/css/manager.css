@@ -1369,4 +1369,85 @@ input:checked + .slider:before {
     transform: translateY(-1px);
 }
 
+/* Thẻ "Số tiền chờ hoàn" (hóa đơn Refunding) */
+.refund-pending-card { border-left: 4px solid #ea580c; }
+.refund-pending-body { padding: 10px 24px 20px; }
+.pending-amount {
+    display: block;
+    font-size: 26px;
+    font-weight: 800;
+    color: #ea580c;
+}
+.pending-reason-label {
+    display: block;
+    margin-top: 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+.pending-reason {
+    margin: 4px 0 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-navy-light);
+}
+
+/* Danh sách khoản chờ hoàn + thao tác xác nhận */
+.pending-total-badge {
+    margin-left: auto;
+    background: #fff7ed;
+    color: #ea580c;
+    font-size: 14px;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 999px;
+}
+.pending-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+.pending-checkall {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-navy-light);
+    cursor: pointer;
+}
+.btn-confirm-refund {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--success-green);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-confirm-refund:hover { background: #059669; }
+.btn-confirm-one {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    color: var(--success-green);
+    border: 1px solid var(--success-green);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-confirm-one:hover { background: #ecfdf5; }
+
 
