@@ -9,6 +9,8 @@ import java.util.List;
  * doanh thu, công suất phòng và các phân tích theo ngày / loại phòng / trạng thái.
  *
  * Date: 02/6/2026
+ * ver 1.0
+ * @author Phạm Quốc Quý
  */
 public class DashboardStats {
 

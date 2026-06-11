@@ -22,8 +22,10 @@ import java.util.List;
  * POST /manager/invoices?action=surcharge -> thêm phụ phí (invoiceId, description, quantity, unitPrice)
  * POST /manager/invoices?action=refund    -> hoàn tiền (invoiceId, amount, reason)
  *
- * Date: 02/6/2026
- * version 1.0
+ * Thay xử lý render trang từ FE xuống BE
+ * 
+ * Date: 11/6/2026
+ * version 1.1
  * @author Pham Quoc Quy
  */
 @WebServlet(name = "ManagerInvoiceController", urlPatterns = {"/manager/invoices"})
@@ -58,10 +60,30 @@ public class ManagerInvoiceController extends HttpServlet {
             }
         }
 
-        // Trang danh sách
-        request.setAttribute("invoices", service.getAllInvoices());
+        // Trang danh sách (lọc + phân trang server-side)
+        String keyword = request.getParameter("q");
+        String status = request.getParameter("status");
+        if (status == null || status.trim().isEmpty()) status = "all";
+
+        final int pageSize = 8;
+        int page = parseIntOr(request.getParameter("page"), 1);
+        if (page < 1) page = 1;
+
+        int totalItems = service.countInvoices(keyword, status);
+        int totalPages = (int) Math.ceil(totalItems / (double) pageSize);
+        if (totalPages < 1) totalPages = 1;
+        if (page > totalPages) page = totalPages;
+        int offset = (page - 1) * pageSize;
+
+        request.setAttribute("invoices", service.getInvoices(keyword, status, offset, pageSize));
         request.setAttribute("unpaidTotal", service.getUnpaidTotal());
         request.setAttribute("refundingTotal", service.getRefundingTotal());
+        request.setAttribute("q", keyword == null ? "" : keyword);
+        request.setAttribute("statusFilter", status);
+        request.setAttribute("page", page);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("totalItems", totalItems);
+        request.setAttribute("pageSize", pageSize);
         request.getRequestDispatcher("/WEB-INF/views/manager/invoices.jsp")
                 .forward(request, response);
     }

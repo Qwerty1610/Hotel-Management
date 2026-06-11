@@ -7,7 +7,11 @@ import java.sql.Timestamp;
  * Hóa đơn (header). Tổng tiền = SUM(InvoiceItem.amount), tổng đã hoàn = SUM(Refund.amount),
  * đều được tính khi truy vấn nên là trường dẫn xuất.
  *
- * Date: 02/6/2026
+ * Chỉnh sửa điều kiện trong getRefundableAmount để tránh việc hoàn tiền khiến hóa đơn bị âm
+ * 
+ * Date: 11/6/2026
+ * ver 1.1
+ * @author Phạm Quốc Quý
  */
 public class Invoice {
 
@@ -55,13 +59,20 @@ public class Invoice {
     public double getPendingRefundAmount()       { return pendingRefundAmount; }
     public void setPendingRefundAmount(double v) { this.pendingRefundAmount = v; }
 
-    /** Thực thu = tổng cộng − tiền cọc đã trả − phần đã hoàn. */
+    /** Thực thu = tổng cộng − tiền cọc đã trả − phần đã hoàn (không nhỏ hơn 0). */
     public double getNetAmount() {
-        return totalAmount - depositAmount - refundedAmount;
+        double net = totalAmount - depositAmount - refundedAmount;
+        return net > 0 ? net : 0;
     }
 
-    /** Số tiền còn có thể tạo khoản hoàn = tổng − đã hoàn − đang chờ hoàn. */
+    /**
+     * Số tiền còn có thể tạo khoản hoàn.
+     * Giới hạn để TỔNG hoàn (đã hoàn + đang chờ) không vượt quá (Tổng − Tiền cọc),
+     * tức là Thực thu không bao giờ bị âm.
+     * = Tổng − Tiền cọc − Đã hoàn − Đang chờ hoàn (kẹp về 0).
+     */
     public double getRefundableAmount() {
-        return totalAmount - refundedAmount - pendingRefundAmount;
+        double r = totalAmount - depositAmount - refundedAmount - pendingRefundAmount;
+        return r > 0 ? r : 0;
     }
 }

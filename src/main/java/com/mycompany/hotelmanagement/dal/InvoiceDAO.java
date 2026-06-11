@@ -19,8 +19,13 @@ import java.util.List;
  * Tổng tiền hóa đơn được tính bằng subquery SUM(InvoiceItem.amount); tổng đã hoàn bằng
  * SUM(Refund.amount).
  *
+ * Thêm 3 hàm hỗ trợ việc render các danh sách:
+ * buildWhere: xây dựng câu lệnh điều kiện để lọc các hóa đơn theo input của người dùng
+ * getInvoices: lấy hóa đơn theo bộ lọc buildWhere
+ * countInvoices: đếm tổng hóa đơn theo bộ lọc buildWhere để phân trang
+ * 
  * Date: 02/6/2026
- * version 1.0
+ * version 1.1
  * @author Pham Quoc Quy
  */
 public class InvoiceDAO {
@@ -57,6 +62,69 @@ public class InvoiceDAO {
             e.printStackTrace();
         }
         return list;
+    }
+
+    /** Xây mệnh đề WHERE lọc theo từ khóa (mã/khách/phòng) và trạng thái. */
+    private String buildWhere(String keyword, String status, List<Object> params) {
+        StringBuilder w = new StringBuilder(" WHERE 1 = 1 ");
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String kw = "%" + keyword.trim() + "%";
+            String digits = keyword.replaceAll("\\D", "").replaceFirst("^0+", "");
+            w.append(" AND (i.customer_name LIKE ? OR i.room_number LIKE ?");
+            params.add(kw);
+            params.add(kw);
+            if (!digits.isEmpty()) {
+                w.append(" OR CAST(i.invoice_id AS NVARCHAR(20)) LIKE ?");
+                params.add("%" + digits + "%");
+            }
+            w.append(") ");
+        }
+        if (status != null && !status.trim().isEmpty() && !"all".equalsIgnoreCase(status)) {
+            w.append(" AND i.status = ? ");
+            params.add(status);
+        }
+        return w.toString();
+    }
+
+    /** Một trang hóa đơn theo bộ lọc, sắp xếp theo ngày tạo mới nhất. */
+    public List<Invoice> getInvoices(String keyword, String status, int offset, int pageSize) {
+        List<Invoice> list = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+        String sql = BASE_SELECT + buildWhere(keyword, status, params)
+                + " ORDER BY i.created_at DESC, i.invoice_id DESC "
+                + " OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+        params.add(offset);
+        params.add(pageSize);
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                for (int i = 0; i < params.size(); i++) ps.setObject(i + 1, params.get(i));
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) list.add(mapInvoice(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    /** Tổng số hóa đơn khớp bộ lọc (để phân trang). */
+    public int countInvoices(String keyword, String status) {
+        List<Object> params = new ArrayList<>();
+        String sql = "SELECT COUNT(*) FROM dbo.Invoice i" + buildWhere(keyword, status, params);
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                for (int i = 0; i < params.size(); i++) ps.setObject(i + 1, params.get(i));
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     public Invoice getInvoiceById(int invoiceId) {

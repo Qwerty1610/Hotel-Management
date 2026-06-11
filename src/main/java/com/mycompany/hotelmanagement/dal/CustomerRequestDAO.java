@@ -15,6 +15,14 @@ import java.util.List;
  * CustomerRequestDAO
  * Truy vấn bảng CustomerRequest phục vụ trang quản lý yêu cầu khách hàng của Manager.
  *
+ * thêm 6 hàm để hỗ trợ việc render danh sách từ BE:
+ * buildReqWhere: xây dựng hàm điều kiện theo input của người dùng
+ * getRequests: lấy tất cả request theo bộ lọc
+ * countRequests: đếm tổng request để phân trang
+ * getRequestsByStaff: lấy danh sách công việc đã nhận hoặc được gán của nhân viên theo offset
+ * countRequestsByStaff: tổng số công việc đã nhận của nhân viên
+ * getInProgressByStaff: lấy công việc đang thực hiện của nhân viên
+ * 
  * Date: 02/6/2026
  * version 1.0
  * @author Pham Quoc Quy
@@ -47,6 +55,139 @@ public class CustomerRequestDAO {
                  ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     list.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    /** Xây WHERE lọc yêu cầu theo phòng / ưu tiên / nhân viên / trạng thái. */
+    private String buildReqWhere(String roomKw, String priority, String staffFilter, String status, List<Object> params) {
+        StringBuilder w = new StringBuilder(" WHERE 1 = 1 ");
+        if (roomKw != null && !roomKw.trim().isEmpty()) {
+            w.append(" AND rm.room_number LIKE ? ");
+            params.add("%" + roomKw.trim() + "%");
+        }
+        if (priority != null && !priority.trim().isEmpty() && !"all".equalsIgnoreCase(priority)) {
+            w.append(" AND cr.priority = ? ");
+            params.add(priority);
+        }
+        if (status != null && !status.trim().isEmpty() && !"all".equalsIgnoreCase(status)) {
+            w.append(" AND cr.status = ? ");
+            params.add(status);
+        }
+        if (staffFilter != null && !staffFilter.trim().isEmpty() && !"all".equalsIgnoreCase(staffFilter)) {
+            if ("unassigned".equalsIgnoreCase(staffFilter)) {
+                w.append(" AND cr.assigned_staff_id IS NULL ");
+            } else {
+                try {
+                    int sid = Integer.parseInt(staffFilter.trim());
+                    w.append(" AND cr.assigned_staff_id = ? ");
+                    params.add(sid);
+                } catch (NumberFormatException ignored) {
+                    // bỏ qua giá trị nhân viên không hợp lệ
+                }
+            }
+        }
+        return w.toString();
+    }
+
+    /** Một trang yêu cầu theo bộ lọc, sắp xếp theo thời gian mới nhất. */
+    public List<CustomerRequest> getRequests(String roomKw, String priority, String staffFilter,
+                                             String status, int offset, int pageSize) {
+        List<CustomerRequest> list = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+        String sql = BASE_SELECT + buildReqWhere(roomKw, priority, staffFilter, status, params)
+                + " ORDER BY cr.created_at DESC, cr.request_id DESC "
+                + " OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+        params.add(offset);
+        params.add(pageSize);
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                for (int i = 0; i < params.size(); i++) ps.setObject(i + 1, params.get(i));
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) list.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    /** Tổng số yêu cầu khớp bộ lọc (để phân trang). */
+    public int countRequests(String roomKw, String priority, String staffFilter, String status) {
+        List<Object> params = new ArrayList<>();
+        String sql = "SELECT COUNT(*) FROM dbo.CustomerRequest cr " +
+                "LEFT JOIN dbo.Room rm ON cr.room_id = rm.room_id"
+                + buildReqWhere(roomKw, priority, staffFilter, status, params);
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                for (int i = 0; i < params.size(); i++) ps.setObject(i + 1, params.get(i));
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    /** Một trang công việc đã nhận / được gán của một nhân viên (mọi trạng thái). */
+    public List<CustomerRequest> getRequestsByStaff(int staffId, int offset, int pageSize) {
+        List<CustomerRequest> list = new ArrayList<>();
+        String sql = BASE_SELECT + " WHERE cr.assigned_staff_id = ? " +
+                " ORDER BY cr.created_at DESC, cr.request_id DESC " +
+                " OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, staffId);
+                ps.setInt(2, offset);
+                ps.setInt(3, pageSize);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) list.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    /** Tổng số công việc đã nhận của một nhân viên. */
+    public int countRequestsByStaff(int staffId) {
+        String sql = "SELECT COUNT(*) FROM dbo.CustomerRequest WHERE assigned_staff_id = ?";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, staffId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    /** Các công việc đang thực hiện (InProgress) của một nhân viên. */
+    public List<CustomerRequest> getInProgressByStaff(int staffId) {
+        List<CustomerRequest> list = new ArrayList<>();
+        String sql = BASE_SELECT + " WHERE cr.assigned_staff_id = ? AND cr.status = N'InProgress' " +
+                " ORDER BY cr.created_at DESC, cr.request_id DESC";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, staffId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) list.add(mapRow(rs));
                 }
             }
         } catch (Exception e) {
