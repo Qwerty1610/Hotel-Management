@@ -70,7 +70,7 @@
                                 <c:if test="${param.error eq 'duplicateName'}">
                                     <div class="alert-banner alert-danger">
                                         <i class="fa-solid fa-circle-exclamation"></i>
-                                        Tên loại phòng này đã tồn tại trong hệ thống. Vui lòng chọn tên khác.
+                                        This Room Type is already available.
                                     </div>
                                 </c:if>
 
@@ -94,7 +94,8 @@
                                                     <label>Tìm kiếm loại phòng</label>
                                                     <div class="search-wrapper" style="max-width: 100%;">
                                                         <i class="fa-solid fa-magnifying-glass"></i>
-                                                        <input type="text" id="roomTypeSearch" class="input-search-service"
+                                                        <input type="text" id="roomTypeSearch"
+                                                            class="input-search-service"
                                                             placeholder="Tìm kiếm loại phòng..."
                                                             onkeyup="filterRoomTypes()" />
                                                     </div>
@@ -271,56 +272,57 @@
                                     <div class="modal-footer-row">
                                         <button type="button" class="btn-modal-cancel"
                                             onclick="closeRoomTypeModal()">Hủy bỏ</button>
-                                 <%-- Shared pagination/table utility --%>
-    <script src="${pageContext.request.contextPath}/assets/js/manager-table.js"></script>
+                                        <%-- Shared pagination/table utility --%>
+                                            <script
+                                                src="${pageContext.request.contextPath}/assets/js/manager-table.js"></script>
 
-    <%-- JavaScript: Room Types Management Logic --%>
-    <script>
-        // Initialize ManagerTable utility for room types list
-        window.addEventListener('DOMContentLoaded', function () {
-            ManagerTable.init("roomTypesTable", {
-                storageSelector: ".roomtype-data-item",
-                tbodyId: "roomTypesTableBody",
-                paginationInfoId: "roomTypePaginationInfo",
-                paginationControlsId: "roomTypePaginationControls",
-                pageSize: 5,
-                emptyMessage: "Không tìm thấy loại phòng nào phù hợp",
-                infoTextFn: (start, end, total) => `Hiển thị \${start}-\${end} trong số \${total} loại phòng`,
-                hydrateItem: function (item) {
-                    const amenitiesStr = item.getAttribute("data-amenities");
-                    const amenitiesList = amenitiesStr ? amenitiesStr.split(",") : [];
-                    return {
-                        id: parseInt(item.getAttribute("data-id")),
-                        name: (item.getAttribute("data-name") || "").trim(),
-                        price: parseFloat(item.getAttribute("data-price")),
-                        capacity: parseInt(item.getAttribute("data-capacity")),
-                        bedType: (item.getAttribute("data-bed-type") || "").trim(),
-                        area: (item.getAttribute("data-area") || "").trim(),
-                        imageUrl: (item.getAttribute("data-image-url") || "").trim(),
-                        description: (item.getAttribute("data-description") || "").trim(),
-                        amenities: amenitiesList
-                    };
-                },
-                renderRow: function (rt) {
-                    const priceFormatted = new Intl.NumberFormat('vi-VN').format(rt.price);
+                                            <%-- JavaScript: Room Types Management Logic --%>
+                                                <script>
+                                                    // Initialize ManagerTable utility for room types list
+                                                    window.addEventListener('DOMContentLoaded', function () {
+                                                        ManagerTable.init("roomTypesTable", {
+                                                            storageSelector: ".roomtype-data-item",
+                                                            tbodyId: "roomTypesTableBody",
+                                                            paginationInfoId: "roomTypePaginationInfo",
+                                                            paginationControlsId: "roomTypePaginationControls",
+                                                            pageSize: 5,
+                                                            emptyMessage: "Không tìm thấy loại phòng nào phù hợp",
+                                                            infoTextFn: (start, end, total) => `Hiển thị \${start}-\${end} trong số \${total} loại phòng`,
+                                                            hydrateItem: function (item) {
+                                                                const amenitiesStr = item.getAttribute("data-amenities");
+                                                                const amenitiesList = amenitiesStr ? amenitiesStr.split(",") : [];
+                                                                return {
+                                                                    id: parseInt(item.getAttribute("data-id")),
+                                                                    name: (item.getAttribute("data-name") || "").trim(),
+                                                                    price: parseFloat(item.getAttribute("data-price")),
+                                                                    capacity: parseInt(item.getAttribute("data-capacity")),
+                                                                    bedType: (item.getAttribute("data-bed-type") || "").trim(),
+                                                                    area: (item.getAttribute("data-area") || "").trim(),
+                                                                    imageUrl: (item.getAttribute("data-image-url") || "").trim(),
+                                                                    description: (item.getAttribute("data-description") || "").trim(),
+                                                                    amenities: amenitiesList
+                                                                };
+                                                            },
+                                                            renderRow: function (rt) {
+                                                                const priceFormatted = new Intl.NumberFormat('vi-VN').format(rt.price);
 
-                    let amenitiesHtml = "";
-                    rt.amenities.forEach(am => {
-                        if (am.trim()) {
-                            let badgeText = am.toUpperCase();
-                            if (badgeText.includes("WIFI")) badgeText = "WIFI";
-                            else if (badgeText.includes("ĐIỀU HÒA")) badgeText = "AC";
-                            else if (badgeText.includes("TIVI")) badgeText = "TV";
-                            else if (badgeText.includes("VIEW THÀNH PHỐ")) badgeText = "CITY VIEW";
-                            else if (badgeText.includes("BỒN TẮM")) badgeText = "BATHTUB";
-                            else if (badgeText.includes("MINI BAR")) badgeText = "MINI BAR";
-                            else if (badgeText.includes("BAN CÔNG")) badgeText = "BALCONY";
-                            else if (badgeText.includes("MÁY PHA CÀ PHÊ")) badgeText = "COFFEE";
-                            amenitiesHtml += `<span class="roomtype-badge">\${badgeText}</span>`;
-                        }
-                    });
+                                                                let amenitiesHtml = "";
+                                                                rt.amenities.forEach(am => {
+                                                                    if (am.trim()) {
+                                                                        let badgeText = am.toUpperCase();
+                                                                        if (badgeText.includes("WIFI")) badgeText = "WIFI";
+                                                                        else if (badgeText.includes("ĐIỀU HÒA")) badgeText = "AC";
+                                                                        else if (badgeText.includes("TIVI")) badgeText = "TV";
+                                                                        else if (badgeText.includes("VIEW THÀNH PHỐ")) badgeText = "CITY VIEW";
+                                                                        else if (badgeText.includes("BỒN TẮM")) badgeText = "BATHTUB";
+                                                                        else if (badgeText.includes("MINI BAR")) badgeText = "MINI BAR";
+                                                                        else if (badgeText.includes("BAN CÔNG")) badgeText = "BALCONY";
+                                                                        else if (badgeText.includes("MÁY PHA CÀ PHÊ")) badgeText = "COFFEE";
+                                                                        amenitiesHtml += `<span class="roomtype-badge">\${badgeText}</span>`;
+                                                                    }
+                                                                });
 
-                    return `
+                                                                return `
                         <td>
                             <div class="service-name-cell">
                                 <img src="\${rt.imageUrl}" class="roomtype-img" alt="\${rt.name}"
@@ -354,189 +356,173 @@
                             </div>
                         </td>
                     `;
-                },
-                filterPredicate: function (rt) {
-                    const query = document.getElementById("roomTypeSearch").value.toLowerCase().trim();
-                    const capacity = document.getElementById("capacityFilter").value;
+                                                            },
+                                                            filterPredicate: function (rt) {
+                                                                const query = document.getElementById("roomTypeSearch").value.toLowerCase().trim();
+                                                                const capacity = document.getElementById("capacityFilter").value;
 
-                    const matchQuery = rt.name.toLowerCase().includes(query) ||
-                        rt.bedType.toLowerCase().includes(query) ||
-                        rt.description.toLowerCase().includes(query);
-                    
-                    let matchCapacity = true;
-                    if (capacity !== "all") {
-                        if (capacity === "4+") {
-                            matchCapacity = (rt.capacity >= 4);
-                        } else {
-                            matchCapacity = (rt.capacity === parseInt(capacity));
-                        }
-                    }
+                                                                const matchQuery = rt.name.toLowerCase().includes(query) ||
+                                                                    rt.bedType.toLowerCase().includes(query) ||
+                                                                    rt.description.toLowerCase().includes(query);
 
-                    return matchQuery && matchCapacity;
-                }
-            });
-        });
+                                                                let matchCapacity = true;
+                                                                if (capacity !== "all") {
+                                                                    if (capacity === "4+") {
+                                                                        matchCapacity = (rt.capacity >= 4);
+                                                                    } else {
+                                                                        matchCapacity = (rt.capacity === parseInt(capacity));
+                                                                    }
+                                                                }
 
-        // Filter trigger
-        function filterRoomTypes() {
-            ManagerTable.filter("roomTypesTable");
-        }
+                                                                return matchQuery && matchCapacity;
+                                                            }
+                                                        });
+                                                    });
 
-        // Clear validation errors
-        function clearRoomTypeErrors() {
-            ['modalRtName', 'modalRtPrice', 'modalRtCapacity', 'modalRtBedType', 'modalRtArea', 'modalRtImageUrl', 'modalRtDescription']
-                .forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.setCustomValidity("");
-                });
-        }
+                                                    // Filter trigger
+                                                    function filterRoomTypes() {
+                                                        ManagerTable.filter("roomTypesTable");
+                                                    }
 
-        // Modal Handlers
-        function openAddRoomTypeModal() {
-            clearRoomTypeErrors();
-            document.getElementById("roomTypeModalTitle").innerText = "Thêm loại phòng mới";
-            document.getElementById("modalRtId").value = "";
-            document.getElementById("roomTypeForm").reset();
-            document.querySelectorAll('#roomTypeForm input[name="amenity"]').forEach(cb => cb.checked = false);
-            document.getElementById("roomTypeModal").style.display = "flex";
-        }
+                                                    // Clear validation errors
+                                                    function clearRoomTypeErrors() {
+                                                        ['modalRtName', 'modalRtPrice', 'modalRtCapacity', 'modalRtBedType', 'modalRtArea', 'modalRtImageUrl', 'modalRtDescription']
+                                                            .forEach(id => {
+                                                                const el = document.getElementById(id);
+                                                                if (el) el.setCustomValidity("");
+                                                            });
+                                                    }
 
-        function openEditRoomTypeModal(id) {
-            const table = ManagerTable.tables.roomTypesTable;
-            if (!table) return;
-            const rt = table.items.find(item => item.id === id);
-            if (rt) {
-                clearRoomTypeErrors();
-                document.getElementById("roomTypeModalTitle").innerText = "Chỉnh sửa loại phòng";
-                document.getElementById("modalRtId").value = rt.id;
-                document.getElementById("modalRtName").value = rt.name;
-                document.getElementById("modalRtPrice").value = rt.price;
-                document.getElementById("modalRtCapacity").value = rt.capacity;
-                document.getElementById("modalRtBedType").value = rt.bedType;
-                document.getElementById("modalRtArea").value = rt.area;
-                document.getElementById("modalRtImageUrl").value = rt.imageUrl;
-                document.getElementById("modalRtDescription").value = rt.description;
-                document.querySelectorAll('#roomTypeForm input[name="amenity"]').forEach(cb => {
-                    cb.checked = rt.amenities.some(am => am.toLowerCase().trim() === cb.value.toLowerCase().trim());
-                });
-                document.getElementById("roomTypeModal").style.display = "flex";
-            }
-        }
+                                                    // Modal Handlers
+                                                    function openAddRoomTypeModal() {
+                                                        clearRoomTypeErrors();
+                                                        document.getElementById("roomTypeModalTitle").innerText = "Thêm loại phòng mới";
+                                                        document.getElementById("modalRtId").value = "";
+                                                        document.getElementById("roomTypeForm").reset();
+                                                        document.querySelectorAll('#roomTypeForm input[name="amenity"]').forEach(cb => cb.checked = false);
+                                                        document.getElementById("roomTypeModal").style.display = "flex";
+                                                    }
 
-        function closeRoomTypeModal() {
-            clearRoomTypeErrors();
-            document.getElementById("roomTypeModal").style.display = "none";
-        }
+                                                    function openEditRoomTypeModal(id) {
+                                                        const table = ManagerTable.tables.roomTypesTable;
+                                                        if (!table) return;
+                                                        const rt = table.items.find(item => item.id === id);
+                                                        if (rt) {
+                                                            clearRoomTypeErrors();
+                                                            document.getElementById("roomTypeModalTitle").innerText = "Chỉnh sửa loại phòng";
+                                                            document.getElementById("modalRtId").value = rt.id;
+                                                            document.getElementById("modalRtName").value = rt.name;
+                                                            document.getElementById("modalRtPrice").value = rt.price;
+                                                            document.getElementById("modalRtCapacity").value = rt.capacity;
+                                                            document.getElementById("modalRtBedType").value = rt.bedType;
+                                                            document.getElementById("modalRtArea").value = rt.area;
+                                                            document.getElementById("modalRtImageUrl").value = rt.imageUrl;
+                                                            document.getElementById("modalRtDescription").value = rt.description;
+                                                            document.querySelectorAll('#roomTypeForm input[name="amenity"]').forEach(cb => {
+                                                                cb.checked = rt.amenities.some(am => am.toLowerCase().trim() === cb.value.toLowerCase().trim());
+                                                            });
+                                                            document.getElementById("roomTypeModal").style.display = "flex";
+                                                        }
+                                                    }
 
-        function deleteRoomType(id) {
-            if (confirm("Bạn có chắc chắn muốn xóa loại phòng này không?\nLưu ý: Hành động này sẽ xóa tất cả phòng thuộc loại phòng này.")) {
-                window.location.href = `${pageContext.request.contextPath}/manager/roomtypes?action=delete&id=` + id;
-            }
-        }
+                                                    function closeRoomTypeModal() {
+                                                        clearRoomTypeErrors();
+                                                        document.getElementById("roomTypeModal").style.display = "none";
+                                                    }
 
-        // Input listeners for real-time validity clearing
-        ['modalRtName', 'modalRtPrice', 'modalRtCapacity', 'modalRtBedType', 'modalRtArea', 'modalRtImageUrl', 'modalRtDescription']
-            .forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.addEventListener('input', function () { this.setCustomValidity(""); });
-            });
+                                                    function deleteRoomType(id) {
+                                                        if (confirm("Bạn có chắc chắn muốn xóa loại phòng này không?\nLưu ý: Hành động này sẽ xóa tất cả phòng thuộc loại phòng này.")) {
+                                                            window.location.href = `${pageContext.request.contextPath}/manager/roomtypes?action=delete&id=` + id;
+                                                        }
+                                                    }
 
-        // Form Submit Validation
-        document.getElementById('roomTypeForm').addEventListener('submit', function (e) {
-            clearRoomTypeErrors();
+                                                    // Input listeners for real-time validity clearing
+                                                    ['modalRtName', 'modalRtPrice', 'modalRtCapacity', 'modalRtBedType', 'modalRtArea', 'modalRtImageUrl', 'modalRtDescription']
+                                                        .forEach(id => {
+                                                            const el = document.getElementById(id);
+                                                            if (el) el.addEventListener('input', function () { this.setCustomValidity(""); });
+                                                        });
 
-            const nameInput = document.getElementById('modalRtName');
-            const priceInput = document.getElementById('modalRtPrice');
-            const capacityInput = document.getElementById('modalRtCapacity');
-            const bedTypeInput = document.getElementById('modalRtBedType');
-            const areaInput = document.getElementById('modalRtArea');
-            const imageUrlInput = document.getElementById('modalRtImageUrl');
+                                                    // Form Submit Validation
+                                                    document.getElementById('roomTypeForm').addEventListener('submit', function (e) {
+                                                        clearRoomTypeErrors();
 
-            const nameVal = nameInput.value.trim();
-            const priceVal = parseFloat(priceInput.value);
-            const capacityVal = parseFloat(capacityInput.value);
-            const bedTypeVal = bedTypeInput.value.trim();
-            const areaVal = areaInput.value.trim();
-            const imageUrlVal = imageUrlInput.value.trim();
+                                                        const nameInput = document.getElementById('modalRtName');
+                                                        const priceInput = document.getElementById('modalRtPrice');
+                                                        const capacityInput = document.getElementById('modalRtCapacity');
+                                                        const bedTypeInput = document.getElementById('modalRtBedType');
+                                                        const areaInput = document.getElementById('modalRtArea');
+                                                        const imageUrlInput = document.getElementById('modalRtImageUrl');
 
-            if (nameVal === "") {
-                e.preventDefault();
-                nameInput.setCustomValidity("Vui lòng điền vào trường này.");
-                nameInput.reportValidity();
-                return;
-            }
+                                                        const nameVal = nameInput.value.trim();
+                                                        const priceVal = parseFloat(priceInput.value);
+                                                        const capacityVal = parseFloat(capacityInput.value);
+                                                        const bedTypeVal = bedTypeInput.value.trim();
+                                                        const areaVal = areaInput.value.trim();
+                                                        const imageUrlVal = imageUrlInput.value.trim();
 
-            // Check for duplicate name
-            const currentIdVal = document.getElementById("modalRtId").value;
-            const currentId = currentIdVal ? parseInt(currentIdVal) : -1;
-            const table = ManagerTable.tables.roomTypesTable;
-            if (table && table.items) {
-                const isDuplicate = table.items.some(rt => {
-                    return rt.name.toLowerCase() === nameVal.toLowerCase() && rt.id !== currentId;
-                });
-                if (isDuplicate) {
-                    e.preventDefault();
-                    nameInput.setCustomValidity("This room type already exists.");
-                    nameInput.reportValidity();
-                    return;
-                }
-            }
+                                                        if (nameVal === "") {
+                                                            e.preventDefault();
+                                                            nameInput.setCustomValidity("Vui lòng điền vào trường này.");
+                                                            nameInput.reportValidity();
+                                                            return;
+                                                        }
 
-            if (priceInput.value.trim() !== "" && (isNaN(priceVal) || priceVal <= 0)) {
-                e.preventDefault();
-                priceInput.setCustomValidity("Giá cơ bản phải lớn hơn 0.");
-                priceInput.reportValidity();
-                return;
-            }
+                                                        if (priceInput.value.trim() !== "" && (isNaN(priceVal) || priceVal <= 0)) {
+                                                            e.preventDefault();
+                                                            priceInput.setCustomValidity("Giá cơ bản phải lớn hơn 0.");
+                                                            priceInput.reportValidity();
+                                                            return;
+                                                        }
 
-            if (capacityInput.value.trim() !== "" && (isNaN(capacityVal) || capacityVal <= 0)) {
-                e.preventDefault();
-                capacityInput.setCustomValidity("Sức chứa phải lớn hơn 0.");
-                capacityInput.reportValidity();
-                return;
-            }
+                                                        if (capacityInput.value.trim() !== "" && (isNaN(capacityVal) || capacityVal <= 0)) {
+                                                            e.preventDefault();
+                                                            capacityInput.setCustomValidity("Sức chứa phải lớn hơn 0.");
+                                                            capacityInput.reportValidity();
+                                                            return;
+                                                        }
 
-            if (bedTypeVal === "") {
-                e.preventDefault();
-                bedTypeInput.setCustomValidity("Vui lòng điền vào trường này.");
-                bedTypeInput.reportValidity();
-                return;
-            }
-            if (/-\s*\d/.test(bedTypeVal) || /^\s*-/.test(bedTypeVal) || /^\s*0\s/.test(bedTypeVal) || /^\s*0$/.test(bedTypeVal)) {
-                e.preventDefault();
-                bedTypeInput.setCustomValidity("Incorrect format");
-                bedTypeInput.reportValidity();
-                return;
-            }
+                                                        if (bedTypeVal === "") {
+                                                            e.preventDefault();
+                                                            bedTypeInput.setCustomValidity("Vui lòng điền vào trường này.");
+                                                            bedTypeInput.reportValidity();
+                                                            return;
+                                                        }
+                                                        if (/-\s*\d/.test(bedTypeVal) || /^\s*-/.test(bedTypeVal) || /^\s*0\s/.test(bedTypeVal) || /^\s*0$/.test(bedTypeVal)) {
+                                                            e.preventDefault();
+                                                            bedTypeInput.setCustomValidity("Incorrect format");
+                                                            bedTypeInput.reportValidity();
+                                                            return;
+                                                        }
 
-            if (areaVal !== "") {
-                const numericArea = parseFloat(areaVal);
-                if (isNaN(numericArea) || numericArea <= 0) {
-                    e.preventDefault();
-                    areaInput.setCustomValidity("Diện tích phải lớn hơn 0.");
-                    areaInput.reportValidity();
-                    return;
-                }
-                areaInput.value = numericArea + " m²";
-            }
+                                                        if (areaVal !== "") {
+                                                            const numericArea = parseFloat(areaVal);
+                                                            if (isNaN(numericArea) || numericArea <= 0) {
+                                                                e.preventDefault();
+                                                                areaInput.setCustomValidity("Diện tích phải lớn hơn 0.");
+                                                                areaInput.reportValidity();
+                                                                return;
+                                                            }
+                                                            areaInput.value = numericArea + " m²";
+                                                        }
 
-            if (imageUrlVal === "") {
-                e.preventDefault();
-                imageUrlInput.setCustomValidity("Vui lòng điền vào trường này.");
-                imageUrlInput.reportValidity();
-                return;
-            }
-        });
-    </script>
-                                        <button type="submit" class="btn-modal-submit">Lưu lại</button>
+                                                        if (imageUrlVal === "") {
+                                                            e.preventDefault();
+                                                            imageUrlInput.setCustomValidity("Vui lòng điền vào trường này.");
+                                                            imageUrlInput.reportValidity();
+                                                            return;
+                                                        }
+                                                    });
+                                                </script>
+                                                <button type="submit" class="btn-modal-submit">Lưu lại</button>
                                     </div>
                                 </form>
                             </div>
                         </div>
                     </div>
-                                filterRoomTypes();
-                            });
-                        </script>
+                    filterRoomTypes();
+                    });
+                    </script>
 
             </body>
 

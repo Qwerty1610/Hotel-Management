@@ -406,7 +406,7 @@
                 });
                 if (isDuplicate) {
                     e.preventDefault();
-                    roomNumberInput.setCustomValidity("This room number already exists.");
+                    roomNumberInput.setCustomValidity("Số phòng này đã tồn tại trong hệ thống. Vui lòng chọn số khác.");
                     roomNumberInput.reportValidity();
                     return;
                 }
