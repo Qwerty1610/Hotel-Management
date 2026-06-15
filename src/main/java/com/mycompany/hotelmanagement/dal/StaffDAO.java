@@ -16,7 +16,9 @@ import java.util.List;
  * Truy vấn thông tin nhân viên Housekeeping kèm số liệu công việc đã hoàn thành
  * (theo ngày / tháng) phục vụ trang theo dõi công việc của Manager.
  *
- * Date: 02/6/2026
+ * thêm hàm getStaffById: lấy thông tin chi tiết của nhân viên(số liệu làm việc)
+ * 
+ * Date: 11/6/2026
  * version 1.0
  * @author Pham Quoc Quy
  */
@@ -74,6 +76,45 @@ public class StaffDAO {
             e.printStackTrace();
         }
         return list;
+    }
+
+    /** Thông tin một nhân viên Housekeeping kèm số liệu công việc (theo account_id). */
+    public StaffInfo getStaffById(int accountId) {
+        String sql =
+            "SELECT a.account_id, a.full_name, a.email, " +
+            "       ISNULL(a.work_status, N'Offline') AS work_status, " +
+            "       (SELECT COUNT(*) FROM dbo.CustomerRequest cr " +
+            "          WHERE cr.assigned_staff_id = a.account_id AND cr.status = N'Completed' " +
+            "            AND CAST(cr.completed_at AS DATE) = CAST(GETDATE() AS DATE)) AS completed_today, " +
+            "       (SELECT COUNT(*) FROM dbo.CustomerRequest cr " +
+            "          WHERE cr.assigned_staff_id = a.account_id AND cr.status = N'Completed' " +
+            "            AND YEAR(cr.completed_at) = YEAR(GETDATE()) " +
+            "            AND MONTH(cr.completed_at) = MONTH(GETDATE())) AS completed_month, " +
+            "       (SELECT COUNT(*) FROM dbo.CustomerRequest cr " +
+            "          WHERE cr.assigned_staff_id = a.account_id AND cr.status = N'InProgress') AS active_assignments " +
+            "FROM dbo.Account a WHERE a.account_id = ?";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, accountId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        StaffInfo s = new StaffInfo();
+                        s.setAccountId(rs.getInt("account_id"));
+                        s.setFullName(rs.getString("full_name"));
+                        s.setEmail(rs.getString("email"));
+                        s.setWorkStatus(rs.getString("work_status"));
+                        s.setCompletedToday(rs.getInt("completed_today"));
+                        s.setCompletedMonth(rs.getInt("completed_month"));
+                        s.setActiveAssignments(rs.getInt("active_assignments"));
+                        return s;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /** Số nhân viên Housekeeping đang ở trạng thái Active. */

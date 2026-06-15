@@ -1062,16 +1062,19 @@ UPDATE dbo.Refund SET confirmed_at = created_at WHERE status = N'Done' AND confi
 GO
 
 /* Sinh khoản Refund(Pending) cho hóa đơn Refunding chưa có khoản Pending nào.
-   Số tiền chờ hoàn = tổng hóa đơn - phần đã hoàn (Done). (idempotent) */
+   Số tiền chờ hoàn = Tổng hóa đơn - Tiền cọc (30% tiền phòng) - phần đã hoàn (Done),
+   để tổng hoàn không vượt (Tổng - Cọc) => Thực thu không bị âm. (idempotent) */
 INSERT INTO dbo.Refund (invoice_id, amount, reason, status, created_at)
 SELECT i.invoice_id,
        (SELECT ISNULL(SUM(ii.amount),0) FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id)
+       - (SELECT ISNULL(SUM(ii.amount),0) * 0.3 FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id AND ii.item_type = N'Room')
        - (SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Done'),
        N'Hoàn tiền cọc do đặt phòng bị từ chối hoặc khách huỷ.', N'Pending', SYSDATETIME()
 FROM dbo.Invoice i
 WHERE i.status = N'Refunding'
   AND NOT EXISTS (SELECT 1 FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Pending')
   AND (SELECT ISNULL(SUM(ii.amount),0) FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id)
+      - (SELECT ISNULL(SUM(ii.amount),0) * 0.3 FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id AND ii.item_type = N'Room')
       - (SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Done') > 0;
 GO
 
@@ -1098,4 +1101,29 @@ GO
 
 ALTER TABLE dbo.Invoice ADD CONSTRAINT CK_Invoice_Status
     CHECK (status IN (N'Pending', N'Paid', N'Refunding', N'Cancelled'));
+GO
+
+/* ============================================================
+   10. GIỚI HẠN KHOẢN HOÀN (tránh Thực thu < 0)
+   Tổng hoàn (Done + Pending) không được vượt (Tổng - Tiền cọc 30% phòng).
+   Sửa dữ liệu cũ: nếu một hóa đơn có đúng 1 khoản chờ hoàn vượt mức cho phép,
+   hạ số tiền khoản đó về đúng mức (Tổng - Cọc - Đã hoàn). (idempotent)
+   ============================================================ */
+;WITH budget AS (
+    SELECT i.invoice_id,
+        (SELECT ISNULL(SUM(ii.amount),0) FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id)
+        - (SELECT ISNULL(SUM(ii.amount),0) * 0.3 FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id AND ii.item_type = N'Room')
+        - (SELECT ISNULL(SUM(d.amount),0) FROM dbo.Refund d WHERE d.invoice_id = i.invoice_id AND d.status = N'Done') AS allowed,
+        (SELECT COUNT(*) FROM dbo.Refund p WHERE p.invoice_id = i.invoice_id AND p.status = N'Pending') AS pend_cnt,
+        (SELECT ISNULL(SUM(p.amount),0) FROM dbo.Refund p WHERE p.invoice_id = i.invoice_id AND p.status = N'Pending') AS pend_sum
+    FROM dbo.Invoice i
+)
+UPDATE rf
+SET rf.amount = b.allowed
+FROM dbo.Refund rf
+JOIN budget b ON b.invoice_id = rf.invoice_id
+WHERE rf.status = N'Pending'
+  AND b.pend_cnt = 1
+  AND b.pend_sum > b.allowed
+  AND b.allowed > 0;
 GO

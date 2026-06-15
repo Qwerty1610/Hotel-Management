@@ -5,6 +5,8 @@ package com.mycompany.hotelmanagement.entity;
  * Dòng chi tiết hóa đơn: tiền phòng (Room), dịch vụ thêm (Service) hoặc phụ phí (Surcharge).
  *
  * Date: 02/6/2026
+ * ver 1.0
+ * @author Phạm Quốc Quý
  */
 public class InvoiceItem {
 

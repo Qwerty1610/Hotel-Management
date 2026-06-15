@@ -8,6 +8,8 @@ import java.sql.Timestamp;
  * nhân viên Housekeeping xử lý.
  *
  * Date: 02/6/2026
+ * ver 1.0
+ * @author Phạm Quốc Quý
  */
 public class CustomerRequest {
 

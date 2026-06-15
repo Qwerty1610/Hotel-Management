@@ -6,6 +6,8 @@ package com.mycompany.hotelmanagement.entity;
  * trạng thái làm việc và số công việc đã hoàn thành theo ngày / tháng.
  *
  * Date: 02/6/2026
+ * ver 1.0
+ * @author Phạm Quốc Quý
  */
 public class StaffInfo {
 

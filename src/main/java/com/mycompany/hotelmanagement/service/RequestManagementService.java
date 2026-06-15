@@ -24,6 +24,33 @@ public class RequestManagementService {
         return requestDAO.getAllRequests();
     }
 
+    /* ---------- Danh sách yêu cầu: lọc + phân trang server-side ---------- */
+    public List<CustomerRequest> getRequests(String roomKw, String priority, String staffFilter,
+                                             String status, int offset, int pageSize) {
+        return requestDAO.getRequests(roomKw, priority, staffFilter, status, offset, pageSize);
+    }
+
+    public int countRequests(String roomKw, String priority, String staffFilter, String status) {
+        return requestDAO.countRequests(roomKw, priority, staffFilter, status);
+    }
+
+    /* ---------- Trang chi tiết nhân viên ---------- */
+    public com.mycompany.hotelmanagement.entity.StaffInfo getStaffById(int accountId) {
+        return staffDAO.getStaffById(accountId);
+    }
+
+    public List<CustomerRequest> getRequestsByStaff(int staffId, int offset, int pageSize) {
+        return requestDAO.getRequestsByStaff(staffId, offset, pageSize);
+    }
+
+    public int countRequestsByStaff(int staffId) {
+        return requestDAO.countRequestsByStaff(staffId);
+    }
+
+    public List<CustomerRequest> getInProgressByStaff(int staffId) {
+        return requestDAO.getInProgressByStaff(staffId);
+    }
+
     public List<StaffInfo> getHousekeepingStaff() {
         return staffDAO.getHousekeepingStaff();
     }
