@@ -1,7 +1,6 @@
 package com.mycompany.hotelmanagement.controller.manager;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -14,14 +13,15 @@ import com.mycompany.hotelmanagement.service.RoomTypeService;
 
 /**
  * RoomTypeController
- * URL: /manager/roomtypes
+ * URL: controller/manager
  *
  * Xử lý các hành động (action param):
- *   - view   : Hiển thị danh sách loại phòng (Manage Room Type)
- *   - save   : Thêm mới hoặc cập nhật thông tin loại phòng (Manage Room Type)
- *   - delete : Xóa loại phòng (Manage Room Type)
+ * - view : Hiển thị danh sách loại phòng (Manage Room Type)
+ * - save : Thêm mới hoặc cập nhật thông tin loại phòng (Manage Room Type)
+ * - delete : Xóa loại phòng (Manage Room Type)
  * 
  * Date: 01/6/2026
+ * 
  * @author DINH KHANH
  */
 @WebServlet(name = "RoomTypeController", urlPatterns = { "/manager/roomtypes" })
@@ -56,11 +56,8 @@ public class RoomTypeController extends HttpServlet {
         }
 
         List<RoomTypeInfo> roomTypesList = roomTypeService.getAllRoomTypes();
-        if (roomTypesList.isEmpty()) {
-            roomTypesList = getMockRoomTypes();
-        }
         request.setAttribute("roomTypesList", roomTypesList);
-        request.getRequestDispatcher("/WEB-INF/views/manager/room-types/list.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/manager/room-types-list.jsp").forward(request, response);
     }
 
     @Override
@@ -167,78 +164,5 @@ public class RoomTypeController extends HttpServlet {
         }
 
         response.sendRedirect(request.getContextPath() + "/manager/roomtypes?success=saved");
-    }
-
-    private List<RoomTypeInfo> getMockRoomTypes() {
-        List<RoomTypeInfo> list = new ArrayList<>();
-
-        RoomTypeInfo standard = new RoomTypeInfo();
-        standard.setTypeId(1);
-        standard.setTypeName("Phòng Standard");
-        standard.setBasePrice(750000.0);
-        standard.setCapacity(2);
-        standard.setArea("25 m²");
-        standard.setBedType("1 Giường Queen");
-        standard.setImageUrl("https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80");
-        List<String> standardAm = new ArrayList<>();
-        standardAm.add("Wifi miễn phí");
-        standardAm.add("Điều hòa");
-        standardAm.add("Tivi");
-        standard.setAmenities(standardAm);
-        list.add(standard);
-
-        RoomTypeInfo deluxe = new RoomTypeInfo();
-        deluxe.setTypeId(2);
-        deluxe.setTypeName("Phòng Deluxe");
-        deluxe.setBasePrice(1200000.0);
-        deluxe.setCapacity(2);
-        deluxe.setArea("45 m²");
-        deluxe.setBedType("1 Giường đôi lớn");
-        deluxe.setImageUrl("https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&q=80");
-        List<String> deluxeAm = new ArrayList<>();
-        deluxeAm.add("Wifi miễn phí");
-        deluxeAm.add("Điều hòa");
-        deluxeAm.add("Tivi");
-        deluxeAm.add("View thành phố");
-        deluxeAm.add("Mini bar");
-        deluxe.setAmenities(deluxeAm);
-        list.add(deluxe);
-
-        RoomTypeInfo family = new RoomTypeInfo();
-        family.setTypeId(3);
-        family.setTypeName("Phòng Family");
-        family.setBasePrice(1800000.0);
-        family.setCapacity(4);
-        family.setArea("60 m²");
-        family.setBedType("2 Giường đôi");
-        family.setImageUrl("https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80");
-        List<String> familyAm = new ArrayList<>();
-        familyAm.add("Wifi miễn phí");
-        familyAm.add("Điều hòa");
-        familyAm.add("Tivi");
-        familyAm.add("Mini bar");
-        family.setAmenities(familyAm);
-        list.add(family);
-
-        RoomTypeInfo suite = new RoomTypeInfo();
-        suite.setTypeId(4);
-        suite.setTypeName("Phòng Suite");
-        suite.setBasePrice(2800000.0);
-        suite.setCapacity(3);
-        suite.setArea("75 m²");
-        suite.setBedType("1 Giường King");
-        suite.setImageUrl("https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80");
-        List<String> suiteAm = new ArrayList<>();
-        suiteAm.add("Wifi miễn phí");
-        suiteAm.add("Điều hòa");
-        suiteAm.add("Tivi");
-        suiteAm.add("Bồn tắm");
-        suiteAm.add("View thành phố");
-        suiteAm.add("Mini bar");
-        suiteAm.add("Ban công");
-        suite.setAmenities(suiteAm);
-        list.add(suite);
-
-        return list;
     }
 }

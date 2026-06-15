@@ -14,7 +14,7 @@
         
         <!-- SIDEBAR -->
         <c:set var="activePage" value="${currentTab}" scope="request" />
-        <jsp:include page="../manager/includes/sidebar.jsp" />
+        <jsp:include page="../manager/sidebar.jsp" />
         
         <!-- MAIN DASHBOARD CONTENT -->
         <div class="dashboard-main">

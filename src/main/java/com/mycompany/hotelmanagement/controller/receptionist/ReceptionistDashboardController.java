@@ -117,8 +117,7 @@ public class ReceptionistDashboardController extends HttpServlet {
             request.setAttribute("cntCancelled",   cntCancelled);
 
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error in loadBookingTab of ReceptionistDashboardController", e);
-            throw e; // Rethrow to be handled by doGet try-catch
+            throw new RuntimeException("Error in loadBookingTab of ReceptionistDashboardController", e);
         }
     }
 }

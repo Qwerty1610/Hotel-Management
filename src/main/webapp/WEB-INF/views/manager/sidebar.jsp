@@ -1,5 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ include file="../../../includes/taglibs.jsp" %>
+<%@ include file="../../includes/taglibs.jsp" %>
 <%--
     Sidebar chung cho Manager Dashboard.
     Sử dụng biến 'activePage' (request scope) để highlight menu item hiện tại.
