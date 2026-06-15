@@ -57,7 +57,7 @@ public class RoomTypeController extends HttpServlet {
 
         List<RoomTypeInfo> roomTypesList = roomTypeService.getAllRoomTypes();
         request.setAttribute("roomTypesList", roomTypesList);
-        request.getRequestDispatcher("/WEB-INF/views/manager/room-types/list.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/manager/room-types-list.jsp").forward(request, response);
     }
 
     @Override

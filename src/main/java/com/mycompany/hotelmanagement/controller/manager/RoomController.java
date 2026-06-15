@@ -71,7 +71,7 @@ public class RoomController extends HttpServlet {
 
         request.setAttribute("roomsList", roomsList);
         request.setAttribute("roomTypesList", roomTypesList);
-        request.getRequestDispatcher("/WEB-INF/views/manager/rooms/list.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/manager/rooms-list.jsp").forward(request, response);
     }
 
     @Override

@@ -63,7 +63,7 @@ public class ServiceController extends HttpServlet {
 
         List<HotelService> servicesList = hotelServiceService.getAllServices();
         request.setAttribute("servicesList", servicesList);
-        request.getRequestDispatcher("/WEB-INF/views/manager/services/list.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/manager/services-list.jsp").forward(request, response);
     }
 
     @Override

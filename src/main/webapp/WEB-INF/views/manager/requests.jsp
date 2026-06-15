@@ -10,7 +10,7 @@
 
         <!-- SIDEBAR -->
         <c:set var="activePage" value="requests" scope="request" />
-        <jsp:include page="includes/sidebar.jsp" />
+        <jsp:include page="sidebar.jsp" />
 
         <!-- MAIN -->
         <div class="dashboard-main">
