@@ -453,5 +453,122 @@ public class BookingDAO {
         }
         return list;
     }
+
+    public int createBooking(Booking b) {
+        if (b == null) return -1;
+        String sql = "INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note, created_at, updated_at) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATETIME(), SYSDATETIME())";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                if (b.getAccountId() != null) {
+                    ps.setInt(1, b.getAccountId());
+                } else {
+                    ps.setNull(1, Types.INTEGER);
+                }
+                ps.setString(2, b.getCustomerName());
+                if (b.getRoomTypeId() != null) {
+                    ps.setInt(3, b.getRoomTypeId());
+                } else {
+                    ps.setNull(3, Types.INTEGER);
+                }
+                ps.setInt(4, b.getRoomQuantity());
+                ps.setDate(5, b.getCheckInDate());
+                ps.setDate(6, b.getCheckOutDate());
+                ps.setDouble(7, b.getTotalAmount());
+                ps.setString(8, b.getStatus() != null ? b.getStatus() : "Pending");
+                ps.setString(9, b.getNote() != null ? b.getNote().trim() : "");
+
+                int affected = ps.executeUpdate();
+                if (affected > 0) {
+                    try (ResultSet rs = ps.getGeneratedKeys()) {
+                        if (rs.next()) {
+                            return rs.getInt(1);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in createBooking: " + b, e);
+        }
+        return -1;
+    }
+
+    private static class BookingOverlap {
+        Date checkIn;
+        Date checkOut;
+        int qty;
+        BookingOverlap(Date checkIn, Date checkOut, int qty) {
+            this.checkIn = checkIn;
+            this.checkOut = checkOut;
+            this.qty = qty;
+        }
+    }
+
+    public int checkRoomAvailability(int roomTypeId, Date checkIn, Date checkOut) {
+        int totalRooms = 0;
+        String countSql = "SELECT COUNT(*) FROM dbo.Room WHERE type_id = ? AND status <> N'Maintenance'";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(countSql)) {
+                ps.setInt(1, roomTypeId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        totalRooms = rs.getInt(1);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error counting total rooms for type: " + roomTypeId, e);
+            return 0;
+        }
+
+        String overlapSql = "SELECT check_in_date, check_out_date, room_quantity FROM dbo.Booking " +
+                            "WHERE room_type_id = ? AND status IN (N'Pending', N'Confirmed', N'CheckedIn') " +
+                            "AND check_in_date < ? AND check_out_date > ?";
+        
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(overlapSql)) {
+                ps.setInt(1, roomTypeId);
+                ps.setDate(2, checkOut);
+                ps.setDate(3, checkIn);
+                
+                List<BookingOverlap> overlaps = new ArrayList<>();
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        overlaps.add(new BookingOverlap(
+                            rs.getDate("check_in_date"),
+                            rs.getDate("check_out_date"),
+                            rs.getInt("room_quantity")
+                        ));
+                    }
+                }
+                
+                long startEpoch = checkIn.getTime();
+                long endEpoch = checkOut.getTime();
+                int maxBooked = 0;
+                
+                for (long time = startEpoch; time < endEpoch; time += 24 * 60 * 60 * 1000L) {
+                    Date day = new Date(time);
+                    int bookedOnDay = 0;
+                    for (BookingOverlap overlap : overlaps) {
+                        if (!day.before(overlap.checkIn) && day.before(overlap.checkOut)) {
+                            bookedOnDay += overlap.qty;
+                        }
+                    }
+                    if (bookedOnDay > maxBooked) {
+                        maxBooked = bookedOnDay;
+                    }
+                }
+                
+                return Math.max(0, totalRooms - maxBooked);
+                
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error checking room availability for type: " + roomTypeId, e);
+        }
+        return 0;
+    }
 }
 

@@ -118,6 +118,7 @@ public class LoginController extends HttpServlet {
             HttpSession session = request.getSession();
             session.setAttribute("user", displayName);
             session.setAttribute("role", role);
+            session.setAttribute("email", username);
 
             // Remember Me Cookies configuration
             if ("on".equals(remember) || "true".equals(remember)) {

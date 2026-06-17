@@ -63,4 +63,12 @@ public class BookingService {
     public List<Room> getAssignedRoomsForBooking(int bookingId) {
         return bookingDAO.getAssignedRoomsForBooking(bookingId);
     }
+
+    public int createBooking(Booking b) {
+        return bookingDAO.createBooking(b);
+    }
+
+    public int checkRoomAvailability(int roomTypeId, java.sql.Date checkIn, java.sql.Date checkOut) {
+        return bookingDAO.checkRoomAvailability(roomTypeId, checkIn, checkOut);
+    }
 }

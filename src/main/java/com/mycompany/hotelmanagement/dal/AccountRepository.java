@@ -71,4 +71,21 @@ public class AccountRepository {
         }
         return -1;
     }
+
+    public int getAccountIdByEmail(String email) {
+        if (email == null) return -1;
+        String sql = "SELECT account_id FROM Account WHERE email = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("account_id");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
 }

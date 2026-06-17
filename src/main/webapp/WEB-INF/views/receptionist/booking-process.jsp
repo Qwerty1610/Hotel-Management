@@ -283,7 +283,7 @@
                                                                                     <c:set var="isMaintenance"
                                                                                         value="${rm.status eq 'Maintenance'}" />
 
-                                                                                    <div class="room-card ${isAvailable || isAssigned ? 'card-avail' : (isCleaning ? 'card-clean' : 'card-disabled')} ${isAssigned ? 'selected' : ''}"
+                                                                                    <div class="room-card ${isAvailable || isAssigned ? 'card-avail' : 'card-disabled'} ${isAssigned ? 'selected' : ''}"
                                                                                         data-room-id="${rm.roomId}"
                                                                                         data-room-type-name="<c:out value="
                                                                                         ${rm.typeName}" />"
@@ -327,7 +327,7 @@
                                                                                         </c:choose>
                                                                                     </div>
                                                                                     <c:if
-                                                                                        test="${isAvailable || isCleaning || isAssigned}">
+                                                                                        test="${isAvailable || isAssigned}">
                                                                                         <div
                                                                                             class="room-checkbox-wrapper">
                                                                                             <input type="checkbox"

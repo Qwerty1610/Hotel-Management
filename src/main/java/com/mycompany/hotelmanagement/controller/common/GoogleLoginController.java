@@ -241,6 +241,7 @@ public class GoogleLoginController extends HttpServlet {
                 HttpSession session = request.getSession();
                 session.setAttribute("user", userDisplayName);
                 session.setAttribute("role", role);
+                session.setAttribute("email", email);
                 response.sendRedirect(request.getContextPath() + redirectUrl);
             } else {
                 response.sendRedirect(request.getContextPath() + "/home/login?error=invalid_credentials");
