@@ -50,6 +50,20 @@ BEGIN
 END
 GO
 
+IF OBJECT_ID(N'dbo.PasswordReset', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.PasswordReset (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        email NVARCHAR(100) NOT NULL,
+        token NVARCHAR(20) NOT NULL,
+        expiry_time DATETIME2 NOT NULL,
+        is_used BIT NOT NULL DEFAULT 0,
+        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+    );
+END
+GO
+
+
 /* Add roles only if they are missing */
 IF NOT EXISTS (SELECT 1 FROM dbo.Role WHERE role_name = N'Admin')
     INSERT INTO dbo.Role (role_name, description) VALUES (N'Admin', N'System administrator account');
@@ -577,11 +591,39 @@ BEGIN
 END
 GO
 
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Nguyễn Văn G' AND check_in_date = '2026-06-20')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (NULL, N'Nguyễn Văn G', 3, 1, '2026-06-20', '2026-06-22', 3600000, N'Pending', N'Cần xuất hóa đơn đỏ.');
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Trần Thị H' AND check_in_date = '2026-06-25')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (NULL, N'Trần Thị H', 1, 1, '2026-06-25', '2026-06-26', 750000, N'Pending', N'Check-in muộn.');
+END
+GO
+
 -- 2. Trạng thái CONFIRMED (Đã xác nhận)
 IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Customer User' AND check_in_date = '2026-06-15')
 BEGIN
     INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
     VALUES (5, N'Customer User', 3, 1, '2026-06-15', '2026-06-18', 5400000, N'Confirmed', N'Đã đặt cọc 50% qua VNPay.');
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Lê Anh Tuấn' AND check_in_date = '2026-06-16')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (NULL, N'Lê Anh Tuấn', 2, 1, '2026-06-16', '2026-06-19', 3600000, N'Confirmed', N'Khách quen, thanh toán khi check-in.');
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Phạm Minh Hoàng' AND check_in_date = '2026-06-18')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (NULL, N'Phạm Minh Hoàng', 4, 1, '2026-06-18', '2026-06-20', 5600000, N'Confirmed', N'Đặt phòng honeymoon, set up hoa tươi.');
 END
 GO
 
@@ -593,11 +635,39 @@ BEGIN
 END
 GO
 
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Đỗ Thị Minh' AND check_in_date = '2026-05-21')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (NULL, N'Đỗ Thị Minh', 1, 3, '2026-05-21', '2026-05-23', 4500000, N'Rejected', N'Khách không hoàn tất đặt cọc đúng hạn.');
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Vũ Hoàng Long' AND check_in_date = '2026-05-24')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (NULL, N'Vũ Hoàng Long', 2, 2, '2026-05-24', '2026-05-26', 4800000, N'Rejected', N'Thông tin liên hệ không chính xác.');
+END
+GO
+
 -- 4. Trạng thái CANCELLED (Đã huỷ)
 IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Phạm Thị D' AND check_in_date = '2026-05-25')
 BEGIN
     INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
     VALUES (NULL, N'Phạm Thị D', 1, 1, '2026-05-25', '2026-05-27', 1500000, N'Cancelled', N'Khách hàng chủ động gọi điện báo huỷ.');
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Bùi Văn Nam' AND check_in_date = '2026-05-26')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (NULL, N'Bùi Văn Nam', 3, 1, '2026-05-26', '2026-05-29', 5400000, N'Cancelled', N'Thay đổi lịch trình công tác.');
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Hoàng Thị Ngọc' AND check_in_date = '2026-05-28')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (NULL, N'Hoàng Thị Ngọc', 2, 1, '2026-05-28', '2026-05-30', 2400000, N'Cancelled', N'Gặp sự cố cá nhân.');
 END
 GO
 
@@ -609,11 +679,39 @@ BEGIN
 END
 GO
 
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Phan Văn Đức' AND check_in_date = '2026-06-12')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (NULL, N'Phan Văn Đức', 3, 1, '2026-06-12', '2026-06-15', 5400000, N'CheckedIn', N'Đoàn khảo sát thị trường.');
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Ngô Minh Triết' AND check_in_date = '2026-06-14')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (NULL, N'Ngô Minh Triết', 2, 1, '2026-06-14', '2026-06-17', 3600000, N'CheckedIn', N'Yêu cầu dọn phòng mỗi sáng.');
+END
+GO
+
 -- 6. Trạng thái CHECKED OUT (Đã trả phòng)
 IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Hoàng Văn E' AND check_in_date = '2026-05-28')
 BEGIN
     INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
     VALUES (NULL, N'Hoàng Văn E', 2, 1, '2026-05-28', '2026-05-30', 2400000, N'CheckedOut', N'Đã hoàn tất thanh toán.');
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Lê Hoàng Nam' AND check_in_date = '2026-05-25')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (NULL, N'Lê Hoàng Nam', 1, 1, '2026-05-25', '2026-05-27', 1500000, N'CheckedOut', N'Không sử dụng thêm dịch vụ ngoài.');
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Đinh Thị Quỳnh' AND check_in_date = '2026-05-26')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (NULL, N'Đinh Thị Quỳnh', 4, 1, '2026-05-26', '2026-05-28', 5600000, N'CheckedOut', N'Thanh toán chuyển khoản thành công.');
 END
 GO
 
@@ -875,4 +973,241 @@ SELECT i.invoice_id, i.customer_name, i.room_number, i.status, i.created_at,
        (SELECT ISNULL(SUM(amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id) AS refunded_amount
 FROM dbo.Invoice i
 ORDER BY i.created_at DESC;
+GO
+
+/* ============================================================
+   7. SEED 30 KHÁCH HÀNG + BOOKING + HÓA ĐƠN TƯƠNG ỨNG
+   Mỗi khách: 1 tài khoản (role Customer) + 1 hồ sơ Customer +
+   1 booking + 1 hóa đơn (kèm dòng chi tiết / phụ phí / hoàn tiền).
+   Ngày nhận phòng trải đều trong 2026-05-07 .. 2026-06-14 để biểu đồ
+   Dashboard và trang Hóa đơn có nhiều dữ liệu.
+   Mật khẩu mọi tài khoản: customer123
+   Idempotent: chỉ chạy khi chưa có booking đánh dấu note = 'SEED30'.
+   ============================================================ */
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE note = N'SEED30')
+BEGIN
+    DECLARE @seed TABLE (
+        email NVARCHAR(100), full_name NVARCHAR(100), phone NVARCHAR(20),
+        type_id INT, room_number NVARCHAR(50), qty INT,
+        check_in DATE, check_out DATE,
+        bstatus NVARCHAR(50), istatus NVARCHAR(20),
+        bf BIT, air BIT,
+        surcharge DECIMAL(18,2), surcharge_desc NVARCHAR(200),
+        refund DECIMAL(18,2), refund_reason NVARCHAR(500),
+        loyalty INT, membership NVARCHAR(50)
+    );
+
+    INSERT INTO @seed (email, full_name, phone, type_id, room_number, qty, check_in, check_out, bstatus, istatus, bf, air, surcharge, surcharge_desc, refund, refund_reason, loyalty, membership) VALUES
+    (N'cust01@hotel.com', N'Trần Anh Khoa',    N'0901000001', 1, N'103', 1, '2026-05-07','2026-05-09', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                          120, N'Silver'),
+    (N'cust02@hotel.com', N'Nguyễn Bảo Châu',  N'0901000002', 2, N'203', 1, '2026-05-07','2026-05-10', N'CheckedOut', N'Paid',      1,1, 0,      NULL,                                  0,      NULL,                                          300, N'Gold'),
+    (N'cust03@hotel.com', N'Lê Gia Bảo',       N'0901000003', 3, N'302', 1, '2026-05-08','2026-05-11', N'CheckedOut', N'Paid',      0,0, 200000, N'Trả phòng muộn (late check-out)',     0,      NULL,                                           50, N'Standard'),
+    (N'cust04@hotel.com', N'Phạm Thuỳ Dung',   N'0901000004', 1, N'104', 2, '2026-05-08','2026-05-09', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                           80, N'Standard'),
+    (N'cust05@hotel.com', N'Hoàng Minh Tuấn',  N'0901000005', 4, N'402', 1, '2026-05-09','2026-05-12', N'CheckedOut', N'Paid',      0,1, 0,      NULL,                                  0,      NULL,                                          500, N'Gold'),
+    (N'cust06@hotel.com', N'Vũ Khánh Linh',    N'0901000006', 2, N'205', 2, '2026-05-10','2026-05-13', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                          210, N'Silver'),
+    (N'cust07@hotel.com', N'Đỗ Hải Nam',       N'0901000007', 1, N'106', 1, '2026-05-11','2026-05-12', N'CheckedOut', N'Paid',      0,0, 0,      NULL,                                  0,      NULL,                                           30, N'Standard'),
+    (N'cust08@hotel.com', N'Bùi Thanh Hà',     N'0901000008', 3, N'303', 1, '2026-05-12','2026-05-15', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                          260, N'Silver'),
+    (N'cust09@hotel.com', N'Đặng Quốc Việt',   N'0901000009', 2, N'206', 1, '2026-05-13','2026-05-16', N'CheckedOut', N'Paid',      0,1, 0,      NULL,                                  0,      NULL,                                           95, N'Standard'),
+    (N'cust10@hotel.com', N'Mai Phương Thảo',  N'0901000010', 4, N'403', 1, '2026-05-14','2026-05-17', N'CheckedOut', N'Paid',      1,0, 300000, N'Hư hỏng nội thất (vỡ kính)',          0,      NULL,                                          600, N'Gold'),
+    (N'cust11@hotel.com', N'Ngô Văn Sơn',      N'0901000011', 1, N'107', 1, '2026-05-15','2026-05-16', N'CheckedOut', N'Paid',      0,0, 0,      NULL,                                  0,      NULL,                                           40, N'Standard'),
+    (N'cust12@hotel.com', N'Lý Thị Hồng',      N'0901000012', 3, N'304', 1, '2026-05-16','2026-05-19', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                          180, N'Silver'),
+    (N'cust13@hotel.com', N'Trịnh Đức Anh',    N'0901000013', 2, N'207', 2, '2026-05-18','2026-05-21', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                          220, N'Silver'),
+    (N'cust14@hotel.com', N'Cao Mỹ Linh',      N'0901000014', 4, N'404', 1, '2026-05-20','2026-05-23', N'CheckedOut', N'Paid',      0,1, 0,      NULL,                                  0,      NULL,                                          410, N'Gold'),
+    (N'cust15@hotel.com', N'Phan Văn Đạt',     N'0901000015', 1, N'108', 1, '2026-05-21','2026-05-22', N'CheckedOut', N'Paid',      0,0, 0,      NULL,                                  0,      NULL,                                           25, N'Standard'),
+    (N'cust16@hotel.com', N'Hồ Ngọc Mai',      N'0901000016', 3, N'306', 1, '2026-05-22','2026-05-25', N'CheckedOut', N'Paid',      1,0, 150000, N'Giặt ủi phát sinh',                   0,      NULL,                                          200, N'Silver'),
+    (N'cust17@hotel.com', N'Dương Quốc Huy',   N'0901000017', 2, N'208', 1, '2026-05-25','2026-05-28', N'CheckedOut', N'Paid',      1,1, 0,      NULL,                                  0,      NULL,                                          130, N'Standard'),
+    (N'cust18@hotel.com', N'Tô Thanh Tùng',    N'0901000018', 4, N'405', 1, '2026-05-26','2026-05-29', N'CheckedOut', N'Paid',      0,0, 0,      NULL,                                  0,      NULL,                                          350, N'Gold'),
+    (N'cust19@hotel.com', N'Lưu Thị Cẩm',      N'0901000019', 3, N'307', 1, '2026-05-28','2026-05-31', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                          160, N'Silver'),
+    (N'cust20@hotel.com', N'Hà Văn Phúc',      N'0901000020', 2, N'209', 2, '2026-05-29','2026-06-01', N'CheckedOut', N'Refunded',  1,0, 0,      NULL,                                  500000, N'Hoàn phí dịch vụ khách không sử dụng',        240, N'Silver'),
+    (N'cust21@hotel.com', N'Quách Bảo Ngọc',   N'0901000021', 1, N'109', 1, '2026-06-03','2026-06-06', N'CheckedIn',  N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                           70, N'Standard'),
+    (N'cust22@hotel.com', N'Vương Tuấn Kiệt',  N'0901000022', 2, N'210', 2, '2026-06-04','2026-06-07', N'CheckedIn',  N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                          150, N'Silver'),
+    (N'cust23@hotel.com', N'Đoàn Thị Yến',     N'0901000023', 4, N'406', 1, '2026-06-04','2026-06-06', N'CheckedIn',  N'Paid',      0,1, 0,      NULL,                                  0,      NULL,                                          320, N'Gold'),
+    (N'cust24@hotel.com', N'Lâm Chí Thành',    N'0901000024', 3, N'308', 1, '2026-06-05','2026-06-08', N'CheckedIn',  N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                          110, N'Standard'),
+    (N'cust25@hotel.com', N'Trương Khải Minh', N'0901000025', 2, N'211', 1, '2026-06-08','2026-06-11', N'Confirmed',  N'Pending',   0,0, 0,      NULL,                                  0,      NULL,                                           60, N'Standard'),
+    (N'cust26@hotel.com', N'Kiều Anh Thư',     N'0901000026', 3, N'309', 1, '2026-06-10','2026-06-13', N'Confirmed',  N'Pending',   0,0, 0,      NULL,                                  0,      NULL,                                           90, N'Standard'),
+    (N'cust27@hotel.com', N'Tạ Quang Dũng',    N'0901000027', 4, N'407', 1, '2026-06-12','2026-06-15', N'Confirmed',  N'Pending',   0,0, 0,      NULL,                                  0,      NULL,                                          280, N'Silver'),
+    (N'cust28@hotel.com', N'Phùng Mỹ Duyên',   N'0901000028', 1, N'110', 1, '2026-06-09','2026-06-11', N'Pending',    N'Pending',   0,0, 0,      NULL,                                  0,      NULL,                                           20, N'Standard'),
+    (N'cust29@hotel.com', N'Châu Văn Lộc',     N'0901000029', 2, N'212', 1, '2026-06-14','2026-06-16', N'Rejected',   N'Refunding', 0,0, 0,      NULL,                                  0,      NULL,                                           45, N'Standard'),
+    (N'cust30@hotel.com', N'Đinh Thị Bích',    N'0901000030', 3, N'310', 1, '2026-06-07','2026-06-09', N'Cancelled',  N'Cancelled', 0,0, 0,      NULL,                                  0,      NULL,                                           15, N'Standard');
+
+    /* 1) Tài khoản khách hàng (role Customer) — mật khẩu: customer123 */
+    INSERT INTO dbo.Account (email, password, full_name, role_id, is_active, phone)
+    SELECT s.email,
+           N'$2a$10$NKZuHMq4Tm0LJgtKBK401.FauytTSiIiR0h6BqGve1RFpZXzcjxeC',
+           s.full_name,
+           (SELECT role_id FROM dbo.Role WHERE role_name = N'Customer'),
+           1, s.phone
+    FROM @seed s
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.Account a WHERE a.email = s.email);
+
+    /* 2) Hồ sơ Customer */
+    INSERT INTO dbo.Customer (account_id, loyalty_points, membership_level)
+    SELECT a.account_id, s.loyalty, s.membership
+    FROM @seed s
+    JOIN dbo.Account a ON a.email = s.email
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.Customer c WHERE c.account_id = a.account_id);
+
+    /* 3) Booking — total_amount = giá nền × số đêm × số phòng (chỉ tiền phòng) */
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    SELECT a.account_id, s.full_name, s.type_id, s.qty, s.check_in, s.check_out,
+           rt.base_price * DATEDIFF(DAY, s.check_in, s.check_out) * s.qty,
+           s.bstatus, N'SEED30'
+    FROM @seed s
+    JOIN dbo.Account a ON a.email = s.email
+    JOIN dbo.RoomType rt ON rt.type_id = s.type_id;
+
+    /* 4) Hóa đơn — 1 hóa đơn / booking */
+    INSERT INTO dbo.Invoice (booking_id, customer_name, room_number, status, created_at)
+    SELECT b.booking_id, s.full_name, s.room_number, s.istatus, CAST(s.check_in AS DATETIME2)
+    FROM @seed s
+    JOIN dbo.Account a ON a.email = s.email
+    JOIN dbo.Booking b ON b.account_id = a.account_id AND b.note = N'SEED30';
+
+    /* 5a) Dòng tiền phòng */
+    INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount)
+    SELECT inv.invoice_id, N'Room',
+           CONCAT(rt.type_name, N' (', DATEDIFF(DAY, s.check_in, s.check_out), N' đêm',
+                  CASE WHEN s.qty > 1 THEN CONCAT(N' x', s.qty, N' phòng') ELSE N'' END, N')'),
+           DATEDIFF(DAY, s.check_in, s.check_out) * s.qty,
+           rt.base_price,
+           rt.base_price * DATEDIFF(DAY, s.check_in, s.check_out) * s.qty
+    FROM @seed s
+    JOIN dbo.Account a ON a.email = s.email
+    JOIN dbo.Booking b ON b.account_id = a.account_id AND b.note = N'SEED30'
+    JOIN dbo.Invoice inv ON inv.booking_id = b.booking_id
+    JOIN dbo.RoomType rt ON rt.type_id = s.type_id;
+
+    /* 5b) Dòng bữa sáng Buffet (nếu có) */
+    INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount)
+    SELECT inv.invoice_id, N'Service', N'Bữa sáng Buffet',
+           DATEDIFF(DAY, s.check_in, s.check_out) * s.qty, 150000,
+           150000 * DATEDIFF(DAY, s.check_in, s.check_out) * s.qty
+    FROM @seed s
+    JOIN dbo.Account a ON a.email = s.email
+    JOIN dbo.Booking b ON b.account_id = a.account_id AND b.note = N'SEED30'
+    JOIN dbo.Invoice inv ON inv.booking_id = b.booking_id
+    WHERE s.bf = 1;
+
+    /* 5c) Dòng đưa đón sân bay (nếu có) */
+    INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount)
+    SELECT inv.invoice_id, N'Service', N'Đưa đón sân bay', 1, 350000, 350000
+    FROM @seed s
+    JOIN dbo.Account a ON a.email = s.email
+    JOIN dbo.Booking b ON b.account_id = a.account_id AND b.note = N'SEED30'
+    JOIN dbo.Invoice inv ON inv.booking_id = b.booking_id
+    WHERE s.air = 1;
+
+    /* 5d) Dòng phụ phí (nếu có) */
+    INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount)
+    SELECT inv.invoice_id, N'Surcharge', s.surcharge_desc, 1, s.surcharge, s.surcharge
+    FROM @seed s
+    JOIN dbo.Account a ON a.email = s.email
+    JOIN dbo.Booking b ON b.account_id = a.account_id AND b.note = N'SEED30'
+    JOIN dbo.Invoice inv ON inv.booking_id = b.booking_id
+    WHERE s.surcharge > 0;
+
+    /* 6) Hoàn tiền (nếu có) */
+    INSERT INTO dbo.Refund (invoice_id, amount, reason, created_at)
+    SELECT inv.invoice_id, s.refund, s.refund_reason, CAST(s.check_out AS DATETIME2)
+    FROM @seed s
+    JOIN dbo.Account a ON a.email = s.email
+    JOIN dbo.Booking b ON b.account_id = a.account_id AND b.note = N'SEED30'
+    JOIN dbo.Invoice inv ON inv.booking_id = b.booking_id
+    WHERE s.refund > 0;
+END
+GO
+
+/* Test query: tổng hợp dữ liệu vừa seed */
+SELECT
+    (SELECT COUNT(*) FROM dbo.Booking WHERE note = N'SEED30')                         AS seed_bookings,
+    (SELECT COUNT(*) FROM dbo.Account a JOIN dbo.Role r ON a.role_id = r.role_id
+        WHERE r.role_name = N'Customer' AND a.email LIKE N'cust%@hotel.com')          AS seed_customers,
+    (SELECT COUNT(*) FROM dbo.Invoice i
+        JOIN dbo.Booking b ON i.booking_id = b.booking_id WHERE b.note = N'SEED30')   AS seed_invoices;
+GO
+
+/* ============================================================
+   8. KHOẢN CHỜ HOÀN DẠNG DANH SÁCH (Refund.status)
+   - Thêm cột status (Pending/Done) + confirmed_at vào Refund.
+   - Bản ghi hoàn cũ -> Done (lịch sử). Khoản chờ hoàn -> Pending.
+   - Sinh khoản Refund(Pending) cho hóa đơn Refunding chưa có khoản nào.
+   - Bỏ 2 cột pending_refund_amount / pending_refund_reason trên Invoice
+     (đã thay bằng danh sách Refund(Pending)).
+   ============================================================ */
+IF COL_LENGTH(N'dbo.Refund', N'status') IS NULL
+    ALTER TABLE dbo.Refund ADD status NVARCHAR(20) NOT NULL CONSTRAINT DF_Refund_Status DEFAULT N'Done';
+GO
+
+IF COL_LENGTH(N'dbo.Refund', N'confirmed_at') IS NULL
+    ALTER TABLE dbo.Refund ADD confirmed_at DATETIME2 NULL;
+GO
+
+/* Bản ghi hoàn cũ coi như đã hoàn xong: gán confirmed_at nếu còn trống. */
+UPDATE dbo.Refund SET confirmed_at = created_at WHERE status = N'Done' AND confirmed_at IS NULL;
+GO
+
+/* Sinh khoản Refund(Pending) cho hóa đơn Refunding chưa có khoản Pending nào.
+   Số tiền chờ hoàn = Tổng hóa đơn - Tiền cọc (30% tiền phòng) - phần đã hoàn (Done),
+   để tổng hoàn không vượt (Tổng - Cọc) => Thực thu không bị âm. (idempotent) */
+INSERT INTO dbo.Refund (invoice_id, amount, reason, status, created_at)
+SELECT i.invoice_id,
+       (SELECT ISNULL(SUM(ii.amount),0) FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id)
+       - (SELECT ISNULL(SUM(ii.amount),0) * 0.3 FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id AND ii.item_type = N'Room')
+       - (SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Done'),
+       N'Hoàn tiền cọc do đặt phòng bị từ chối hoặc khách huỷ.', N'Pending', SYSDATETIME()
+FROM dbo.Invoice i
+WHERE i.status = N'Refunding'
+  AND NOT EXISTS (SELECT 1 FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Pending')
+  AND (SELECT ISNULL(SUM(ii.amount),0) FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id)
+      - (SELECT ISNULL(SUM(ii.amount),0) * 0.3 FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id AND ii.item_type = N'Room')
+      - (SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Done') > 0;
+GO
+
+/* Bỏ 2 cột cũ trên Invoice (không còn dùng). */
+IF COL_LENGTH(N'dbo.Invoice', N'pending_refund_amount') IS NOT NULL
+    ALTER TABLE dbo.Invoice DROP COLUMN pending_refund_amount;
+GO
+
+IF COL_LENGTH(N'dbo.Invoice', N'pending_refund_reason') IS NOT NULL
+    ALTER TABLE dbo.Invoice DROP COLUMN pending_refund_reason;
+GO
+
+/* ============================================================
+   9. BỎ TRẠNG THÁI 'Refunded' KHỎI HÓA ĐƠN
+   - Hóa đơn đã hoàn xong nay quay về 'Pending' (chưa thanh toán).
+   - Thu hẹp ràng buộc CHECK: chỉ còn Pending / Paid / Refunding / Cancelled.
+   ============================================================ */
+UPDATE dbo.Invoice SET status = N'Pending', updated_at = SYSDATETIME() WHERE status = N'Refunded';
+GO
+
+IF OBJECT_ID(N'dbo.CK_Invoice_Status', N'C') IS NOT NULL
+    ALTER TABLE dbo.Invoice DROP CONSTRAINT CK_Invoice_Status;
+GO
+
+ALTER TABLE dbo.Invoice ADD CONSTRAINT CK_Invoice_Status
+    CHECK (status IN (N'Pending', N'Paid', N'Refunding', N'Cancelled'));
+GO
+
+/* ============================================================
+   10. GIỚI HẠN KHOẢN HOÀN (tránh Thực thu < 0)
+   Tổng hoàn (Done + Pending) không được vượt (Tổng - Tiền cọc 30% phòng).
+   Sửa dữ liệu cũ: nếu một hóa đơn có đúng 1 khoản chờ hoàn vượt mức cho phép,
+   hạ số tiền khoản đó về đúng mức (Tổng - Cọc - Đã hoàn). (idempotent)
+   ============================================================ */
+;WITH budget AS (
+    SELECT i.invoice_id,
+        (SELECT ISNULL(SUM(ii.amount),0) FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id)
+        - (SELECT ISNULL(SUM(ii.amount),0) * 0.3 FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id AND ii.item_type = N'Room')
+        - (SELECT ISNULL(SUM(d.amount),0) FROM dbo.Refund d WHERE d.invoice_id = i.invoice_id AND d.status = N'Done') AS allowed,
+        (SELECT COUNT(*) FROM dbo.Refund p WHERE p.invoice_id = i.invoice_id AND p.status = N'Pending') AS pend_cnt,
+        (SELECT ISNULL(SUM(p.amount),0) FROM dbo.Refund p WHERE p.invoice_id = i.invoice_id AND p.status = N'Pending') AS pend_sum
+    FROM dbo.Invoice i
+)
+UPDATE rf
+SET rf.amount = b.allowed
+FROM dbo.Refund rf
+JOIN budget b ON b.invoice_id = rf.invoice_id
+WHERE rf.status = N'Pending'
+  AND b.pend_cnt = 1
+  AND b.pend_sum > b.allowed
+  AND b.allowed > 0;
 GO

@@ -25,6 +25,8 @@ public class Booking {
     private String status;           
     private String note;
     private Date createdAt;
+    private String assignedRoomsStr;
+
 
     /* ---------- Constructors ---------- */
 
@@ -108,6 +110,10 @@ public class Booking {
 
     public Date getCreatedAt()              { return createdAt; }
     public void setCreatedAt(Date v)        { this.createdAt = v; }
+
+    public String getAssignedRoomsStr()     { return assignedRoomsStr; }
+    public void setAssignedRoomsStr(String v) { this.assignedRoomsStr = v; }
+
 
     /* ---------- Validation Logic ---------- */
     public boolean isValid() {

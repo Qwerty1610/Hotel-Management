@@ -1,0 +1,285 @@
+package com.mycompany.hotelmanagement.controller.receptionist;
+
+import com.mycompany.hotelmanagement.service.BookingService;
+import com.mycompany.hotelmanagement.entity.Booking;
+import com.mycompany.hotelmanagement.entity.Room;
+import com.mycompany.hotelmanagement.entity.CustomerDetails;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
+import com.mycompany.hotelmanagement.service.RoomTypeService;
+import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+/**
+ * ReceptionistBookingProcessController
+ * URL: /receptionist/booking/process
+ *
+ * handles room assignment and status approvals (Confirm, Reject, Cancel)
+ * for a specific booking request on a standalone page.
+ *
+ * @author DUC BINH
+ */
+@WebServlet(name = "ReceptionistBookingProcessController", urlPatterns = {"/receptionist/booking/process"})
+public class ReceptionistBookingProcessController extends HttpServlet {
+
+    private static final Logger LOGGER = Logger.getLogger(ReceptionistBookingProcessController.class.getName());
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        // 1. Authorization
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("user") == null
+                || !"RECEPTIONIST".equals(session.getAttribute("role"))) {
+            response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
+            return;
+        }
+
+        String bookingIdStr = request.getParameter("bookingId");
+        if (bookingIdStr == null || bookingIdStr.trim().isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=invalid");
+            return;
+        }
+
+        try {
+            int bookingId = Integer.parseInt(bookingIdStr.trim());
+            BookingService bookingService = new BookingService();
+            Booking booking = bookingService.getBookingById(bookingId);
+
+            if (booking == null) {
+                response.sendRedirect(request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=invalid");
+                return;
+            }
+
+            // Load Customer profile if accountId is set
+            CustomerDetails customer = null;
+            if (booking.getAccountId() != null) {
+                customer = bookingService.getCustomerDetailsByAccountId(booking.getAccountId());
+            }
+
+            // Load all rooms in the hotel (to support dynamic client-side filtering)
+            List<Room> rooms = bookingService.getAllRooms();
+
+            // Load assigned rooms if any
+            List<Room> assignedRooms = bookingService.getAssignedRoomsForBooking(bookingId);
+
+            List<RoomTypeInfo> roomTypesList = new RoomTypeService().getAllRoomTypes();
+
+            request.setAttribute("booking", booking);
+            request.setAttribute("customer", customer);
+            request.setAttribute("rooms", rooms);
+            request.setAttribute("assignedRooms", assignedRooms);
+            request.setAttribute("roomTypesList", roomTypesList);
+
+            request.getRequestDispatcher("/WEB-INF/views/receptionist/booking-process.jsp")
+                   .forward(request, response);
+
+        } catch (NumberFormatException e) {
+            LOGGER.log(Level.WARNING, "Invalid bookingId format: " + bookingIdStr, e);
+            response.sendRedirect(request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=parse");
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Unexpected error in ReceptionistBookingProcessController doGet", e);
+            response.sendRedirect(request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=unknown");
+        }
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        // 1. Authorization
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("user") == null
+                || !"RECEPTIONIST".equals(session.getAttribute("role"))) {
+            response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
+            return;
+        }
+
+        String bookingIdStr = request.getParameter("bookingId");
+        String action = request.getParameter("action");
+
+        if (bookingIdStr == null || action == null || action.trim().isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=invalid");
+            return;
+        }
+
+        try {
+            int bookingId = Integer.parseInt(bookingIdStr.trim());
+            BookingService bookingService = new BookingService();
+            Booking existing = bookingService.getBookingById(bookingId);
+
+            if (existing == null) {
+                response.sendRedirect(request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=invalid");
+                return;
+            }
+
+            boolean success = false;
+
+            if ("Pending".equals(existing.getStatus()) && ("update".equalsIgnoreCase(action) || "confirm".equalsIgnoreCase(action))) {
+                String customerName = request.getParameter("customerName");
+                String checkInStr   = request.getParameter("checkInDate");
+                String checkOutStr  = request.getParameter("checkOutDate");
+                String roomTypeStr  = request.getParameter("roomTypeId");
+                String qtyStr       = request.getParameter("roomQuantity");
+                String amountStr    = request.getParameter("totalAmount");
+                String note         = request.getParameter("note");
+
+                if (customerName != null && !customerName.trim().isEmpty() && customerName.trim().length() <= 100) {
+                    existing.setCustomerName(customerName.trim());
+                }
+
+                if (checkInStr != null && !checkInStr.isEmpty() && checkOutStr != null && !checkOutStr.isEmpty()) {
+                    try {
+                        java.sql.Date checkInDate = java.sql.Date.valueOf(checkInStr);
+                        java.sql.Date checkOutDate = java.sql.Date.valueOf(checkOutStr);
+                        if (checkInDate.before(checkOutDate)) {
+                            existing.setCheckInDate(checkInDate);
+                            existing.setCheckOutDate(checkOutDate);
+                        }
+                    } catch (IllegalArgumentException e) {
+                        LOGGER.log(Level.WARNING, "Date format parse error in process controller", e);
+                    }
+                }
+
+                if (roomTypeStr != null && !roomTypeStr.trim().isEmpty()) {
+                    try {
+                        existing.setRoomTypeId(Integer.parseInt(roomTypeStr.trim()));
+                    } catch (NumberFormatException e) {
+                        LOGGER.log(Level.WARNING, "RoomType parse error", e);
+                    }
+                }
+
+                if (qtyStr != null && !qtyStr.trim().isEmpty()) {
+                    try {
+                        int qty = Integer.parseInt(qtyStr.trim());
+                        if (qty > 0 && qty <= 100) {
+                            existing.setRoomQuantity(qty);
+                        }
+                    } catch (NumberFormatException e) {}
+                }
+
+                if (amountStr != null && !amountStr.trim().isEmpty()) {
+                    try {
+                        double amount = Double.parseDouble(amountStr.trim());
+                        if (amount >= 0) {
+                            existing.setTotalAmount(amount);
+                        }
+                    } catch (NumberFormatException e) {}
+                }
+
+                if (note != null) {
+                    existing.setNote(note.trim());
+                }
+
+                bookingService.updateBookingDetails(existing);
+            }
+
+            switch (action.toLowerCase()) {
+                case "update": {
+                    if ("Pending".equals(existing.getStatus())) {
+                        String[] roomIdStrings = request.getParameterValues("roomIds");
+                        if (roomIdStrings != null && roomIdStrings.length == existing.getRoomQuantity()) {
+                            List<Integer> roomIds = new ArrayList<>();
+                            for (String rIdStr : roomIdStrings) {
+                                roomIds.add(Integer.parseInt(rIdStr.trim()));
+                            }
+                            bookingService.assignRoomsToBooking(bookingId, roomIds);
+                        } else {
+                            bookingService.assignRoomsToBooking(bookingId, new ArrayList<>());
+                        }
+                    }
+                    success = true;
+                    break;
+                }
+
+                case "confirm": {
+                    // Check status validity
+                    if (!"Pending".equals(existing.getStatus())) {
+                        response.sendRedirect(request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=invalid");
+                        return;
+                    }
+
+                    // Retrieve selected room IDs
+                    String[] roomIdStrings = request.getParameterValues("roomIds");
+                    if (roomIdStrings == null || roomIdStrings.length != existing.getRoomQuantity()) {
+                        LOGGER.log(Level.WARNING, "Confirm failed: Room selection mismatch for booking: " + bookingId);
+                        response.sendRedirect(request.getContextPath() + "/receptionist/booking/process?bookingId=" + bookingId + "&error=validation");
+                        return;
+                    }
+
+                    List<Integer> roomIds = new ArrayList<>();
+                    for (String rIdStr : roomIdStrings) {
+                        roomIds.add(Integer.parseInt(rIdStr.trim()));
+                    }
+
+                    // Perform database updates
+                    String note = request.getParameter("note");
+                    String noteText = (note != null && !note.trim().isEmpty()) ? note.trim() : "Đã xác nhận và phân phòng";
+
+                    // Save room assignment first
+                    boolean assigned = bookingService.assignRoomsToBooking(bookingId, roomIds);
+                    if (assigned) {
+                        // Update status to Confirmed
+                        success = bookingService.updateBookingStatus(bookingId, "Confirmed", noteText);
+                    }
+                    break;
+                }
+
+                case "reject": {
+                    if (!"Pending".equals(existing.getStatus())) {
+                        response.sendRedirect(request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=invalid");
+                        return;
+                    }
+
+                    String reason = request.getParameter("reason");
+                    if (reason == null || reason.trim().isEmpty()) {
+                        response.sendRedirect(request.getContextPath() + "/receptionist/booking/process?bookingId=" + bookingId + "&error=validation");
+                        return;
+                    }
+
+                    success = bookingService.updateBookingStatus(bookingId, "Rejected", reason.trim());
+                    break;
+                }
+
+                case "cancel": {
+                    if ("CheckedIn".equals(existing.getStatus()) || "CheckedOut".equals(existing.getStatus())) {
+                        response.sendRedirect(request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=invalid");
+                        return;
+                    }
+
+                    String reason = request.getParameter("reason");
+                    String reasonText = (reason != null && !reason.trim().isEmpty()) ? reason.trim() : "Huỷ theo yêu cầu";
+
+                    success = bookingService.cancelBooking(bookingId, reasonText);
+                    break;
+                }
+
+                default:
+                    response.sendRedirect(request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=invalid");
+                    return;
+            }
+
+            String result = success ? "success" : "fail";
+            response.sendRedirect(request.getContextPath()
+                    + "/receptionist/dashboard?tab=bookings&result=" + result
+                    + "&action=" + action);
+
+        } catch (NumberFormatException e) {
+            LOGGER.log(Level.WARNING, "Format parse error on post processing", e);
+            response.sendRedirect(request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=parse");
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Unexpected error in ReceptionistBookingProcessController doPost", e);
+            response.sendRedirect(request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=unknown");
+        }
+    }
+}

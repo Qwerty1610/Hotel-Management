@@ -242,12 +242,12 @@ body.dashboard-body {
 }
 .status-pill i { font-size: 7px; }
 
-.pill-pending   { background: #fffbeb; color: #d97706; }
-.pill-confirmed { background: #f0fdf4; color: #16a34a; }
-.pill-rejected  { background: #fef2f2; color: #dc2626; }
-.pill-cancelled { background: #f8fafc; color: #64748b; }
-.pill-checkedin { background: #eff6ff; color: #2563eb; }
-.pill-checkedout{ background: #f5f3ff; color: #7c3aed; }
+.status-pill.pill-pending   { background: #fffbeb; color: #d97706 !important; }
+.status-pill.pill-confirmed { background: #f0fdf4; color: #16a34a !important; }
+.status-pill.pill-rejected  { background: #fef2f2; color: #dc2626 !important; }
+.status-pill.pill-cancelled { background: #f8fafc; color: #64748b !important; }
+.status-pill.pill-checkedin { background: #eff6ff; color: #2563eb !important; }
+.status-pill.pill-checkedout{ background: #f5f3ff; color: #7c3aed !important; }
 
 /* ---- ACTION BUTTONS ---- */
 .actions-cell { display: flex; gap: 8px; }
@@ -393,6 +393,293 @@ body.dashboard-body {
     margin-top: 4px;
     animation: slideDown 0.2s ease;
 }
+
+/* ---- DISABLED BUTTON STATE ---- */
+button:disabled,
+.btn-modal-confirm:disabled,
+.btn-modal-reject:disabled,
+.btn-modal-save:disabled {
+    background-color: #cbd5e1 !important;
+    color: #94a3b8 !important;
+    cursor: not-allowed !important;
+    border-color: #cbd5e1 !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* ---- TOAST WARNING VARIANT ---- */
+.toast-warning {
+    background: #fffbeb;
+    color: #d97706;
+    border: 1px solid #fde68a;
+}
+
+/* =========================================================
+   RECEPTIONIST PROCESS BOOKING & ROOM ASSIGNMENT STYLES
+   ========================================================= */
+
+.process-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 24px;
+    align-items: start;
+    margin-top: 10px;
+}
+
+.detail-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    overflow: hidden;
+}
+
+.detail-card .card-header {
+    background: #f8fafc;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.detail-card .card-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-navy);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.detail-card .card-body {
+    padding: 20px;
+}
+
+/* Info Rows */
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 14px;
+}
+
+.info-row:last-of-type {
+    border-bottom: 1px solid #f1f5f9; /* keep border except explicitly removed */
+}
+
+.info-row label {
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.info-row span {
+    font-weight: 600;
+    color: var(--text-navy);
+    text-align: right;
+}
+
+.info-row-full {
+    padding: 10px 0;
+    font-size: 14px;
+}
+
+/* Membership Badges */
+.badge-membership {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.badge-membership.Standard { background: #f1f5f9; color: #475569; }
+.badge-membership.Silver   { background: #e2e8f0; color: #475569; border: 1px solid #cbd5e1; }
+.badge-membership.Gold     { background: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
+.badge-membership.Platinum { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+
+/* Room Grid */
+.room-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.room-card {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 12px;
+    background: #fff;
+    position: relative;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 80px;
+}
+
+.room-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.room-card-header .room-number {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text-navy);
+}
+
+.room-card-header .room-floor {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.room-card-body {
+    margin-top: auto;
+}
+
+.badge-status {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    display: inline-block;
+}
+.badge-avail { background: #f0fdf4; color: #16a34a; }
+.badge-clean { background: #fef3c7; color: #d97706; }
+.badge-occupied { background: #fef2f2; color: #dc2626; }
+.badge-maint { background: #f1f5f9; color: #64748b; }
+
+.room-checkbox-wrapper {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+}
+
+.room-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--brand-blue);
+}
+
+/* Card States */
+.card-avail:hover {
+    border-color: var(--brand-blue);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.card-clean:hover {
+    border-color: var(--warning-yellow);
+}
+
+.room-card.selected {
+    border-color: var(--brand-blue);
+    background: var(--brand-blue-light);
+    box-shadow: 0 0 0 2px var(--brand-blue);
+}
+
+.card-disabled {
+    background: #f8fafc;
+    opacity: 0.6;
+}
+
+/* Selection Counter Header */
+.room-selection-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.counter-badge {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+    background: #f1f5f9;
+    padding: 4px 12px;
+    border-radius: 20px;
+    transition: all 0.2s ease;
+}
+
+.counter-badge.counter-success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+/* Seperator & Actions */
+.or-separator {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    margin: 20px 0;
+}
+.or-separator::before,
+.or-separator::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px dashed var(--border-color);
+}
+.or-separator:not(:empty)::before { margin-right: .5em; }
+.or-separator:not(:empty)::after { margin-left: .5em; }
+
+.action-buttons-row {
+    display: flex;
+    gap: 12px;
+}
+
+/* Assigned Rooms list (Confirmed view) */
+.assigned-rooms-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.assigned-room-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--brand-blue-light);
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    min-width: 140px;
+}
+
+.assigned-room-item .room-icon {
+    font-size: 20px;
+    color: var(--brand-blue);
+}
+
+.assigned-room-item .room-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.assigned-room-item .room-num {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-navy);
+}
+
+.assigned-room-item .room-fl {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+@media (max-width: 992px) {
+    .process-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 
 /* ---- DISABLED BUTTON STATE ---- */
 button:disabled,

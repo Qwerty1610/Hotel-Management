@@ -17,6 +17,8 @@ import java.util.List;
  * (theo ngày / tháng) phục vụ trang theo dõi công việc của Manager.
  *
  * Date: 02/6/2026
+ * version 1.0
+ * @author Pham Quoc Quy
  */
 public class StaffDAO {
 

@@ -19,6 +19,8 @@ import java.util.Map;
  * Một kỳ lưu trú [check_in, check_out) chiếm phòng từ ngày nhận đến trước ngày trả.
  *
  * Date: 02/6/2026
+ * version 1.0
+ * @author Pham Quoc Quy
  */
 public class DashboardService {
 
@@ -45,7 +47,6 @@ public class DashboardService {
 
         double occupancySum = 0;     // cộng dồn % công suất từng ngày
         int dayCount = 0;
-        int roomNightsSold = 0;
 
         for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {
             // Doanh thu của ngày này (0 nếu không có)
@@ -63,8 +64,6 @@ public class DashboardService {
                     occupiedRooms += qty;
                 }
             }
-            roomNightsSold += occupiedRooms;
-
             double occPct = totalRooms > 0
                     ? Math.min(100d, occupiedRooms * 100d / totalRooms)
                     : 0d;
@@ -73,8 +72,9 @@ public class DashboardService {
             dayCount++;
         }
 
-        stats.setRoomNightsSold(roomNightsSold);
         stats.setAvgOccupancy(dayCount > 0 ? round1(occupancySum / dayCount) : 0d);
+        stats.setCheckInRooms(repo.getCheckInRooms(sqlFrom, sqlTo));
+        stats.setCheckOutRooms(repo.getCheckOutRooms(sqlFrom, sqlTo));
 
         // Doanh thu theo loại phòng
         Map<String, Double> revByType = repo.getRevenueByRoomType(sqlFrom, sqlTo);

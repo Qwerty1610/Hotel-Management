@@ -11,6 +11,12 @@ import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Lớp tiện ích gửi email bằng giao thức SMTP.
+ * Hỗ trợ gửi mã OTP khôi phục mật khẩu. Tự động ghi log ra console nếu chưa cấu hình SMTP (cho local development).
+ * 
+ * @author TùngNQ
+ */
 public class EmailUtil {
     private static final Logger logger = LoggerFactory.getLogger(EmailUtil.class);
 
@@ -25,13 +31,13 @@ public class EmailUtil {
             System.getProperty("smtp.password", "your-app-password"));
 
     /**
-     * Sends an email. If SMTP credentials are not configured, it logs the email to
-     * the console.
+     * Thực hiện gửi thư điện tử.
+     * Nếu thông tin tài khoản SMTP chưa được thiết lập, nội dung email sẽ được ghi lại trong Console để hỗ trợ phát triển cục bộ.
      * 
-     * @param toEmail Recipient's email address
-     * @param subject Email subject
-     * @param body    Email body (HTML supported)
-     * @return true if logged/sent successfully, false otherwise
+     * @param toEmail Địa chỉ email người nhận
+     * @param subject Tiêu đề thư
+     * @param body    Nội dung thư (hỗ trợ định dạng HTML)
+     * @return true nếu gửi hoặc ghi nhận thành công, false nếu phát sinh lỗi
      */
     public static boolean sendEmail(String toEmail, String subject, String body) {
         // Log the email action and content first for debugging purposes

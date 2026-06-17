@@ -15,7 +15,8 @@ public class DashboardStats {
     /* ---------- KPI tổng ---------- */
     private double totalRevenue;     // Tổng doanh thu trong khoảng lọc
     private int totalBookings;       // Số lượt đặt phòng (đã xác nhận trở lên)
-    private int roomNightsSold;      // Số đêm-phòng đã bán
+    private int checkInRooms;        // Tổng số phòng đã nhận (check-in) trong khoảng
+    private int checkOutRooms;       // Tổng số phòng đã trả (check-out) trong khoảng
     private int totalRooms;          // Tổng số phòng của khách sạn
     private double avgOccupancy;     // Công suất phòng trung bình (%)
 
@@ -43,8 +44,11 @@ public class DashboardStats {
     public int getTotalBookings()              { return totalBookings; }
     public void setTotalBookings(int v)        { this.totalBookings = v; }
 
-    public int getRoomNightsSold()             { return roomNightsSold; }
-    public void setRoomNightsSold(int v)       { this.roomNightsSold = v; }
+    public int getCheckInRooms()               { return checkInRooms; }
+    public void setCheckInRooms(int v)         { this.checkInRooms = v; }
+
+    public int getCheckOutRooms()              { return checkOutRooms; }
+    public void setCheckOutRooms(int v)        { this.checkOutRooms = v; }
 
     public int getTotalRooms()                 { return totalRooms; }
     public void setTotalRooms(int v)           { this.totalRooms = v; }

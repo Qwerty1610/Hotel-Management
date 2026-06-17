@@ -14,7 +14,9 @@ public class Refund {
     private int invoiceId;
     private double amount;
     private String reason;
+    private String status;        // Pending (chờ hoàn) / Done (đã hoàn)
     private Timestamp createdAt;
+    private Timestamp confirmedAt; // thời điểm xác nhận đã hoàn
 
     public Refund() {}
 
@@ -31,6 +33,12 @@ public class Refund {
     public String getReason()             { return reason; }
     public void setReason(String v)       { this.reason = v; }
 
+    public String getStatus()             { return status; }
+    public void setStatus(String v)       { this.status = v; }
+
     public Timestamp getCreatedAt()       { return createdAt; }
     public void setCreatedAt(Timestamp v) { this.createdAt = v; }
+
+    public Timestamp getConfirmedAt()       { return confirmedAt; }
+    public void setConfirmedAt(Timestamp v) { this.confirmedAt = v; }
 }

@@ -2,6 +2,8 @@ package com.mycompany.hotelmanagement.dal;
 
 import com.mycompany.hotelmanagement.config.DBContext;
 import com.mycompany.hotelmanagement.entity.Booking;
+import com.mycompany.hotelmanagement.entity.Room;
+import com.mycompany.hotelmanagement.entity.CustomerDetails;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,9 +37,14 @@ public class BookingDAO {
     private static final String BASE_SELECT = "SELECT b.booking_id, b.account_id, b.customer_name, " +
             "       b.room_type_id, rt.type_name AS room_type_name, " +
             "       b.room_quantity, b.check_in_date, b.check_out_date, " +
-            "       b.total_amount, b.status, b.note, CAST(b.created_at AS DATE) AS created_at " +
+            "       b.total_amount, b.status, b.note, CAST(b.created_at AS DATE) AS created_at, " +
+            "       (SELECT STRING_AGG(r.room_number, ', ') " +
+            "        FROM dbo.Booking_Room br " +
+            "        JOIN dbo.Room r ON br.room_id = r.room_id " +
+            "        WHERE br.booking_id = b.booking_id) AS assigned_rooms " +
             "FROM dbo.Booking b " +
             "LEFT JOIN dbo.RoomType rt ON b.room_type_id = rt.type_id ";
+
 
     private String sanitizeLikeKeyword(String keyword) {
         if (keyword == null) return "";
@@ -252,6 +259,199 @@ public class BookingDAO {
         b.setStatus(rs.getString("status"));
         b.setNote(rs.getString("note"));
         b.setCreatedAt(rs.getDate("created_at"));
+        try {
+            b.setAssignedRoomsStr(rs.getString("assigned_rooms"));
+        } catch (SQLException e) {
+            // Safe fallback
+        }
         return b;
+
+    }
+
+    public BookingDAO() {
+        ensureBookingRoomTableExists();
+    }
+
+    private void ensureBookingRoomTableExists() {
+        String sql = "IF OBJECT_ID(N'dbo.Booking_Room', N'U') IS NULL " +
+                     "BEGIN " +
+                     "    CREATE TABLE dbo.Booking_Room ( " +
+                     "        booking_id INT NOT NULL, " +
+                     "        room_id INT NOT NULL, " +
+                     "        PRIMARY KEY (booking_id, room_id), " +
+                     "        CONSTRAINT FK_BookingRoom_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id) ON DELETE CASCADE, " +
+                     "        CONSTRAINT FK_BookingRoom_Room FOREIGN KEY (room_id) REFERENCES dbo.Room(room_id) ON DELETE CASCADE " +
+                     "    ); " +
+                     "END";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (Statement stmt = conn.createStatement()) {
+                stmt.execute(sql);
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error ensuring Booking_Room table exists", e);
+        }
+    }
+
+    public List<Room> getRoomsByTypeId(int typeId) {
+        List<Room> list = new ArrayList<>();
+        String sql = "SELECT r.room_id, r.room_number, r.status, r.floor, rt.type_name " +
+                     "FROM dbo.Room r " +
+                     "JOIN dbo.RoomType rt ON r.type_id = rt.type_id " +
+                     "WHERE r.type_id = ? " +
+                     "ORDER BY r.floor, r.room_number";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, typeId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        Room r = new Room();
+                        r.setRoomId(rs.getInt("room_id"));
+                        r.setRoomNumber(rs.getString("room_number"));
+                        r.setStatus(rs.getString("status"));
+                        r.setFloor(rs.getString("floor"));
+                        r.setTypeName(rs.getString("type_name"));
+                        list.add(r);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in getRoomsByTypeId: " + typeId, e);
+        }
+        return list;
+    }
+
+    public List<Room> getAllRooms() {
+        List<Room> list = new ArrayList<>();
+        String sql = "SELECT r.room_id, r.room_number, r.status, r.floor, rt.type_name " +
+                     "FROM dbo.Room r " +
+                     "JOIN dbo.RoomType rt ON r.type_id = rt.type_id " +
+                     "ORDER BY r.floor, r.room_number";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        Room r = new Room();
+                        r.setRoomId(rs.getInt("room_id"));
+                        r.setRoomNumber(rs.getString("room_number"));
+                        r.setStatus(rs.getString("status"));
+                        r.setFloor(rs.getString("floor"));
+                        r.setTypeName(rs.getString("type_name"));
+                        list.add(r);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in getAllRooms", e);
+        }
+        return list;
+    }
+
+
+    public CustomerDetails getCustomerDetailsByAccountId(int accountId) {
+        String sql = "SELECT a.full_name, a.email, a.phone " +
+                     "FROM dbo.Account a " +
+                     "WHERE a.account_id = ?";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, accountId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        CustomerDetails cd = new CustomerDetails();
+                        cd.setFullName(rs.getString("full_name"));
+                        cd.setEmail(rs.getString("email"));
+                        cd.setPhone(rs.getString("phone"));
+                        return cd;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in getCustomerDetailsByAccountId: " + accountId, e);
+        }
+        return null;
+    }
+
+    public boolean assignRoomsToBooking(int bookingId, List<Integer> roomIds) {
+        if (bookingId <= 0 || roomIds == null || roomIds.isEmpty()) {
+            return false;
+        }
+        
+        String deleteSql = "DELETE FROM dbo.Booking_Room WHERE booking_id = ?";
+        String insertSql = "INSERT INTO dbo.Booking_Room (booking_id, room_id) VALUES (?, ?)";
+        
+        Connection conn = null;
+        PreparedStatement deletePs = null;
+        PreparedStatement insertPs = null;
+        
+        try {
+            conn = DBContext.getConnection();
+            useDatabase(conn);
+            conn.setAutoCommit(false);
+            
+            // Delete old assignments
+            deletePs = conn.prepareStatement(deleteSql);
+            deletePs.setInt(1, bookingId);
+            deletePs.executeUpdate();
+            
+            // Insert new assignments
+            insertPs = conn.prepareStatement(insertSql);
+            for (int roomId : roomIds) {
+                insertPs.setInt(1, bookingId);
+                insertPs.setInt(2, roomId);
+                insertPs.addBatch();
+            }
+            insertPs.executeBatch();
+            
+            conn.commit();
+            return true;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in assignRoomsToBooking: bookingId=" + bookingId, e);
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "Error rolling back transaction", ex);
+                }
+            }
+        } finally {
+            if (deletePs != null) try { deletePs.close(); } catch (Exception e) {}
+            if (insertPs != null) try { insertPs.close(); } catch (Exception e) {}
+            if (conn != null) try { conn.close(); } catch (Exception e) {}
+        }
+        return false;
+    }
+
+    public List<Room> getAssignedRoomsForBooking(int bookingId) {
+        List<Room> list = new ArrayList<>();
+        String sql = "SELECT r.room_id, r.room_number, r.status, r.floor, rt.type_name " +
+                     "FROM dbo.Booking_Room br " +
+                     "JOIN dbo.Room r ON br.room_id = r.room_id " +
+                     "JOIN dbo.RoomType rt ON r.type_id = rt.type_id " +
+                     "WHERE br.booking_id = ? " +
+                     "ORDER BY r.room_number";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, bookingId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        Room r = new Room();
+                        r.setRoomId(rs.getInt("room_id"));
+                        r.setRoomNumber(rs.getString("room_number"));
+                        r.setStatus(rs.getString("status"));
+                        r.setFloor(rs.getString("floor"));
+                        r.setTypeName(rs.getString("type_name"));
+                        list.add(r);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in getAssignedRoomsForBooking: " + bookingId, e);
+        }
+        return list;
     }
 }
+

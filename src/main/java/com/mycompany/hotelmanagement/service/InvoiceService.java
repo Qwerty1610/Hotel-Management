@@ -12,6 +12,8 @@ import java.util.List;
  * Tầng nghiệp vụ cho trang quản lý hóa đơn của Manager.
  *
  * Date: 02/6/2026
+ * version 1.0
+ * @author Pham Quoc Quy
  */
 public class InvoiceService {
 
@@ -33,6 +35,10 @@ public class InvoiceService {
         return invoiceDAO.getRefunds(invoiceId);
     }
 
+    public List<Refund> getPendingRefunds(int invoiceId) {
+        return invoiceDAO.getPendingRefunds(invoiceId);
+    }
+
     /** KPI: tổng tiền các hóa đơn chưa thanh toán. */
     public double getUnpaidTotal() {
         return invoiceDAO.sumTotalByStatus("Pending");
@@ -45,17 +51,29 @@ public class InvoiceService {
 
     public boolean addSurcharge(int invoiceId, String description, int quantity, double unitPrice) {
         if (description == null || description.trim().isEmpty()) return false;
-        if (quantity <= 0 || unitPrice < 0) return false;
+        // Đơn giá phụ phí phải lớn hơn 1
+        if (quantity <= 0 || unitPrice <= 1) return false;
+        Invoice inv = invoiceDAO.getInvoiceById(invoiceId);
+        if (inv == null) return false;
+        // Chỉ hóa đơn đã thanh toán mới không được thêm phụ phí
+        if ("Paid".equals(inv.getStatus())) return false;
         return invoiceDAO.addSurcharge(invoiceId, description.trim(), quantity, unitPrice);
     }
 
-    public boolean addRefund(int invoiceId, double amount, String reason) {
-        if (amount <= 0) return false;
+    /** Thêm một khoản chờ hoàn (không hoàn ngay, chờ xác nhận). */
+    public boolean addPendingRefund(int invoiceId, double amount, String reason) {
+        // Số tiền cần hoàn phải lớn hơn 1
+        if (amount <= 1) return false;
         Invoice inv = invoiceDAO.getInvoiceById(invoiceId);
-        if (inv == null) return false;
-        // Không cho hoàn vượt quá phần còn lại của hóa đơn
-        double remaining = inv.getTotalAmount() - inv.getRefundedAmount();
-        if (amount > remaining) return false;
-        return invoiceDAO.addRefund(invoiceId, amount, reason != null ? reason.trim() : "");
+        // Chỉ hóa đơn đã thanh toán mới không được thêm khoản hoàn
+        if (inv == null || "Paid".equals(inv.getStatus())) return false;
+        // Không cho tạo khoản hoàn vượt quá phần còn có thể hoàn
+        if (amount > inv.getRefundableAmount()) return false;
+        return invoiceDAO.addPendingRefund(invoiceId, amount, reason != null ? reason.trim() : "");
+    }
+
+    /** Xác nhận đã hoàn cho các khoản chờ hoàn được chọn. */
+    public boolean confirmRefunds(int invoiceId, List<Integer> refundIds) {
+        return invoiceDAO.confirmRefunds(invoiceId, refundIds);
     }
 }

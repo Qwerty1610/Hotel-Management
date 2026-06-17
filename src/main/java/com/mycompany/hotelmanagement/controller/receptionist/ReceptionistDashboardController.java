@@ -1,7 +1,7 @@
 package com.mycompany.hotelmanagement.controller.receptionist;
 
-import com.mycompany.hotelmanagement.dal.BookingDAO;
-import com.mycompany.hotelmanagement.dal.RoomTypeRepository;
+import com.mycompany.hotelmanagement.service.BookingService;
+import com.mycompany.hotelmanagement.service.RoomTypeService;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import jakarta.servlet.ServletException;
@@ -24,6 +24,7 @@ import java.util.logging.Logger;
  * Quản lý tab sidebar và load dữ liệu booking tương ứng.
  * Tab mặc định: "bookings"
  * Standardized imports utilizing dal instead of dao.
+ * 
  * Date: 01/6/2026
  * @author DUC BINH
  */
@@ -79,8 +80,8 @@ public class ReceptionistDashboardController extends HttpServlet {
 
     private void loadBookingTab(HttpServletRequest request) {
         try {
-            BookingDAO dao = new BookingDAO();
-            RoomTypeRepository roomTypeRepo = new RoomTypeRepository();
+            BookingService bookingService = new BookingService();
+            RoomTypeService roomTypeService = new RoomTypeService();
 
             // Tham số lọc
             String statusFilter = request.getParameter("status");
@@ -93,17 +94,17 @@ public class ReceptionistDashboardController extends HttpServlet {
             }
 
             // Load danh sách
-            List<Booking> bookingList = dao.getBookings(statusFilter, keyword);
+            List<Booking> bookingList = bookingService.getBookings(statusFilter, keyword);
 
             // Load danh sách loại phòng để cập nhật thông tin loại phòng trong modal edit
-            List<RoomTypeInfo> roomTypesList = roomTypeRepo.getAllRoomTypes();
+            List<RoomTypeInfo> roomTypesList = roomTypeService.getAllRoomTypes();
 
             // Thống kê nhanh cho các badge đầu trang
-            int cntAll       = dao.countAll();
-            int cntPending   = dao.countByStatus("Pending");
-            int cntConfirmed = dao.countByStatus("Confirmed");
-            int cntRejected  = dao.countByStatus("Rejected");
-            int cntCancelled = dao.countByStatus("Cancelled");
+            int cntAll       = bookingService.countAll();
+            int cntPending   = bookingService.countByStatus("Pending");
+            int cntConfirmed = bookingService.countByStatus("Confirmed");
+            int cntRejected  = bookingService.countByStatus("Rejected");
+            int cntCancelled = bookingService.countByStatus("Cancelled");
 
             // Đẩy attribute sang JSP
             request.setAttribute("bookingList",    bookingList);

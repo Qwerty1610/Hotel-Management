@@ -16,6 +16,8 @@ import java.util.List;
  * Truy vấn bảng CustomerRequest phục vụ trang quản lý yêu cầu khách hàng của Manager.
  *
  * Date: 02/6/2026
+ * version 1.0
+ * @author Pham Quoc Quy
  */
 public class CustomerRequestDAO {
 
@@ -97,17 +99,20 @@ public class CustomerRequestDAO {
      * ngược lại xoá completed_at.
      */
     public boolean updateStatus(int requestId, String newStatus) {
+        // Không cho đánh dấu Completed nếu yêu cầu chưa được gán nhân viên nào.
         String sql = "UPDATE dbo.CustomerRequest " +
                 "SET status = ?, " +
                 "    completed_at = CASE WHEN ? = N'Completed' THEN SYSDATETIME() ELSE NULL END, " +
                 "    updated_at = SYSDATETIME() " +
-                "WHERE request_id = ?";
+                "WHERE request_id = ? " +
+                "  AND (? <> N'Completed' OR assigned_staff_id IS NOT NULL)";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, newStatus);
                 ps.setString(2, newStatus);
                 ps.setInt(3, requestId);
+                ps.setString(4, newStatus);
                 return ps.executeUpdate() > 0;
             }
         } catch (Exception e) {

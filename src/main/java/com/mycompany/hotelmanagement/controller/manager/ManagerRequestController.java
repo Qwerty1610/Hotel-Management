@@ -15,13 +15,15 @@ import java.util.List;
 
 /**
  * ManagerRequestController
- * Trang riêng: quản lý yêu cầu khách hàng và theo dõi công việc nhân viên Housekeeping.
+ * Quản lý yêu cầu khách hàng và theo dõi công việc nhân viên Housekeeping.
  *
  * GET  /manager/requests                -> hiển thị trang
  * POST /manager/requests?action=assign  -> gán việc cho nhân viên (requestId, staffId)
  * POST /manager/requests?action=status  -> cập nhật trạng thái yêu cầu (requestId, status)
  *
  * Date: 02/6/2026
+ * version 1.0
+ * @author Pham Quoc Quy
  */
 @WebServlet(name = "ManagerRequestController", urlPatterns = {"/manager/requests"})
 public class ManagerRequestController extends HttpServlet {
