@@ -9,17 +9,18 @@ import java.sql.ResultSet;
 public class AccountRepository {
 
     public Account getAccountByEmail(String email) {
-        String sql = "SELECT a.email, a.password, a.full_name, r.role_name " +
+        String sql = "SELECT a.account_id, a.email, a.password, a.full_name, r.role_name " +
                      "FROM Account a JOIN Role r ON a.role_id = r.role_id " +
                      "WHERE a.email = ? AND a.is_active = 1";
         
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+             
             ps.setString(1, email);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     Account account = new Account();
+                    account.setAccountId(rs.getInt("account_id"));
                     account.setEmail(rs.getString("email"));
                     account.setPassword(rs.getString("password"));
                     account.setFullName(rs.getString("full_name"));
@@ -72,20 +73,22 @@ public class AccountRepository {
         return -1;
     }
 
-    public int getAccountIdByEmail(String email) {
-        if (email == null) return -1;
-        String sql = "SELECT account_id FROM Account WHERE email = ?";
+    public java.util.List<String> getAllCustomerNames() {
+        java.util.List<String> names = new java.util.ArrayList<>();
+        String sql = "SELECT a.full_name " +
+                     "FROM Account a JOIN Role r ON a.role_id = r.role_id " +
+                     "WHERE r.role_name = 'Customer' AND a.is_active = 1 " +
+                     "ORDER BY a.full_name";
         try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, email.trim());
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("account_id");
-                }
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                names.add(rs.getString("full_name"));
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return -1;
+        return names;
     }
 }
+

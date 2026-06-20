@@ -3,10 +3,19 @@ package com.mycompany.hotelmanagement.entity;
 import java.io.Serializable;
 
 public class Account implements Serializable {
+    private int accountId;
     private String email;
     private String password;
     private String fullName;
     private String roleName;
+
+    public int getAccountId() {
+        return accountId;
+    }
+
+    public void setAccountId(int accountId) {
+        this.accountId = accountId;
+    }
 
     public Account() {
     }

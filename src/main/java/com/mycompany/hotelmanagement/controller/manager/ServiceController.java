@@ -13,18 +13,19 @@ import com.mycompany.hotelmanagement.service.HotelServiceService;
 
 /**
  * ServiceController
- * URL: /manager/services
+ * URL: controller/manager
  *
  * Xử lý các hành động (action param):
- *   - view   : Hiển thị danh sách các dịch vụ khách sạn (Manage Service)
- *   - save   : Thêm mới hoặc cập nhật thông tin dịch vụ (Manage Service)
- *   - delete : Xóa dịch vụ khỏi hệ thống (Manage Service)
- *   - toggle : Kích hoạt hoặc vô hiệu hóa trạng thái của dịch vụ (Manage Service)
+ * - view : Hiển thị danh sách các dịch vụ khách sạn (Manage Service)
+ * - save : Thêm mới hoặc cập nhật thông tin dịch vụ (Manage Service)
+ * - delete : Xóa dịch vụ khỏi hệ thống (Manage Service)
+ * - toggle : Kích hoạt hoặc vô hiệu hóa trạng thái của dịch vụ (Manage Service)
  * 
  * Date: 01/6/2026
+ * 
  * @author DINH KHANH
  */
-@WebServlet(name = "ServiceController", urlPatterns = {"/manager/services"})
+@WebServlet(name = "ServiceController", urlPatterns = { "/manager/services" })
 public class ServiceController extends HttpServlet {
 
     private final HotelServiceService hotelServiceService = new HotelServiceService();
@@ -32,7 +33,7 @@ public class ServiceController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         String action = request.getParameter("action");
         String idParam = request.getParameter("id");
         int serviceId = -1;
@@ -53,7 +54,8 @@ public class ServiceController extends HttpServlet {
             String statusParam = request.getParameter("status");
             boolean isActive = "true".equalsIgnoreCase(statusParam);
             hotelServiceService.toggleServiceStatus(serviceId, isActive);
-            // Since toggle is called via AJAX fetch, we can just return a redirect or 200 OK.
+            // Since toggle is called via AJAX fetch, we can just return a redirect or 200
+            // OK.
             // Redirecting to list path works fine and is consistent.
             response.sendRedirect(request.getContextPath() + "/manager/services");
             return;
@@ -61,13 +63,13 @@ public class ServiceController extends HttpServlet {
 
         List<HotelService> servicesList = hotelServiceService.getAllServices();
         request.setAttribute("servicesList", servicesList);
-        request.getRequestDispatcher("/WEB-INF/views/manager/services/list.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/manager/services-list.jsp").forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         String action = request.getParameter("action");
         if ("save".equalsIgnoreCase(action)) {
             String serviceIdParam = request.getParameter("serviceId");
@@ -76,9 +78,12 @@ public class ServiceController extends HttpServlet {
             String priceParam = request.getParameter("price");
             String unit = request.getParameter("unit");
 
-            if (name != null) name = name.trim();
-            if (description != null) description = description.trim();
-            if (unit != null) unit = unit.trim();
+            if (name != null)
+                name = name.trim();
+            if (description != null)
+                description = description.trim();
+            if (unit != null)
+                unit = unit.trim();
 
             double price = 0.0;
             try {
@@ -90,8 +95,8 @@ public class ServiceController extends HttpServlet {
             }
 
             if (name == null || name.isEmpty() ||
-                price <= 0 ||
-                unit == null || unit.isEmpty()) {
+                    price <= 0 ||
+                    unit == null || unit.isEmpty()) {
                 response.sendRedirect(request.getContextPath() + "/manager/services?error=invalidData");
                 return;
             }

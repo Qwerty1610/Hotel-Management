@@ -11,7 +11,7 @@
 
         <!-- SIDEBAR -->
         <c:set var="activePage" value="invoices" scope="request" />
-        <jsp:include page="includes/sidebar.jsp" />
+        <jsp:include page="sidebar.jsp" />
 
         <div class="dashboard-main">
             <header class="main-topbar">
@@ -141,7 +141,7 @@
                                                 <td style="font-weight:700; color:#ea580c;"><fmt:formatNumber value="${pr.amount}" type="number" maxFractionDigits="0" /> đ</td>
                                                 <td><c:out value="${pr.reason}" /></td>
                                                 <td>
-                                                    <button type="button" class="btn-confirm-one" onclick="confirmOneRefund(${pr.refundId})">
+                                                    <button type="button" class="btn-confirm-one" onclick="confirmOneRefund('${pr.refundId}')">
                                                         <i class="fa-solid fa-check"></i> Xác nhận đã hoàn
                                                     </button>
                                                 </td>

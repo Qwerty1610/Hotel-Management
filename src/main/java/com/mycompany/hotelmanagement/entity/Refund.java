@@ -7,6 +7,8 @@ import java.sql.Timestamp;
  * Bản ghi hoàn tiền cho một hóa đơn (số tiền + lý do).
  *
  * Date: 02/6/2026
+ * ver 1.0
+ * @author Phạm Quốc Quý
  */
 public class Refund {
 

@@ -1,6 +1,6 @@
 package com.mycompany.hotelmanagement.controller.receptionist;
 
-import com.mycompany.hotelmanagement.service.BookingService;
+import com.mycompany.hotelmanagement.dal.BookingDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -24,9 +24,10 @@ import java.util.logging.Logger;
  * - update : Cập nhật thông tin booking (chỉ khi Pending)
  * - cancel : Huỷ booking
  * 
- * Date: 13/6/2026
+ * Standardized imports utilizing dal instead of dao.
+ * Date: 01/6/2026
  * 
- * @author DUC BINH
+ * @author BinhHD
  */
 @WebServlet(name = "ReceptionistBookingController", urlPatterns = { "/receptionist/booking" })
 public class ReceptionistBookingController extends HttpServlet {
@@ -62,14 +63,14 @@ public class ReceptionistBookingController extends HttpServlet {
                 return;
             }
 
-            BookingService bookingService = new BookingService();
+            BookingDAO dao = new BookingDAO();
             boolean success = false;
 
             switch (action.toLowerCase()) {
 
                 /* ---------- Xác nhận ---------- */
                 case "confirm": {
-                    Booking existing = bookingService.getBookingById(bookingId);
+                    Booking existing = dao.getBookingById(bookingId);
                     if (existing == null || !"Pending".equals(existing.getStatus())) {
                         LOGGER.log(Level.WARNING, "Confirm attempted on invalid booking or state. ID: " + bookingId);
                         response.sendRedirect(
@@ -77,14 +78,14 @@ public class ReceptionistBookingController extends HttpServlet {
                         return;
                     }
                     String confirmNote = request.getParameter("note");
-                    success = bookingService.updateBookingStatus(bookingId, "Confirmed",
+                    success = dao.updateBookingStatus(bookingId, "Confirmed",
                             confirmNote != null ? confirmNote.trim() : "Đã xác nhận bởi lễ tân");
                     break;
                 }
 
                 /* ---------- Từ chối ---------- */
                 case "reject": {
-                    Booking existing = bookingService.getBookingById(bookingId);
+                    Booking existing = dao.getBookingById(bookingId);
                     if (existing == null || !"Pending".equals(existing.getStatus())) {
                         LOGGER.log(Level.WARNING, "Reject attempted on invalid booking or state. ID: " + bookingId);
                         response.sendRedirect(
@@ -98,13 +99,13 @@ public class ReceptionistBookingController extends HttpServlet {
                                 request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=validation");
                         return;
                     }
-                    success = bookingService.updateBookingStatus(bookingId, "Rejected", rejectReason.trim());
+                    success = dao.updateBookingStatus(bookingId, "Rejected", rejectReason.trim());
                     break;
                 }
 
                 /* ---------- Huỷ booking ---------- */
                 case "cancel": {
-                    Booking existing = bookingService.getBookingById(bookingId);
+                    Booking existing = dao.getBookingById(bookingId);
                     if (existing == null || "CheckedIn".equals(existing.getStatus())
                             || "CheckedOut".equals(existing.getStatus())) {
                         LOGGER.log(Level.WARNING,
@@ -114,14 +115,14 @@ public class ReceptionistBookingController extends HttpServlet {
                         return;
                     }
                     String cancelReason = request.getParameter("reason");
-                    success = bookingService.cancelBooking(bookingId,
+                    success = dao.cancelBooking(bookingId,
                             cancelReason != null ? cancelReason.trim() : "Huỷ theo yêu cầu khách");
                     break;
                 }
 
                 /* ---------- Cập nhật thông tin ---------- */
                 case "update": {
-                    Booking existing = bookingService.getBookingById(bookingId);
+                    Booking existing = dao.getBookingById(bookingId);
                     if (existing == null || !"Pending".equals(existing.getStatus())) {
                         LOGGER.log(Level.WARNING, "Update attempted on invalid booking or state. ID: " + bookingId);
                         response.sendRedirect(
@@ -252,7 +253,7 @@ public class ReceptionistBookingController extends HttpServlet {
                     existing.setTotalAmount(amount);
                     existing.setNote(note != null ? note.trim() : "");
 
-                    success = bookingService.updateBookingDetails(existing);
+                    success = dao.updateBookingDetails(existing);
                     break;
                 }
 

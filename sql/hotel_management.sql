@@ -591,39 +591,11 @@ BEGIN
 END
 GO
 
-IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Nguyễn Văn G' AND check_in_date = '2026-06-20')
-BEGIN
-    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
-    VALUES (NULL, N'Nguyễn Văn G', 3, 1, '2026-06-20', '2026-06-22', 3600000, N'Pending', N'Cần xuất hóa đơn đỏ.');
-END
-GO
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Trần Thị H' AND check_in_date = '2026-06-25')
-BEGIN
-    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
-    VALUES (NULL, N'Trần Thị H', 1, 1, '2026-06-25', '2026-06-26', 750000, N'Pending', N'Check-in muộn.');
-END
-GO
-
 -- 2. Trạng thái CONFIRMED (Đã xác nhận)
 IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Customer User' AND check_in_date = '2026-06-15')
 BEGIN
     INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
     VALUES (5, N'Customer User', 3, 1, '2026-06-15', '2026-06-18', 5400000, N'Confirmed', N'Đã đặt cọc 50% qua VNPay.');
-END
-GO
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Lê Anh Tuấn' AND check_in_date = '2026-06-16')
-BEGIN
-    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
-    VALUES (NULL, N'Lê Anh Tuấn', 2, 1, '2026-06-16', '2026-06-19', 3600000, N'Confirmed', N'Khách quen, thanh toán khi check-in.');
-END
-GO
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Phạm Minh Hoàng' AND check_in_date = '2026-06-18')
-BEGIN
-    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
-    VALUES (NULL, N'Phạm Minh Hoàng', 4, 1, '2026-06-18', '2026-06-20', 5600000, N'Confirmed', N'Đặt phòng honeymoon, set up hoa tươi.');
 END
 GO
 
@@ -635,39 +607,11 @@ BEGIN
 END
 GO
 
-IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Đỗ Thị Minh' AND check_in_date = '2026-05-21')
-BEGIN
-    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
-    VALUES (NULL, N'Đỗ Thị Minh', 1, 3, '2026-05-21', '2026-05-23', 4500000, N'Rejected', N'Khách không hoàn tất đặt cọc đúng hạn.');
-END
-GO
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Vũ Hoàng Long' AND check_in_date = '2026-05-24')
-BEGIN
-    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
-    VALUES (NULL, N'Vũ Hoàng Long', 2, 2, '2026-05-24', '2026-05-26', 4800000, N'Rejected', N'Thông tin liên hệ không chính xác.');
-END
-GO
-
 -- 4. Trạng thái CANCELLED (Đã huỷ)
 IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Phạm Thị D' AND check_in_date = '2026-05-25')
 BEGIN
     INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
     VALUES (NULL, N'Phạm Thị D', 1, 1, '2026-05-25', '2026-05-27', 1500000, N'Cancelled', N'Khách hàng chủ động gọi điện báo huỷ.');
-END
-GO
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Bùi Văn Nam' AND check_in_date = '2026-05-26')
-BEGIN
-    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
-    VALUES (NULL, N'Bùi Văn Nam', 3, 1, '2026-05-26', '2026-05-29', 5400000, N'Cancelled', N'Thay đổi lịch trình công tác.');
-END
-GO
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Hoàng Thị Ngọc' AND check_in_date = '2026-05-28')
-BEGIN
-    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
-    VALUES (NULL, N'Hoàng Thị Ngọc', 2, 1, '2026-05-28', '2026-05-30', 2400000, N'Cancelled', N'Gặp sự cố cá nhân.');
 END
 GO
 
@@ -679,39 +623,11 @@ BEGIN
 END
 GO
 
-IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Phan Văn Đức' AND check_in_date = '2026-06-12')
-BEGIN
-    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
-    VALUES (NULL, N'Phan Văn Đức', 3, 1, '2026-06-12', '2026-06-15', 5400000, N'CheckedIn', N'Đoàn khảo sát thị trường.');
-END
-GO
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Ngô Minh Triết' AND check_in_date = '2026-06-14')
-BEGIN
-    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
-    VALUES (NULL, N'Ngô Minh Triết', 2, 1, '2026-06-14', '2026-06-17', 3600000, N'CheckedIn', N'Yêu cầu dọn phòng mỗi sáng.');
-END
-GO
-
 -- 6. Trạng thái CHECKED OUT (Đã trả phòng)
 IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Hoàng Văn E' AND check_in_date = '2026-05-28')
 BEGIN
     INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
     VALUES (NULL, N'Hoàng Văn E', 2, 1, '2026-05-28', '2026-05-30', 2400000, N'CheckedOut', N'Đã hoàn tất thanh toán.');
-END
-GO
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Lê Hoàng Nam' AND check_in_date = '2026-05-25')
-BEGIN
-    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
-    VALUES (NULL, N'Lê Hoàng Nam', 1, 1, '2026-05-25', '2026-05-27', 1500000, N'CheckedOut', N'Không sử dụng thêm dịch vụ ngoài.');
-END
-GO
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE customer_name = N'Đinh Thị Quỳnh' AND check_in_date = '2026-05-26')
-BEGIN
-    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
-    VALUES (NULL, N'Đinh Thị Quỳnh', 4, 1, '2026-05-26', '2026-05-28', 5600000, N'CheckedOut', N'Thanh toán chuyển khoản thành công.');
 END
 GO
 
@@ -1207,7 +1123,25 @@ SET rf.amount = b.allowed
 FROM dbo.Refund rf
 JOIN budget b ON b.invoice_id = rf.invoice_id
 WHERE rf.status = N'Pending'
-  AND b.pend_cnt = 1
+    AND b.pend_cnt = 1
   AND b.pend_sum > b.allowed
   AND b.allowed > 0;
+GO
+
+/* ============================================================
+   11. BOOKING ROOM DETAIL TABLE (Multi-room & Guest Names)
+   ============================================================ */
+IF OBJECT_ID(N'dbo.BookingRoom', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.BookingRoom (
+        booking_room_id INT IDENTITY(1,1) PRIMARY KEY,
+        booking_id INT NOT NULL,
+        room_type_id INT NOT NULL,
+        quantity INT NOT NULL DEFAULT 1,
+        price DECIMAL(18,2) NOT NULL,
+        guest_name NVARCHAR(255) NULL,
+        CONSTRAINT FK_BookingRoom_Booking_HMS FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id) ON DELETE CASCADE,
+        CONSTRAINT FK_BookingRoom_RoomType_HMS FOREIGN KEY (room_type_id) REFERENCES dbo.RoomType(type_id)
+    );
+END
 GO

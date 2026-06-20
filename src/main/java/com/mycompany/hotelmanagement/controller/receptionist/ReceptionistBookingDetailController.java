@@ -22,9 +22,9 @@ import java.util.logging.Logger;
  *
  * Hiển thị chi tiết (read-only) của một yêu cầu đặt phòng.
  *
- * @author DUC BINH
+ * @author BinhHD
  */
-@WebServlet(name = "ReceptionistBookingDetailController", urlPatterns = {"/receptionist/booking/detail"})
+@WebServlet(name = "ReceptionistBookingDetailController", urlPatterns = { "/receptionist/booking/detail" })
 public class ReceptionistBookingDetailController extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(ReceptionistBookingDetailController.class.getName());
@@ -71,7 +71,7 @@ public class ReceptionistBookingDetailController extends HttpServlet {
             request.setAttribute("assignedRooms", assignedRooms);
 
             request.getRequestDispatcher("/WEB-INF/views/receptionist/booking-detail.jsp")
-                   .forward(request, response);
+                    .forward(request, response);
 
         } catch (NumberFormatException e) {
             LOGGER.log(Level.WARNING, "Invalid bookingId format: " + bookingIdStr, e);

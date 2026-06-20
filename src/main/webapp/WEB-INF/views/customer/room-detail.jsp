@@ -2,7 +2,7 @@
     <%@ include file="../../includes/taglibs.jsp" %>
         <%@ include file="../../includes/header.jsp" %>
 
-            <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/rooms.css?v=2" />
+            <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/rooms.css?v=20" />
             <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/room_detail.css?v=2" />
             <fmt:setLocale value="vi_VN" />
 
@@ -21,18 +21,63 @@
 
                         <div class="nav-actions">
                             <c:choose>
-                                <c:when test="${not empty sessionScope.role and sessionScope.role == 'CUSTOMER'}">
-                                    <span class="user-greeting"
-                                        style="color: var(--text-navy); margin-right: 15px; font-weight: 600; font-size: 14px;">
-                                        <i class="fa-solid fa-user-circle"></i> Xin chào, ${sessionScope.user}
-                                    </span>
-                                    <a href="${pageContext.request.contextPath}/logout" class="btn-login"
-                                        style="background: transparent; border: 1px solid var(--brand-blue); color: var(--brand-blue);">Đăng
-                                        xuất</a>
+                                <c:when test="${not empty sessionScope.user}">
+                                    <div class="user-dropdown">
+                                        <button class="dropdown-trigger" type="button">
+                                            <i class="fa-solid fa-user-circle"></i>
+                                            <span>${sessionScope.user}</span>
+                                            <i class="fa-solid fa-chevron-down" style="font-size: 10px; margin-left: 2px;"></i>
+                                        </button>
+                                        <div class="dropdown-menu">
+                                            <c:choose>
+                                                <c:when test="${sessionScope.role eq 'CUSTOMER'}">
+                                                    <a href="${pageContext.request.contextPath}/customer/profile" class="dropdown-item">
+                                                        <i class="fa-solid fa-id-card"></i> Hồ sơ
+                                                    </a>
+                                                    <a href="${pageContext.request.contextPath}/customer/bookings" class="dropdown-item">
+                                                        <i class="fa-solid fa-calendar-check"></i> Đặt phòng của tôi
+                                                    </a>
+                                                    <a href="${pageContext.request.contextPath}/customer/services" class="dropdown-item">
+                                                        <i class="fa-solid fa-bell-concierge"></i> Yêu cầu dịch vụ
+                                                    </a>
+                                                    <a href="${pageContext.request.contextPath}/customer/services/history" class="dropdown-item">
+                                                        <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử yêu cầu
+                                                    </a>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <c:choose>
+                                                        <c:when test="${sessionScope.role eq 'ADMIN'}">
+                                                            <a href="${pageContext.request.contextPath}/admin/dashboard" class="dropdown-item">
+                                                                <i class="fa-solid fa-chart-line"></i> Dashboard Admin
+                                                            </a>
+                                                        </c:when>
+                                                        <c:when test="${sessionScope.role eq 'HOTEL_MANAGER'}">
+                                                            <a href="${pageContext.request.contextPath}/manager/dashboard" class="dropdown-item">
+                                                                <i class="fa-solid fa-chart-line"></i> Dashboard Manager
+                                                            </a>
+                                                        </c:when>
+                                                        <c:when test="${sessionScope.role eq 'RECEPTIONIST'}">
+                                                            <a href="${pageContext.request.contextPath}/receptionist/dashboard" class="dropdown-item">
+                                                                <i class="fa-solid fa-chart-line"></i> Dashboard Lễ tân
+                                                            </a>
+                                                        </c:when>
+                                                        <c:when test="${sessionScope.role eq 'HOUSEKEEPING'}">
+                                                            <a href="${pageContext.request.contextPath}/housekeeping/dashboard" class="dropdown-item">
+                                                                <i class="fa-solid fa-broom"></i> Dashboard Dọn phòng
+                                                            </a>
+                                                        </c:when>
+                                                    </c:choose>
+                                                </c:otherwise>
+                                            </c:choose>
+                                            <div class="dropdown-divider"></div>
+                                            <a href="${pageContext.request.contextPath}/logout" class="dropdown-item logout-item">
+                                                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                                            </a>
+                                        </div>
+                                    </div>
                                 </c:when>
                                 <c:otherwise>
-                                    <a href="${pageContext.request.contextPath}/home/login" class="btn-login">Đăng
-                                        nhập</a>
+                                    <a href="${pageContext.request.contextPath}/home/login" class="btn-login">Đăng nhập</a>
                                     <a href="#" class="btn-register">Đăng ký</a>
                                 </c:otherwise>
                             </c:choose>

@@ -26,9 +26,9 @@ import java.util.logging.Logger;
  * handles room assignment and status approvals (Confirm, Reject, Cancel)
  * for a specific booking request on a standalone page.
  *
- * @author DUC BINH
+ * @author BinhHD
  */
-@WebServlet(name = "ReceptionistBookingProcessController", urlPatterns = {"/receptionist/booking/process"})
+@WebServlet(name = "ReceptionistBookingProcessController", urlPatterns = { "/receptionist/booking/process" })
 public class ReceptionistBookingProcessController extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(ReceptionistBookingProcessController.class.getName());
@@ -82,7 +82,7 @@ public class ReceptionistBookingProcessController extends HttpServlet {
             request.setAttribute("roomTypesList", roomTypesList);
 
             request.getRequestDispatcher("/WEB-INF/views/receptionist/booking-process.jsp")
-                   .forward(request, response);
+                    .forward(request, response);
 
         } catch (NumberFormatException e) {
             LOGGER.log(Level.WARNING, "Invalid bookingId format: " + bookingIdStr, e);
@@ -125,14 +125,15 @@ public class ReceptionistBookingProcessController extends HttpServlet {
 
             boolean success = false;
 
-            if ("Pending".equals(existing.getStatus()) && ("update".equalsIgnoreCase(action) || "confirm".equalsIgnoreCase(action))) {
+            if ("Pending".equals(existing.getStatus())
+                    && ("update".equalsIgnoreCase(action) || "confirm".equalsIgnoreCase(action))) {
                 String customerName = request.getParameter("customerName");
-                String checkInStr   = request.getParameter("checkInDate");
-                String checkOutStr  = request.getParameter("checkOutDate");
-                String roomTypeStr  = request.getParameter("roomTypeId");
-                String qtyStr       = request.getParameter("roomQuantity");
-                String amountStr    = request.getParameter("totalAmount");
-                String note         = request.getParameter("note");
+                String checkInStr = request.getParameter("checkInDate");
+                String checkOutStr = request.getParameter("checkOutDate");
+                String roomTypeStr = request.getParameter("roomTypeId");
+                String qtyStr = request.getParameter("roomQuantity");
+                String amountStr = request.getParameter("totalAmount");
+                String note = request.getParameter("note");
 
                 if (customerName != null && !customerName.trim().isEmpty() && customerName.trim().length() <= 100) {
                     existing.setCustomerName(customerName.trim());
@@ -165,7 +166,8 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                         if (qty > 0 && qty <= 100) {
                             existing.setRoomQuantity(qty);
                         }
-                    } catch (NumberFormatException e) {}
+                    } catch (NumberFormatException e) {
+                    }
                 }
 
                 if (amountStr != null && !amountStr.trim().isEmpty()) {
@@ -174,7 +176,8 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                         if (amount >= 0) {
                             existing.setTotalAmount(amount);
                         }
-                    } catch (NumberFormatException e) {}
+                    } catch (NumberFormatException e) {
+                    }
                 }
 
                 if (note != null) {
@@ -205,7 +208,8 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                 case "confirm": {
                     // Check status validity
                     if (!"Pending".equals(existing.getStatus())) {
-                        response.sendRedirect(request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=invalid");
+                        response.sendRedirect(
+                                request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=invalid");
                         return;
                     }
 
@@ -213,7 +217,8 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                     String[] roomIdStrings = request.getParameterValues("roomIds");
                     if (roomIdStrings == null || roomIdStrings.length != existing.getRoomQuantity()) {
                         LOGGER.log(Level.WARNING, "Confirm failed: Room selection mismatch for booking: " + bookingId);
-                        response.sendRedirect(request.getContextPath() + "/receptionist/booking/process?bookingId=" + bookingId + "&error=validation");
+                        response.sendRedirect(request.getContextPath() + "/receptionist/booking/process?bookingId="
+                                + bookingId + "&error=validation");
                         return;
                     }
 
@@ -224,7 +229,8 @@ public class ReceptionistBookingProcessController extends HttpServlet {
 
                     // Perform database updates
                     String note = request.getParameter("note");
-                    String noteText = (note != null && !note.trim().isEmpty()) ? note.trim() : "Đã xác nhận và phân phòng";
+                    String noteText = (note != null && !note.trim().isEmpty()) ? note.trim()
+                            : "Đã xác nhận và phân phòng";
 
                     // Save room assignment first
                     boolean assigned = bookingService.assignRoomsToBooking(bookingId, roomIds);
@@ -237,13 +243,15 @@ public class ReceptionistBookingProcessController extends HttpServlet {
 
                 case "reject": {
                     if (!"Pending".equals(existing.getStatus())) {
-                        response.sendRedirect(request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=invalid");
+                        response.sendRedirect(
+                                request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=invalid");
                         return;
                     }
 
                     String reason = request.getParameter("reason");
                     if (reason == null || reason.trim().isEmpty()) {
-                        response.sendRedirect(request.getContextPath() + "/receptionist/booking/process?bookingId=" + bookingId + "&error=validation");
+                        response.sendRedirect(request.getContextPath() + "/receptionist/booking/process?bookingId="
+                                + bookingId + "&error=validation");
                         return;
                     }
 
@@ -253,19 +261,22 @@ public class ReceptionistBookingProcessController extends HttpServlet {
 
                 case "cancel": {
                     if ("CheckedIn".equals(existing.getStatus()) || "CheckedOut".equals(existing.getStatus())) {
-                        response.sendRedirect(request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=invalid");
+                        response.sendRedirect(
+                                request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=invalid");
                         return;
                     }
 
                     String reason = request.getParameter("reason");
-                    String reasonText = (reason != null && !reason.trim().isEmpty()) ? reason.trim() : "Huỷ theo yêu cầu";
+                    String reasonText = (reason != null && !reason.trim().isEmpty()) ? reason.trim()
+                            : "Huỷ theo yêu cầu";
 
                     success = bookingService.cancelBooking(bookingId, reasonText);
                     break;
                 }
 
                 default:
-                    response.sendRedirect(request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=invalid");
+                    response.sendRedirect(
+                            request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=invalid");
                     return;
             }
 

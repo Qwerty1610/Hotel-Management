@@ -64,11 +64,16 @@ public class LoginController extends HttpServlet {
         String redirectUrl = null;
         String displayName = null;
 
+        String emailVal = null;
+        int accountIdVal = -1;
+
         // 1. Authenticate using database via AuthService
         Account account = authService.authenticate(username, pass);
         if (account != null) {
             String dbRoleName = account.getRoleName();
             String fullName = account.getFullName();
+            emailVal = account.getEmail();
+            accountIdVal = account.getAccountId();
 
             if ("Admin".equalsIgnoreCase(dbRoleName)) {
                 role = "ADMIN";
@@ -106,10 +111,28 @@ public class LoginController extends HttpServlet {
                 role = "ADMIN";
                 redirectUrl = "/admin/dashboard";
                 displayName = "Admin User";
+                com.mycompany.hotelmanagement.dal.AccountRepository ar = new com.mycompany.hotelmanagement.dal.AccountRepository();
+                Account mockAcc = ar.getAccountByEmail("admin@hotel.com");
+                if (mockAcc != null) {
+                    emailVal = mockAcc.getEmail();
+                    accountIdVal = mockAcc.getAccountId();
+                } else {
+                    emailVal = "admin@hotel.com";
+                    accountIdVal = 1;
+                }
             } else if ("customer".equalsIgnoreCase(username) && "customer123".equals(pass)) {
                 role = "CUSTOMER";
                 redirectUrl = "/home";
                 displayName = "Customer User";
+                com.mycompany.hotelmanagement.dal.AccountRepository ar = new com.mycompany.hotelmanagement.dal.AccountRepository();
+                Account mockAcc = ar.getAccountByEmail("customer@hotel.com");
+                if (mockAcc != null) {
+                    emailVal = mockAcc.getEmail();
+                    accountIdVal = mockAcc.getAccountId();
+                } else {
+                    emailVal = "customer@hotel.com";
+                    accountIdVal = 5;
+                }
             }
         }
         
@@ -118,7 +141,8 @@ public class LoginController extends HttpServlet {
             HttpSession session = request.getSession();
             session.setAttribute("user", displayName);
             session.setAttribute("role", role);
-            session.setAttribute("email", username);
+            session.setAttribute("email", emailVal);
+            session.setAttribute("accountId", accountIdVal);
 
             // Remember Me Cookies configuration
             if ("on".equals(remember) || "true".equals(remember)) {

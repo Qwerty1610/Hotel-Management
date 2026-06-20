@@ -1,7 +1,7 @@
 package com.mycompany.hotelmanagement.controller.receptionist;
 
-import com.mycompany.hotelmanagement.service.BookingService;
-import com.mycompany.hotelmanagement.service.RoomTypeService;
+import com.mycompany.hotelmanagement.dal.BookingDAO;
+import com.mycompany.hotelmanagement.dal.RoomTypeRepository;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import jakarta.servlet.ServletException;
@@ -26,15 +26,17 @@ import java.util.logging.Logger;
  * Standardized imports utilizing dal instead of dao.
  * 
  * Date: 01/6/2026
- * @author DUC BINH
+ * 
+ * @author BinhHD
  */
-@WebServlet(name = "ReceptionistDashboardController", urlPatterns = {"/receptionist/dashboard"})
+@WebServlet(name = "ReceptionistDashboardController", urlPatterns = { "/receptionist/dashboard" })
 public class ReceptionistDashboardController extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(ReceptionistDashboardController.class.getName());
 
     private static final Set<String> ALLOWED_TABS = Set.of("bookings", "checkin", "checkout");
-    private static final Set<String> STATUS_WHITELIST = Set.of("All", "Pending", "Confirmed", "Rejected", "Cancelled", "CheckedIn", "CheckedOut");
+    private static final Set<String> STATUS_WHITELIST = Set.of("All", "Pending", "Confirmed", "Rejected", "Cancelled",
+            "CheckedIn", "CheckedOut");
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -64,7 +66,7 @@ public class ReceptionistDashboardController extends HttpServlet {
 
             // 4. Forward to view
             request.getRequestDispatcher("/WEB-INF/views/dashboard/receptionist.jsp")
-                   .forward(request, response);
+                    .forward(request, response);
 
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error in doGet of ReceptionistDashboardController", e);
@@ -80,12 +82,12 @@ public class ReceptionistDashboardController extends HttpServlet {
 
     private void loadBookingTab(HttpServletRequest request) {
         try {
-            BookingService bookingService = new BookingService();
-            RoomTypeService roomTypeService = new RoomTypeService();
+            BookingDAO dao = new BookingDAO();
+            RoomTypeRepository roomTypeRepo = new RoomTypeRepository();
 
             // Tham số lọc
             String statusFilter = request.getParameter("status");
-            String keyword      = request.getParameter("keyword");
+            String keyword = request.getParameter("keyword");
 
             if (statusFilter == null || !STATUS_WHITELIST.contains(statusFilter.trim())) {
                 statusFilter = "All";
@@ -94,32 +96,31 @@ public class ReceptionistDashboardController extends HttpServlet {
             }
 
             // Load danh sách
-            List<Booking> bookingList = bookingService.getBookings(statusFilter, keyword);
+            List<Booking> bookingList = dao.getBookings(statusFilter, keyword);
 
             // Load danh sách loại phòng để cập nhật thông tin loại phòng trong modal edit
-            List<RoomTypeInfo> roomTypesList = roomTypeService.getAllRoomTypes();
+            List<RoomTypeInfo> roomTypesList = roomTypeRepo.getAllRoomTypes();
 
             // Thống kê nhanh cho các badge đầu trang
-            int cntAll       = bookingService.countAll();
-            int cntPending   = bookingService.countByStatus("Pending");
-            int cntConfirmed = bookingService.countByStatus("Confirmed");
-            int cntRejected  = bookingService.countByStatus("Rejected");
-            int cntCancelled = bookingService.countByStatus("Cancelled");
+            int cntAll = dao.countAll();
+            int cntPending = dao.countByStatus("Pending");
+            int cntConfirmed = dao.countByStatus("Confirmed");
+            int cntRejected = dao.countByStatus("Rejected");
+            int cntCancelled = dao.countByStatus("Cancelled");
 
             // Đẩy attribute sang JSP
-            request.setAttribute("bookingList",    bookingList);
-            request.setAttribute("roomTypesList",  roomTypesList);
-            request.setAttribute("currentStatus",  statusFilter);
-            request.setAttribute("keyword",        keyword != null ? keyword : "");
-            request.setAttribute("cntAll",         cntAll);
-            request.setAttribute("cntPending",     cntPending);
-            request.setAttribute("cntConfirmed",   cntConfirmed);
-            request.setAttribute("cntRejected",    cntRejected);
-            request.setAttribute("cntCancelled",   cntCancelled);
+            request.setAttribute("bookingList", bookingList);
+            request.setAttribute("roomTypesList", roomTypesList);
+            request.setAttribute("currentStatus", statusFilter);
+            request.setAttribute("keyword", keyword != null ? keyword : "");
+            request.setAttribute("cntAll", cntAll);
+            request.setAttribute("cntPending", cntPending);
+            request.setAttribute("cntConfirmed", cntConfirmed);
+            request.setAttribute("cntRejected", cntRejected);
+            request.setAttribute("cntCancelled", cntCancelled);
 
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error in loadBookingTab of ReceptionistDashboardController", e);
-            throw e; // Rethrow to be handled by doGet try-catch
+            throw new RuntimeException("Error in loadBookingTab of ReceptionistDashboardController", e);
         }
     }
 }

@@ -1,9 +1,16 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-    <%@ include file="../../includes/taglibs.jsp" %>
-        <%@ include file="../../includes/header.jsp" %>
-
-            <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/receptionist.css?v=3" />
-            <fmt:setLocale value="vi_VN" />
+<%@ include file="../../includes/taglibs.jsp" %>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cập nhật & Duyệt đặt phòng #${booking.bookingId} - HotelOps Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/receptionist.css?v=4" />
+</head>
+<fmt:setLocale value="vi_VN" />
 
             <body class="dashboard-body">
 
@@ -121,8 +128,7 @@
                                                                                     style="color:#ef4444">*</span></label>
                                                                             <input type="text" name="customerName"
                                                                                 id="editCustomerName"
-                                                                                value="<c:out value="
-                                                                                ${booking.customerName}" />"
+                                                                                value="${booking.customerName}"
                                                                             class="modal-input" required maxlength="100"
                                                                             />
                                                                         </div>
@@ -178,14 +184,9 @@
                                                                                     items="${roomTypesList}">
                                                                                     <option value="${rt.typeId}"
                                                                                         data-price="${rt.basePrice}"
-                                                                                        data-type-name="<c:out value="
-                                                                                        ${rt.typeName}" />" ${rt.typeId
-                                                                                    eq booking.roomTypeId ? 'selected' :
-                                                                                    ''}>
-                                                                                    <c:out value="${rt.typeName}" /> —
-                                                                                    <fmt:formatNumber
-                                                                                        value="${rt.basePrice}"
-                                                                                        type="number" />đ/đêm
+                                                                                        data-type-name="${rt.typeName}"
+                                                                                        ${rt.typeId eq booking.roomTypeId ? 'selected' : ''}>
+                                                                                        <c:out value="${rt.typeName}" /> — <fmt:formatNumber value="${rt.basePrice}" type="number" />đ/đêm
                                                                                     </option>
                                                                                 </c:forEach>
                                                                             </select>
@@ -232,9 +233,7 @@
                                                                                     style="color:#ef4444">*</span></label>
                                                                             <input type="number" id="editTotalAmount"
                                                                                 name="totalAmount" class="modal-input"
-                                                                                min="0" value="<fmt:formatNumber value="
-                                                                                ${booking.totalAmount}"
-                                                                                pattern="#####.##" />" required />
+                                                                                min="0" value="${booking.totalAmount}" required />
                                                                         </div>
                                                                         <div class="modal-form-group"
                                                                             style="margin-bottom:0">
@@ -285,8 +284,7 @@
 
                                                                                     <div class="room-card ${isAvailable || isAssigned ? 'card-avail' : 'card-disabled'} ${isAssigned ? 'selected' : ''}"
                                                                                         data-room-id="${rm.roomId}"
-                                                                                        data-room-type-name="<c:out value="
-                                                                                        ${rm.typeName}" />"
+                                                                                        data-room-type-name="${rm.typeName}"
                                                                                     style="display:none;">
                                                                                     <div class="room-card-header">
                                                                                         <span class="room-number">P.
@@ -897,6 +895,5 @@
                         document.getElementById('processForm').submit();
                     }
                 </script>
-            </body>
-
-            </html>
+</body>
+</html>

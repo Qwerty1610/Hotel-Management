@@ -11,6 +11,10 @@ import java.util.List;
  * InvoiceService
  * Tầng nghiệp vụ cho trang quản lý hóa đơn của Manager.
  *
+ * thêm 2 hàm:
+ * getInvoices: lấy ra danh sách hóa đơn theo bộ lọc
+ * countInvoices: đếm tổng hóa đơn khớp bộ lọc
+ * 
  * Date: 02/6/2026
  * version 1.0
  * @author Pham Quoc Quy
@@ -21,6 +25,16 @@ public class InvoiceService {
 
     public List<Invoice> getAllInvoices() {
         return invoiceDAO.getAllInvoices();
+    }
+
+    /** Một trang hóa đơn theo bộ lọc (server-side). */
+    public List<Invoice> getInvoices(String keyword, String status, int offset, int pageSize) {
+        return invoiceDAO.getInvoices(keyword, status, offset, pageSize);
+    }
+
+    /** Tổng số hóa đơn khớp bộ lọc (server-side). */
+    public int countInvoices(String keyword, String status) {
+        return invoiceDAO.countInvoices(keyword, status);
     }
 
     public Invoice getInvoiceById(int id) {

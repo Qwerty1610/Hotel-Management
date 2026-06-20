@@ -2,6 +2,7 @@ package com.mycompany.hotelmanagement.dal;
 
 import com.mycompany.hotelmanagement.config.DBContext;
 import com.mycompany.hotelmanagement.entity.Booking;
+import com.mycompany.hotelmanagement.entity.BookingRoom;
 import com.mycompany.hotelmanagement.entity.Room;
 import com.mycompany.hotelmanagement.entity.CustomerDetails;
 import java.sql.*;
@@ -35,7 +36,7 @@ public class BookingDAO {
     }
 
     private static final String BASE_SELECT = "SELECT b.booking_id, b.account_id, b.customer_name, " +
-            "       b.room_type_id, rt.type_name AS room_type_name, " +
+            "       b.room_type_id, COALESCE(rt.type_name, (SELECT STRING_AGG(rt2.type_name, ', ') FROM dbo.BookingRoom br JOIN dbo.RoomType rt2 ON br.room_type_id = rt2.type_id WHERE br.booking_id = b.booking_id)) AS room_type_name, " +
             "       b.room_quantity, b.check_in_date, b.check_out_date, " +
             "       b.total_amount, b.status, b.note, CAST(b.created_at AS DATE) AS created_at, " +
             "       (SELECT STRING_AGG(r.room_number, ', ') " +
@@ -44,7 +45,6 @@ public class BookingDAO {
             "        WHERE br.booking_id = b.booking_id) AS assigned_rooms " +
             "FROM dbo.Booking b " +
             "LEFT JOIN dbo.RoomType rt ON b.room_type_id = rt.type_id ";
-
 
     private String sanitizeLikeKeyword(String keyword) {
         if (keyword == null) return "";
@@ -265,7 +265,213 @@ public class BookingDAO {
             // Safe fallback
         }
         return b;
+    }
 
+    public int getBookedRoomsCountForDates(int typeId, Date checkIn, Date checkOut) {
+        String sql = "SELECT COALESCE(SUM(quantity), 0) FROM (" +
+                     "    SELECT SUM(br.quantity) AS quantity " +
+                     "    FROM dbo.BookingRoom br " +
+                     "    JOIN dbo.Booking b ON br.booking_id = b.booking_id " +
+                     "    WHERE br.room_type_id = ? " +
+                     "      AND b.status IN ('Pending', 'Confirmed', 'CheckedIn') " +
+                     "      AND b.check_in_date < ? " +
+                     "      AND b.check_out_date > ? " +
+                     "    UNION ALL " +
+                     "    SELECT SUM(b.room_quantity) AS quantity " +
+                     "    FROM dbo.Booking b " +
+                     "    WHERE b.room_type_id = ? " +
+                     "      AND b.status IN ('Pending', 'Confirmed', 'CheckedIn') " +
+                     "      AND b.check_in_date < ? " +
+                     "      AND b.check_out_date > ? " +
+                     "      AND b.booking_id NOT IN (SELECT booking_id FROM dbo.BookingRoom)" +
+                     ") AS combined";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, typeId);
+                ps.setDate(2, checkOut);
+                ps.setDate(3, checkIn);
+                ps.setInt(4, typeId);
+                ps.setDate(5, checkOut);
+                ps.setDate(6, checkIn);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt(1);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in getBookedRoomsCountForDates: typeId=" + typeId + ", in=" + checkIn + ", out=" + checkOut, e);
+        }
+        return 0;
+    }
+
+    public boolean insertBookingTransaction(Booking booking, List<BookingRoom> rooms) {
+        if (booking == null || rooms == null || rooms.isEmpty()) {
+            return false;
+        }
+        String insertBookingSql = "INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, " +
+                "check_in_date, check_out_date, total_amount, status, note, created_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATETIME())";
+        String insertRoomSql = "INSERT INTO dbo.BookingRoom (booking_id, room_type_id, quantity, price, guest_name) " +
+                "VALUES (?, ?, ?, ?, ?)";
+        
+        Connection conn = null;
+        try {
+            conn = DBContext.getConnection();
+            useDatabase(conn);
+            conn.setAutoCommit(false);
+            
+            try (PreparedStatement psB = conn.prepareStatement(insertBookingSql, Statement.RETURN_GENERATED_KEYS)) {
+                if (booking.getAccountId() != null) {
+                    psB.setInt(1, booking.getAccountId());
+                } else {
+                    psB.setNull(1, Types.INTEGER);
+                }
+                psB.setString(2, booking.getCustomerName());
+                if (booking.getRoomTypeId() != null) {
+                    psB.setInt(3, booking.getRoomTypeId());
+                } else {
+                    psB.setNull(3, Types.INTEGER);
+                }
+                psB.setInt(4, booking.getRoomQuantity());
+                psB.setDate(5, booking.getCheckInDate());
+                psB.setDate(6, booking.getCheckOutDate());
+                psB.setDouble(7, booking.getTotalAmount());
+                psB.setString(8, booking.getStatus());
+                psB.setString(9, booking.getNote());
+                
+                psB.executeUpdate();
+                int bookingId = -1;
+                try (ResultSet rs = psB.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        bookingId = rs.getInt(1);
+                    }
+                }
+                
+                if (bookingId <= 0) {
+                    throw new SQLException("Inserting booking failed, no ID obtained.");
+                }
+                
+                booking.setBookingId(bookingId);
+                
+                try (PreparedStatement psR = conn.prepareStatement(insertRoomSql)) {
+                    for (BookingRoom r : rooms) {
+                        psR.setInt(1, bookingId);
+                        psR.setInt(2, r.getRoomTypeId());
+                        psR.setInt(3, r.getQuantity() > 0 ? r.getQuantity() : 1);
+                        psR.setDouble(4, r.getPrice());
+                        psR.setString(5, r.getGuestName());
+                        psR.addBatch();
+                    }
+                    psR.executeBatch();
+                }
+                
+                conn.commit();
+                return true;
+            } catch (Exception e) {
+                if (conn != null) {
+                    try {
+                        conn.rollback();
+                    } catch (SQLException ex) {
+                        LOGGER.log(Level.SEVERE, "Rollback failed", ex);
+                    }
+                }
+                throw e;
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in insertBookingTransaction", e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "Closing connection failed", ex);
+                }
+            }
+        }
+        return false;
+    }
+
+    public List<BookingRoom> getBookingRooms(int bookingId) {
+        List<BookingRoom> rooms = new ArrayList<>();
+        String sql = "SELECT br.booking_room_id, br.booking_id, br.room_type_id, rt.type_name, br.quantity, br.price, br.guest_name " +
+                     "FROM dbo.BookingRoom br " +
+                     "JOIN dbo.RoomType rt ON br.room_type_id = rt.type_id " +
+                     "WHERE br.booking_id = ?";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, bookingId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        BookingRoom r = new BookingRoom();
+                        r.setBookingRoomId(rs.getInt("booking_room_id"));
+                        r.setBookingId(rs.getInt("booking_id"));
+                        r.setRoomTypeId(rs.getInt("room_type_id"));
+                        r.setRoomTypeName(rs.getString("type_name"));
+                        r.setQuantity(rs.getInt("quantity"));
+                        r.setPrice(rs.getDouble("price"));
+                        r.setGuestName(rs.getString("guest_name"));
+                        rooms.add(r);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in getBookingRooms for bookingId=" + bookingId, e);
+        }
+        return rooms;
+    }
+
+    public List<Booking> getBookingsByAccount(int accountId, String statusFilter, String keyword) {
+        List<Booking> list = new ArrayList<>();
+
+        if (statusFilter == null || !FILTER_STATUS_WHITELIST.contains(statusFilter)) {
+            statusFilter = "All";
+        }
+
+        StringBuilder sql = new StringBuilder(BASE_SELECT);
+        List<Object> params = new ArrayList<>();
+        
+        sql.append("WHERE b.account_id = ? ");
+        params.add(accountId);
+
+        // Filter by status
+        if (!statusFilter.equalsIgnoreCase("All")) {
+            sql.append("AND b.status = ? ");
+            params.add(statusFilter);
+        }
+
+        // Filter by keyword
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String sanitizedKw = sanitizeLikeKeyword(keyword.trim());
+            String kw = "%" + sanitizedKw + "%";
+            sql.append("AND (b.customer_name LIKE ? OR CAST(b.booking_id AS NVARCHAR) LIKE ? OR b.note LIKE ?) ");
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+        }
+
+        sql.append("ORDER BY b.created_at DESC, b.booking_id DESC");
+
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+                for (int i = 0; i < params.size(); i++) {
+                    ps.setObject(i + 1, params.get(i));
+                }
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        list.add(mapRow(rs));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in getBookingsByAccount: accountId=" + accountId + ", status=" + statusFilter + ", keyword=" + keyword, e);
+        }
+        return list;
     }
 
     public BookingDAO() {
@@ -349,7 +555,6 @@ public class BookingDAO {
         return list;
     }
 
-
     public CustomerDetails getCustomerDetailsByAccountId(int accountId) {
         String sql = "SELECT a.full_name, a.email, a.phone " +
                      "FROM dbo.Account a " +
@@ -375,7 +580,7 @@ public class BookingDAO {
     }
 
     public boolean assignRoomsToBooking(int bookingId, List<Integer> roomIds) {
-        if (bookingId <= 0 || roomIds == null || roomIds.isEmpty()) {
+        if (bookingId <= 0 || roomIds == null) {
             return false;
         }
         
@@ -397,13 +602,15 @@ public class BookingDAO {
             deletePs.executeUpdate();
             
             // Insert new assignments
-            insertPs = conn.prepareStatement(insertSql);
-            for (int roomId : roomIds) {
-                insertPs.setInt(1, bookingId);
-                insertPs.setInt(2, roomId);
-                insertPs.addBatch();
+            if (!roomIds.isEmpty()) {
+                insertPs = conn.prepareStatement(insertSql);
+                for (int roomId : roomIds) {
+                    insertPs.setInt(1, bookingId);
+                    insertPs.setInt(2, roomId);
+                    insertPs.addBatch();
+                }
+                insertPs.executeBatch();
             }
-            insertPs.executeBatch();
             
             conn.commit();
             return true;
@@ -571,4 +778,3 @@ public class BookingDAO {
         return 0;
     }
 }
-
