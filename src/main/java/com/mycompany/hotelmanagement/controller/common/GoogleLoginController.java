@@ -137,7 +137,7 @@ public class GoogleLoginController extends HttpServlet {
             
             // Query to find user and role
             checkPs = conn.prepareStatement(
-                "SELECT a.email, a.full_name, r.role_name " +
+                "SELECT a.account_id, a.email, a.full_name, r.role_name " +
                 "FROM Account a JOIN Role r ON a.role_id = r.role_id " +
                 "WHERE a.email = ? AND a.is_active = 1");
             checkPs.setString(1, email);
@@ -146,9 +146,11 @@ public class GoogleLoginController extends HttpServlet {
             String role = null;
             String redirectUrl = null;
             String userDisplayName = name;
+            int accountIdVal = -1;
 
             if (rs.next()) {
                 // User already exists, retrieve details
+                accountIdVal = rs.getInt("account_id");
                 String dbFullName = rs.getString("full_name");
                 String dbRoleName = rs.getString("role_name");
                 userDisplayName = (dbFullName != null && !dbFullName.trim().isEmpty()) ? dbFullName : name;
@@ -215,6 +217,7 @@ public class GoogleLoginController extends HttpServlet {
                             throw new SQLException("Creating account failed, no ID obtained.");
                         }
                     }
+                    accountIdVal = accountId;
 
                     String insertCustomerSql = "INSERT INTO Customer (account_id, loyalty_points, membership_level) VALUES (?, ?, ?)";
                     insertCustomerPs = conn.prepareStatement(insertCustomerSql);
@@ -241,6 +244,8 @@ public class GoogleLoginController extends HttpServlet {
                 HttpSession session = request.getSession();
                 session.setAttribute("user", userDisplayName);
                 session.setAttribute("role", role);
+                session.setAttribute("email", email);
+                session.setAttribute("accountId", accountIdVal);
                 response.sendRedirect(request.getContextPath() + redirectUrl);
             } else {
                 response.sendRedirect(request.getContextPath() + "/home/login?error=invalid_credentials");

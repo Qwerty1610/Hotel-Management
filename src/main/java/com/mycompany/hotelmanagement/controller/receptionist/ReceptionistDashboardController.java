@@ -24,16 +24,19 @@ import java.util.logging.Logger;
  * Quản lý tab sidebar và load dữ liệu booking tương ứng.
  * Tab mặc định: "bookings"
  * Standardized imports utilizing dal instead of dao.
+ * 
  * Date: 01/6/2026
- * @author DUC BINH
+ * 
+ * @author BinhHD
  */
-@WebServlet(name = "ReceptionistDashboardController", urlPatterns = {"/receptionist/dashboard"})
+@WebServlet(name = "ReceptionistDashboardController", urlPatterns = { "/receptionist/dashboard" })
 public class ReceptionistDashboardController extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(ReceptionistDashboardController.class.getName());
 
     private static final Set<String> ALLOWED_TABS = Set.of("bookings", "checkin", "checkout");
-    private static final Set<String> STATUS_WHITELIST = Set.of("All", "Pending", "Confirmed", "Rejected", "Cancelled", "CheckedIn", "CheckedOut");
+    private static final Set<String> STATUS_WHITELIST = Set.of("All", "Pending", "Confirmed", "Rejected", "Cancelled",
+            "CheckedIn", "CheckedOut");
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -63,7 +66,7 @@ public class ReceptionistDashboardController extends HttpServlet {
 
             // 4. Forward to view
             request.getRequestDispatcher("/WEB-INF/views/dashboard/receptionist.jsp")
-                   .forward(request, response);
+                    .forward(request, response);
 
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error in doGet of ReceptionistDashboardController", e);
@@ -84,7 +87,7 @@ public class ReceptionistDashboardController extends HttpServlet {
 
             // Tham số lọc
             String statusFilter = request.getParameter("status");
-            String keyword      = request.getParameter("keyword");
+            String keyword = request.getParameter("keyword");
 
             if (statusFilter == null || !STATUS_WHITELIST.contains(statusFilter.trim())) {
                 statusFilter = "All";
@@ -99,22 +102,22 @@ public class ReceptionistDashboardController extends HttpServlet {
             List<RoomTypeInfo> roomTypesList = roomTypeRepo.getAllRoomTypes();
 
             // Thống kê nhanh cho các badge đầu trang
-            int cntAll       = dao.countAll();
-            int cntPending   = dao.countByStatus("Pending");
+            int cntAll = dao.countAll();
+            int cntPending = dao.countByStatus("Pending");
             int cntConfirmed = dao.countByStatus("Confirmed");
-            int cntRejected  = dao.countByStatus("Rejected");
+            int cntRejected = dao.countByStatus("Rejected");
             int cntCancelled = dao.countByStatus("Cancelled");
 
             // Đẩy attribute sang JSP
-            request.setAttribute("bookingList",    bookingList);
-            request.setAttribute("roomTypesList",  roomTypesList);
-            request.setAttribute("currentStatus",  statusFilter);
-            request.setAttribute("keyword",        keyword != null ? keyword : "");
-            request.setAttribute("cntAll",         cntAll);
-            request.setAttribute("cntPending",     cntPending);
-            request.setAttribute("cntConfirmed",   cntConfirmed);
-            request.setAttribute("cntRejected",    cntRejected);
-            request.setAttribute("cntCancelled",   cntCancelled);
+            request.setAttribute("bookingList", bookingList);
+            request.setAttribute("roomTypesList", roomTypesList);
+            request.setAttribute("currentStatus", statusFilter);
+            request.setAttribute("keyword", keyword != null ? keyword : "");
+            request.setAttribute("cntAll", cntAll);
+            request.setAttribute("cntPending", cntPending);
+            request.setAttribute("cntConfirmed", cntConfirmed);
+            request.setAttribute("cntRejected", cntRejected);
+            request.setAttribute("cntCancelled", cntCancelled);
 
         } catch (Exception e) {
             throw new RuntimeException("Error in loadBookingTab of ReceptionistDashboardController", e);

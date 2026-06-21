@@ -1123,7 +1123,25 @@ SET rf.amount = b.allowed
 FROM dbo.Refund rf
 JOIN budget b ON b.invoice_id = rf.invoice_id
 WHERE rf.status = N'Pending'
-  AND b.pend_cnt = 1
+    AND b.pend_cnt = 1
   AND b.pend_sum > b.allowed
   AND b.allowed > 0;
+GO
+
+/* ============================================================
+   11. BOOKING ROOM DETAIL TABLE (Multi-room & Guest Names)
+   ============================================================ */
+IF OBJECT_ID(N'dbo.BookingRoom', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.BookingRoom (
+        booking_room_id INT IDENTITY(1,1) PRIMARY KEY,
+        booking_id INT NOT NULL,
+        room_type_id INT NOT NULL,
+        quantity INT NOT NULL DEFAULT 1,
+        price DECIMAL(18,2) NOT NULL,
+        guest_name NVARCHAR(255) NULL,
+        CONSTRAINT FK_BookingRoom_Booking_HMS FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id) ON DELETE CASCADE,
+        CONSTRAINT FK_BookingRoom_RoomType_HMS FOREIGN KEY (room_type_id) REFERENCES dbo.RoomType(type_id)
+    );
+END
 GO

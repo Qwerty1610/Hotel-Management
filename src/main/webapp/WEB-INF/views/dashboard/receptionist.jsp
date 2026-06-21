@@ -1,8 +1,15 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ include file="../../includes/taglibs.jsp" %>
-<%@ include file="../../includes/header.jsp" %>
-
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/receptionist.css?v=1" />
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quản lý đặt phòng - HotelOps Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/receptionist.css?v=4" />
+</head>
 <fmt:setLocale value="vi_VN" />
 
 <body class="dashboard-body">
@@ -216,7 +223,22 @@
                                                 ${b.checkInDate} → ${b.checkOutDate}
                                                 <span class="nights">${b.nights} đêm</span>
                                             </div>
+                                            <div style="margin-top: 4px; font-size: 11px;">
+                                                <c:choose>
+                                                    <c:when test="${not empty b.assignedRoomsStr}">
+                                                        <span style="color: var(--brand-blue); font-weight: 600;">
+                                                            <i class="fa-solid fa-door-open" style="margin-right: 4px;"></i> Phòng: ${b.assignedRoomsStr}
+                                                        </span>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span style="color: var(--text-muted); font-style: italic;">
+                                                            <i class="fa-solid fa-door-closed" style="margin-right: 4px; opacity: 0.5;"></i> Chưa phân phòng
+                                                        </span>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </div>
                                         </td>
+
 
                                         <%-- Tổng tiền --%>
                                         <td class="amount-cell">
@@ -265,59 +287,20 @@
                                         <%-- Thao tác --%>
                                         <td>
                                             <div class="actions-cell">
-                                                <%-- Xem chi tiết (tất cả status) --%>
-                                                <button type="button" class="btn-action-icon btn-edit btn-view-detail"
-                                                        title="Xem chi tiết"
-                                                        data-id="${b.bookingId}"
-                                                        data-customer-name="<c:out value="${b.customerName}"/>"
-                                                        data-room-type-name="<c:out value="${b.roomTypeName}"/>"
-                                                        data-room-quantity="${b.roomQuantity}"
-                                                        data-check-in-date="${b.checkInDate}"
-                                                        data-check-out-date="${b.checkOutDate}"
-                                                        data-total-amount="${b.totalAmount}"
-                                                        data-status="<c:out value="${b.status}"/>"
-                                                        data-note="<c:out value="${b.note}"/>">
+                                                <%-- Xem chi tiết --%>
+                                                <a href="${pageContext.request.contextPath}/receptionist/booking/detail?bookingId=${b.bookingId}"
+                                                   class="btn-action-icon btn-edit"
+                                                   title="Xem chi tiết">
                                                     <i class="fa-solid fa-eye"></i>
-                                                </button>
+                                                </a>
 
-                                                <%-- Confirm (chỉ Pending) --%>
-                                                <c:if test="${b.status eq 'Pending'}">
-                                                    <button type="button" class="btn-action-icon btn-confirm btn-open-confirm"
-                                                            title="Xác nhận"
-                                                            data-id="${b.bookingId}"
-                                                            data-customer-name="<c:out value="${b.customerName}"/>">
-                                                        <i class="fa-solid fa-check-circle"></i>
-                                                    </button>
-
-                                                    <button type="button" class="btn-action-icon btn-reject btn-open-reject"
-                                                            title="Từ chối"
-                                                            data-id="${b.bookingId}"
-                                                            data-customer-name="<c:out value="${b.customerName}"/>">
-                                                        <i class="fa-solid fa-times-circle"></i>
-                                                    </button>
-
-                                                    <button type="button" class="btn-action-icon btn-edit btn-open-edit"
-                                                            title="Cập nhật thông tin"
-                                                            data-id="${b.bookingId}"
-                                                            data-customer-name="<c:out value="${b.customerName}"/>"
-                                                            data-room-type-id="${b.roomTypeId}"
-                                                            data-room-quantity="${b.roomQuantity}"
-                                                            data-check-in-date="${b.checkInDate}"
-                                                            data-check-out-date="${b.checkOutDate}"
-                                                            data-total-amount="${b.totalAmount}"
-                                                            data-note="<c:out value="${b.note}"/>">
+                                                <%-- Cập nhật thông tin (chỉ Pending hoặc Confirmed) --%>
+                                                <c:if test="${b.status eq 'Pending' || b.status eq 'Confirmed'}">
+                                                    <a href="${pageContext.request.contextPath}/receptionist/booking/process?bookingId=${b.bookingId}"
+                                                       class="btn-action-icon btn-edit"
+                                                       title="Cập nhật & Duyệt">
                                                         <i class="fa-solid fa-pen-to-square"></i>
-                                                    </button>
-                                                </c:if>
-
-                                                <%-- Huỷ (Pending hoặc Confirmed) --%>
-                                                <c:if test="${b.status eq 'Pending' or b.status eq 'Confirmed'}">
-                                                    <button type="button" class="btn-action-icon btn-cancel btn-open-cancel"
-                                                            title="Huỷ booking"
-                                                            data-id="${b.bookingId}"
-                                                            data-customer-name="<c:out value="${b.customerName}"/>">
-                                                        <i class="fa-solid fa-ban"></i>
-                                                    </button>
+                                                    </a>
                                                 </c:if>
                                             </div>
                                         </td>
