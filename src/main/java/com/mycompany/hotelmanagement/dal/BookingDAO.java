@@ -479,23 +479,27 @@ public class BookingDAO {
     }
 
     private void ensureBookingRoomTableExists() {
-        String sql = "IF OBJECT_ID(N'dbo.Booking_Room', N'U') IS NULL " +
-                     "BEGIN " +
-                     "    CREATE TABLE dbo.Booking_Room ( " +
-                     "        booking_id INT NOT NULL, " +
-                     "        room_id INT NOT NULL, " +
-                     "        PRIMARY KEY (booking_id, room_id), " +
-                     "        CONSTRAINT FK_BookingRoom_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id) ON DELETE CASCADE, " +
-                     "        CONSTRAINT FK_BookingRoom_Room FOREIGN KEY (room_id) REFERENCES dbo.Room(room_id) ON DELETE CASCADE " +
-                     "    ); " +
-                     "END";
+        String sql = 
+            "IF OBJECT_ID('dbo.BookingRoom', 'U') IS NULL " +
+            "CREATE TABLE dbo.BookingRoom (" +
+            "    booking_room_id INT IDENTITY(1,1) PRIMARY KEY, booking_id INT NOT NULL, room_type_id INT NOT NULL, " +
+            "    quantity INT NOT NULL DEFAULT 1, price DECIMAL(18,2) NOT NULL, guest_name NVARCHAR(255) NULL, " +
+            "    CONSTRAINT FK_BookingRoom_Booking_HMS FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id) ON DELETE CASCADE, " +
+            "    CONSTRAINT FK_BookingRoom_RoomType_HMS FOREIGN KEY (room_type_id) REFERENCES dbo.RoomType(type_id)" +
+            "); " +
+            "IF OBJECT_ID('dbo.Booking_Room', 'U') IS NULL " +
+            "CREATE TABLE dbo.Booking_Room (" +
+            "    booking_id INT NOT NULL, room_id INT NOT NULL, PRIMARY KEY (booking_id, room_id), " +
+            "    CONSTRAINT FK_BookingRoom_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id) ON DELETE CASCADE, " +
+            "    CONSTRAINT FK_BookingRoom_Room FOREIGN KEY (room_id) REFERENCES dbo.Room(room_id) ON DELETE CASCADE" +
+            ");";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (Statement stmt = conn.createStatement()) {
                 stmt.execute(sql);
             }
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error ensuring Booking_Room table exists", e);
+            LOGGER.log(Level.SEVERE, "Error ensuring booking tables exist", e);
         }
     }
 

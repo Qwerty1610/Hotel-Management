@@ -120,19 +120,6 @@ public class LoginController extends HttpServlet {
                     emailVal = "admin@hotel.com";
                     accountIdVal = 1;
                 }
-            } else if ("customer".equalsIgnoreCase(username) && "customer123".equals(pass)) {
-                role = "CUSTOMER";
-                redirectUrl = "/home";
-                displayName = "Customer User";
-                com.mycompany.hotelmanagement.dal.AccountRepository ar = new com.mycompany.hotelmanagement.dal.AccountRepository();
-                Account mockAcc = ar.getAccountByEmail("customer@hotel.com");
-                if (mockAcc != null) {
-                    emailVal = mockAcc.getEmail();
-                    accountIdVal = mockAcc.getAccountId();
-                } else {
-                    emailVal = "customer@hotel.com";
-                    accountIdVal = 5;
-                }
             }
         }
         
