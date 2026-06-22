@@ -5,15 +5,9 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
 import com.mycompany.hotelmanagement.config.ConfigUtil;
-import com.mycompany.hotelmanagement.config.DBContext;
-import org.mindrot.jbcrypt.BCrypt;
+import com.mycompany.hotelmanagement.service.AuthService;
+import com.mycompany.hotelmanagement.service.LoginResult;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -25,12 +19,14 @@ import jakarta.servlet.http.HttpSession;
 /**
  * Controller xử lý đăng nhập bằng Google OAuth2.
  * Nhận authorization code, đổi lấy access token, lấy thông tin tài khoản người dùng,
- * sau đó đăng nhập hoặc tự động đăng ký tài khoản khách hàng mới nếu chưa có trong DB.
+ * sau đó ủy thác việc đăng nhập/đăng ký tự động cho AuthService.
  * 
  * @author TùngNQ
  */
 @WebServlet(name = "GoogleLoginController", urlPatterns = {"/login-google"})
 public class GoogleLoginController extends HttpServlet {
+
+    private final AuthService authService = new AuthService();
 
     private static final String CLIENT_ID = ConfigUtil.get("google.client.id",
             System.getProperty("google.client.id", "your-google-client-id"));
@@ -71,8 +67,31 @@ public class GoogleLoginController extends HttpServlet {
                 return;
             }
 
-            // 3. Check and authenticate or register in DB
-            authenticateOrRegisterUser(email, name, request, response);
+            // 3. Delegate authentication and register logic to AuthService
+            LoginResult result = authService.loginOrRegisterGoogle(email, name);
+
+            if (result.isSuccess()) {
+                HttpSession session = request.getSession();
+                session.setAttribute("user", result.getDisplayName());
+                session.setAttribute("role", result.getRole());
+                session.setAttribute("email", email != null ? email.trim() : "");
+                
+                String redirectUrl = null;
+                if ("CUSTOMER".equals(result.getRole())) {
+                    redirectUrl = (String) session.getAttribute("redirectAfterLogin");
+                    session.removeAttribute("redirectAfterLogin");
+                } else {
+                    session.removeAttribute("redirectAfterLogin");
+                }
+
+                if (redirectUrl != null && !redirectUrl.isEmpty()) {
+                    response.sendRedirect(redirectUrl);
+                } else {
+                    response.sendRedirect(request.getContextPath() + result.getRedirectUrl());
+                }
+            } else {
+                response.sendRedirect(request.getContextPath() + "/home/login?error=invalid_credentials");
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
