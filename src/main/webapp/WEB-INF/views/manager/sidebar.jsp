@@ -55,7 +55,7 @@
             </a>
         </div>
 
-        <div class="user-profile-card">
+        <a href="${pageContext.request.contextPath}/profile" class="user-profile-card" title="Xem hồ sơ cá nhân" style="text-decoration:none;cursor:pointer;">
             <div class="profile-avatar">
                 <c:choose>
                     <c:when test="${not empty sessionScope.user}">
@@ -68,6 +68,6 @@
                 <span class="profile-name">${not empty sessionScope.user ? sessionScope.user : 'Hotel Manager'}</span>
                 <span class="profile-role">Hotel Manager</span>
             </div>
-        </div>
+        </a>
     </div>
 </aside>

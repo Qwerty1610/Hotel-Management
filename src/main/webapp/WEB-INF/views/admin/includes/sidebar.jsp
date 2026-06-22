@@ -24,7 +24,7 @@
     </ul>
 
     <div class="sidebar-footer">
-        <div class="user-profile-card">
+        <a href="${pageContext.request.contextPath}/profile" class="user-profile-card" title="Xem hồ sơ cá nhân" style="text-decoration:none;cursor:pointer;">
             <div class="profile-avatar" style="background: linear-gradient(135deg, #3a86ff, #0056b3) !important;">
                 <c:choose>
                     <c:when test="${not empty sessionScope.user}">
@@ -37,6 +37,6 @@
                 <span class="profile-name">${not empty sessionScope.user ? sessionScope.user : 'Admin User'}</span>
                 <span class="profile-role">Hệ Thống Admin</span>
             </div>
-        </div>
+        </a>
     </div>
 </aside>

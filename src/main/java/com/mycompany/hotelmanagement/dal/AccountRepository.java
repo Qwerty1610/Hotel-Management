@@ -3,6 +3,7 @@ package com.mycompany.hotelmanagement.dal;
 import com.mycompany.hotelmanagement.config.DBContext;
 import com.mycompany.hotelmanagement.entity.Account;
 import com.mycompany.hotelmanagement.entity.CustomerInfo;
+import com.mycompany.hotelmanagement.entity.ProfileView;
 import com.mycompany.hotelmanagement.entity.Role;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -36,6 +37,78 @@ public class AccountRepository {
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * Load the full personal profile of one account (any role). For Customer
+     * accounts the loyalty fields are populated via the LEFT JOIN; for other
+     * roles they remain at their defaults.
+     */
+    public ProfileView getProfileByAccountId(int accountId) {
+        String sql = "SELECT a.account_id, a.email, a.full_name, a.phone, a.is_active, a.created_at, " +
+                     "       r.role_name, c.loyalty_points, c.membership_level " +
+                     "FROM Account a " +
+                     "JOIN Role r ON a.role_id = r.role_id " +
+                     "LEFT JOIN Customer c ON a.account_id = c.account_id " +
+                     "WHERE a.account_id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    ProfileView p = new ProfileView();
+                    p.setAccountId(rs.getInt("account_id"));
+                    p.setEmail(rs.getString("email"));
+                    p.setFullName(rs.getString("full_name"));
+                    p.setPhone(rs.getString("phone"));
+                    p.setActive(rs.getBoolean("is_active"));
+                    p.setCreatedAt(rs.getTimestamp("created_at"));
+                    p.setRoleName(rs.getString("role_name"));
+                    String membership = rs.getString("membership_level");
+                    boolean isCustomer = "Customer".equalsIgnoreCase(rs.getString("role_name"));
+                    p.setCustomer(isCustomer);
+                    if (membership != null) {
+                        p.setMembershipLevel(membership);
+                        p.setLoyaltyPoints(rs.getInt("loyalty_points"));
+                    }
+                    return p;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /** True if another account (not {@code accountId}) already uses this phone. */
+    public boolean existsByPhoneExcept(String phone, int accountId) {
+        String sql = "SELECT 1 FROM Account WHERE phone = ? AND account_id <> ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, phone);
+            ps.setInt(2, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /** Update the editable profile fields (full name + phone) of the logged-in user. */
+    public boolean updateOwnProfile(int accountId, String fullName, String phone) {
+        String sql = "UPDATE Account SET full_name = ?, phone = ? WHERE account_id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, fullName);
+            ps.setString(2, phone);
+            ps.setInt(3, accountId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     public int insertAccount(String email, String passwordHash, String fullName, int roleId) {
