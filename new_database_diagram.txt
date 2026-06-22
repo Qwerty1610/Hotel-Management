@@ -1,0 +1,77 @@
+================================================================================
+                      HOTEL MANAGEMENT SYSTEM - DATABASE DIAGRAM
+                              (SIMPLIFIED BOOKING SCHEMA)
+================================================================================
+
+ [ Account ]
+   - account_id (PK) <-----------------+
+   - email                             |
+   - password                          |
+   - full_name                         |
+   - role_id (FK to Role)              |
+   - is_active                         |
+   - created_at                        |
+   - phone                             |
+   - work_status                       |
+                                       |
+                                       | places
+                                       |
+ [ Booking ]                           |
+   - booking_id (PK) <-----------+     |
+   - account_id (FK) ------------|-----+
+   - customer_name               |
+   - room_type_id (FK) ----------|-----+
+   - room_quantity               |     |
+   - check_in_date               |     |
+   - check_out_date              |     |
+   - total_amount                |     |
+   - status                      |     |
+   - note                        |     |
+   - created_at                  |     |
+   - updated_at                  |     |
+                                 |     |
+                                 |     |
+ [ RoomAssignment ]              |     |
+   - booking_id (PK, FK) --------+     |
+   - room_id (PK, FK) -----------+     |
+   - assigned_by (FK)                  |
+   - assigned_at                       |
+   - note                              |
+                                 |     |
+                                 |     | maps
+                                 |     |
+ [ Room ]                        |     |
+   - room_id (PK) <--------------+     |
+   - room_number                       |
+   - type_id (FK) ---------------------|-----+
+   - status                            |     |
+   - floor                             |     |
+                                       |     |
+                                       |     | defines category
+                                       v     v
+                                 [ RoomType ]
+                                   - type_id (PK)
+                                   - type_name
+                                   - base_price
+                                   - price_per_hour
+                                   - deposit_percent
+                                   - capacity
+                                   - description
+                                   - area
+                                   - bed_type
+
+================================================================================
+DESCRIPTION OF RELATIONSHIPS:
+1. Account (1) -------- (0..*) Booking
+   - A registered account can place multiple bookings.
+   
+2. RoomType (1) ------- (0..*) Booking
+   - Each booking is reserved for a single RoomType.
+   
+3. RoomType (1) ------- (0..*) Room
+   - Each physical room belongs to one RoomType category.
+   
+4. Booking (1) -------- (0..*) RoomAssignment (0..*) -------- (1) Room
+   - A many-to-many bridge table that assigns specific physical rooms to a booking
+     at check-in time.
+================================================================================

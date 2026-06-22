@@ -12,7 +12,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -63,12 +65,24 @@ public class ReceptionistBookingDetailController extends HttpServlet {
                 customer = bookingService.getCustomerDetailsByAccountId(booking.getAccountId());
             }
 
-            // Load assigned rooms if any
-            List<Room> assignedRooms = bookingService.getAssignedRoomsForBooking(bookingId);
+            // Load assigned rooms for parent booking
+            java.util.List<Room> assignedRooms = bookingService.getAssignedRoomsForBooking(bookingId);
+
+            // Load child bookings (for group booking support)
+            java.util.List<Booking> childBookings = bookingService.getChildBookings(bookingId);
+
+            // Load assigned rooms for each child booking
+            Map<Integer, java.util.List<Room>> childAssignedRoomsMap = new HashMap<>();
+            for (Booking child : childBookings) {
+                java.util.List<Room> childRooms = bookingService.getAssignedRoomsForBooking(child.getBookingId());
+                childAssignedRoomsMap.put(child.getBookingId(), childRooms);
+            }
 
             request.setAttribute("booking", booking);
             request.setAttribute("customer", customer);
             request.setAttribute("assignedRooms", assignedRooms);
+            request.setAttribute("childBookings", childBookings);
+            request.setAttribute("childAssignedRoomsMap", childAssignedRoomsMap);
 
             request.getRequestDispatcher("/WEB-INF/views/receptionist/booking-detail.jsp")
                     .forward(request, response);

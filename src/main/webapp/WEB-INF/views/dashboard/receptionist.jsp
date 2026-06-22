@@ -209,9 +209,11 @@
                                         <%-- Loại phòng --%>
                                         <td>
                                             <c:choose>
-                                                <c:when test="${not empty b.roomTypeName}">
-                                                    <span class="roomtype-badge"><c:out value="${b.roomTypeName}" /></span>
-                                                    <br/><small style="color:var(--text-muted)">${b.roomQuantity} phòng</small>
+                                                <c:when test="${not empty b.groupRoomTypeNames}">
+                                                    <span class="roomtype-badge">
+                                                        <c:out value="${b.groupRoomTypeNames}" />
+                                                    </span>
+                                                    <br/><small style="color:var(--text-muted)">${b.totalRoomQuantity} phòng</small>
                                                 </c:when>
                                                 <c:otherwise><span style="color:var(--text-muted)">—</span></c:otherwise>
                                             </c:choose>
@@ -242,7 +244,7 @@
 
                                         <%-- Tổng tiền --%>
                                         <td class="amount-cell">
-                                            <fmt:formatNumber value="${b.totalAmount}" type="number" groupingUsed="true"/>đ
+                                            <fmt:formatNumber value="${b.overallTotalAmount}" type="number" groupingUsed="true"/>đ
                                         </td>
 
                                         <%-- Trạng thái --%>

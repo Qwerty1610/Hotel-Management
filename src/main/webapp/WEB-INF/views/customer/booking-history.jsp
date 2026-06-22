@@ -160,16 +160,16 @@
                                         </div>
                                         <small style="color: var(--text-muted);">${b.nights} đêm</small>
                                     </td>
-                                    <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${b.roomTypeName}">
-                                        ${b.roomTypeName}
-                                    </td>
-                                    <td style="font-weight: 600;">${b.roomQuantity} phòng</td>
-                                    <td style="font-weight: 700; color: var(--primary-indigo);">
-                                        <fmt:formatNumber value="${b.totalAmount}" type="currency" currencySymbol="" /> VND
-                                    </td>
-                                    <td style="font-weight: 600; color: var(--accent-gold);">
-                                        <fmt:formatNumber value="${b.totalAmount * 0.3}" type="currency" currencySymbol="" /> VND
-                                    </td>
+                                     <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${b.groupRoomTypeNames}">
+                                         ${b.groupRoomTypeNames}
+                                     </td>
+                                     <td style="font-weight: 600;">${b.totalRoomQuantity} phòng</td>
+                                     <td style="font-weight: 700; color: var(--primary-indigo);">
+                                         <fmt:formatNumber value="${b.overallTotalAmount}" type="currency" currencySymbol="" /> VND
+                                     </td>
+                                     <td style="font-weight: 600; color: var(--accent-gold);">
+                                         <fmt:formatNumber value="${b.overallTotalAmount * 0.3}" type="currency" currencySymbol="" /> VND
+                                     </td>
                                     <td>
                                         <c:choose>
                                             <c:when test="${b.status eq 'Pending'}">
