@@ -3,25 +3,17 @@ package com.mycompany.hotelmanagement.entity;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
-public class Account implements Serializable {
+public class CustomerInfo implements Serializable {
     private int accountId;
     private String email;
-    private String password;
     private String fullName;
     private String phone;
-    private int roleId;
-    private String roleName;
     private boolean isActive;
     private Timestamp createdAt;
+    private int loyaltyPoints;
+    private String membershipLevel;
 
-    public Account() {
-    }
-
-    public Account(String email, String password, String fullName, String roleName) {
-        this.email = email;
-        this.password = password;
-        this.fullName = fullName;
-        this.roleName = roleName;
+    public CustomerInfo() {
     }
 
     public int getAccountId() {
@@ -40,14 +32,6 @@ public class Account implements Serializable {
         this.email = email;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
     public String getFullName() {
         return fullName;
     }
@@ -64,22 +48,6 @@ public class Account implements Serializable {
         this.phone = phone;
     }
 
-    public int getRoleId() {
-        return roleId;
-    }
-
-    public void setRoleId(int roleId) {
-        this.roleId = roleId;
-    }
-
-    public String getRoleName() {
-        return roleName;
-    }
-
-    public void setRoleName(String roleName) {
-        this.roleName = roleName;
-    }
-
     public boolean isActive() {
         return isActive;
     }
@@ -94,5 +62,21 @@ public class Account implements Serializable {
 
     public void setCreatedAt(Timestamp createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public int getLoyaltyPoints() {
+        return loyaltyPoints;
+    }
+
+    public void setLoyaltyPoints(int loyaltyPoints) {
+        this.loyaltyPoints = loyaltyPoints;
+    }
+
+    public String getMembershipLevel() {
+        return membershipLevel;
+    }
+
+    public void setMembershipLevel(String membershipLevel) {
+        this.membershipLevel = membershipLevel;
     }
 }

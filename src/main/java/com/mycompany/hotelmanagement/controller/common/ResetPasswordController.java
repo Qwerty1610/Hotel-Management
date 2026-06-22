@@ -1,12 +1,7 @@
 package com.mycompany.hotelmanagement.controller.common;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import com.mycompany.hotelmanagement.config.DBContext;
-import org.mindrot.jbcrypt.BCrypt;
+import com.mycompany.hotelmanagement.service.AuthService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -16,13 +11,15 @@ import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Controller xử lý việc đặt lại mật khẩu mới.
- * Kiểm tra tính hợp lệ của mã OTP người dùng nhập vào. Nếu khớp và chưa hết hạn,
- * tiến hành mã hóa mật khẩu mới bằng BCrypt và cập nhật lại vào Database.
+ * Chỉ tiếp nhận dữ liệu đầu vào, ủy thác xác thực mã OTP, đặt lại mật khẩu mới cho AuthService,
+ * sau đó chuyển hướng người dùng dựa trên kết quả trả về.
  * 
  * @author TùngNQ
  */
 @WebServlet(name = "ResetPasswordController", urlPatterns = {"/home/reset-password"})
 public class ResetPasswordController extends HttpServlet {
+
+    private final AuthService authService = new AuthService();
 
     /**
      * Chuyển hướng người dùng đến giao diện nhập OTP và mật khẩu mới.
@@ -35,8 +32,7 @@ public class ResetPasswordController extends HttpServlet {
     }
 
     /**
-     * Xác thực thông tin đặt lại mật khẩu: kiểm tra mã OTP trong DB, cập nhật mật khẩu đã hash,
-     * và đánh dấu mã OTP đã được sử dụng (is_used = 1) để tránh tái sử dụng.
+     * Xác thực thông tin đặt lại mật khẩu: chuyển xử lý cho AuthService và thực hiện redirect.
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -47,96 +43,43 @@ public class ResetPasswordController extends HttpServlet {
         String newPassword = request.getParameter("newPassword");
         String confirmPassword = request.getParameter("confirmPassword");
 
-        if (email != null) email = email.trim();
-        if (otp != null) otp = otp.trim();
+        String result = authService.resetPassword(email, otp, newPassword, confirmPassword);
+        String contextPath = request.getContextPath();
+        String encodedEmail = encode(email);
 
-        if (email == null || email.isEmpty() ||
-            otp == null || otp.isEmpty() ||
-            newPassword == null || newPassword.isEmpty() ||
-            confirmPassword == null || confirmPassword.isEmpty()) {
-            
-            response.sendRedirect(request.getContextPath() + "/home/reset-password?error=invalid_input&email=" + email);
-            return;
+        switch (result) {
+            case "success":
+                // Success, redirect to login page
+                response.sendRedirect(contextPath + "/home/login?success=password_reset");
+                break;
+                
+            case "invalid_input":
+                response.sendRedirect(contextPath + "/home/reset-password?error=invalid_input&email=" + encodedEmail);
+                break;
+                
+            case "invalid_password":
+                response.sendRedirect(contextPath + "/home/reset-password?error=invalid_password&email=" + encodedEmail);
+                break;
+                
+            case "passwords_dont_match":
+                response.sendRedirect(contextPath + "/home/reset-password?error=passwords_dont_match&email=" + encodedEmail);
+                break;
+                
+            case "invalid_otp":
+                response.sendRedirect(contextPath + "/home/reset-password?error=invalid_otp&email=" + encodedEmail);
+                break;
+                
+            case "server_error":
+            default:
+                response.sendRedirect(contextPath + "/home/reset-password?error=server_error&email=" + encodedEmail);
+                break;
         }
+    }
 
-        if (!newPassword.equals(confirmPassword)) {
-            response.sendRedirect(request.getContextPath() + "/home/reset-password?error=passwords_dont_match&email=" + email);
-            return;
+    private String encode(String val) {
+        if (val == null) {
+            return "";
         }
-
-        Connection conn = null;
-        PreparedStatement checkOtpPs = null;
-        PreparedStatement updatePassPs = null;
-        PreparedStatement updateOtpPs = null;
-        ResultSet rs = null;
-
-        try {
-            conn = DBContext.getConnection();
-            conn.setAutoCommit(false); // Begin Transaction
-
-            // 1. Verify OTP token in database
-            // Top 1 ordered by created_at desc to get the latest otp
-            String checkOtpSql = "SELECT TOP 1 id FROM PasswordReset " +
-                                 "WHERE email = ? AND token = ? AND is_used = 0 AND expiry_time > GETDATE() " +
-                                 "ORDER BY created_at DESC";
-            
-            checkOtpPs = conn.prepareStatement(checkOtpSql);
-            checkOtpPs.setString(1, email);
-            checkOtpPs.setString(2, otp);
-            rs = checkOtpPs.executeQuery();
-
-            if (!rs.next()) {
-                // Invalid or expired OTP code
-                conn.rollback();
-                response.sendRedirect(request.getContextPath() + "/home/reset-password?error=invalid_otp&email=" + email);
-                return;
-            }
-
-            int resetId = rs.getInt("id");
-            rs.close();
-            checkOtpPs.close();
-
-            // 2. Hash the new password with BCrypt
-            String hashedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt(12));
-
-            // 3. Update the password in Account table (if exists)
-            String updatePassSql = "UPDATE Account SET password = ? WHERE email = ? AND is_active = 1";
-            updatePassPs = conn.prepareStatement(updatePassSql);
-            updatePassPs.setString(1, hashedPassword);
-            updatePassPs.setString(2, email);
-            updatePassPs.executeUpdate(); // Proceed even if account doesn't exist
-
-            // 4. Mark OTP as used
-            String updateOtpSql = "UPDATE PasswordReset SET is_used = 1 WHERE id = ?";
-            updateOtpPs = conn.prepareStatement(updateOtpSql);
-            updateOtpPs.setInt(1, resetId);
-            updateOtpPs.executeUpdate();
-
-            conn.commit(); // Commit Transaction
-
-            // Success, redirect to login page
-            response.sendRedirect(request.getContextPath() + "/home/login?success=password_reset");
-
-        } catch (Exception e) {
-            if (conn != null) {
-                try {
-                    conn.rollback();
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                }
-            }
-            e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/home/reset-password?error=server_error&email=" + email);
-        } finally {
-            try {
-                if (rs != null) rs.close();
-                if (checkOtpPs != null) checkOtpPs.close();
-                if (updatePassPs != null) updatePassPs.close();
-                if (updateOtpPs != null) updateOtpPs.close();
-                if (conn != null) conn.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
+        return java.net.URLEncoder.encode(val.trim(), java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20");
     }
 }

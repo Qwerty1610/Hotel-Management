@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/login.css" />
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/login.css?v=3" />
 </head>
 
 <body class="login-body">
@@ -28,6 +28,9 @@
                         <c:choose>
                             <c:when test="${param.error eq 'email_exists'}">
                                 Email này đã được đăng ký trong hệ thống!
+                            </c:when>
+                            <c:when test="${param.error eq 'phone_exists'}">
+                                Số điện thoại này đã được đăng ký trong hệ thống!
                             </c:when>
                             <c:when test="${param.error eq 'passwords_dont_match'}">
                                 Mật khẩu xác nhận không trùng khớp!
