@@ -8,6 +8,8 @@ import java.sql.Timestamp;
  * nhân viên Housekeeping xử lý.
  *
  * Date: 02/6/2026
+ * ver 1.0
+ * @author Phạm Quốc Quý
  */
 public class CustomerRequest {
 
@@ -22,10 +24,18 @@ public class CustomerRequest {
     private String assignedStaffName;// lấy kèm từ JOIN Account
     private Timestamp createdAt;     // thời gian yêu cầu
     private Timestamp completedAt;
+    private Integer bookingId;       // có thể null, liên kết với booking của khách
+    private String customerName;     // lấy kèm từ JOIN Booking để hiển thị
 
     public CustomerRequest() {}
 
     /* ---------- Getters & Setters ---------- */
+    public String getCustomerName()           { return customerName; }
+    public void setCustomerName(String v)     { this.customerName = v; }
+
+    public Integer getBookingId()             { return bookingId; }
+    public void setBookingId(Integer v)       { this.bookingId = v; }
+
     public int getRequestId()                 { return requestId; }
     public void setRequestId(int v)           { this.requestId = v; }
 

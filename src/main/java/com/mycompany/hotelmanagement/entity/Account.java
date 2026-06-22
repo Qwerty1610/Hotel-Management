@@ -14,6 +14,14 @@ public class Account implements Serializable {
     private boolean isActive;
     private Timestamp createdAt;
 
+    public int getAccountId() {
+        return accountId;
+    }
+
+    public void setAccountId(int accountId) {
+        this.accountId = accountId;
+    }
+
     public Account() {
     }
 

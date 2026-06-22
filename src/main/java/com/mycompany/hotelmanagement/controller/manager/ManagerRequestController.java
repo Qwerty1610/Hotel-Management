@@ -21,8 +21,10 @@ import java.util.List;
  * POST /manager/requests?action=assign  -> gán việc cho nhân viên (requestId, staffId)
  * POST /manager/requests?action=status  -> cập nhật trạng thái yêu cầu (requestId, status)
  *
- * Date: 02/6/2026
- * version 1.0
+ * Thay xử lý render trang từ FE xuống BE
+ * 
+ * Date: 11/6/2026
+ * version 1.1
  * @author Pham Quoc Quy
  */
 @WebServlet(name = "ManagerRequestController", urlPatterns = {"/manager/requests"})
@@ -34,16 +36,45 @@ public class ManagerRequestController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        List<CustomerRequest> requests = service.getAllRequests();
-        List<StaffInfo> staffList = service.getHousekeepingStaff();
+        // Bộ lọc + phân trang server-side
+        String roomKw = request.getParameter("q");
+        String priority = request.getParameter("priority");
+        String staffFilter = request.getParameter("staff");
+        String status = request.getParameter("status");
+        if (priority == null || priority.trim().isEmpty()) priority = "all";
+        if (staffFilter == null || staffFilter.trim().isEmpty()) staffFilter = "all";
+        if (status == null || status.trim().isEmpty()) status = "all";
 
-        request.setAttribute("requests", requests);
-        request.setAttribute("staffList", staffList);
+        final int pageSize = 6;
+        int page = parseIntOr(request.getParameter("page"), 1);
+        if (page < 1) page = 1;
+
+        int totalItems = service.countRequests(roomKw, priority, staffFilter, status);
+        int totalPages = (int) Math.ceil(totalItems / (double) pageSize);
+        if (totalPages < 1) totalPages = 1;
+        if (page > totalPages) page = totalPages;
+        int offset = (page - 1) * pageSize;
+
+        request.setAttribute("requests", service.getRequests(roomKw, priority, staffFilter, status, offset, pageSize));
+        request.setAttribute("staffList", service.getHousekeepingStaff());
         request.setAttribute("pendingCount", service.countPending());
         request.setAttribute("inProgressCount", service.countInProgress());
         request.setAttribute("activeStaffCount", service.countActiveStaff());
 
+        request.setAttribute("q", roomKw == null ? "" : roomKw);
+        request.setAttribute("priorityFilter", priority);
+        request.setAttribute("staffFilterVal", staffFilter);
+        request.setAttribute("statusFilter", status);
+        request.setAttribute("page", page);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("totalItems", totalItems);
+        request.setAttribute("pageSize", pageSize);
+
         request.getRequestDispatcher("/WEB-INF/views/manager/requests.jsp").forward(request, response);
+    }
+
+    private int parseIntOr(String v, int fallback) {
+        try { return Integer.parseInt(v.trim()); } catch (Exception e) { return fallback; }
     }
 
     @Override

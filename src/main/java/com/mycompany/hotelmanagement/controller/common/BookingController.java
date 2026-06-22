@@ -15,7 +15,6 @@ public class BookingController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Verify Session & Customer Role
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("user") == null
                 || !"CUSTOMER".equals(session.getAttribute("role"))) {
@@ -29,8 +28,7 @@ public class BookingController extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/home/login");
             return;
         }
-        response.setContentType("text/plain;charset=UTF-8");
-        response.getWriter().write("");
+        response.sendRedirect(request.getContextPath() + "/customer/booking/create");
     }
 
     @Override

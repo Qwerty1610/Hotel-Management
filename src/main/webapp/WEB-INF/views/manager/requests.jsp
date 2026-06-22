@@ -1,603 +1,468 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ include file="../../includes/taglibs.jsp" %>
-<%@ include file="../../includes/header.jsp" %>
+    <%@ include file="../../includes/taglibs.jsp" %>
+        <%@ include file="../../includes/header.jsp" %>
 
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/manager.css?v=3" />
+            <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/manager.css?v=3" />
 
-<body class="dashboard-body">
+            <body class="dashboard-body">
 
-    <div class="dashboard-layout">
+                <div class="dashboard-layout">
 
-        <!-- SIDEBAR -->
-        <c:set var="activePage" value="requests" scope="request" />
-        <jsp:include page="includes/sidebar.jsp" />
+                    <!-- SIDEBAR -->
+                    <c:set var="activePage" value="requests" scope="request" />
+                    <jsp:include page="sidebar.jsp" />
 
-        <!-- MAIN -->
-        <div class="dashboard-main">
+                    <div class="dashboard-main">
 
-            <header class="main-topbar">
-                <div class="breadcrumb">
-                    <span>Quản trị</span>
-                    <span class="separator">&gt;</span>
-                    <span class="current">Yêu cầu &amp; Nhân viên</span>
-                </div>
-                <a href="${pageContext.request.contextPath}/logout" class="btn-logout">
-                    <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
-                </a>
-            </header>
-
-            <main class="workspace-content">
-
-                <div class="content-header-row">
-                    <div>
-                        <h1>Yêu cầu khách hàng &amp; công việc nhân viên</h1>
-                        <p>Quản lý yêu cầu của khách, phân công và theo dõi hiệu suất nhân viên buồng phòng.</p>
-                    </div>
-                </div>
-
-                <!-- KPI -->
-                <div class="stat-grid stat-grid-3">
-                    <div class="stat-card">
-                        <div class="stat-icon icon-pending"><i class="fa-solid fa-hourglass-half"></i></div>
-                        <div class="stat-body">
-                            <span class="stat-label">Yêu cầu đang chờ</span>
-                            <span class="stat-value">${pendingCount}</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon icon-progress"><i class="fa-solid fa-spinner"></i></div>
-                        <div class="stat-body">
-                            <span class="stat-label">Đang thực hiện</span>
-                            <span class="stat-value">${inProgressCount}</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon icon-occupancy"><i class="fa-solid fa-user-check"></i></div>
-                        <div class="stat-body">
-                            <span class="stat-label">Nhân viên đang trực</span>
-                            <span class="stat-value">${activeStaffCount}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Hidden data: requests -->
-                <div id="requestDataStorage" style="display:none;">
-                    <c:forEach var="r" items="${requests}">
-                        <div class="request-data-item"
-                             data-id="${r.requestId}"
-                             data-room="<c:out value='${r.roomNumber}' />"
-                             data-title="<c:out value='${r.title}' />"
-                             data-desc="<c:out value='${r.description}' />"
-                             data-priority="<c:out value='${r.priority}' />"
-                             data-status="<c:out value='${r.status}' />"
-                             data-staff-id="${r.assignedStaffId}"
-                             data-staff-name="<c:out value='${r.assignedStaffName}' />"
-                             data-created="<fmt:formatDate value='${r.createdAt}' pattern='dd/MM/yyyy HH:mm' />">
-                        </div>
-                    </c:forEach>
-                </div>
-
-                <!-- Hidden data: staff -->
-                <div id="staffDataStorage" style="display:none;">
-                    <c:forEach var="s" items="${staffList}">
-                        <div class="staff-data-item"
-                             data-id="${s.accountId}"
-                             data-name="<c:out value='${s.fullName}' />"
-                             data-email="<c:out value='${s.email}' />"
-                             data-status="<c:out value='${s.workStatus}' />"
-                             data-today="${s.completedToday}"
-                             data-month="${s.completedMonth}"
-                             data-active="${s.activeAssignments}">
-                        </div>
-                    </c:forEach>
-                </div>
-
-                <!-- CUSTOMER REQUESTS TABLE -->
-                <div class="table-card" style="margin-bottom: 24px;">
-                    <div class="table-filter-bar" style="display:grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap:16px; align-items:end;">
-                        <div class="modal-form-group" style="margin-bottom:0;">
-                            <label>Tìm theo phòng</label>
-                            <div class="search-wrapper" style="max-width:100%;">
-                                <i class="fa-solid fa-magnifying-glass"></i>
-                                <input type="text" id="reqSearch" class="input-search-service" placeholder="Nhập số phòng..." onkeyup="filterRequests()" />
+                        <header class="main-topbar">
+                            <div class="breadcrumb">
+                                <span>Quản trị</span>
+                                <span class="separator">&gt;</span>
+                                <span class="current">Yêu cầu &amp; Nhân viên</span>
                             </div>
-                        </div>
-                        <div class="modal-form-group" style="margin-bottom:0;">
-                            <label>Mức độ ưu tiên</label>
-                            <select id="priorityFilter" class="status-select" onchange="filterRequests()" style="width:100%;">
-                                <option value="all">Tất cả mức độ</option>
-                                <option value="Urgent">Khẩn cấp</option>
-                                <option value="High">Cao</option>
-                                <option value="Medium">Trung bình</option>
-                                <option value="Low">Thấp</option>
-                            </select>
-                        </div>
-                        <div class="modal-form-group" style="margin-bottom:0;">
-                            <label>Nhân viên được giao</label>
-                            <select id="staffFilter" class="status-select" onchange="filterRequests()" style="width:100%;">
-                                <option value="all">Tất cả nhân viên</option>
-                                <option value="unassigned">Chưa gán</option>
-                                <c:forEach var="s" items="${staffList}">
-                                    <option value="${s.accountId}"><c:out value="${s.fullName}" /></option>
-                                </c:forEach>
-                            </select>
-                        </div>
-                        <div class="modal-form-group" style="margin-bottom:0;">
-                            <label>Trạng thái</label>
-                            <select id="reqStatusFilter" class="status-select" onchange="filterRequests()" style="width:100%;">
-                                <option value="all">Tất cả trạng thái</option>
-                                <option value="Pending">Đang chờ</option>
-                                <option value="InProgress">Đang thực hiện</option>
-                                <option value="Completed">Hoàn thành</option>
-                                <option value="Cancelled">Đã huỷ</option>
-                            </select>
-                        </div>
-                    </div>
+                            <a href="${pageContext.request.contextPath}/logout" class="btn-logout">
+                                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                            </a>
+                        </header>
 
-                    <table class="services-table-element">
-                        <thead>
-                            <tr>
-                                <th style="width:34%">Yêu cầu</th>
-                                <th style="width:13%">Ưu tiên</th>
-                                <th style="width:18%">Nhân viên được giao</th>
-                                <th style="width:15%">Trạng thái</th>
-                                <th style="width:20%">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody id="requestsTableBody"></tbody>
-                    </table>
+                        <main class="workspace-content">
 
-                    <div class="table-pagination-bar">
-                        <div class="pagination-info" id="reqPaginationInfo"></div>
-                        <div class="pagination-controls" id="reqPaginationControls"></div>
+                            <div class="content-header-row">
+                                <div>
+                                    <h1>Yêu cầu khách hàng &amp; công việc nhân viên</h1>
+                                    <p>Quản lý yêu cầu của khách, phân công và theo dõi hiệu suất nhân viên buồng phòng.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- KPI -->
+                            <div class="stat-grid stat-grid-3">
+                                <div class="stat-card">
+                                    <div class="stat-icon icon-pending"><i class="fa-solid fa-hourglass-half"></i></div>
+                                    <div class="stat-body">
+                                        <span class="stat-label">Yêu cầu đang chờ</span>
+                                        <span class="stat-value">${pendingCount}</span>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon icon-progress"><i class="fa-solid fa-spinner"></i></div>
+                                    <div class="stat-body">
+                                        <span class="stat-label">Đang thực hiện</span>
+                                        <span class="stat-value">${inProgressCount}</span>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon icon-occupancy"><i class="fa-solid fa-user-check"></i></div>
+                                    <div class="stat-body">
+                                        <span class="stat-label">Nhân viên đang trực</span>
+                                        <span class="stat-value">${activeStaffCount}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- CUSTOMER REQUESTS TABLE -->
+                            <div class="table-card" style="margin-bottom: 24px;">
+                                <!-- BỘ LỌC (GET, server-side) -->
+                                <form class="table-filter-bar" method="get"
+                                    action="${pageContext.request.contextPath}/manager/requests"
+                                    style="display:grid; grid-template-columns: 1.5fr 1fr 1fr 1fr auto; gap:16px; align-items:end;">
+                                    <div class="modal-form-group" style="margin-bottom:0;">
+                                        <label>Tìm theo phòng</label>
+                                        <div class="search-wrapper" style="max-width:100%;">
+                                            <i class="fa-solid fa-magnifying-glass"></i>
+                                            <input type="text" name="q" class="input-search-service"
+                                                placeholder="Nhập số phòng..." value="<c:out value='${q}' />" />
+                                        </div>
+                                    </div>
+                                    <div class="modal-form-group" style="margin-bottom:0;">
+                                        <label>Mức độ ưu tiên</label>
+                                        <select name="priority" class="status-select" onchange="this.form.submit()"
+                                            style="width:100%;">
+                                            <option value="all" ${priorityFilter eq 'all' ? 'selected' : '' }>Tất cả mức
+                                                độ</option>
+                                            <option value="Urgent" ${priorityFilter eq 'Urgent' ? 'selected' : '' }>Khẩn
+                                                cấp</option>
+                                            <option value="High" ${priorityFilter eq 'High' ? 'selected' : '' }>Cao
+                                            </option>
+                                            <option value="Medium" ${priorityFilter eq 'Medium' ? 'selected' : '' }>
+                                                Trung bình</option>
+                                            <option value="Low" ${priorityFilter eq 'Low' ? 'selected' : '' }>Thấp
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="modal-form-group" style="margin-bottom:0;">
+                                        <label>Nhân viên được giao</label>
+                                        <select name="staff" class="status-select" onchange="this.form.submit()"
+                                            style="width:100%;">
+                                            <option value="all" ${staffFilterVal eq 'all' ? 'selected' : '' }>Tất cả
+                                                nhân viên</option>
+                                            <option value="unassigned" ${staffFilterVal eq 'unassigned' ? 'selected'
+                                                : '' }>Chưa gán</option>
+                                            <c:forEach var="s" items="${staffList}">
+                                                <c:set var="sidStr">${s.accountId}</c:set>
+                                                <option value="${s.accountId}" ${staffFilterVal eq sidStr ? 'selected'
+                                                    : '' }>
+                                                    <c:out value="${s.fullName}" />
+                                                </option>
+                                            </c:forEach>
+                                        </select>
+                                    </div>
+                                    <div class="modal-form-group" style="margin-bottom:0;">
+                                        <label>Trạng thái</label>
+                                        <select name="status" class="status-select" onchange="this.form.submit()"
+                                            style="width:100%;">
+                                            <option value="all" ${statusFilter eq 'all' ? 'selected' : '' }>Tất cả trạng
+                                                thái</option>
+                                            <option value="Pending" ${statusFilter eq 'Pending' ? 'selected' : '' }>Đang
+                                                chờ</option>
+                                            <option value="InProgress" ${statusFilter eq 'InProgress' ? 'selected' : ''
+                                                }>Đang thực hiện</option>
+                                            <option value="Completed" ${statusFilter eq 'Completed' ? 'selected' : '' }>
+                                                Hoàn thành</option>
+                                            <option value="Cancelled" ${statusFilter eq 'Cancelled' ? 'selected' : '' }>
+                                                Đã huỷ</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn-add-service" style="height:40px;"><i
+                                            class="fa-solid fa-magnifying-glass"></i> Lọc</button>
+                                </form>
+
+                                <table class="services-table-element">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:34%">Yêu cầu</th>
+                                            <th style="width:13%">Ưu tiên</th>
+                                            <th style="width:18%">Nhân viên được giao</th>
+                                            <th style="width:15%">Trạng thái</th>
+                                            <th style="width:20%">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <c:forEach var="r" items="${requests}">
+                                            <tr>
+                                                <td>
+                                                    <div class="service-name-cell">
+                                                        <div>
+                                                            <span class="service-title">
+                                                                <c:out value="${r.title}" />
+                                                            </span>
+                                                            <span class="request-sub">
+                                                                <i class="fa-solid fa-bed"></i> Phòng
+                                                                <c:out value="${r.roomNumber}" />
+                                                                &nbsp;•&nbsp; <i class="fa-regular fa-clock"></i>
+                                                                <fmt:formatDate value="${r.createdAt}"
+                                                                    pattern="dd/MM/yyyy HH:mm" />
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <c:choose>
+                                                        <c:when test="${r.priority eq 'Urgent'}"><span
+                                                                class="prio-badge prio-urgent">KHẨN CẤP</span></c:when>
+                                                        <c:when test="${r.priority eq 'High'}"><span
+                                                                class="prio-badge prio-high">CAO</span></c:when>
+                                                        <c:when test="${r.priority eq 'Low'}"><span
+                                                                class="prio-badge prio-low">THẤP</span></c:when>
+                                                        <c:otherwise><span class="prio-badge prio-medium">TRUNG
+                                                                BÌNH</span></c:otherwise>
+                                                    </c:choose>
+                                                </td>
+                                                <td>
+                                                    <c:choose>
+                                                        <c:when test="${not empty r.assignedStaffName}"><span
+                                                                style="font-weight:600; color:var(--text-navy);">
+                                                                <c:out value="${r.assignedStaffName}" />
+                                                            </span></c:when>
+                                                        <c:otherwise><span
+                                                                style="color:var(--text-muted); font-style:italic;">Chưa
+                                                                gán</span></c:otherwise>
+                                                    </c:choose>
+                                                </td>
+                                                <td>
+                                                    <c:choose>
+                                                        <c:when test="${r.status eq 'InProgress'}"><span
+                                                                class="status-pill status-occupied"><i
+                                                                    class="fa-solid fa-circle"></i> ĐANG THỰC
+                                                                HIỆN</span></c:when>
+                                                        <c:when test="${r.status eq 'Completed'}"><span
+                                                                class="status-pill status-available"><i
+                                                                    class="fa-solid fa-circle"></i> HOÀN THÀNH</span>
+                                                        </c:when>
+                                                        <c:when test="${r.status eq 'Cancelled'}"><span
+                                                                class="status-pill status-maintenance"><i
+                                                                    class="fa-solid fa-circle"></i> ĐÃ HUỶ</span>
+                                                        </c:when>
+                                                        <c:otherwise><span class="status-pill status-cleaning"><i
+                                                                    class="fa-solid fa-circle"></i> ĐANG CHỜ</span>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </td>
+                                                <td>
+                                                    <div class="table-actions" style="display:flex; gap:8px;">
+                                                        <c:choose>
+                                                            <c:when
+                                                                test="${r.status eq 'Pending' or r.status eq 'InProgress'}">
+                                                                <button class="btn-action assign"
+                                                                    title="${r.assignedStaffId != null ? 'Đổi NV' : 'Gán việc'}"
+                                                                    data-title="<c:out value='${r.title}' />"
+                                                                    data-room="<c:out value='${r.roomNumber}' />"
+                                                                    onclick="openAssignModal(${r.requestId}, this)"><i
+                                                                        class="fa-solid fa-user-plus"></i></button>
+                                                                <c:choose>
+                                                                    <c:when test="${r.assignedStaffId != null}">
+                                                                        <button class="btn-action done"
+                                                                            title="Hoàn thành"
+                                                                            onclick="changeStatus(${r.requestId}, 'Completed')"><i
+                                                                                class="fa-solid fa-check"></i></button>
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        <button class="btn-action done"
+                                                                            title="Cần gán nhân viên trước khi hoàn thành"
+                                                                            disabled
+                                                                            style="opacity:.35; cursor:not-allowed;"><i
+                                                                                class="fa-solid fa-check"></i></button>
+                                                                    </c:otherwise>
+                                                                </c:choose>
+                                                                <button class="btn-action delete" title="Huỷ"
+                                                                    onclick="changeStatus(${r.requestId}, 'Cancelled')"><i
+                                                                        class="fa-solid fa-xmark"></i></button>
+                                                            </c:when>
+                                                            <c:otherwise><span
+                                                                    style="color:var(--text-muted); font-size:12px;">—</span>
+                                                            </c:otherwise>
+                                                        </c:choose>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </c:forEach>
+                                        <c:if test="${empty requests}">
+                                            <tr>
+                                                <td colspan="5"
+                                                    style="text-align:center; padding:40px; color:var(--text-muted);">
+                                                    <i class="fa-solid fa-folder-open"
+                                                        style="font-size:32px; margin-bottom:12px; display:block;"></i>
+                                                    Không tìm thấy yêu cầu nào phù hợp
+                                                </td>
+                                            </tr>
+                                        </c:if>
+                                    </tbody>
+                                </table>
+
+                                <div class="table-pagination-bar">
+                                    <div class="pagination-info">
+                                        <c:choose>
+                                            <c:when test="${totalItems == 0}">Hiển thị 0 yêu cầu</c:when>
+                                            <c:otherwise>Hiển thị ${(page-1)*pageSize + 1}-${page*pageSize gt totalItems
+                                                ? totalItems : page*pageSize} trong số ${totalItems} yêu cầu
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </div>
+                                    <div class="pagination-controls">
+                                        <c:choose>
+                                            <c:when test="${page > 1}">
+                                                <c:url var="prevUrl" value="/manager/requests">
+                                                    <c:param name="q" value="${q}" />
+                                                    <c:param name="priority" value="${priorityFilter}" />
+                                                    <c:param name="staff" value="${staffFilterVal}" />
+                                                    <c:param name="status" value="${statusFilter}" />
+                                                    <c:param name="page" value="${page-1}" />
+                                                </c:url>
+                                                <a class="btn-page" href="${prevUrl}"><i
+                                                        class="fa-solid fa-chevron-left"></i></a>
+                                            </c:when>
+                                            <c:otherwise><span class="btn-page disabled"><i
+                                                        class="fa-solid fa-chevron-left"></i></span></c:otherwise>
+                                        </c:choose>
+                                        <c:forEach var="p" begin="1" end="${totalPages}">
+                                            <c:url var="pUrl" value="/manager/requests">
+                                                <c:param name="q" value="${q}" />
+                                                <c:param name="priority" value="${priorityFilter}" />
+                                                <c:param name="staff" value="${staffFilterVal}" />
+                                                <c:param name="status" value="${statusFilter}" />
+                                                <c:param name="page" value="${p}" />
+                                            </c:url>
+                                            <a class="btn-page ${p == page ? 'active' : ''}" href="${pUrl}">${p}</a>
+                                        </c:forEach>
+                                        <c:choose>
+                                            <c:when test="${page < totalPages}">
+                                                <c:url var="nextUrl" value="/manager/requests">
+                                                    <c:param name="q" value="${q}" />
+                                                    <c:param name="priority" value="${priorityFilter}" />
+                                                    <c:param name="staff" value="${staffFilterVal}" />
+                                                    <c:param name="status" value="${statusFilter}" />
+                                                    <c:param name="page" value="${page+1}" />
+                                                </c:url>
+                                                <a class="btn-page" href="${nextUrl}"><i
+                                                        class="fa-solid fa-chevron-right"></i></a>
+                                            </c:when>
+                                            <c:otherwise><span class="btn-page disabled"><i
+                                                        class="fa-solid fa-chevron-right"></i></span></c:otherwise>
+                                        </c:choose>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- STAFF TRACKING TABLE -->
+                            <div class="content-header-row" style="margin-bottom:16px;">
+                                <div>
+                                    <h1 style="font-size:22px;">Theo dõi công việc nhân viên</h1>
+                                    <p>Trạng thái trực và số công việc đã hoàn thành của nhân viên buồng phòng. Bấm vào
+                                        một dòng để xem chi tiết.</p>
+                                </div>
+                            </div>
+
+                            <div class="table-card">
+                                <table class="services-table-element">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:32%">Nhân viên</th>
+                                            <th style="width:18%">Trạng thái</th>
+                                            <th style="width:15%">Việc đang làm</th>
+                                            <th style="width:15%">Hoàn thành hôm nay</th>
+                                            <th style="width:20%">Hoàn thành tháng này</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <c:forEach var="s" items="${staffList}">
+                                            <tr style="cursor:pointer;"
+                                                onclick="window.location.href='${pageContext.request.contextPath}/manager/staff?id=${s.accountId}'">
+                                                <td>
+                                                    <div class="service-name-cell">
+                                                        <div class="staff-avatar-sm"><i class="fa-solid fa-user"></i>
+                                                        </div>
+                                                        <div><span class="service-title">
+                                                                <c:out value="${s.fullName}" />
+                                                            </span>
+                                                            <span class="request-sub">
+                                                                <c:out value="${s.email}" />
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <c:choose>
+                                                        <c:when test="${s.workStatus eq 'Active'}"><span
+                                                                class="wk-badge wk-active"><i
+                                                                    class="fa-solid fa-circle"></i> Đang trực</span>
+                                                        </c:when>
+                                                        <c:when test="${s.workStatus eq 'OnBreak'}"><span
+                                                                class="wk-badge wk-break"><i
+                                                                    class="fa-solid fa-circle"></i> Đang nghỉ</span>
+                                                        </c:when>
+                                                        <c:otherwise><span class="wk-badge wk-offline"><i
+                                                                    class="fa-solid fa-circle"></i> Ngoại tuyến</span>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </td>
+                                                <td><span style="font-weight:600;">${s.activeAssignments}</span></td>
+                                                <td><span
+                                                        style="font-weight:700; color:var(--brand-blue);">${s.completedToday}</span>
+                                                </td>
+                                                <td><span style="font-weight:600;">${s.completedMonth} việc</span></td>
+                                            </tr>
+                                        </c:forEach>
+                                        <c:if test="${empty staffList}">
+                                            <tr>
+                                                <td colspan="5"
+                                                    style="text-align:center; padding:40px; color:var(--text-muted);">
+                                                    Chưa có nhân viên buồng phòng</td>
+                                            </tr>
+                                        </c:if>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </main>
+
+                        <footer class="dashboard-footer">
+                            <span>© 2026 HotelOps Luxury Management. Hệ thống quản trị nội bộ.</span>
+                            <div class="footer-links-row">
+                                <a href="#">Hỗ trợ</a><a href="#">Bảo mật</a><a href="#">Điều khoản</a>
+                            </div>
+                        </footer>
                     </div>
                 </div>
 
-                <!-- STAFF TRACKING TABLE -->
-                <div class="content-header-row" style="margin-bottom:16px;">
-                    <div>
-                        <h1 style="font-size:22px;">Theo dõi công việc nhân viên</h1>
-                        <p>Trạng thái trực và số công việc đã hoàn thành của nhân viên buồng phòng.</p>
+                <!-- ASSIGN MODAL -->
+                <div class="modal-overlay" id="assignModal">
+                    <div class="modal-container">
+                        <div class="modal-header">
+                            <h3>Gán việc cho nhân viên</h3>
+                            <button class="btn-close-modal" onclick="closeAssignModal()"><i
+                                    class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="modal-body">
+                            <p id="assignContext" style="color:var(--text-muted); font-size:14px; margin-top:0;"></p>
+                            <form id="assignForm" action="${pageContext.request.contextPath}/manager/requests"
+                                method="post">
+                                <input type="hidden" name="action" value="assign" />
+                                <input type="hidden" id="assignRequestId" name="requestId" value="" />
+                                <div class="modal-form-group">
+                                    <label for="assignStaffId">Chọn nhân viên đang trực</label>
+                                    <select id="assignStaffId" name="staffId" class="modal-select" required>
+                                        <c:forEach var="s" items="${staffList}">
+                                            <c:if test="${s.workStatus eq 'Active'}">
+                                                <option value="${s.accountId}">
+                                                    <c:out value="${s.fullName}" /> — đang làm ${s.activeAssignments}
+                                                    việc
+                                                </option>
+                                            </c:if>
+                                        </c:forEach>
+                                    </select>
+                                    <small id="noActiveStaffHint"
+                                        style="display:none; color:#dc2626; font-weight:600;">Hiện không có nhân viên
+                                        nào đang trực.</small>
+                                </div>
+                                <div class="modal-footer-row">
+                                    <button type="button" class="btn-modal-cancel" onclick="closeAssignModal()">Hủy
+                                        bỏ</button>
+                                    <button type="submit" class="btn-modal-submit">Gán việc</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
 
-                <div class="table-card">
-                    <table class="services-table-element">
-                        <thead>
-                            <tr>
-                                <th style="width:32%">Nhân viên</th>
-                                <th style="width:18%">Trạng thái</th>
-                                <th style="width:15%">Việc đang làm</th>
-                                <th style="width:15%">Hoàn thành hôm nay</th>
-                                <th style="width:20%">Hoàn thành tháng này</th>
-                            </tr>
-                        </thead>
-                        <tbody id="staffTableBody"></tbody>
-                    </table>
-                </div>
-
-            </main>
-
-            <footer class="dashboard-footer">
-                <span>© 2026 HotelOps Luxury Management. Hệ thống quản trị nội bộ.</span>
-                <div class="footer-links-row">
-                    <a href="#">Hỗ trợ</a>
-                    <a href="#">Bảo mật</a>
-                    <a href="#">Điều khoản</a>
-                </div>
-            </footer>
-        </div>
-    </div>
-
-    <!-- ASSIGN MODAL -->
-    <div class="modal-overlay" id="assignModal">
-        <div class="modal-container">
-            <div class="modal-header">
-                <h3>Gán việc cho nhân viên</h3>
-                <button class="btn-close-modal" onclick="closeAssignModal()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="modal-body">
-                <p id="assignContext" style="color:var(--text-muted); font-size:14px; margin-top:0;"></p>
-                <form id="assignForm" action="${pageContext.request.contextPath}/manager/requests" method="post">
-                    <input type="hidden" name="action" value="assign" />
-                    <input type="hidden" id="assignRequestId" name="requestId" value="" />
-                    <div class="modal-form-group">
-                        <label for="assignStaffId">Chọn nhân viên đang trực</label>
-                        <select id="assignStaffId" name="staffId" class="modal-select" required>
-                            <c:forEach var="s" items="${staffList}">
-                                <c:if test="${s.workStatus eq 'Active'}">
-                                    <option value="${s.accountId}"><c:out value="${s.fullName}" /> — đang làm ${s.activeAssignments} việc</option>
-                                </c:if>
-                            </c:forEach>
-                        </select>
-                        <small id="noActiveStaffHint" style="display:none; color:#dc2626; font-weight:600;">
-                            Hiện không có nhân viên nào đang trực.
-                        </small>
-                    </div>
-                    <div class="modal-footer-row">
-                        <button type="button" class="btn-modal-cancel" onclick="closeAssignModal()">Hủy bỏ</button>
-                        <button type="submit" class="btn-modal-submit">Gán việc</button>
-                    </div>
+                <!-- Hidden form for status updates -->
+                <form id="statusForm" action="${pageContext.request.contextPath}/manager/requests" method="post"
+                    style="display:none;">
+                    <input type="hidden" name="action" value="status" />
+                    <input type="hidden" id="statusRequestId" name="requestId" value="" />
+                    <input type="hidden" id="statusValue" name="status" value="" />
                 </form>
-            </div>
-        </div>
-    </div>
 
-    <!-- STAFF DETAIL MODAL -->
-    <div class="modal-overlay" id="staffModal">
-        <div class="modal-container">
-            <div class="modal-header">
-                <h3>Thông tin nhân viên</h3>
-                <button class="btn-close-modal" onclick="closeStaffModal()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="modal-body" style="max-height:80vh; overflow-y:auto;">
-                <div class="staff-detail-head">
-                    <div class="staff-detail-avatar" id="staffAvatar">NV</div>
-                    <div>
-                        <div class="staff-detail-name" id="staffName"></div>
-                        <div class="staff-detail-email" id="staffEmail"></div>
-                        <span id="staffStatusBadge"></span>
-                    </div>
-                </div>
-                <div class="staff-detail-stats">
-                    <div class="detail-stat"><span class="detail-stat-value" id="staffToday">0</span><span class="detail-stat-label">Hoàn thành hôm nay</span></div>
-                    <div class="detail-stat"><span class="detail-stat-value" id="staffMonth">0</span><span class="detail-stat-label">Hoàn thành tháng này</span></div>
-                    <div class="detail-stat"><span class="detail-stat-value" id="staffActive">0</span><span class="detail-stat-label">Việc đang làm</span></div>
-                </div>
-                <h4 style="margin:18px 0 8px; font-size:14px; color:var(--text-navy);">Công việc đang thực hiện</h4>
-                <ul class="staff-task-list" id="staffTaskList"></ul>
-
-                <h4 style="margin:18px 0 8px; font-size:14px; color:var(--text-navy);">Công việc đã nhận / được gán</h4>
-                <ul class="staff-task-list" id="staffAssignedList" style="max-height:none;"></ul>
-                <div class="table-pagination-bar" style="padding:12px 0 0; border-top:none;">
-                    <div class="pagination-info" id="staffAssignedInfo"></div>
-                    <div class="pagination-controls" id="staffAssignedControls"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Hidden form for status updates -->
-    <form id="statusForm" action="${pageContext.request.contextPath}/manager/requests" method="post" style="display:none;">
-        <input type="hidden" name="action" value="status" />
-        <input type="hidden" id="statusRequestId" name="requestId" value="" />
-        <input type="hidden" id="statusValue" name="status" value="" />
-    </form>
-
-    <script>
-        // ---------- Hydrate data ----------
-        const requests = [];
-        document.querySelectorAll(".request-data-item").forEach(el => {
-            const staffIdRaw = el.getAttribute("data-staff-id");
-            requests.push({
-                id: parseInt(el.getAttribute("data-id")),
-                room: el.getAttribute("data-room") || "",
-                title: el.getAttribute("data-title") || "",
-                desc: el.getAttribute("data-desc") || "",
-                priority: el.getAttribute("data-priority") || "Medium",
-                status: el.getAttribute("data-status") || "Pending",
-                staffId: (staffIdRaw && staffIdRaw !== "") ? parseInt(staffIdRaw) : null,
-                staffName: el.getAttribute("data-staff-name") || "",
-                created: el.getAttribute("data-created") || ""
-            });
-        });
-
-        const staff = [];
-        document.querySelectorAll(".staff-data-item").forEach(el => {
-            staff.push({
-                id: parseInt(el.getAttribute("data-id")),
-                name: el.getAttribute("data-name") || "",
-                email: el.getAttribute("data-email") || "",
-                status: el.getAttribute("data-status") || "Offline",
-                today: parseInt(el.getAttribute("data-today")) || 0,
-                month: parseInt(el.getAttribute("data-month")) || 0,
-                active: parseInt(el.getAttribute("data-active")) || 0
-            });
-        });
-
-        // ---------- Label / badge helpers ----------
-        const PRIORITY = {
-            Urgent: { text: "KHẨN CẤP", cls: "prio-urgent" },
-            High:   { text: "CAO",       cls: "prio-high" },
-            Medium: { text: "TRUNG BÌNH",cls: "prio-medium" },
-            Low:    { text: "THẤP",      cls: "prio-low" }
-        };
-        const REQ_STATUS = {
-            Pending:    { text: "ĐANG CHỜ",       cls: "status-cleaning" },
-            InProgress: { text: "ĐANG THỰC HIỆN", cls: "status-occupied" },
-            Completed:  { text: "HOÀN THÀNH",     cls: "status-available" },
-            Cancelled:  { text: "ĐÃ HUỶ",         cls: "status-maintenance" }
-        };
-        const STAFF_STATUS = {
-            Active:  { text: "Đang trực",  cls: "wk-active" },
-            OnBreak: { text: "Đang nghỉ",  cls: "wk-break" },
-            Offline: { text: "Ngoại tuyến",cls: "wk-offline" }
-        };
-        function esc(s) {
-            return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-        }
-
-        // ---------- Requests table (filter + pagination) ----------
-        let reqPage = 1;
-        const reqPageSize = 6;
-        let filteredReqs = [];
-
-        function renderReqPagination(totalPages) {
-            const c = document.getElementById("reqPaginationControls");
-            c.innerHTML = "";
-            const prev = document.createElement("button");
-            prev.type = "button";
-            prev.className = "btn-page" + (reqPage === 1 || totalPages === 0 ? " disabled" : "");
-            prev.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
-            if (reqPage > 1 && totalPages > 0) prev.onclick = () => { reqPage--; renderRequests(); };
-            c.appendChild(prev);
-            for (let i = 1; i <= totalPages; i++) {
-                const b = document.createElement("button");
-                b.type = "button";
-                b.className = "btn-page" + (i === reqPage ? " active" : "");
-                b.innerText = i;
-                b.onclick = () => { reqPage = i; renderRequests(); };
-                c.appendChild(b);
-            }
-            const next = document.createElement("button");
-            next.type = "button";
-            next.className = "btn-page" + (reqPage === totalPages || totalPages === 0 ? " disabled" : "");
-            next.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
-            if (reqPage < totalPages && totalPages > 0) next.onclick = () => { reqPage++; renderRequests(); };
-            c.appendChild(next);
-        }
-
-        function renderRequests() {
-            const tbody = document.getElementById("requestsTableBody");
-            tbody.innerHTML = "";
-            const total = filteredReqs.length;
-            const totalPages = Math.ceil(total / reqPageSize);
-            if (reqPage > totalPages && totalPages > 0) reqPage = totalPages;
-
-            if (total === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-muted);">' +
-                    '<i class="fa-solid fa-folder-open" style="font-size:32px; margin-bottom:12px; display:block;"></i>' +
-                    'Không tìm thấy yêu cầu nào phù hợp</td></tr>';
-                document.getElementById("reqPaginationInfo").innerText = "Hiển thị 0 yêu cầu";
-                renderReqPagination(0);
-                return;
-            }
-
-            const start = (reqPage - 1) * reqPageSize;
-            const end = Math.min(start + reqPageSize, total);
-            filteredReqs.slice(start, end).forEach(r => {
-                const p = PRIORITY[r.priority] || PRIORITY.Medium;
-                const st = REQ_STATUS[r.status] || REQ_STATUS.Pending;
-                const staffCell = r.staffName
-                    ? '<span style="font-weight:600; color:var(--text-navy);">' + esc(r.staffName) + '</span>'
-                    : '<span style="color:var(--text-muted); font-style:italic;">Chưa gán</span>';
-
-                // Hành động theo trạng thái
-                let actions = "";
-                if (r.status === "Pending" || r.status === "InProgress") {
-                    const assignLabel = r.staffId ? "Đổi NV" : "Gán việc";
-                    actions += '<button class="btn-action assign" title="' + assignLabel + '" onclick="openAssignModal(' + r.id + ')"><i class="fa-solid fa-user-plus"></i></button>';
-                    if (r.staffId) {
-                        actions += '<button class="btn-action done" title="Hoàn thành" onclick="changeStatus(' + r.id + ', \'Completed\')"><i class="fa-solid fa-check"></i></button>';
-                    } else {
-                        actions += '<button class="btn-action done" title="Cần gán nhân viên trước khi hoàn thành" disabled style="opacity:.35; cursor:not-allowed;"><i class="fa-solid fa-check"></i></button>';
+                <script>
+                    function openAssignModal(requestId, btn) {
+                        document.getElementById("assignRequestId").value = requestId;
+                        const title = btn ? (btn.dataset.title || "") : "";
+                        const room = btn ? (btn.dataset.room || "?") : "?";
+                        document.getElementById("assignContext").innerText = 'Yêu cầu: "' + title + '" — Phòng ' + room;
+                        const sel = document.getElementById("assignStaffId");
+                        const hint = document.getElementById("noActiveStaffHint");
+                        const hasActive = sel.options.length > 0;
+                        sel.style.display = hasActive ? "block" : "none";
+                        hint.style.display = hasActive ? "none" : "block";
+                        document.querySelector("#assignForm .btn-modal-submit").disabled = !hasActive;
+                        document.getElementById("assignModal").style.display = "flex";
                     }
-                    actions += '<button class="btn-action delete" title="Huỷ" onclick="changeStatus(' + r.id + ', \'Cancelled\')"><i class="fa-solid fa-xmark"></i></button>';
-                } else {
-                    actions = '<span style="color:var(--text-muted); font-size:12px;">—</span>';
-                }
+                    function closeAssignModal() { document.getElementById("assignModal").style.display = "none"; }
 
-                const tr = document.createElement("tr");
-                tr.innerHTML =
-                    '<td><div class="service-name-cell"><div>' +
-                        '<span class="service-title">' + esc(r.title) + '</span>' +
-                        '<span class="request-sub"><i class="fa-solid fa-bed"></i> Phòng ' + esc(r.room || "?") +
-                        ' &nbsp;•&nbsp; <i class="fa-regular fa-clock"></i> ' + esc(r.created) + '</span>' +
-                    '</div></div></td>' +
-                    '<td><span class="prio-badge ' + p.cls + '">' + p.text + '</span></td>' +
-                    '<td>' + staffCell + '</td>' +
-                    '<td><span class="status-pill ' + st.cls + '"><i class="fa-solid fa-circle"></i> ' + st.text + '</span></td>' +
-                    '<td><div class="table-actions" style="display:flex; gap:8px;">' + actions + '</div></td>';
-                tbody.appendChild(tr);
-            });
+                    function changeStatus(requestId, status) {
+                        const msg = status === "Completed"
+                            ? "Đánh dấu yêu cầu này là ĐÃ HOÀN THÀNH?"
+                            : "Bạn có chắc muốn HUỶ yêu cầu này?";
+                        if (!confirm(msg)) return;
+                        document.getElementById("statusRequestId").value = requestId;
+                        document.getElementById("statusValue").value = status;
+                        document.getElementById("statusForm").submit();
+                    }
 
-            document.getElementById("reqPaginationInfo").innerText =
-                "Hiển thị " + (start + 1) + "-" + end + " trong số " + total + " yêu cầu";
-            renderReqPagination(totalPages);
-        }
+                    document.querySelectorAll(".modal-overlay").forEach(ov => {
+                        ov.addEventListener("click", e => { if (e.target === ov) ov.style.display = "none"; });
+                    });
+                </script>
 
-        function filterRequests() {
-            const q = document.getElementById("reqSearch").value.toLowerCase().trim();
-            const prio = document.getElementById("priorityFilter").value;
-            const staffSel = document.getElementById("staffFilter").value;
-            const status = document.getElementById("reqStatusFilter").value;
+            </body>
 
-            filteredReqs = requests.filter(r => {
-                const mQ = r.room.toLowerCase().includes(q);
-                const mP = (prio === "all") || (r.priority === prio);
-                const mS = (status === "all") || (r.status === status);
-                let mStaff = true;
-                if (staffSel === "unassigned") mStaff = (r.staffId === null);
-                else if (staffSel !== "all") mStaff = (r.staffId === parseInt(staffSel));
-                return mQ && mP && mS && mStaff;
-            });
-            reqPage = 1;
-            renderRequests();
-        }
-
-        // ---------- Staff table ----------
-        function renderStaff() {
-            const tbody = document.getElementById("staffTableBody");
-            tbody.innerHTML = "";
-            if (staff.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--text-muted);">Chưa có nhân viên buồng phòng</td></tr>';
-                return;
-            }
-            staff.forEach(s => {
-                const ws = STAFF_STATUS[s.status] || STAFF_STATUS.Offline;
-                const initials = s.name.trim().split(/\s+/).slice(-2).map(w => w[0]).join("").toUpperCase();
-                const tr = document.createElement("tr");
-                tr.style.cursor = "pointer";
-                tr.onclick = () => openStaffDetail(s.id);
-                tr.innerHTML =
-                    '<td><div class="service-name-cell"><div class="staff-avatar-sm">' + esc(initials) + '</div>' +
-                        '<div><span class="service-title">' + esc(s.name) + '</span>' +
-                        '<span class="request-sub">' + esc(s.email) + '</span></div></div></td>' +
-                    '<td><span class="wk-badge ' + ws.cls + '"><i class="fa-solid fa-circle"></i> ' + ws.text + '</span></td>' +
-                    '<td><span style="font-weight:600;">' + s.active + '</span></td>' +
-                    '<td><span style="font-weight:700; color:var(--brand-blue);">' + s.today + '</span></td>' +
-                    '<td><span style="font-weight:600;">' + s.month + ' việc</span></td>';
-                tbody.appendChild(tr);
-            });
-        }
-
-        // ---------- Assign modal ----------
-        function openAssignModal(requestId) {
-            const r = requests.find(x => x.id === requestId);
-            document.getElementById("assignRequestId").value = requestId;
-            document.getElementById("assignContext").innerText =
-                r ? ('Yêu cầu: "' + r.title + '" — Phòng ' + (r.room || "?")) : "";
-            const sel = document.getElementById("assignStaffId");
-            const hint = document.getElementById("noActiveStaffHint");
-            const hasActive = sel.options.length > 0;
-            sel.style.display = hasActive ? "block" : "none";
-            hint.style.display = hasActive ? "none" : "block";
-            document.querySelector("#assignForm .btn-modal-submit").disabled = !hasActive;
-            document.getElementById("assignModal").style.display = "flex";
-        }
-        function closeAssignModal() { document.getElementById("assignModal").style.display = "none"; }
-
-        // ---------- Status change ----------
-        function changeStatus(requestId, status) {
-            if (status === "Completed") {
-                const r = requests.find(x => x.id === requestId);
-                if (r && (r.staffId === null || r.staffId === undefined)) {
-                    alert("Yêu cầu chưa được gán cho nhân viên nào — không thể xác nhận hoàn thành.");
-                    return;
-                }
-            }
-            const msg = status === "Completed"
-                ? "Đánh dấu yêu cầu này là ĐÃ HOÀN THÀNH?"
-                : "Bạn có chắc muốn HUỶ yêu cầu này?";
-            if (!confirm(msg)) return;
-            document.getElementById("statusRequestId").value = requestId;
-            document.getElementById("statusValue").value = status;
-            document.getElementById("statusForm").submit();
-        }
-
-        // ---------- Danh sách công việc đã nhận của nhân viên (phân trang 5/trang) ----------
-        let staffAssignedTasks = [];
-        let staffAssignedPage = 1;
-        const staffAssignedPageSize = 5;
-
-        function renderStaffAssigned() {
-            const list = document.getElementById("staffAssignedList");
-            const info = document.getElementById("staffAssignedInfo");
-            const controls = document.getElementById("staffAssignedControls");
-            list.innerHTML = "";
-            controls.innerHTML = "";
-
-            const total = staffAssignedTasks.length;
-            if (total === 0) {
-                list.innerHTML = '<li style="color:var(--text-muted); font-style:italic;">Chưa nhận công việc nào.</li>';
-                info.innerText = "";
-                return;
-            }
-
-            const totalPages = Math.ceil(total / staffAssignedPageSize);
-            if (staffAssignedPage > totalPages) staffAssignedPage = totalPages;
-            const start = (staffAssignedPage - 1) * staffAssignedPageSize;
-            const end = Math.min(start + staffAssignedPageSize, total);
-
-            staffAssignedTasks.slice(start, end).forEach(t => {
-                const p = PRIORITY[t.priority] || PRIORITY.Medium;
-                const st = REQ_STATUS[t.status] || REQ_STATUS.Pending;
-                const li = document.createElement("li");
-                li.innerHTML = '<span class="prio-badge ' + p.cls + '">' + p.text + '</span> ' +
-                    esc(t.title) + ' <span style="color:var(--text-muted);">— Phòng ' + esc(t.room || "?") + '</span>' +
-                    ' <span class="status-pill ' + st.cls + '" style="margin-left:4px;"><i class="fa-solid fa-circle"></i> ' + st.text + '</span>';
-                list.appendChild(li);
-            });
-
-            info.innerText = "Hiển thị " + (start + 1) + "-" + end + " trong số " + total + " công việc";
-
-            // Chỉ hiện điều khiển phân trang khi có nhiều hơn 1 trang (> 5 công việc)
-            if (totalPages > 1) {
-                const prev = document.createElement("button");
-                prev.type = "button";
-                prev.className = "btn-page" + (staffAssignedPage === 1 ? " disabled" : "");
-                prev.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
-                if (staffAssignedPage > 1) prev.onclick = () => { staffAssignedPage--; renderStaffAssigned(); };
-                controls.appendChild(prev);
-
-                for (let i = 1; i <= totalPages; i++) {
-                    const b = document.createElement("button");
-                    b.type = "button";
-                    b.className = "btn-page" + (i === staffAssignedPage ? " active" : "");
-                    b.innerText = i;
-                    b.onclick = () => { staffAssignedPage = i; renderStaffAssigned(); };
-                    controls.appendChild(b);
-                }
-
-                const next = document.createElement("button");
-                next.type = "button";
-                next.className = "btn-page" + (staffAssignedPage === totalPages ? " disabled" : "");
-                next.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
-                if (staffAssignedPage < totalPages) next.onclick = () => { staffAssignedPage++; renderStaffAssigned(); };
-                controls.appendChild(next);
-            }
-        }
-
-        // ---------- Staff detail modal ----------
-        function openStaffDetail(staffId) {
-            const s = staff.find(x => x.id === staffId);
-            if (!s) return;
-            const ws = STAFF_STATUS[s.status] || STAFF_STATUS.Offline;
-            const initials = s.name.trim().split(/\s+/).slice(-2).map(w => w[0]).join("").toUpperCase();
-            document.getElementById("staffAvatar").innerText = initials;
-            document.getElementById("staffName").innerText = s.name;
-            document.getElementById("staffEmail").innerText = s.email;
-            document.getElementById("staffStatusBadge").innerHTML =
-                '<span class="wk-badge ' + ws.cls + '"><i class="fa-solid fa-circle"></i> ' + ws.text + '</span>';
-            document.getElementById("staffToday").innerText = s.today;
-            document.getElementById("staffMonth").innerText = s.month;
-            document.getElementById("staffActive").innerText = s.active;
-
-            const list = document.getElementById("staffTaskList");
-            list.innerHTML = "";
-            const tasks = requests.filter(r => r.staffId === staffId && r.status === "InProgress");
-            if (tasks.length === 0) {
-                list.innerHTML = '<li style="color:var(--text-muted); font-style:italic;">Không có việc đang thực hiện.</li>';
-            } else {
-                tasks.forEach(t => {
-                    const p = PRIORITY[t.priority] || PRIORITY.Medium;
-                    const li = document.createElement("li");
-                    li.innerHTML = '<span class="prio-badge ' + p.cls + '">' + p.text + '</span> ' +
-                        esc(t.title) + ' <span style="color:var(--text-muted);">— Phòng ' + esc(t.room || "?") + '</span>';
-                    list.appendChild(li);
-                });
-            }
-
-            // Danh sách công việc đã nhận / được gán (mọi trạng thái), phân trang 5/trang
-            staffAssignedTasks = requests.filter(r => r.staffId === staffId);
-            staffAssignedPage = 1;
-            renderStaffAssigned();
-
-            document.getElementById("staffModal").style.display = "flex";
-        }
-        function closeStaffModal() { document.getElementById("staffModal").style.display = "none"; }
-
-        // Đóng modal khi bấm nền tối
-        document.querySelectorAll(".modal-overlay").forEach(ov => {
-            ov.addEventListener("click", e => { if (e.target === ov) ov.style.display = "none"; });
-        });
-
-        // Init
-        window.addEventListener("load", function() {
-            filterRequests();
-            renderStaff();
-        });
-    </script>
-
-</body>
-</html>
+            </html>

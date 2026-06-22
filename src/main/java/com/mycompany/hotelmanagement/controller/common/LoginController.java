@@ -92,14 +92,96 @@ public class LoginController extends HttpServlet {
         String pass = request.getParameter("password");
         String remember = request.getParameter("remember");
 
-        LoginResult result = authService.login(username, pass);
+        if (username != null) {
+            username = username.trim();
+        }
+        if (pass != null) {
+            pass = pass.trim();
+        }
 
-        if (result.isSuccess()) {
+        String role = null;
+        String redirectUrl = null;
+        String displayName = null;
+
+        String emailVal = null;
+        int accountIdVal = -1;
+
+        // 1. Authenticate using database via AuthService
+        Account account = authService.authenticate(username, pass);
+        if (account != null) {
+            String dbRoleName = account.getRoleName();
+            String fullName = account.getFullName();
+            emailVal = account.getEmail();
+            accountIdVal = account.getAccountId();
+
+            if ("Admin".equalsIgnoreCase(dbRoleName)) {
+                role = "ADMIN";
+                redirectUrl = "/admin/dashboard";
+            } else if ("Customer".equalsIgnoreCase(dbRoleName)) {
+                role = "CUSTOMER";
+                redirectUrl = "/home";
+            } else if ("Manager".equalsIgnoreCase(dbRoleName)) {
+                role = "HOTEL_MANAGER";
+                redirectUrl = "/manager/dashboard";
+            } else if ("Receptionist".equalsIgnoreCase(dbRoleName)) {
+                role = "RECEPTIONIST";
+                redirectUrl = "/receptionist/dashboard";
+            } else if ("Housekeeping".equalsIgnoreCase(dbRoleName) || "Housekeeper".equalsIgnoreCase(dbRoleName)) {
+                role = "HOUSEKEEPING";
+                redirectUrl = "/housekeeping/dashboard";
+            } else if ("Staff".equalsIgnoreCase(dbRoleName)) {
+                if (username != null && username.toLowerCase().contains("manager")) {
+                    role = "HOTEL_MANAGER";
+                    redirectUrl = "/manager/dashboard";
+                } else if (username != null && username.toLowerCase().contains("housekeeping")) {
+                    role = "HOUSEKEEPING";
+                    redirectUrl = "/housekeeping/dashboard";
+                } else {
+                    role = "RECEPTIONIST";
+                    redirectUrl = "/receptionist/dashboard";
+                }
+            }
+            displayName = (fullName != null && !fullName.trim().isEmpty()) ? fullName : username;
+        }
+
+        // 2. Fallback to Mock authentication credentials check if database check didn't match
+        if (role == null) {
+            if ("admin".equalsIgnoreCase(username) && "admin123".equals(pass)) {
+                role = "ADMIN";
+                redirectUrl = "/admin/dashboard";
+                displayName = "Admin User";
+                com.mycompany.hotelmanagement.dal.AccountRepository ar = new com.mycompany.hotelmanagement.dal.AccountRepository();
+                Account mockAcc = ar.getAccountByEmail("admin@hotel.com");
+                if (mockAcc != null) {
+                    emailVal = mockAcc.getEmail();
+                    accountIdVal = mockAcc.getAccountId();
+                } else {
+                    emailVal = "admin@hotel.com";
+                    accountIdVal = 1;
+                }
+            } else if ("customer".equalsIgnoreCase(username) && "customer123".equals(pass)) {
+                role = "CUSTOMER";
+                redirectUrl = "/home";
+                displayName = "Customer User";
+                com.mycompany.hotelmanagement.dal.AccountRepository ar = new com.mycompany.hotelmanagement.dal.AccountRepository();
+                Account mockAcc = ar.getAccountByEmail("customer@hotel.com");
+                if (mockAcc != null) {
+                    emailVal = mockAcc.getEmail();
+                    accountIdVal = mockAcc.getAccountId();
+                } else {
+                    emailVal = "customer@hotel.com";
+                    accountIdVal = 5;
+                }
+            }
+        }
+        
+        if (role != null) {
             // Authentication successful, establish session
             HttpSession session = request.getSession();
-            session.setAttribute("user", result.getDisplayName());
-            session.setAttribute("role", result.getRole());
-            session.setAttribute("email", username != null ? username.trim() : "");
+            session.setAttribute("user", displayName);
+            session.setAttribute("role", role);
+            session.setAttribute("email", emailVal);
+            session.setAttribute("accountId", accountIdVal);
 
             // Remember Me Cookies configuration
             if ("on".equals(remember) || "true".equals(remember)) {
