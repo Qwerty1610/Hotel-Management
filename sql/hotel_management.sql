@@ -1171,3 +1171,54 @@ BEGIN
         FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id);
 END
 GO
+/* ============================================================
+   11. CREATE 2 TABLE FOR STORE CHECK IN HISTORY
+   ============================================================ */
+
+IF OBJECT_ID(N'dbo.CheckIn', N'U') IS NOT NULL
+    DROP TABLE dbo.CheckIn;
+GO
+
+CREATE TABLE dbo.CheckIn (
+    check_in_id INT IDENTITY(1,1) PRIMARY KEY,
+    booking_id INT NOT NULL,
+    receptionist_id INT NOT NULL,
+
+    checked_in_at DATETIME NOT NULL DEFAULT GETDATE(),
+    updated_at DATETIME NULL,
+
+    special_request NVARCHAR(500) NULL,
+    notes NVARCHAR(500) NULL,
+
+    CONSTRAINT FK_CheckIn_Booking
+        FOREIGN KEY (booking_id)
+        REFERENCES dbo.Booking(booking_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT FK_CheckIn_Account
+        FOREIGN KEY (receptionist_id)
+        REFERENCES dbo.Account(account_id)
+);
+
+CREATE INDEX IX_CheckIn_BookingId ON dbo.CheckIn(booking_id);
+GO
+
+IF OBJECT_ID(N'dbo.CheckInCompanion', N'U') IS NOT NULL
+    DROP TABLE dbo.CheckInCompanion;
+GO
+
+CREATE TABLE dbo.CheckInCompanion (
+    companion_id INT IDENTITY(1,1) PRIMARY KEY,
+    check_in_id INT NOT NULL,
+
+    full_name NVARCHAR(100) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT GETDATE(),
+
+    CONSTRAINT FK_CheckInCompanion_CheckIn
+        FOREIGN KEY (check_in_id)
+        REFERENCES dbo.CheckIn(check_in_id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX IX_CheckInCompanion_CheckInId ON dbo.CheckInCompanion(check_in_id);
+GO
