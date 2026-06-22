@@ -196,17 +196,55 @@
                                                                     </c:choose>
                                                                 </span>
                                                             </div>
-                                                            <div class="info-row">
-                                                                <label>Loại phòng yêu cầu:</label>
-                                                                <span class="roomtype-badge">
-                                                                    <c:out value="${booking.roomTypeName}" />
-                                                                </span>
+
+                                                            <%-- Room type breakdown table --%>
+                                                            <div style="margin-top: 16px; margin-bottom: 16px;">
+                                                                <label style="font-size: 12px; font-weight: 700; color: var(--text-navy); display: block; margin-bottom: 8px;">
+                                                                    <i class="fa-solid fa-layer-group" style="margin-right: 4px;"></i> Chi tiết các loại phòng:
+                                                                </label>
+                                                                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                                                    <thead>
+                                                                        <tr style="background: #f8fafc; border-bottom: 2px solid var(--border-color);">
+                                                                            <th style="padding: 8px 12px; text-align: left; font-weight: 700; color: var(--text-navy);">Loại phòng</th>
+                                                                            <th style="padding: 8px 12px; text-align: center; font-weight: 700; color: var(--text-navy);">Số lượng</th>
+                                                                            <th style="padding: 8px 12px; text-align: right; font-weight: 700; color: var(--text-navy);">Thành tiền</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        <%-- Parent booking row --%>
+                                                                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                                                                            <td style="padding: 8px 12px;">
+                                                                                <span class="roomtype-badge"><c:out value="${booking.roomTypeName}" /></span>
+                                                                            </td>
+                                                                            <td style="padding: 8px 12px; text-align: center; font-weight: 600;">${booking.roomQuantity}</td>
+                                                                            <td style="padding: 8px 12px; text-align: right; font-weight: 600;">
+                                                                                <fmt:formatNumber value="${booking.totalAmount}" type="number" groupingUsed="true" />đ
+                                                                            </td>
+                                                                        </tr>
+                                                                        <%-- Child booking rows --%>
+                                                                        <c:forEach var="child" items="${childBookings}">
+                                                                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                                                                <td style="padding: 8px 12px;">
+                                                                                    <span class="roomtype-badge"><c:out value="${child.roomTypeName}" /></span>
+                                                                                </td>
+                                                                                <td style="padding: 8px 12px; text-align: center; font-weight: 600;">${child.roomQuantity}</td>
+                                                                                <td style="padding: 8px 12px; text-align: right; font-weight: 600;">
+                                                                                    <fmt:formatNumber value="${child.totalAmount}" type="number" groupingUsed="true" />đ
+                                                                                </td>
+                                                                            </tr>
+                                                                        </c:forEach>
+                                                                        <%-- Total row --%>
+                                                                        <tr style="border-top: 2px solid var(--border-color); background: #f0f9ff;">
+                                                                            <td style="padding: 8px 12px; font-weight: 700; color: var(--text-navy);">Tổng cộng</td>
+                                                                            <td style="padding: 8px 12px; text-align: center; font-weight: 700; color: var(--text-navy);">${booking.totalRoomQuantity} phòng</td>
+                                                                            <td style="padding: 8px 12px; text-align: right; font-weight: 800; color: var(--brand-blue); font-size: 15px;">
+                                                                                <fmt:formatNumber value="${booking.overallTotalAmount}" type="number" groupingUsed="true" />đ
+                                                                            </td>
+                                                                        </tr>
+                                                                    </tbody>
+                                                                </table>
                                                             </div>
-                                                            <div class="info-row">
-                                                                <label>Số lượng phòng:</label>
-                                                                <span style="font-weight:700">${booking.roomQuantity}
-                                                                    phòng</span>
-                                                            </div>
+
                                                             <div class="info-row">
                                                                 <label>Ngày Check-in:</label>
                                                                 <span>${booking.checkInDate}</span>
@@ -215,18 +253,10 @@
                                                                 <label>Ngày Check-out:</label>
                                                                 <span>${booking.checkOutDate}</span>
                                                             </div>
-                                                            <div class="info-row">
-                                                                <label>Số đêm lưu trú:</label>
-                                                                <span>${booking.nights} đêm</span>
-                                                            </div>
                                                             <div class="info-row"
                                                                 style="border-bottom:none; padding-bottom:0">
-                                                                <label>Tổng số tiền:</label>
-                                                                <span
-                                                                    style="color:var(--brand-blue); font-size: 18px; font-weight: 800">
-                                                                    <fmt:formatNumber value="${booking.totalAmount}"
-                                                                        type="number" groupingUsed="true" />đ
-                                                                </span>
+                                                                <label>Số đêm lưu trú:</label>
+                                                                <span>${booking.nights} đêm</span>
                                                             </div>
                                                             <c:if test="${not empty booking.note}">
                                                                 <div class="info-row-full"
@@ -265,26 +295,61 @@
                                                                             gán phòng thành công
                                                                         </span>
                                                                     </div>
-                                                                    <div class="assigned-rooms-list">
-                                                                        <c:choose>
-                                                                            <c:when test="${not empty assignedRooms}">
-                                                                                <c:forEach var="ar"
-                                                                                    items="${assignedRooms}">
-                                                                                    <div class="assigned-room-item">
-                                                                                        <div class="room-icon"><i
-                                                                                                class="fa-solid fa-door-closed"></i>
+
+                                                                    <%-- Parent booking rooms --%>
+                                                                    <div style="margin-bottom: 16px;">
+                                                                        <div style="font-size: 12px; font-weight: 700; color: var(--text-navy); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0;">
+                                                                            <i class="fa-solid fa-bed" style="margin-right: 4px; color: var(--brand-blue);"></i>
+                                                                            <c:out value="${booking.roomTypeName}" /> (${booking.roomQuantity} phòng)
+                                                                        </div>
+                                                                        <div class="assigned-rooms-list">
+                                                                            <c:choose>
+                                                                                <c:when test="${not empty assignedRooms}">
+                                                                                    <c:forEach var="ar" items="${assignedRooms}">
+                                                                                        <div class="assigned-room-item">
+                                                                                            <div class="room-icon"><i class="fa-solid fa-door-closed"></i></div>
+                                                                                            <div class="room-info">
+                                                                                                <span class="room-num">Phòng ${ar.roomNumber}</span>
+                                                                                                <span class="room-fl">${ar.floor}</span>
+                                                                                            </div>
                                                                                         </div>
-                                                                                        <div class="room-info">
-                                                                                            <span class="room-num">Phòng
-                                                                                                ${ar.roomNumber}</span>
-                                                                                            <span
-                                                                                                class="room-fl">${ar.floor}</span>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </c:forEach>
-                                                                            </c:when>
-                                                                        </c:choose>
+                                                                                    </c:forEach>
+                                                                                </c:when>
+                                                                                <c:otherwise>
+                                                                                    <span style="font-size: 12px; color: var(--text-muted); font-style: italic;">Chưa gán phòng</span>
+                                                                                </c:otherwise>
+                                                                            </c:choose>
+                                                                        </div>
                                                                     </div>
+
+                                                                    <%-- Child booking rooms --%>
+                                                                    <c:forEach var="child" items="${childBookings}">
+                                                                        <div style="margin-bottom: 16px;">
+                                                                            <div style="font-size: 12px; font-weight: 700; color: var(--text-navy); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0;">
+                                                                                <i class="fa-solid fa-bed" style="margin-right: 4px; color: var(--brand-blue);"></i>
+                                                                                <c:out value="${child.roomTypeName}" /> (${child.roomQuantity} phòng)
+                                                                            </div>
+                                                                            <div class="assigned-rooms-list">
+                                                                                <c:set var="childRooms" value="${childAssignedRoomsMap[child.bookingId]}" />
+                                                                                <c:choose>
+                                                                                    <c:when test="${not empty childRooms}">
+                                                                                        <c:forEach var="ar" items="${childRooms}">
+                                                                                            <div class="assigned-room-item">
+                                                                                                <div class="room-icon"><i class="fa-solid fa-door-closed"></i></div>
+                                                                                                <div class="room-info">
+                                                                                                    <span class="room-num">Phòng ${ar.roomNumber}</span>
+                                                                                                    <span class="room-fl">${ar.floor}</span>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </c:forEach>
+                                                                                    </c:when>
+                                                                                    <c:otherwise>
+                                                                                        <span style="font-size: 12px; color: var(--text-muted); font-style: italic;">Chưa gán phòng</span>
+                                                                                    </c:otherwise>
+                                                                                </c:choose>
+                                                                            </div>
+                                                                        </div>
+                                                                    </c:forEach>
                                                                 </c:when>
 
                                                                 <c:otherwise>

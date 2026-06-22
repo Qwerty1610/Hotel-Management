@@ -173,34 +173,44 @@
                                                                                     Chờ xử lý</span>
                                                                             </span>
                                                                         </div>
-                                                                        <div class="modal-form-group"
-                                                                            style="margin-top:12px">
-                                                                            <label>Loại phòng yêu cầu <span
-                                                                                    style="color:#ef4444">*</span></label>
-                                                                            <select id="editRoomTypeId"
-                                                                                name="roomTypeId" class="modal-select"
-                                                                                onchange="recalcAmount(); filterRooms();">
-                                                                                <c:forEach var="rt"
-                                                                                    items="${roomTypesList}">
-                                                                                    <option value="${rt.typeId}"
-                                                                                        data-price="${rt.basePrice}"
-                                                                                        data-type-name="${rt.typeName}"
-                                                                                        ${rt.typeId eq booking.roomTypeId ? 'selected' : ''}>
-                                                                                        <c:out value="${rt.typeName}" /> — <fmt:formatNumber value="${rt.basePrice}" type="number" />đ/đêm
-                                                                                    </option>
+                                                                        <div style="border-bottom:1px solid #e2e8f0; margin-bottom:16px; padding-bottom:12px;">
+                                                                            <div style="font-weight:600; color:var(--text-navy); margin-bottom:8px;">Loại phòng 1 (Parent)</div>
+                                                                            <div class="modal-form-group">
+                                                                                <label>Loại phòng yêu cầu <span style="color:#ef4444">*</span></label>
+                                                                                <select id="editRoomTypeId_parent" name="roomTypeId" class="modal-select" onchange="recalcAmount(); filterRooms('parent');">
+                                                                                    <c:forEach var="rt" items="${roomTypesList}">
+                                                                                        <option value="${rt.typeId}" data-price="${rt.basePrice}" data-type-name="${rt.typeName}" ${rt.typeId eq booking.roomTypeId ? 'selected' : ''}>
+                                                                                            <c:out value="${rt.typeName}" /> — <fmt:formatNumber value="${rt.basePrice}" type="number" />đ/đêm
+                                                                                        </option>
+                                                                                    </c:forEach>
+                                                                                </select>
+                                                                            </div>
+                                                                            <div class="modal-form-group">
+                                                                                <label>Số lượng phòng <span style="color:#ef4444">*</span></label>
+                                                                                <input type="number" id="editRoomQuantity_parent" name="roomQuantity" class="modal-input" min="1" max="100" value="${booking.roomQuantity}" onchange="recalcAmount(); updateSelection('parent');" required />
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <c:forEach var="child" items="${childBookings}" varStatus="status">
+                                                                        <div style="border-bottom:1px solid #e2e8f0; margin-bottom:16px; padding-bottom:12px;">
+                                                                            <div style="font-weight:600; color:var(--text-navy); margin-bottom:8px;">Loại phòng ${status.index + 2}</div>
+                                                                            <div class="modal-form-group">
+                                                                                <label>Loại phòng yêu cầu</label>
+                                                                                <input type="text" class="modal-input" value="${child.roomTypeName}" disabled />
+                                                                                <c:set var="childPrice" value="0" />
+                                                                                <c:forEach var="rt" items="${roomTypesList}">
+                                                                                    <c:if test="${rt.typeId eq child.roomTypeId}">
+                                                                                        <c:set var="childPrice" value="${rt.basePrice}" />
+                                                                                    </c:if>
                                                                                 </c:forEach>
-                                                                            </select>
+                                                                                <input type="hidden" id="editRoomTypeId_${child.bookingId}" value="${child.roomTypeId}" data-type-name="${child.roomTypeName}" data-price="${childPrice}" />
+                                                                            </div>
+                                                                            <div class="modal-form-group">
+                                                                                <label>Số lượng phòng <span style="color:#ef4444">*</span></label>
+                                                                                <input type="number" id="editRoomQuantity_${child.bookingId}" name="childRoomQuantity_${child.bookingId}" class="modal-input" min="1" max="100" value="${child.roomQuantity}" onchange="recalcAmount(); updateSelection('${child.bookingId}');" required />
+                                                                            </div>
                                                                         </div>
-                                                                        <div class="modal-form-group">
-                                                                            <label>Số lượng phòng <span
-                                                                                    style="color:#ef4444">*</span></label>
-                                                                            <input type="number" id="editRoomQuantity"
-                                                                                name="roomQuantity" class="modal-input"
-                                                                                min="1" max="100"
-                                                                                value="${booking.roomQuantity}"
-                                                                                onchange="recalcAmount(); updateSelection();"
-                                                                                required />
-                                                                        </div>
+                                                                        </c:forEach>
                                                                         <div class="modal-grid-2">
                                                                             <div class="modal-form-group">
                                                                                 <label>Ngày Check-in <span
@@ -258,88 +268,94 @@
                                                                     <div class="card-body">
                                                                         <span id="selection-counter"
                                                                             style="display:none"></span>
-                                                                        <div class="room-grid" id="roomGrid">
-                                                                            <c:forEach var="rm" items="${rooms}">
-                                                                                <%-- Check if this room is already
-                                                                                    assigned to this booking --%>
-                                                                                    <c:set var="isAssigned"
-                                                                                        value="false" />
-                                                                                    <c:forEach var="ar"
-                                                                                        items="${assignedRooms}">
-                                                                                        <c:if
-                                                                                            test="${ar.roomId eq rm.roomId}">
-                                                                                            <c:set var="isAssigned"
-                                                                                                value="true" />
-                                                                                        </c:if>
-                                                                                    </c:forEach>
+                                                                        <div id="gridsContainer">
+                                                                            <%-- Parent Grid --%>
+                                                                            <div class="booking-grid-section" id="sectionGrid_parent" style="margin-bottom:20px;">
+                                                                                <h4 style="font-size: 13px; color: var(--text-navy); margin-bottom: 8px;"><i class="fa-solid fa-bed"></i> Loại 1 (Parent): <span id="typeName_parent"><c:out value="${booking.roomTypeName}" /></span></h4>
+                                                                                <div class="room-grid" id="roomGrid_parent">
+                                                                                    <c:forEach var="rm" items="${rooms}">
+                                                                                        <c:set var="isAssigned" value="false" />
+                                                                                        <c:forEach var="ar" items="${assignedRooms}">
+                                                                                            <c:if test="${ar.roomId eq rm.roomId}">
+                                                                                                <c:set var="isAssigned" value="true" />
+                                                                                            </c:if>
+                                                                                        </c:forEach>
+                                                                                        <c:set var="isAvailable" value="${rm.status eq 'Available'}" />
+                                                                                        <c:set var="isCleaning" value="${rm.status eq 'Cleaning'}" />
+                                                                                        <c:set var="isOccupied" value="${rm.status eq 'Occupied'}" />
+                                                                                        <c:set var="isMaintenance" value="${rm.status eq 'Maintenance'}" />
 
-                                                                                    <c:set var="isAvailable"
-                                                                                        value="${rm.status eq 'Available'}" />
-                                                                                    <c:set var="isCleaning"
-                                                                                        value="${rm.status eq 'Cleaning'}" />
-                                                                                    <c:set var="isOccupied"
-                                                                                        value="${rm.status eq 'Occupied'}" />
-                                                                                    <c:set var="isMaintenance"
-                                                                                        value="${rm.status eq 'Maintenance'}" />
-
-                                                                                    <div class="room-card ${isAvailable || isAssigned ? 'card-avail' : 'card-disabled'} ${isAssigned ? 'selected' : ''}"
-                                                                                        data-room-id="${rm.roomId}"
-                                                                                        data-room-type-name="${rm.typeName}"
-                                                                                    style="display:none;">
-                                                                                    <div class="room-card-header">
-                                                                                        <span class="room-number">P.
-                                                                                            ${rm.roomNumber}</span>
-                                                                                        <span
-                                                                                            class="room-floor">${rm.floor}</span>
-                                                                                    </div>
-                                                                                    <div class="room-card-body">
-                                                                                        <c:choose>
-                                                                                            <c:when
-                                                                                                test="${isAssigned}">
-                                                                                                <span
-                                                                                                    class="badge-status badge-avail">Đang
-                                                                                                    gán</span>
-                                                                                            </c:when>
-                                                                                            <c:when
-                                                                                                test="${isAvailable}">
-                                                                                                <span
-                                                                                                    class="badge-status badge-avail">Trống</span>
-                                                                                            </c:when>
-                                                                                            <c:when
-                                                                                                test="${isCleaning}">
-                                                                                                <span
-                                                                                                    class="badge-status badge-clean">Dọn
-                                                                                                    dẹp</span>
-                                                                                            </c:when>
-                                                                                            <c:when
-                                                                                                test="${isOccupied}">
-                                                                                                <span
-                                                                                                    class="badge-status badge-occupied">Có
-                                                                                                    khách</span>
-                                                                                            </c:when>
-                                                                                            <c:otherwise>
-                                                                                                <span
-                                                                                                    class="badge-status badge-maint">Bảo
-                                                                                                    trì</span>
-                                                                                            </c:otherwise>
-                                                                                        </c:choose>
-                                                                                    </div>
-                                                                                    <c:if
-                                                                                        test="${isAvailable || isAssigned}">
-                                                                                        <div
-                                                                                            class="room-checkbox-wrapper">
-                                                                                            <input type="checkbox"
-                                                                                                name="selectedRooms"
-                                                                                                value="${rm.roomId}"
-                                                                                                class="room-checkbox"
-                                                                                                onchange="updateSelection()"
-                                                                                                ${isAssigned ? 'checked'
-                                                                                                : '' } />
+                                                                                        <div class="room-card ${isAvailable || isAssigned ? 'card-avail' : 'card-disabled'} ${isAssigned ? 'selected' : ''}"
+                                                                                            data-room-id="${rm.roomId}" data-room-type-name="${rm.typeName}" style="display:none;">
+                                                                                            <div class="room-card-header">
+                                                                                                <span class="room-number">P. ${rm.roomNumber}</span>
+                                                                                                <span class="room-floor">${rm.floor}</span>
+                                                                                            </div>
+                                                                                            <div class="room-card-body">
+                                                                                                <c:choose>
+                                                                                                    <c:when test="${isAssigned}"><span class="badge-status badge-avail">Đang gán</span></c:when>
+                                                                                                    <c:when test="${isAvailable}"><span class="badge-status badge-avail">Trống</span></c:when>
+                                                                                                    <c:when test="${isCleaning}"><span class="badge-status badge-clean">Dọn dẹp</span></c:when>
+                                                                                                    <c:when test="${isOccupied}"><span class="badge-status badge-occupied">Có khách</span></c:when>
+                                                                                                    <c:otherwise><span class="badge-status badge-maint">Bảo trì</span></c:otherwise>
+                                                                                                </c:choose>
+                                                                                            </div>
+                                                                                            <c:if test="${isAvailable || isAssigned}">
+                                                                                                <div class="room-checkbox-wrapper">
+                                                                                                    <input type="checkbox" name="selectedRooms" value="${rm.roomId}" class="room-checkbox cb-parent" onchange="updateSelection('parent')" ${isAssigned ? 'checked' : '' } />
+                                                                                                </div>
+                                                                                            </c:if>
                                                                                         </div>
-                                                                                    </c:if>
+                                                                                    </c:forEach>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <%-- Child Grids --%>
+                                                                            <c:forEach var="child" items="${childBookings}" varStatus="status">
+                                                                                <div class="booking-grid-section" id="sectionGrid_${child.bookingId}" style="margin-bottom:20px;">
+                                                                                    <h4 style="font-size: 13px; color: var(--text-navy); margin-bottom: 8px;"><i class="fa-solid fa-bed"></i> Loại ${status.index + 2}: <c:out value="${child.roomTypeName}" /></h4>
+                                                                                    <div class="room-grid" id="roomGrid_${child.bookingId}">
+                                                                                        <c:set var="childRooms" value="${childAssignedRoomsMap[child.bookingId]}" />
+                                                                                        <c:forEach var="rm" items="${rooms}">
+                                                                                            <c:set var="isAssigned" value="false" />
+                                                                                            <c:if test="${not empty childRooms}">
+                                                                                                <c:forEach var="ar" items="${childRooms}">
+                                                                                                    <c:if test="${ar.roomId eq rm.roomId}">
+                                                                                                        <c:set var="isAssigned" value="true" />
+                                                                                                    </c:if>
+                                                                                                </c:forEach>
+                                                                                            </c:if>
+                                                                                            <c:set var="isAvailable" value="${rm.status eq 'Available'}" />
+                                                                                            <c:set var="isCleaning" value="${rm.status eq 'Cleaning'}" />
+                                                                                            <c:set var="isOccupied" value="${rm.status eq 'Occupied'}" />
+                                                                                            <c:set var="isMaintenance" value="${rm.status eq 'Maintenance'}" />
+
+                                                                                            <div class="room-card ${isAvailable || isAssigned ? 'card-avail' : 'card-disabled'} ${isAssigned ? 'selected' : ''}"
+                                                                                                data-room-id="${rm.roomId}" data-room-type-name="${rm.typeName}" style="display:none;">
+                                                                                                <div class="room-card-header">
+                                                                                                    <span class="room-number">P. ${rm.roomNumber}</span>
+                                                                                                    <span class="room-floor">${rm.floor}</span>
+                                                                                                </div>
+                                                                                                <div class="room-card-body">
+                                                                                                    <c:choose>
+                                                                                                        <c:when test="${isAssigned}"><span class="badge-status badge-avail">Đang gán</span></c:when>
+                                                                                                        <c:when test="${isAvailable}"><span class="badge-status badge-avail">Trống</span></c:when>
+                                                                                                        <c:when test="${isCleaning}"><span class="badge-status badge-clean">Dọn dẹp</span></c:when>
+                                                                                                        <c:when test="${isOccupied}"><span class="badge-status badge-occupied">Có khách</span></c:when>
+                                                                                                        <c:otherwise><span class="badge-status badge-maint">Bảo trì</span></c:otherwise>
+                                                                                                    </c:choose>
+                                                                                                </div>
+                                                                                                <c:if test="${isAvailable || isAssigned}">
+                                                                                                    <div class="room-checkbox-wrapper">
+                                                                                                        <input type="checkbox" name="selectedRooms" value="${rm.roomId}" class="room-checkbox cb-${child.bookingId}" onchange="updateSelection('${child.bookingId}')" ${isAssigned ? 'checked' : '' } />
+                                                                                                    </div>
+                                                                                                </c:if>
+                                                                                            </div>
+                                                                                        </c:forEach>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </c:forEach>
                                                                         </div>
-                                                                        </c:forEach>
-                                                                    </div>
                                                                     <div id="selection-error" class="error-message"
                                                                         style="display:none; margin-top:10px"></div>
                                                                 </div>
@@ -525,33 +541,49 @@
                                                     <div class="info-row">
                                                         <label>Loại phòng yêu cầu:</label>
                                                         <span class="roomtype-badge">
-                                                            <c:out value="${booking.roomTypeName}" />
+                                                             <c:out value="${booking.groupRoomTypeNames}" />
                                                         </span>
                                                     </div>
-                                                    <div class="info-row">
-                                                        <label>Số lượng phòng:</label>
-                                                        <span style="font-weight:700">${booking.roomQuantity}
-                                                            phòng</span>
-                                                    </div>
-                                                    <div class="info-row">
-                                                        <label>Ngày Check-in:</label>
-                                                        <span>${booking.checkInDate}</span>
-                                                    </div>
-                                                    <div class="info-row">
-                                                        <label>Ngày Check-out:</label>
-                                                        <span>${booking.checkOutDate}</span>
-                                                    </div>
-                                                    <div class="info-row">
-                                                        <label>Số đêm lưu trú:</label>
-                                                        <span>${booking.nights} đêm</span>
-                                                    </div>
-                                                    <div class="info-row" style="border-bottom:none; padding-bottom:0">
-                                                        <label>Tổng số tiền:</label>
-                                                        <span
-                                                            style="color:var(--brand-blue); font-size: 18px; font-weight: 800">
-                                                            <fmt:formatNumber value="${booking.totalAmount}"
-                                                                type="number" groupingUsed="true" />đ
-                                                        </span>
+
+                                                    <%-- Room type breakdown table --%>
+                                                    <div style="margin-top: 12px; margin-bottom: 16px;">
+                                                        <label style="font-size: 12px; font-weight: 700; color: var(--text-navy); display: block; margin-bottom: 8px;">
+                                                            <i class="fa-solid fa-layer-group" style="margin-right: 4px;"></i> Chi tiết các loại phòng:
+                                                        </label>
+                                                        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                                            <thead>
+                                                                <tr style="background: #f8fafc; border-bottom: 2px solid var(--border-color);">
+                                                                    <th style="padding: 8px 10px; text-align: left; font-weight: 700; color: var(--text-navy);">Loại phòng</th>
+                                                                    <th style="padding: 8px 10px; text-align: center; font-weight: 700; color: var(--text-navy);">SL</th>
+                                                                    <th style="padding: 8px 10px; text-align: right; font-weight: 700; color: var(--text-navy);">Thành tiền</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                                                    <td style="padding: 6px 10px;"><span class="roomtype-badge"><c:out value="${booking.roomTypeName}" /></span></td>
+                                                                    <td style="padding: 6px 10px; text-align: center; font-weight: 600;">${booking.roomQuantity}</td>
+                                                                    <td style="padding: 6px 10px; text-align: right; font-weight: 600;">
+                                                                        <fmt:formatNumber value="${booking.totalAmount}" type="number" groupingUsed="true" />đ
+                                                                    </td>
+                                                                </tr>
+                                                                <c:forEach var="child" items="${childBookings}">
+                                                                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                                                                        <td style="padding: 6px 10px;"><span class="roomtype-badge"><c:out value="${child.roomTypeName}" /></span></td>
+                                                                        <td style="padding: 6px 10px; text-align: center; font-weight: 600;">${child.roomQuantity}</td>
+                                                                        <td style="padding: 6px 10px; text-align: right; font-weight: 600;">
+                                                                            <fmt:formatNumber value="${child.totalAmount}" type="number" groupingUsed="true" />đ
+                                                                        </td>
+                                                                    </tr>
+                                                                </c:forEach>
+                                                                <tr style="border-top: 2px solid var(--border-color); background: #f0f9ff;">
+                                                                    <td style="padding: 8px 10px; font-weight: 700; color: var(--text-navy);">Tổng cộng</td>
+                                                                    <td style="padding: 8px 10px; text-align: center; font-weight: 700;">${booking.totalRoomQuantity} phòng</td>
+                                                                    <td style="padding: 8px 10px; text-align: right; font-weight: 800; color: var(--brand-blue); font-size: 15px;">
+                                                                        <fmt:formatNumber value="${booking.overallTotalAmount}" type="number" groupingUsed="true" />đ
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
                                                     </div>
                                                 </div>
                                             </div>
@@ -577,20 +609,61 @@
                                                                     Đã đặt phòng thành công
                                                                 </span>
                                                             </div>
-                                                            <div class="assigned-rooms-list">
-                                                                <c:forEach var="ar" items="${assignedRooms}">
-                                                                    <div class="assigned-room-item">
-                                                                        <div class="room-icon"><i
-                                                                                class="fa-solid fa-door-closed"></i>
-                                                                        </div>
-                                                                        <div class="room-info">
-                                                                            <span class="room-num">Phòng
-                                                                                ${ar.roomNumber}</span>
-                                                                            <span class="room-fl">${ar.floor}</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </c:forEach>
+
+                                                            <%-- Parent booking rooms --%>
+                                                            <div style="margin-bottom: 16px;">
+                                                                <div style="font-size: 12px; font-weight: 700; color: var(--text-navy); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0;">
+                                                                    <i class="fa-solid fa-bed" style="margin-right: 4px; color: var(--brand-blue);"></i>
+                                                                    <c:out value="${booking.roomTypeName}" /> (${booking.roomQuantity} phòng)
+                                                                </div>
+                                                                <div class="assigned-rooms-list">
+                                                                    <c:choose>
+                                                                        <c:when test="${not empty assignedRooms}">
+                                                                            <c:forEach var="ar" items="${assignedRooms}">
+                                                                                <div class="assigned-room-item">
+                                                                                    <div class="room-icon"><i class="fa-solid fa-door-closed"></i></div>
+                                                                                    <div class="room-info">
+                                                                                        <span class="room-num">Phòng ${ar.roomNumber}</span>
+                                                                                        <span class="room-fl">${ar.floor}</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </c:forEach>
+                                                                        </c:when>
+                                                                        <c:otherwise>
+                                                                            <span style="font-size: 12px; color: var(--text-muted); font-style: italic;">Chưa gán phòng</span>
+                                                                        </c:otherwise>
+                                                                    </c:choose>
+                                                                </div>
                                                             </div>
+
+                                                            <%-- Child booking rooms --%>
+                                                            <c:forEach var="child" items="${childBookings}">
+                                                                <div style="margin-bottom: 16px;">
+                                                                    <div style="font-size: 12px; font-weight: 700; color: var(--text-navy); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0;">
+                                                                        <i class="fa-solid fa-bed" style="margin-right: 4px; color: var(--brand-blue);"></i>
+                                                                        <c:out value="${child.roomTypeName}" /> (${child.roomQuantity} phòng)
+                                                                    </div>
+                                                                    <div class="assigned-rooms-list">
+                                                                        <c:set var="childRooms" value="${childAssignedRoomsMap[child.bookingId]}" />
+                                                                        <c:choose>
+                                                                            <c:when test="${not empty childRooms}">
+                                                                                <c:forEach var="ar" items="${childRooms}">
+                                                                                    <div class="assigned-room-item">
+                                                                                        <div class="room-icon"><i class="fa-solid fa-door-closed"></i></div>
+                                                                                        <div class="room-info">
+                                                                                            <span class="room-num">Phòng ${ar.roomNumber}</span>
+                                                                                            <span class="room-fl">${ar.floor}</span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </c:forEach>
+                                                                            </c:when>
+                                                                            <c:otherwise>
+                                                                                <span style="font-size: 12px; color: var(--text-muted); font-style: italic;">Chưa gán phòng</span>
+                                                                            </c:otherwise>
+                                                                        </c:choose>
+                                                                    </div>
+                                                                </div>
+                                                            </c:forEach>
                                                         </c:when>
                                                         <c:otherwise>
                                                             <p
@@ -677,19 +750,37 @@
                 </div>
 
                 <script>
-                    function getRequiredQty() {
-                        const qtyInput = document.getElementById('editRoomQuantity');
+                    const childIds = [
+                        <c:forEach var="child" items="${childBookings}">
+                            '${child.bookingId}',
+                        </c:forEach>
+                    ];
+
+                    function getRequiredQty(suffix) {
+                        const qtyInput = document.getElementById('editRoomQuantity_' + suffix);
                         return parseInt(qtyInput ? qtyInput.value : "${booking.roomQuantity}") || 0;
                     }
 
-                    function filterRooms() {
-                        const sel = document.getElementById('editRoomTypeId');
-                        if (!sel) return;
-                        const selectedTypeName = sel.selectedOptions[0]?.dataset?.typeName;
+                    function filterRooms(suffix) {
+                        let typeName = "";
+                        if (suffix === 'parent') {
+                            const sel = document.getElementById('editRoomTypeId_parent');
+                            if (!sel) return;
+                            typeName = sel.selectedOptions[0]?.dataset?.typeName;
+                            const typeNameLabel = document.getElementById('typeName_parent');
+                            if (typeNameLabel) typeNameLabel.textContent = typeName;
+                        } else {
+                            const hid = document.getElementById('editRoomTypeId_' + suffix);
+                            if (!hid) return;
+                            typeName = hid.dataset.typeName;
+                        }
 
-                        document.querySelectorAll('.room-card').forEach(card => {
+                        const grid = document.getElementById('roomGrid_' + suffix);
+                        if (!grid) return;
+                        
+                        grid.querySelectorAll('.room-card').forEach(card => {
                             const cardTypeName = card.dataset.roomTypeName;
-                            if (cardTypeName === selectedTypeName) {
+                            if (cardTypeName === typeName) {
                                 card.style.display = 'block';
                             } else {
                                 card.style.display = 'none';
@@ -700,16 +791,18 @@
                                 }
                             }
                         });
-                        updateSelection();
+                        updateSelection(suffix);
                     }
 
-                    function updateSelection() {
-                        const checkboxes = document.querySelectorAll('.room-checkbox:checked');
+                    function updateSelection(suffix) {
+                        const grid = document.getElementById('roomGrid_' + suffix);
+                        if (!grid) return;
+                        const checkboxes = grid.querySelectorAll('.room-checkbox:checked');
                         const count = checkboxes.length;
-                        const reqQty = getRequiredQty();
+                        const reqQty = getRequiredQty(suffix);
 
                         // Làm nổi bật card phòng được chọn
-                        document.querySelectorAll('.room-card').forEach(card => {
+                        grid.querySelectorAll('.room-card').forEach(card => {
                             const cb = card.querySelector('.room-checkbox');
                             if (cb) {
                                 if (cb.checked) {
@@ -720,14 +813,28 @@
                             }
                         });
 
+                        validateAllSelections();
+                    }
+
+                    function validateAllSelections() {
+                        let allValid = true;
+                        
+                        // Validate parent
+                        const pReq = getRequiredQty('parent');
+                        const pChecked = document.querySelectorAll('#roomGrid_parent .room-checkbox:checked').length;
+                        if (pChecked !== pReq) allValid = false;
+
+                        // Validate children
+                        for (let cid of childIds) {
+                            const cReq = getRequiredQty(cid);
+                            const cChecked = document.querySelectorAll('#roomGrid_' + cid + ' .room-checkbox:checked').length;
+                            if (cChecked !== cReq) allValid = false;
+                        }
+
                         // Vô hiệu/Kích hoạt nút duyệt đặt phòng
                         const btnConfirm = document.getElementById('btnConfirmBooking');
                         if (btnConfirm) {
-                            if (count === reqQty) {
-                                btnConfirm.disabled = false;
-                            } else {
-                                btnConfirm.disabled = true;
-                            }
+                            btnConfirm.disabled = !allValid;
                         }
                     }
 
@@ -735,10 +842,7 @@
                     function recalcAmount() {
                         const checkIn = document.getElementById('editCheckIn').value;
                         const checkOut = document.getElementById('editCheckOut').value;
-                        const sel = document.getElementById('editRoomTypeId');
-                        const qtyInput = document.getElementById('editRoomQuantity');
-                        const qty = parseInt(qtyInput ? qtyInput.value : 1) || 1;
-
+                        
                         const displayNights = document.getElementById('displayNights');
                         const totalAmountInput = document.getElementById('editTotalAmount');
 
@@ -755,15 +859,38 @@
 
                         if (displayNights) displayNights.textContent = nights + " đêm";
 
-                        if (!sel) return;
-                        const basePrice = parseFloat(sel.selectedOptions[0]?.dataset?.price || 0);
-                        if (basePrice > 0 && totalAmountInput) {
-                            totalAmountInput.value = (basePrice * nights * qty).toFixed(0);
+                        let total = 0;
+                        
+                        // Parent price
+                        const pSel = document.getElementById('editRoomTypeId_parent');
+                        const pQty = getRequiredQty('parent');
+                        if (pSel) {
+                            const price = parseFloat(pSel.selectedOptions[0]?.dataset?.price || 0);
+                            total += price * nights * pQty;
+                        }
+
+                        // Children price
+                        for (let cid of childIds) {
+                            const cHid = document.getElementById('editRoomTypeId_' + cid);
+                            const cQty = getRequiredQty(cid);
+                            if (cHid) {
+                                const price = parseFloat(cHid.dataset.price || 0);
+                                total += price * nights * cQty;
+                            }
+                        }
+
+                        if (totalAmountInput) {
+                            totalAmountInput.value = total.toFixed(0);
                         }
                     }
 
                     document.addEventListener("DOMContentLoaded", function () {
-                        filterRooms();
+                        filterRooms('parent');
+                        updateSelection('parent');
+                        for (let cid of childIds) {
+                            filterRooms(cid);
+                            updateSelection(cid);
+                        }
                         updateSelection();
 
                         // Double submit prevention cho cancelForm
@@ -811,14 +938,26 @@
                     }
 
                     function submitAction(action) {
-                        const checkboxes = document.querySelectorAll('.room-checkbox:checked');
                         document.getElementById('actionField').value = action;
-                        const reqQty = getRequiredQty();
+                        const errDiv = document.getElementById('selection-error');
+                        errDiv.style.display = 'none';
+
+                        let allValid = true;
+                        
+                        // Check validation
+                        const pReq = getRequiredQty('parent');
+                        const pChecked = document.querySelectorAll('#roomGrid_parent .room-checkbox:checked').length;
+                        if (pChecked !== pReq) allValid = false;
+
+                        for (let cid of childIds) {
+                            const cReq = getRequiredQty(cid);
+                            const cChecked = document.querySelectorAll('#roomGrid_' + cid + ' .room-checkbox:checked').length;
+                            if (cChecked !== cReq) allValid = false;
+                        }
 
                         if (action === 'confirm') {
-                            if (checkboxes.length !== reqQty) {
-                                const errDiv = document.getElementById('selection-error');
-                                errDiv.textContent = `Vui lòng chọn đúng ${reqQty} phòng trống.`;
+                            if (!allValid) {
+                                errDiv.textContent = `Vui lòng chọn đủ và đúng số lượng phòng yêu cầu cho tất cả các loại phòng.`;
                                 errDiv.style.display = 'block';
                                 return;
                             }
@@ -831,15 +970,26 @@
                             }
                         }
 
-                        // Đẩy các phòng đã chọn vào hidden input cho cả confirm và update (chỉ khi số lượng chọn bằng số lượng phòng yêu cầu)
+                        // Đẩy các phòng đã chọn vào hidden input
                         const container = document.getElementById('hiddenRoomIdsContainer');
                         if (container) {
                             container.innerHTML = '';
-                            if (checkboxes.length === reqQty) {
-                                checkboxes.forEach(cb => {
+                            
+                            // Thêm phòng của parent
+                            document.querySelectorAll('#roomGrid_parent .room-checkbox:checked').forEach(cb => {
+                                const hiddenInput = document.createElement('input');
+                                hiddenInput.type = 'hidden';
+                                hiddenInput.name = 'roomIds';
+                                hiddenInput.value = cb.value;
+                                container.appendChild(hiddenInput);
+                            });
+
+                            // Thêm phòng của child
+                            for (let cid of childIds) {
+                                document.querySelectorAll('#roomGrid_' + cid + ' .room-checkbox:checked').forEach(cb => {
                                     const hiddenInput = document.createElement('input');
                                     hiddenInput.type = 'hidden';
-                                    hiddenInput.name = 'roomIds';
+                                    hiddenInput.name = 'childRoomIds_' + cid;
                                     hiddenInput.value = cb.value;
                                     container.appendChild(hiddenInput);
                                 });

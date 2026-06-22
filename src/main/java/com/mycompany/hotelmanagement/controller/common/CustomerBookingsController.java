@@ -2,7 +2,6 @@ package com.mycompany.hotelmanagement.controller.common;
 
 import com.mycompany.hotelmanagement.dal.AccountRepository;
 import com.mycompany.hotelmanagement.entity.Booking;
-import com.mycompany.hotelmanagement.entity.BookingRoom;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import com.mycompany.hotelmanagement.service.BookingService;
 import com.mycompany.hotelmanagement.service.RoomTypeService;
@@ -22,14 +21,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Controller xử lý luồng tạo đặt phòng và quản lý lịch sử đặt phòng của khách hàng (Customer).
- * Hỗ trợ các chức năng hiển thị danh sách, chi tiết hóa đơn đặt phòng, tạo đặt phòng đơn/nhiều phòng.
+ * Controller xử lý luồng tạo đặt phòng và quản lý lịch sử đặt phòng của khách
+ * hàng (Customer).
+ * Hỗ trợ các chức năng hiển thị danh sách, chi tiết hóa đơn đặt phòng, tạo đặt
+ * phòng đơn/nhiều phòng.
  *
  * @author BinhHD
  * @date 20/06/2026
  * @version 1.0
  */
-@WebServlet(name = "CustomerBookingsController", urlPatterns = {"/customer/bookings", "/customer/booking/*"})
+@WebServlet(name = "CustomerBookingsController", urlPatterns = { "/customer/bookings", "/customer/booking/*" })
 public class CustomerBookingsController extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(CustomerBookingsController.class.getName());
     private final BookingService bookingService = new BookingService();
@@ -47,7 +48,7 @@ public class CustomerBookingsController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         // 1. Authorize Customer
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("user") == null
@@ -79,7 +80,7 @@ public class CustomerBookingsController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         // 1. Authorize Customer
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("user") == null
@@ -109,11 +110,11 @@ public class CustomerBookingsController extends HttpServlet {
             throws ServletException, IOException {
         List<RoomTypeInfo> roomTypes = roomTypeService.getAllRoomTypes();
         request.setAttribute("roomTypes", roomTypes);
-        
+
         AccountRepository accountRepo = new AccountRepository();
         List<String> customerNames = accountRepo.getAllCustomerNames();
         request.setAttribute("customerNames", customerNames);
-        
+
         request.getRequestDispatcher("/WEB-INF/views/customer/booking-create.jsp").forward(request, response);
     }
 
@@ -156,16 +157,52 @@ public class CustomerBookingsController extends HttpServlet {
         try {
             int bookingId = Integer.parseInt(idStr);
             Booking booking = bookingService.getBookingById(bookingId);
-            
+
             // Check authorization: must belong to logged-in user
             if (booking == null || booking.getAccountId() == null || booking.getAccountId() != accountId) {
                 response.sendRedirect(request.getContextPath() + "/customer/bookings?error=MSG55");
                 return;
             }
 
-            List<BookingRoom> rooms = bookingService.getBookingRooms(bookingId);
+            // Redirect child booking to parent booking details
+            if (booking.getGroupBookingId() != null) {
+                booking = bookingService.getBookingById(booking.getGroupBookingId());
+                if (booking == null || booking.getAccountId() == null || booking.getAccountId() != accountId) {
+                    response.sendRedirect(request.getContextPath() + "/customer/bookings?error=MSG55");
+                    return;
+                }
+            }
+
+            List<Booking> children = bookingService.getChildBookings(booking.getBookingId());
+            List<Map<String, Object>> roomsList = new ArrayList<>();
+            
+            // Add parent room details
+            Map<String, Object> parentMap = new HashMap<>();
+            parentMap.put("roomTypeName", booking.getRoomTypeName());
+            parentMap.put("quantity", booking.getRoomQuantity());
+            parentMap.put("price", booking.getTotalAmount() / booking.getRoomQuantity() / booking.getNights());
+            parentMap.put("guestName", booking.getCustomerName() + " (Theo đơn đặt)");
+            roomsList.add(parentMap);
+
+            double overallTotal = booking.getTotalAmount();
+
+            // Add child room details
+            for (Booking child : children) {
+                Map<String, Object> childMap = new HashMap<>();
+                childMap.put("roomTypeName", child.getRoomTypeName());
+                childMap.put("quantity", child.getRoomQuantity());
+                childMap.put("price", child.getTotalAmount() / child.getRoomQuantity() / child.getNights());
+                childMap.put("guestName", child.getCustomerName() + " (Theo đơn đặt)");
+                roomsList.add(childMap);
+                
+                overallTotal += child.getTotalAmount();
+            }
+
+            // Temporarily update totalAmount on parent booking object for JSP presentation
+            booking.setTotalAmount(overallTotal);
+
             request.setAttribute("booking", booking);
-            request.setAttribute("rooms", rooms);
+            request.setAttribute("rooms", roomsList);
             request.getRequestDispatcher("/WEB-INF/views/customer/booking-detail.jsp").forward(request, response);
         } catch (NumberFormatException e) {
             response.sendRedirect(request.getContextPath() + "/customer/bookings?error=MSG55");
@@ -174,14 +211,23 @@ public class CustomerBookingsController extends HttpServlet {
 
     private void handleCreateBooking(HttpServletRequest request, HttpServletResponse response, int accountId)
             throws ServletException, IOException {
-        
+
         String customerName = request.getParameter("customerName");
         String checkInStr = request.getParameter("checkInDate");
         String checkOutStr = request.getParameter("checkOutDate");
         String note = request.getParameter("note");
         String bookingType = request.getParameter("bookingType"); // "single" or "multi"
 
-        List<BookingRoom> roomsList = new ArrayList<>();
+        System.out.println("DEBUG handleCreateBooking:");
+        System.out.println("  bookingType: " + bookingType);
+        System.out.println("  roomTypeId: " + request.getParameter("roomTypeId"));
+        System.out.println("  roomQuantity: " + request.getParameter("roomQuantity"));
+        String[] rtIds = request.getParameterValues("roomTypeId[]");
+        System.out.println("  roomTypeId[]: " + (rtIds == null ? "null" : java.util.Arrays.toString(rtIds)));
+        String[] rtQs = request.getParameterValues("roomQuantity[]");
+        System.out.println("  roomQuantity[]: " + (rtQs == null ? "null" : java.util.Arrays.toString(rtQs)));
+
+
         Booking booking = new Booking();
 
         try {
@@ -196,10 +242,55 @@ public class CustomerBookingsController extends HttpServlet {
                 booking.setCheckOutDate(Date.valueOf(checkOutStr));
             }
 
-            if ("single".equalsIgnoreCase(bookingType)) {
+            if ("multi".equalsIgnoreCase(bookingType)) {
+                String[] roomTypeIds = request.getParameterValues("roomTypeId[]");
+                String[] roomQuantities = request.getParameterValues("roomQuantity[]");
+                
+                if (roomTypeIds == null || roomQuantities == null || roomTypeIds.length == 0 || roomTypeIds.length != roomQuantities.length) {
+                    throw new Exception("MSG55");
+                }
+
+                // 1. Pre-validate availability for all selected room types
+                for (int i = 0; i < roomTypeIds.length; i++) {
+                    int rtId = Integer.parseInt(roomTypeIds[i].trim());
+                    int qty = Integer.parseInt(roomQuantities[i].trim());
+                    int available = bookingService.checkRoomAvailability(rtId, booking.getCheckInDate(), booking.getCheckOutDate());
+                    if (qty > available) {
+                        throw new Exception("MSG19"); // Rooms not available
+                    }
+                }
+
+                // 2. Insert main (parent) booking
+                int parentRoomTypeId = Integer.parseInt(roomTypeIds[0].trim());
+                int parentQty = Integer.parseInt(roomQuantities[0].trim());
+                booking.setRoomTypeId(parentRoomTypeId);
+                booking.setRoomQuantity(parentQty);
+                booking.setGroupBookingId(null); // Parent is root
+
+                bookingService.createBooking(booking);
+                int parentBookingId = booking.getBookingId();
+
+                // 3. Insert subsequent bookings as child bookings
+                for (int i = 1; i < roomTypeIds.length; i++) {
+                    Booking childBooking = new Booking();
+                    childBooking.setAccountId(accountId);
+                    childBooking.setCustomerName(customerName);
+                    childBooking.setCheckInDate(booking.getCheckInDate());
+                    childBooking.setCheckOutDate(booking.getCheckOutDate());
+                    childBooking.setNote(note);
+                    childBooking.setGroupBookingId(parentBookingId);
+                    
+                    int childRoomTypeId = Integer.parseInt(roomTypeIds[i].trim());
+                    int childQty = Integer.parseInt(roomQuantities[i].trim());
+                    childBooking.setRoomTypeId(childRoomTypeId);
+                    childBooking.setRoomQuantity(childQty);
+                    
+                    bookingService.createBooking(childBooking);
+                }
+            } else {
+                // Single booking creation flow
                 String roomTypeIdStr = request.getParameter("roomTypeId");
                 String quantityStr = request.getParameter("roomQuantity");
-                String guestCountStr = request.getParameter("guestCount");
 
                 if (roomTypeIdStr == null || roomTypeIdStr.trim().isEmpty()) {
                     throw new Exception("MSG55");
@@ -211,82 +302,12 @@ public class CustomerBookingsController extends HttpServlet {
                     quantity = Integer.parseInt(quantityStr);
                 }
 
-                int guestCount = 1;
-                if (guestCountStr != null && !guestCountStr.trim().isEmpty()) {
-                    guestCount = Integer.parseInt(guestCountStr);
-                }
-
                 booking.setRoomTypeId(roomTypeId);
                 booking.setRoomQuantity(quantity);
+                booking.setGroupBookingId(null);
 
-                // Construct guestName based on customerName and guestCount
-                StringBuilder guestNameBuilder = new StringBuilder(customerName);
-                for (int i = 1; i < guestCount; i++) {
-                    guestNameBuilder.append(", Khách đi cùng ").append(i);
-                }
-                String guestName = guestNameBuilder.toString();
-
-                // Add detail row
-                BookingRoom br = new BookingRoom();
-                br.setRoomTypeId(roomTypeId);
-                br.setQuantity(quantity);
-                br.setGuestName(guestName);
-                roomsList.add(br);
-            } else {
-                // Multi-room selection
-                String[] roomTypeIds = request.getParameterValues("roomTypeId[]");
-                String[] roomQuantities = request.getParameterValues("roomQuantity[]");
-                String[] guestCounts = request.getParameterValues("guestCount[]");
-                String[] guestNames = request.getParameterValues("guestName[]");
-
-                if (roomTypeIds == null || roomTypeIds.length == 0) {
-                    throw new Exception("MSG55");
-                }
-
-                // In multi-room mode, booking roomTypeId is null
-                booking.setRoomTypeId(null);
-
-                for (int i = 0; i < roomTypeIds.length; i++) {
-                    int rtId = Integer.parseInt(roomTypeIds[i]);
-                    
-                    int qty = 1;
-                    if (roomQuantities != null && roomQuantities.length > i && !roomQuantities[i].trim().isEmpty()) {
-                        qty = Integer.parseInt(roomQuantities[i]);
-                    }
-                    
-                    int guestCount = 1;
-                    if (guestCounts != null && guestCounts.length > i && !guestCounts[i].trim().isEmpty()) {
-                        guestCount = Integer.parseInt(guestCounts[i]);
-                    }
-                    
-                    String rawGuestName = (guestNames != null && guestNames.length > i) ? guestNames[i] : "";
-
-                    // Construct guestName list based on rawGuestName and guestCount.
-                    StringBuilder guestNameBuilder = new StringBuilder();
-                    if (!rawGuestName.trim().isEmpty()) {
-                        guestNameBuilder.append(rawGuestName.trim());
-                        String[] typedNames = rawGuestName.split(",");
-                        int typedCount = typedNames.length;
-                        for (int j = typedCount; j < guestCount; j++) {
-                            guestNameBuilder.append(", Khách đi cùng ").append(j);
-                        }
-                    } else {
-                        guestNameBuilder.append("Thành viên");
-                        for (int j = 1; j < guestCount; j++) {
-                            guestNameBuilder.append(", Khách đi cùng ").append(j);
-                        }
-                    }
-
-                    BookingRoom br = new BookingRoom();
-                    br.setRoomTypeId(rtId);
-                    br.setQuantity(qty);
-                    br.setGuestName(guestNameBuilder.toString());
-                    roomsList.add(br);
-                }
+                bookingService.createBooking(booking);
             }
-
-            // Create booking inside service layer
-            bookingService.createBooking(booking, roomsList);
 
             // Redirect to history on success
             response.sendRedirect(request.getContextPath() + "/customer/bookings?success=created");
@@ -301,18 +322,18 @@ public class CustomerBookingsController extends HttpServlet {
             // Keep form data and forward to create form with error message
             request.setAttribute("errorCode", errCode);
             request.setAttribute("errorMessage", ERROR_MESSAGES.get(errCode));
-            
+
             // Retain inputs
             request.setAttribute("customerName", customerName);
             request.setAttribute("checkInDate", checkInStr);
             request.setAttribute("checkOutDate", checkOutStr);
             request.setAttribute("note", note);
             request.setAttribute("bookingType", bookingType);
-            
+
             // Reload room types list
             List<RoomTypeInfo> roomTypes = roomTypeService.getAllRoomTypes();
             request.setAttribute("roomTypes", roomTypes);
-            
+
             // Reload customer names for lookup dropdown
             AccountRepository accountRepo = new AccountRepository();
             request.setAttribute("customerNames", accountRepo.getAllCustomerNames());

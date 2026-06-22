@@ -15,7 +15,9 @@ import com.mycompany.hotelmanagement.service.RoomTypeService;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -75,11 +77,23 @@ public class ReceptionistBookingProcessController extends HttpServlet {
 
             List<RoomTypeInfo> roomTypesList = new RoomTypeService().getAllRoomTypes();
 
+            // Load child bookings (for group booking support)
+            List<Booking> childBookings = bookingService.getChildBookings(bookingId);
+
+            // Load assigned rooms for each child booking
+            Map<Integer, List<Room>> childAssignedRoomsMap = new HashMap<>();
+            for (Booking child : childBookings) {
+                List<Room> childRooms = bookingService.getAssignedRoomsForBooking(child.getBookingId());
+                childAssignedRoomsMap.put(child.getBookingId(), childRooms);
+            }
+
             request.setAttribute("booking", booking);
             request.setAttribute("customer", customer);
             request.setAttribute("rooms", rooms);
             request.setAttribute("assignedRooms", assignedRooms);
             request.setAttribute("roomTypesList", roomTypesList);
+            request.setAttribute("childBookings", childBookings);
+            request.setAttribute("childAssignedRoomsMap", childAssignedRoomsMap);
 
             request.getRequestDispatcher("/WEB-INF/views/receptionist/booking-process.jsp")
                     .forward(request, response);
@@ -124,6 +138,8 @@ public class ReceptionistBookingProcessController extends HttpServlet {
             }
 
             boolean success = false;
+
+            List<Booking> children = bookingService.getChildBookings(bookingId);
 
             if ("Pending".equals(existing.getStatus())
                     && ("update".equalsIgnoreCase(action) || "confirm".equalsIgnoreCase(action))) {
@@ -185,11 +201,30 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                 }
 
                 bookingService.updateBookingDetails(existing);
+
+                // Update child bookings
+                for (Booking child : children) {
+                    child.setCheckInDate(existing.getCheckInDate());
+                    child.setCheckOutDate(existing.getCheckOutDate());
+                    child.setCustomerName(existing.getCustomerName());
+
+                    String cQtyStr = request.getParameter("childRoomQuantity_" + child.getBookingId());
+                    if (cQtyStr != null && !cQtyStr.trim().isEmpty()) {
+                        try {
+                            int cQty = Integer.parseInt(cQtyStr.trim());
+                            if (cQty > 0 && cQty <= 100) {
+                                child.setRoomQuantity(cQty);
+                            }
+                        } catch (NumberFormatException e) {}
+                    }
+                    bookingService.updateBookingDetails(child);
+                }
             }
 
             switch (action.toLowerCase()) {
                 case "update": {
                     if ("Pending".equals(existing.getStatus())) {
+                        // Parent assignment
                         String[] roomIdStrings = request.getParameterValues("roomIds");
                         if (roomIdStrings != null && roomIdStrings.length == existing.getRoomQuantity()) {
                             List<Integer> roomIds = new ArrayList<>();
@@ -199,6 +234,20 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                             bookingService.assignRoomsToBooking(bookingId, roomIds);
                         } else {
                             bookingService.assignRoomsToBooking(bookingId, new ArrayList<>());
+                        }
+
+                        // Child assignments
+                        for (Booking child : children) {
+                            String[] cRoomIdStrings = request.getParameterValues("childRoomIds_" + child.getBookingId());
+                            if (cRoomIdStrings != null && cRoomIdStrings.length == child.getRoomQuantity()) {
+                                List<Integer> cRoomIds = new ArrayList<>();
+                                for (String rIdStr : cRoomIdStrings) {
+                                    cRoomIds.add(Integer.parseInt(rIdStr.trim()));
+                                }
+                                bookingService.assignRoomsToBooking(child.getBookingId(), cRoomIds);
+                            } else {
+                                bookingService.assignRoomsToBooking(child.getBookingId(), new ArrayList<>());
+                            }
                         }
                     }
                     success = true;
@@ -213,7 +262,7 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                         return;
                     }
 
-                    // Retrieve selected room IDs
+                    // Validate selected room IDs for parent
                     String[] roomIdStrings = request.getParameterValues("roomIds");
                     if (roomIdStrings == null || roomIdStrings.length != existing.getRoomQuantity()) {
                         LOGGER.log(Level.WARNING, "Confirm failed: Room selection mismatch for booking: " + bookingId);
@@ -221,10 +270,16 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                                 + bookingId + "&error=validation");
                         return;
                     }
-
-                    List<Integer> roomIds = new ArrayList<>();
-                    for (String rIdStr : roomIdStrings) {
-                        roomIds.add(Integer.parseInt(rIdStr.trim()));
+                    
+                    // Validate selected room IDs for children
+                    for (Booking child : children) {
+                        String[] cRoomIdStrings = request.getParameterValues("childRoomIds_" + child.getBookingId());
+                        if (cRoomIdStrings == null || cRoomIdStrings.length != child.getRoomQuantity()) {
+                            LOGGER.log(Level.WARNING, "Confirm failed: Room selection mismatch for child booking: " + child.getBookingId());
+                            response.sendRedirect(request.getContextPath() + "/receptionist/booking/process?bookingId="
+                                    + bookingId + "&error=validation");
+                            return;
+                        }
                     }
 
                     // Perform database updates
@@ -232,11 +287,27 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                     String noteText = (note != null && !note.trim().isEmpty()) ? note.trim()
                             : "Đã xác nhận và phân phòng";
 
-                    // Save room assignment first
+                    // Parent
+                    List<Integer> roomIds = new ArrayList<>();
+                    for (String rIdStr : roomIdStrings) {
+                        roomIds.add(Integer.parseInt(rIdStr.trim()));
+                    }
                     boolean assigned = bookingService.assignRoomsToBooking(bookingId, roomIds);
                     if (assigned) {
-                        // Update status to Confirmed
                         success = bookingService.updateBookingStatus(bookingId, "Confirmed", noteText);
+                    }
+
+                    // Children
+                    for (Booking child : children) {
+                        List<Integer> cRoomIds = new ArrayList<>();
+                        String[] cRoomIdStrings = request.getParameterValues("childRoomIds_" + child.getBookingId());
+                        for (String rIdStr : cRoomIdStrings) {
+                            cRoomIds.add(Integer.parseInt(rIdStr.trim()));
+                        }
+                        boolean cAssigned = bookingService.assignRoomsToBooking(child.getBookingId(), cRoomIds);
+                        if (cAssigned) {
+                            bookingService.updateBookingStatus(child.getBookingId(), "Confirmed", noteText);
+                        }
                     }
                     break;
                 }
@@ -256,6 +327,9 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                     }
 
                     success = bookingService.updateBookingStatus(bookingId, "Rejected", reason.trim());
+                    for (Booking child : children) {
+                        bookingService.updateBookingStatus(child.getBookingId(), "Rejected", reason.trim());
+                    }
                     break;
                 }
 
@@ -271,6 +345,9 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                             : "Huỷ theo yêu cầu";
 
                     success = bookingService.cancelBooking(bookingId, reasonText);
+                    for (Booking child : children) {
+                        bookingService.cancelBooking(child.getBookingId(), reasonText);
+                    }
                     break;
                 }
 
