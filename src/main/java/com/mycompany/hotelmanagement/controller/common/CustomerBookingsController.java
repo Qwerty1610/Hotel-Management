@@ -2,7 +2,9 @@ package com.mycompany.hotelmanagement.controller.common;
 
 import com.mycompany.hotelmanagement.dal.AccountRepository;
 import com.mycompany.hotelmanagement.entity.Booking;
+import com.mycompany.hotelmanagement.entity.BookingRequest;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
+import com.mycompany.hotelmanagement.service.BookingRequestService;
 import com.mycompany.hotelmanagement.service.BookingService;
 import com.mycompany.hotelmanagement.service.RoomTypeService;
 import jakarta.servlet.ServletException;
@@ -35,13 +37,17 @@ public class CustomerBookingsController extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(CustomerBookingsController.class.getName());
     private final BookingService bookingService = new BookingService();
     private final RoomTypeService roomTypeService = new RoomTypeService();
+    private final BookingRequestService bookingRequestService = new BookingRequestService();
 
     private static final Map<String, String> ERROR_MESSAGES = new HashMap<>();
     static {
+        ERROR_MESSAGES.put("MSG02", "Vui lòng điền đầy đủ các trường bắt buộc.");
+        ERROR_MESSAGES.put("MSG03", "Yêu cầu đặc biệt / lý do không được vượt quá 500 ký tự.");
+        ERROR_MESSAGES.put("MSG16", "Không còn phòng trống phù hợp cho lựa chọn / khoảng ngày mới. Vui lòng thử phương án khác.");
         ERROR_MESSAGES.put("MSG17", "Ngày trả phòng phải sau ngày nhận phòng.");
         ERROR_MESSAGES.put("MSG19", "Xin lỗi, loại phòng bạn chọn không còn đủ phòng trống trong thời gian này.");
         ERROR_MESSAGES.put("MSG20", "Số lượng khách vượt quá sức chứa tối đa của phòng.");
-        ERROR_MESSAGES.put("MSG03", "Yêu cầu đặc biệt không được vượt quá 500 ký tự.");
+        ERROR_MESSAGES.put("NOT_ELIGIBLE", "Đơn đặt phòng này không đủ điều kiện để thực hiện yêu cầu.");
         ERROR_MESSAGES.put("MSG55", "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.");
     }
 
@@ -97,6 +103,10 @@ public class CustomerBookingsController extends HttpServlet {
                 handleCreateBooking(request, response, accountId);
             } else if ("/cancel".equals(pathInfo)) {
                 handleCancelBooking(request, response, accountId);
+            } else if ("/change-request".equals(pathInfo)) {
+                handleBookingChangeRequest(request, response, accountId);
+            } else if ("/extension-request".equals(pathInfo)) {
+                handleStayExtensionRequest(request, response, accountId);
             } else {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);
             }
@@ -132,10 +142,16 @@ public class CustomerBookingsController extends HttpServlet {
         request.setAttribute("statusFilter", statusFilter);
         request.setAttribute("keyword", keyword);
 
+        // Room types feed the "Request Change" form's room-type dropdown
+        request.setAttribute("roomTypes", roomTypeService.getAllRoomTypes());
+
+        // Customer's change/extension requests, for status tracking (POST-3)
+        request.setAttribute("myRequests", bookingRequestService.getRequestsByAccount(accountId));
+
         // Display success or error toast/alert if redirected
         String success = request.getParameter("success");
         if (success != null) {
-            request.setAttribute("successMessage", "Thao tác thực hiện thành công!");
+            request.setAttribute("successMessage", buildSuccessMessage(success, request.getParameter("charge")));
         }
         String error = request.getParameter("error");
         if (error != null) {
@@ -144,6 +160,31 @@ public class CustomerBookingsController extends HttpServlet {
         }
 
         request.getRequestDispatcher("/WEB-INF/views/customer/booking-history.jsp").forward(request, response);
+    }
+
+    /** Maps a success code (and optional charge) to a friendly Vietnamese message. */
+    private String buildSuccessMessage(String success, String charge) {
+        switch (success) {
+            case "change_requested":
+                return "Đã gửi yêu cầu thay đổi đặt phòng. Vui lòng chờ lễ tân/quản lý duyệt.";
+            case "ext_requested":
+                String base = "Đã gửi yêu cầu gia hạn lưu trú. Vui lòng chờ duyệt.";
+                if (charge != null && !charge.isBlank()) {
+                    try {
+                        double c = Double.parseDouble(charge);
+                        java.text.NumberFormat nf = java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN"));
+                        base += " Phụ phí dự kiến: " + nf.format(c) + " VND.";
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+                return base;
+            case "created":
+                return "Đặt phòng thành công!";
+            case "cancelled":
+                return "Đã hủy đơn đặt phòng.";
+            default:
+                return "Thao tác thực hiện thành công!";
+        }
     }
 
     private void showBookingDetail(HttpServletRequest request, HttpServletResponse response, int accountId)
@@ -361,6 +402,50 @@ public class CustomerBookingsController extends HttpServlet {
                 errCode = e.getMessage();
             }
             response.sendRedirect(request.getContextPath() + "/customer/bookings?error=" + errCode);
+        }
+    }
+
+    private void handleBookingChangeRequest(HttpServletRequest request, HttpServletResponse response, int accountId)
+            throws IOException {
+        String ctx = request.getContextPath();
+        try {
+            int bookingId = Integer.parseInt(request.getParameter("bookingId"));
+            BookingRequestService.Result res = bookingRequestService.requestBookingChange(
+                    accountId,
+                    bookingId,
+                    request.getParameter("newCheckInDate"),
+                    request.getParameter("newCheckOutDate"),
+                    request.getParameter("roomTypeId"),
+                    request.getParameter("roomQuantity"),
+                    request.getParameter("reason"));
+            if (res.isSuccess()) {
+                response.sendRedirect(ctx + "/customer/bookings?success=change_requested");
+            } else {
+                response.sendRedirect(ctx + "/customer/bookings?error=" + res.code);
+            }
+        } catch (NumberFormatException e) {
+            response.sendRedirect(ctx + "/customer/bookings?error=MSG02");
+        }
+    }
+
+    private void handleStayExtensionRequest(HttpServletRequest request, HttpServletResponse response, int accountId)
+            throws IOException {
+        String ctx = request.getContextPath();
+        try {
+            int bookingId = Integer.parseInt(request.getParameter("bookingId"));
+            BookingRequestService.Result res = bookingRequestService.requestStayExtension(
+                    accountId,
+                    bookingId,
+                    request.getParameter("newCheckOutDate"),
+                    request.getParameter("reason"));
+            if (res.isSuccess()) {
+                response.sendRedirect(ctx + "/customer/bookings?success=ext_requested&charge="
+                        + (long) res.additionalCharge);
+            } else {
+                response.sendRedirect(ctx + "/customer/bookings?error=" + res.code);
+            }
+        } catch (NumberFormatException e) {
+            response.sendRedirect(ctx + "/customer/bookings?error=MSG02");
         }
     }
 }
