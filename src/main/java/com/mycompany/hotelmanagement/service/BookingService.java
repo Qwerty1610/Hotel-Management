@@ -3,10 +3,9 @@ package com.mycompany.hotelmanagement.service;
 import com.mycompany.hotelmanagement.dal.BookingDAO;
 import com.mycompany.hotelmanagement.dal.RoomTypeRepository;
 import com.mycompany.hotelmanagement.entity.Booking;
-import com.mycompany.hotelmanagement.entity.BookingRoom;
-import com.mycompany.hotelmanagement.entity.CustomerDetails;
 import com.mycompany.hotelmanagement.entity.Room;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
+import com.mycompany.hotelmanagement.entity.CustomerDetails;
 import java.sql.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -14,7 +13,8 @@ import java.util.logging.Logger;
 
 /**
  * Service xử lý các nghiệp vụ logic liên quan đến Đặt phòng (Booking).
- * Thực hiện kiểm tra ngày hợp lệ, sức chứa tối đa, tính tổng tiền, đặt cọc 30% và gọi DAO lưu thông tin.
+ * Thực hiện kiểm tra ngày hợp lệ, sức chứa tối đa, tính tổng tiền, đặt cọc 30%
+ * và gọi DAO lưu thông tin.
  *
  * @author BinhHD
  * @date 20/06/2026
@@ -27,12 +27,13 @@ public class BookingService {
 
     /**
      * Creates a new booking with validation.
-     * Throws exception with message keys (MSG17, MSG19, MSG20, MSG03, MSG55) if validation fails.
+     * Throws exception with message keys (MSG17, MSG19, MSG20, MSG03, MSG55) if
+     * validation fails.
      */
-    public boolean createBooking(Booking booking, List<BookingRoom> rooms) throws Exception {
+    public boolean createBooking(Booking booking) throws Exception {
         try {
             // 1. Validate inputs
-            if (booking == null || rooms == null || rooms.isEmpty()) {
+            if (booking == null) {
                 throw new Exception("MSG55"); // Unexpected error
             }
 
@@ -53,91 +54,37 @@ public class BookingService {
                 throw new Exception("MSG17");
             }
 
-            double totalAmount = 0;
-            int totalRoomsCount = 0;
-            StringBuilder guestNamesBuilder = new StringBuilder();
-
-            // 4. Validate capacity and availability for each room selection
-            for (BookingRoom br : rooms) {
-                RoomTypeInfo rt = roomTypeRepository.getRoomTypeById(br.getRoomTypeId());
-                if (rt == null) {
-                    throw new Exception("MSG55");
-                }
-
-                // Attach room type name and price per night to the BookingRoom detail record
-                br.setRoomTypeName(rt.getTypeName());
-                br.setPrice(rt.getBasePrice());
-
-                // Check capacity constraint (MSG20)
-                // In single-room mode, the quantity is br.getQuantity() (which is 1 or more)
-                // and guests count is compared.
-                // In multi-room mode, each BookingRoom has quantity=1.
-                // br.getQuantity() should be >= 1.
-                int qty = br.getQuantity() > 0 ? br.getQuantity() : 1;
-                totalRoomsCount += qty;
-
-                // Validate capacity: if the room has guest name list or guest count
-                // Since guestName is a string, let's check its length or content.
-                // However, for direct capacity check, we will validate the number of guests
-                // that the user passed for this room type.
-                // If the user specifies guestName, we can split it by comma to count guests.
-                int guestCount = 1;
-                if (br.getGuestName() != null && !br.getGuestName().trim().isEmpty()) {
-                    String[] names = br.getGuestName().split(",");
-                    guestCount = names.length;
-                }
-                
-                if (guestCount > rt.getCapacity() * qty) {
-                    throw new Exception("MSG20"); // Guest count exceeds capacity
-                }
-
-                // Check date-based overlapping availability (MSG19)
-                int totalRoomsInHotel = getRoomCountByTypeId(br.getRoomTypeId());
-                int bookedRoomsCount = bookingDAO.getBookedRoomsCountForDates(br.getRoomTypeId(), checkIn, checkOut);
-                int availableRooms = totalRoomsInHotel - bookedRoomsCount;
-
-                if (qty > availableRooms) {
-                    throw new Exception("MSG19"); // Rooms not available
-                }
-
-                // Accumulate total price
-                totalAmount += rt.getBasePrice() * qty * nights;
-
-                // Collect guest names
-                if (br.getGuestName() != null && !br.getGuestName().trim().isEmpty()) {
-                    if (guestNamesBuilder.length() > 0) {
-                        guestNamesBuilder.append(", ");
-                    }
-                    guestNamesBuilder.append(br.getGuestName().trim());
-                }
-            }
-
-            // Set calculated properties on booking
-            booking.setTotalAmount(totalAmount);
-            booking.setRoomQuantity(totalRoomsCount);
-            booking.setStatus("Pending"); // Default initial status
-
-            // Format note for receptionist dashboard compatibility (appending guest list to the note)
-            String originalNote = booking.getNote() != null ? booking.getNote().trim() : "";
-            String formattedNote = originalNote;
-            if (guestNamesBuilder.length() > 0) {
-                String guestListPart = "Khách đi cùng: " + guestNamesBuilder.toString();
-                if (!originalNote.isEmpty()) {
-                    formattedNote = guestListPart + ". Ghi chú đặc biệt: " + originalNote;
-                } else {
-                    formattedNote = guestListPart;
-                }
-            }
-            if (formattedNote.length() > 500) {
-                formattedNote = formattedNote.substring(0, 497) + "...";
-            }
-            booking.setNote(formattedNote);
-
-            // 5. Call DAO to write Booking and BookingRooms in a single transaction
-            boolean success = bookingDAO.insertBookingTransaction(booking, rooms);
-            if (!success) {
+            // 4. Validate capacity and availability
+            RoomTypeInfo rt = roomTypeRepository.getRoomTypeById(booking.getRoomTypeId());
+            if (rt == null) {
                 throw new Exception("MSG55");
             }
+
+            // Attach room type name
+            booking.setRoomTypeName(rt.getTypeName());
+
+            int qty = booking.getRoomQuantity() > 0 ? booking.getRoomQuantity() : 1;
+
+            // Check date-based overlapping availability (MSG19)
+            int totalRoomsInHotel = getRoomCountByTypeId(booking.getRoomTypeId());
+            int bookedRoomsCount = bookingDAO.getBookedRoomsCountForDates(booking.getRoomTypeId(), checkIn, checkOut);
+            int availableRooms = totalRoomsInHotel - bookedRoomsCount;
+
+            if (qty > availableRooms) {
+                throw new Exception("MSG19"); // Rooms not available
+            }
+
+            // Calculate total price
+            double totalAmount = rt.getBasePrice() * qty * nights;
+            booking.setTotalAmount(totalAmount);
+            booking.setStatus("Pending"); // Default initial status
+
+            // 5. Call DAO to write Booking
+            int bookingId = bookingDAO.createBooking(booking);
+            if (bookingId <= 0) {
+                throw new Exception("MSG55");
+            }
+            booking.setBookingId(bookingId);
             return true;
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error in createBooking service call", e);
@@ -165,7 +112,8 @@ public class BookingService {
 
             // Validate status allows cancellation
             String status = b.getStatus();
-            if ("CheckedIn".equalsIgnoreCase(status) || "CheckedOut".equalsIgnoreCase(status) || "Rejected".equalsIgnoreCase(status) || "Cancelled".equalsIgnoreCase(status)) {
+            if ("CheckedIn".equalsIgnoreCase(status) || "CheckedOut".equalsIgnoreCase(status)
+                    || "Rejected".equalsIgnoreCase(status) || "Cancelled".equalsIgnoreCase(status)) {
                 throw new Exception("MSG55");
             }
 
@@ -191,9 +139,11 @@ public class BookingService {
         return bookingDAO.getBookingById(bookingId);
     }
 
-    public List<BookingRoom> getBookingRooms(int bookingId) {
-        return bookingDAO.getBookingRooms(bookingId);
+    public List<Booking> getChildBookings(int parentBookingId) {
+        return bookingDAO.getChildBookings(parentBookingId);
     }
+
+    // getBookingRooms removed in simplification
 
     /**
      * Delegates updateBookingDetails to DAO.
@@ -231,14 +181,14 @@ public class BookingService {
     }
 
     /**
-     * Returns rooms already assigned to a specific booking via Booking_Room.
+     * Returns rooms already assigned to a specific booking via RoomAssignment.
      */
     public List<Room> getAssignedRoomsForBooking(int bookingId) {
         return bookingDAO.getAssignedRoomsForBooking(bookingId);
     }
 
     /**
-     * Assigns (or replaces) rooms to a booking in the Booking_Room table.
+     * Assigns (or replaces) rooms to a booking in the RoomAssignment table.
      */
     public boolean assignRoomsToBooking(int bookingId, List<Integer> roomIds) {
         return bookingDAO.assignRoomsToBooking(bookingId, roomIds);
@@ -249,6 +199,13 @@ public class BookingService {
      */
     public CustomerDetails getCustomerDetailsByAccountId(int accountId) {
         return bookingDAO.getCustomerDetailsByAccountId(accountId);
+    }
+
+    /**
+     * Checks available rooms of a specific type for a date range.
+     */
+    public int checkRoomAvailability(int roomTypeId, Date checkIn, Date checkOut) {
+        return bookingDAO.checkRoomAvailability(roomTypeId, checkIn, checkOut);
     }
 
     /**

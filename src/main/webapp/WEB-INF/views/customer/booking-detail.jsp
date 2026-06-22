@@ -146,6 +146,14 @@
                             <span>Số đêm nghỉ:</span>
                             <span style="font-weight: 700; color: var(--primary-indigo);">${booking.nights} đêm</span>
                         </div>
+                        <div class="receipt-info-row">
+                            <span>Số loại phòng:</span>
+                            <span style="font-weight: 700; color: var(--primary-indigo);">${booking.totalRoomTypes} loại</span>
+                        </div>
+                        <div class="receipt-info-row">
+                            <span>Tổng số phòng:</span>
+                            <span style="font-weight: 700; color: var(--primary-indigo);">${booking.totalRoomQuantity} phòng</span>
+                        </div>
                     </div>
                 </div>
 
@@ -158,6 +166,7 @@
                         <tr>
                             <th style="width: 50px;">STT</th>
                             <th>Loại phòng</th>
+                            <th style="text-align: center;">Số lượng</th>
                             <th style="text-align: right;">Đơn giá / đêm</th>
                             <th>Họ tên khách nghỉ</th>
                         </tr>
@@ -169,6 +178,7 @@
                                     <tr>
                                         <td>${status.index + 1}</td>
                                         <td style="font-weight: 600;">${r.roomTypeName}</td>
+                                        <td style="text-align: center; font-weight: 600; color: var(--primary-indigo);">${r.quantity}</td>
                                         <td style="text-align: right;">
                                             <fmt:formatNumber value="${r.price}" type="currency" currencySymbol="" /> VND
                                         </td>
@@ -182,6 +192,7 @@
                                 <tr>
                                     <td>1</td>
                                     <td style="font-weight: 600;">${booking.roomTypeName}</td>
+                                    <td style="text-align: center; font-weight: 600; color: var(--primary-indigo);">${booking.roomQuantity}</td>
                                     <td style="text-align: right;">
                                         <fmt:formatNumber value="${booking.totalAmount / booking.roomQuantity / booking.nights}" type="currency" currencySymbol="" /> VND
                                     </td>

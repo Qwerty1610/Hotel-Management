@@ -24,8 +24,15 @@ public class Booking {
     private double totalAmount;
     private String status;           
     private String note;
+    private Integer groupBookingId;
     private Date createdAt;
     private String assignedRoomsStr;
+
+    private int totalRoomQuantity;
+    private String groupRoomTypeNames;
+    private double overallTotalAmount;
+    private int totalRoomTypes;
+
 
     /* ---------- Constructors ---------- */
 
@@ -107,11 +114,43 @@ public class Booking {
     public String getNote()                 { return note; }
     public void setNote(String v)           { this.note = v; }
 
+    public Integer getGroupBookingId()      { return groupBookingId; }
+    public void setGroupBookingId(Integer v) { this.groupBookingId = v; }
+
     public Date getCreatedAt()              { return createdAt; }
     public void setCreatedAt(Date v)        { this.createdAt = v; }
 
     public String getAssignedRoomsStr()     { return assignedRoomsStr; }
     public void setAssignedRoomsStr(String v) { this.assignedRoomsStr = v; }
+
+    public int getTotalRoomQuantity() {
+        return totalRoomQuantity > 0 ? totalRoomQuantity : roomQuantity;
+    }
+    public void setTotalRoomQuantity(int v) {
+        this.totalRoomQuantity = v;
+    }
+
+    public String getGroupRoomTypeNames() {
+        return (groupRoomTypeNames != null && !groupRoomTypeNames.trim().isEmpty()) ? groupRoomTypeNames : roomTypeName;
+    }
+    public void setGroupRoomTypeNames(String v) {
+        this.groupRoomTypeNames = v;
+    }
+
+    public double getOverallTotalAmount() {
+        return overallTotalAmount > 0 ? overallTotalAmount : totalAmount;
+    }
+    public void setOverallTotalAmount(double v) {
+        this.overallTotalAmount = v;
+    }
+
+    public int getTotalRoomTypes() {
+        return totalRoomTypes > 0 ? totalRoomTypes : 1;
+    }
+    public void setTotalRoomTypes(int v) {
+        this.totalRoomTypes = v;
+    }
+
 
     /* ---------- Validation Logic ---------- */
     public boolean isValid() {

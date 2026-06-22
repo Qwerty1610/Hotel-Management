@@ -565,13 +565,41 @@ BEGIN
         total_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
         status NVARCHAR(50) NOT NULL DEFAULT N'Pending',
         note NVARCHAR(500) NULL,
+        group_booking_id INT NULL,
         created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
         updated_at DATETIME2 NULL,
         CONSTRAINT FK_Booking_Account FOREIGN KEY (account_id) REFERENCES dbo.Account(account_id),
-        CONSTRAINT FK_Booking_RoomType FOREIGN KEY (room_type_id) REFERENCES dbo.RoomType(type_id)
+        CONSTRAINT FK_Booking_RoomType FOREIGN KEY (room_type_id) REFERENCES dbo.RoomType(type_id),
+        CONSTRAINT FK_Booking_Group FOREIGN KEY (group_booking_id) REFERENCES dbo.Booking(booking_id)
     );
 END
 GO
+
+/* Add group_booking_id to existing Booking table if missing */
+IF COL_LENGTH(N'dbo.Booking', N'group_booking_id') IS NULL
+BEGIN
+    ALTER TABLE dbo.Booking ADD group_booking_id INT NULL;
+    ALTER TABLE dbo.Booking ADD CONSTRAINT FK_Booking_Group FOREIGN KEY (group_booking_id) REFERENCES dbo.Booking(booking_id);
+END
+GO
+
+/* Create RoomAssignment table (mapping Booking to Room) if missing */
+IF OBJECT_ID(N'dbo.RoomAssignment', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.RoomAssignment (
+        booking_id INT NOT NULL,
+        room_id INT NOT NULL,
+        assigned_by INT NULL,
+        assigned_at DATETIME2 NULL,
+        note NVARCHAR(500) NULL,
+        PRIMARY KEY (booking_id, room_id),
+        CONSTRAINT FK_RoomAssignment_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id) ON DELETE CASCADE,
+        CONSTRAINT FK_RoomAssignment_Room FOREIGN KEY (room_id) REFERENCES dbo.Room(room_id) ON DELETE CASCADE,
+        CONSTRAINT FK_RoomAssignment_Account FOREIGN KEY (assigned_by) REFERENCES dbo.Account(account_id)
+    );
+END
+GO
+
 
 /* Seed Mock Data cho Booking 
 */
@@ -1129,19 +1157,17 @@ WHERE rf.status = N'Pending'
 GO
 
 /* ============================================================
-   11. BOOKING ROOM DETAIL TABLE (Multi-room & Guest Names)
+   11. ADD BOOKING_ID TO CUSTOMERREQUEST TABLE
    ============================================================ */
-IF OBJECT_ID(N'dbo.BookingRoom', N'U') IS NULL
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.columns 
+    WHERE object_id = OBJECT_ID(N'dbo.CustomerRequest') 
+      AND name = N'booking_id'
+)
 BEGIN
-    CREATE TABLE dbo.BookingRoom (
-        booking_room_id INT IDENTITY(1,1) PRIMARY KEY,
-        booking_id INT NOT NULL,
-        room_type_id INT NOT NULL,
-        quantity INT NOT NULL DEFAULT 1,
-        price DECIMAL(18,2) NOT NULL,
-        guest_name NVARCHAR(255) NULL,
-        CONSTRAINT FK_BookingRoom_Booking_HMS FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id) ON DELETE CASCADE,
-        CONSTRAINT FK_BookingRoom_RoomType_HMS FOREIGN KEY (room_type_id) REFERENCES dbo.RoomType(type_id)
-    );
+    ALTER TABLE dbo.CustomerRequest ADD booking_id INT NULL;
+    ALTER TABLE dbo.CustomerRequest ADD CONSTRAINT FK_CustomerRequest_Booking 
+        FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id);
 END
 GO

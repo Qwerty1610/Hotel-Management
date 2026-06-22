@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ include file="../../includes/taglibs.jsp" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -8,7 +9,7 @@
     <title>Quản lý đặt phòng - HotelOps Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/receptionist.css?v=4" />
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/receptionist.css?v=5" />
 </head>
 <fmt:setLocale value="vi_VN" />
 
@@ -43,6 +44,12 @@
                     <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh toán</span>
                 </a>
             </li>
+
+            <li class="menu-item ${currentTab eq 'servicerequests' ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=servicerequests">
+                    <i class="fa-solid fa-bell-concierge"></i> <span>Quản lý yêu cầu dịch vụ</span>
+                </a>
+            </li>
         </ul>
 
         <div class="sidebar-footer">
@@ -64,7 +71,15 @@
             <div class="breadcrumb">
                 <span>Receptionist</span>
                 <span class="separator">&gt;</span>
-                <span class="current">Quản lý đặt phòng</span>
+                <span class="current">
+                    <c:choose>
+                        <c:when test="${currentTab eq 'bookings'}">Quản lý đặt phòng</c:when>
+                        <c:when test="${currentTab eq 'checkin'}">Nhận phòng (Check-in)</c:when>
+                        <c:when test="${currentTab eq 'checkout'}">Trả phòng & Thanh toán</c:when>
+                        <c:when test="${currentTab eq 'servicerequests'}">Quản lý yêu cầu dịch vụ</c:when>
+                        <c:otherwise>Receptionist Dashboard</c:otherwise>
+                    </c:choose>
+                </span>
             </div>
             <a href="${pageContext.request.contextPath}/logout" class="btn-logout">
                 <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
@@ -209,9 +224,11 @@
                                         <%-- Loại phòng --%>
                                         <td>
                                             <c:choose>
-                                                <c:when test="${not empty b.roomTypeName}">
-                                                    <span class="roomtype-badge"><c:out value="${b.roomTypeName}" /></span>
-                                                    <br/><small style="color:var(--text-muted)">${b.roomQuantity} phòng</small>
+                                                <c:when test="${not empty b.groupRoomTypeNames}">
+                                                    <span class="roomtype-badge">
+                                                        <c:out value="${b.groupRoomTypeNames}" />
+                                                    </span>
+                                                    <br/><small style="color:var(--text-muted)">${b.totalRoomQuantity} phòng</small>
                                                 </c:when>
                                                 <c:otherwise><span style="color:var(--text-muted)">—</span></c:otherwise>
                                             </c:choose>
@@ -242,7 +259,7 @@
 
                                         <%-- Tổng tiền --%>
                                         <td class="amount-cell">
-                                            <fmt:formatNumber value="${b.totalAmount}" type="number" groupingUsed="true"/>đ
+                                            <fmt:formatNumber value="${b.overallTotalAmount}" type="number" groupingUsed="true"/>đ
                                         </td>
 
                                         <%-- Trạng thái --%>
@@ -341,6 +358,8 @@
                     <h3>Tính năng đang phát triển</h3>
                 </div>
             </c:if>
+
+
             
         </main>
 
@@ -595,6 +614,6 @@
     </div>
 </div>
 
-<script src="${pageContext.request.contextPath}/assets/js/receptionist.js?v=4" charset="UTF-8"></script>
+<script src="${pageContext.request.contextPath}/assets/js/receptionist.js?v=5" charset="UTF-8"></script>
 </body>
 </html>
