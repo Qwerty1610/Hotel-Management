@@ -77,6 +77,24 @@ public class AccountRepository {
         return -1;
     }
 
+    public java.util.List<String> getAllCustomerNames() {
+        java.util.List<String> names = new java.util.ArrayList<>();
+        String sql = "SELECT a.full_name " +
+                     "FROM Account a JOIN Role r ON a.role_id = r.role_id " +
+                     "WHERE r.role_name = 'Customer' AND a.is_active = 1 " +
+                     "ORDER BY a.full_name";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                names.add(rs.getString("full_name"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return names;
+    }
+    
     public boolean existsByEmail(String email) {
         String sql = "SELECT 1 FROM Account WHERE email = ?";
         try (Connection conn = DBContext.getConnection();

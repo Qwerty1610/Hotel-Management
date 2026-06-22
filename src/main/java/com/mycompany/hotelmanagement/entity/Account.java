@@ -32,14 +32,6 @@ public class Account implements Serializable {
         this.roleName = roleName;
     }
 
-    public int getAccountId() {
-        return accountId;
-    }
-
-    public void setAccountId(int accountId) {
-        this.accountId = accountId;
-    }
-
     public String getEmail() {
         return email;
     }
