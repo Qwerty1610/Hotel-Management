@@ -96,7 +96,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 /* Hiển thị / Ẩn Modal Đổi mật khẩu */
 function openChangePasswordModal() {
+    console.log("openChangePasswordModal (external admin.js) has been called!");
     const modal = document.getElementById('changePasswordModal');
+    console.log("Modal element in admin.js:", modal);
     if (modal) {
         modal.style.display = 'flex';
         hideModalAlert();

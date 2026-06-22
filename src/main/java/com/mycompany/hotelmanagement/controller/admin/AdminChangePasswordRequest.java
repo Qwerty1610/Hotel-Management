@@ -4,6 +4,8 @@ import java.io.Serializable;
 
 /**
  * Đối tượng DTO để map dữ liệu JSON nhận từ client khi đổi mật khẩu Admin.
+ * 
+ * @author TùngNQ
  */
 public class AdminChangePasswordRequest implements Serializable {
     private static final long serialVersionUID = 1L;

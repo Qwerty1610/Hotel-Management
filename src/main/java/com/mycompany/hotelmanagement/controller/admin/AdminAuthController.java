@@ -14,6 +14,8 @@ import java.io.IOException;
 /**
  * Controller xử lý yêu cầu đổi mật khẩu cho tài khoản Admin.
  * Được bảo vệ tự động bởi AuthFilter (vì nằm dưới path /admin/*).
+ * 
+ * @author TùngNQ
  */
 @WebServlet(name = "AdminAuthController", urlPatterns = {"/admin/change-password"})
 public class AdminAuthController extends HttpServlet {

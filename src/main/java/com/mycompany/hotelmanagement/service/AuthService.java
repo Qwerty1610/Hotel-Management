@@ -177,8 +177,8 @@ public class AuthService {
             return "invalid_email";
         }
 
-        // 3. Phone validation: starts with 0 and contains only digits
-        if (!phone.matches("^0[0-9]+$")) {
+        // 3. Phone validation: starts with 0, followed by (3, 5, 7, 8, 9) and ends with exactly 8 digits
+        if (!phone.matches("^0[35789]\\d{8}$")) {
             return "invalid_phone";
         }
 

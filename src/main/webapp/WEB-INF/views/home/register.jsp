@@ -39,7 +39,7 @@
                                 Định dạng Email không hợp lệ!
                             </c:when>
                             <c:when test="${param.error eq 'invalid_phone'}">
-                                Số điện thoại phải bắt đầu bằng số 0 và chỉ chứa các chữ số!
+                                Số điện thoại phải bắt đầu bằng số 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số!
                             </c:when>
                             <c:when test="${param.error eq 'invalid_password'}">
                                 Mật khẩu phải tối thiểu 8 ký tự, bao gồm cả chữ, số và ký tự đặc biệt!
@@ -78,7 +78,7 @@
                     <label for="phone">Số điện thoại</label>
                     <div class="input-wrapper">
                         <input type="tel" id="phone" name="phone" class="form-input"
-                            placeholder="0912345678" required pattern="^0[0-9]+$" title="Số điện thoại phải bắt đầu từ số 0 và chỉ gồm chữ số" value="${param.phone}" />
+                            placeholder="0912345678" required pattern="^0[35789][0-9]{8}$" title="Số điện thoại phải bắt đầu bằng số 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số" value="${param.phone}" />
                         <i class="fa-solid fa-phone"></i>
                     </div>
                 </div>
@@ -135,8 +135,8 @@
                 errorMessage = 'Định dạng Email không hợp lệ!';
             }
             // 3. Phone validation
-            else if (!/^0[0-9]+$/.test(phone)) {
-                errorMessage = 'Số điện thoại phải bắt đầu bằng số 0 và chỉ chứa các chữ số!';
+            else if (!/^0[35789][0-9]{8}$/.test(phone)) {
+                errorMessage = 'Số điện thoại phải bắt đầu bằng số 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số!';
             }
             // 4. Password strength validation
             else {

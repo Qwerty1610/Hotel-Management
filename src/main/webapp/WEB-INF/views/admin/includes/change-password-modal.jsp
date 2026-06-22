@@ -1,4 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%--
+    Modal đổi mật khẩu tài khoản Admin.
+    @author TùngNQ
+--%>
 <!-- MODAL ĐỔI MẬT KHẨU ADMIN -->
 <div id="changePasswordModal" class="modal-overlay" style="display: none;">
     <div class="modal-container" style="max-width: 440px;">

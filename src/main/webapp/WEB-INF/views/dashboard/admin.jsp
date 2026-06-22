@@ -1,4 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%--
+    Giao diện Dashboard quản trị hệ thống Admin.
+    @author TùngNQ
+--%>
     <%@ include file="../../includes/taglibs.jsp" %>
         <%@ include file="../../includes/header.jsp" %>
 
@@ -458,8 +462,8 @@
                                         <div class="modal-form-group">
                                             <label for="phone">Số điện thoại</label>
                                             <input type="tel" id="phone" name="phone" class="modal-input"
-                                                placeholder="Ví dụ: 0912345678" pattern="^0[0-9]+$"
-                                                title="Số điện thoại phải bắt đầu bằng số 0 và chỉ chứa số" />
+                                                placeholder="Ví dụ: 0912345678" pattern="^0[35789][0-9]{8}$"
+                                                title="Số điện thoại phải bắt đầu bằng số 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số" />
                                         </div>
                                         <div class="modal-form-group">
                                             <label for="password">Mật khẩu ban đầu <span
@@ -515,8 +519,8 @@
                                         <div class="modal-form-group">
                                             <label for="editPhone">Số điện thoại</label>
                                             <input type="tel" id="editPhone" name="phone" class="modal-input"
-                                                placeholder="Ví dụ: 0912345678" pattern="^0[0-9]+$"
-                                                title="Số điện thoại phải bắt đầu bằng số 0 và chỉ chứa số" />
+                                                placeholder="Ví dụ: 0912345678" pattern="^0[35789][0-9]{8}$"
+                                                title="Số điện thoại phải bắt đầu bằng số 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số" />
                                         </div>
                                         <div class="modal-form-group">
                                             <label for="editPassword">Mật khẩu mới (Để trống nếu không đổi)</label>
@@ -541,6 +545,7 @@
                                     </div>
                                 </form>
                             </div>
+                        </div>
                     </c:if>
 
                     <c:if test="${currentTab eq 'customers'}">
@@ -570,8 +575,8 @@
                                         <div class="modal-form-group">
                                             <label for="editCustomerPhone">Số điện thoại</label>
                                             <input type="tel" id="editCustomerPhone" name="phone" class="modal-input"
-                                                placeholder="Ví dụ: 0912345678" pattern="^0[0-9]+$"
-                                                title="Số điện thoại phải bắt đầu bằng số 0 và chỉ chứa số" />
+                                                placeholder="Ví dụ: 0912345678" pattern="^0[35789][0-9]{8}$"
+                                                title="Số điện thoại phải bắt đầu bằng số 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số" />
                                         </div>
                                         <div class="modal-form-group">
                                             <label for="editCustomerPassword">Mật khẩu mới (Để trống nếu không
@@ -852,7 +857,9 @@
 
                             // Trực tiếp khai báo hàm đóng/mở modal lên đối tượng window toàn cục để tránh lỗi cache JS từ trình duyệt
                             window.openChangePasswordModal = function () {
+                                console.log("openChangePasswordModal (inline admin.jsp) has been called!");
                                 const modal = document.getElementById('changePasswordModal');
+                                console.log("Modal element found:", modal);
                                 if (modal) {
                                     modal.style.display = 'flex';
                                     window.hideModalAlert();
