@@ -37,8 +37,13 @@
 
                                 <li class="menu-item">
                                     <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkout">
-                                        <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh
-                                            toán</span>
+                                        <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh toán</span>
+                                    </a>
+                                </li>
+
+                                <li class="menu-item">
+                                    <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=servicerequests">
+                                        <i class="fa-solid fa-bell-concierge"></i> <span>Quản lý yêu cầu dịch vụ</span>
                                     </a>
                                 </li>
                             </ul>

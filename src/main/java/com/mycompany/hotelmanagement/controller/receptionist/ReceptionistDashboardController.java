@@ -1,8 +1,10 @@
 package com.mycompany.hotelmanagement.controller.receptionist;
 
 import com.mycompany.hotelmanagement.dal.BookingDAO;
+import com.mycompany.hotelmanagement.dal.CustomerRequestDAO;
 import com.mycompany.hotelmanagement.dal.RoomTypeRepository;
 import com.mycompany.hotelmanagement.entity.Booking;
+import com.mycompany.hotelmanagement.entity.CustomerRequest;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -34,7 +36,7 @@ public class ReceptionistDashboardController extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(ReceptionistDashboardController.class.getName());
 
-    private static final Set<String> ALLOWED_TABS = Set.of("bookings", "checkin", "checkout");
+    private static final Set<String> ALLOWED_TABS = Set.of("bookings", "checkin", "checkout", "servicerequests");
     private static final Set<String> STATUS_WHITELIST = Set.of("All", "Pending", "Confirmed", "Rejected", "Cancelled",
             "CheckedIn", "CheckedOut");
 
@@ -62,11 +64,18 @@ public class ReceptionistDashboardController extends HttpServlet {
             // 3. Load dữ liệu theo tab
             if ("bookings".equals(tab)) {
                 loadBookingTab(request);
+            } else if ("servicerequests".equals(tab)) {
+                loadServiceRequestsTab(request);
             }
 
             // 4. Forward to view
-            request.getRequestDispatcher("/WEB-INF/views/dashboard/receptionist.jsp")
-                    .forward(request, response);
+            if ("servicerequests".equals(tab)) {
+                request.getRequestDispatcher("/WEB-INF/views/receptionist/service-requests.jsp")
+                        .forward(request, response);
+            } else {
+                request.getRequestDispatcher("/WEB-INF/views/dashboard/receptionist.jsp")
+                        .forward(request, response);
+            }
 
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error in doGet of ReceptionistDashboardController", e);
@@ -121,6 +130,62 @@ public class ReceptionistDashboardController extends HttpServlet {
 
         } catch (Exception e) {
             throw new RuntimeException("Error in loadBookingTab of ReceptionistDashboardController", e);
+        }
+    }
+
+    private void loadServiceRequestsTab(HttpServletRequest request) {
+        try {
+            CustomerRequestDAO dao = new CustomerRequestDAO();
+            String statusFilter = request.getParameter("status");
+            String keyword = request.getParameter("keyword");
+
+            if (statusFilter == null || statusFilter.trim().isEmpty()) {
+                statusFilter = "All";
+            } else {
+                statusFilter = statusFilter.trim();
+            }
+
+            int page = 1;
+            String pageStr = request.getParameter("page");
+            if (pageStr != null && !pageStr.isEmpty()) {
+                try {
+                    page = Integer.parseInt(pageStr);
+                } catch (NumberFormatException e) {
+                    page = 1;
+                }
+            }
+            if (page < 1) page = 1;
+
+            int pageSize = 10;
+            int totalItems = dao.countReceptionistRequests(statusFilter, keyword);
+            int totalPages = (int) Math.ceil((double) totalItems / pageSize);
+            if (totalPages < 1) totalPages = 1;
+            if (page > totalPages) page = totalPages;
+            int offset = (page - 1) * pageSize;
+
+            List<CustomerRequest> requestList = dao.getReceptionistRequests(statusFilter, keyword, offset, pageSize);
+
+            // KPI Counts (overall counts for the cards)
+            int kpiTotal = dao.countReceptionistRequests("All", null);
+            int kpiPending = dao.countReceptionistByStatus("Pending"); // counts Pending + InProgress
+            int kpiCompleted = dao.countReceptionistByStatus("Completed");
+            int kpiCancelled = dao.countReceptionistByStatus("Cancelled");
+
+            request.setAttribute("requestList", requestList);
+            request.setAttribute("currentStatus", statusFilter);
+            request.setAttribute("keyword", keyword != null ? keyword : "");
+            request.setAttribute("currentPage", page);
+            request.setAttribute("totalPages", totalPages);
+            request.setAttribute("totalItems", totalItems);
+            request.setAttribute("pageSize", pageSize);
+
+            request.setAttribute("kpiTotal", kpiTotal);
+            request.setAttribute("kpiPending", kpiPending);
+            request.setAttribute("kpiCompleted", kpiCompleted);
+            request.setAttribute("kpiCancelled", kpiCancelled);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error in loadServiceRequestsTab of ReceptionistDashboardController", e);
         }
     }
 }

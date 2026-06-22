@@ -29,6 +29,30 @@ import java.util.List;
  */
 public class CustomerRequestDAO {
 
+    public CustomerRequestDAO() {
+        ensureBookingIdColumnExists();
+    }
+
+    private void ensureBookingIdColumnExists() {
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            boolean exists = false;
+            try (ResultSet rs = conn.getMetaData().getColumns("HotelManagementDB", "dbo", "CustomerRequest", "booking_id")) {
+                if (rs.next()) {
+                    exists = true;
+                }
+            }
+            if (!exists) {
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.execute("ALTER TABLE dbo.CustomerRequest ADD booking_id INT NULL");
+                    stmt.execute("ALTER TABLE dbo.CustomerRequest ADD CONSTRAINT FK_CustomerRequest_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id)");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void useDatabase(Connection conn) {
         try (Statement stmt = conn.createStatement()) {
             stmt.execute("USE HotelManagementDB");
@@ -38,11 +62,19 @@ public class CustomerRequestDAO {
     }
 
     private static final String BASE_SELECT =
-            "SELECT cr.request_id, cr.room_id, rm.room_number, cr.title, cr.description, " +
+            "SELECT cr.request_id, cr.room_id, " +
+            "       COALESCE(rm.room_number, ( " +
+            "           SELECT STRING_AGG(r2.room_number, ', ') " +
+            "           FROM dbo.RoomAssignment ra " +
+            "           JOIN dbo.Room r2 ON ra.room_id = r2.room_id " +
+            "           WHERE ra.booking_id = cr.booking_id " +
+            "       )) AS room_number, " +
+            "       cr.booking_id, bk.customer_name, cr.title, cr.description, " +
             "       cr.priority, cr.status, cr.assigned_staff_id, acc.full_name AS staff_name, " +
             "       cr.created_at, cr.completed_at " +
             "FROM dbo.CustomerRequest cr " +
             "LEFT JOIN dbo.Room rm ON cr.room_id = rm.room_id " +
+            "LEFT JOIN dbo.Booking bk ON cr.booking_id = bk.booking_id " +
             "LEFT JOIN dbo.Account acc ON cr.assigned_staff_id = acc.account_id ";
 
     /** Toàn bộ yêu cầu, sắp xếp mặc định theo thời gian yêu cầu (mới nhất trước). */
@@ -262,12 +294,92 @@ public class CustomerRequestDAO {
         return false;
     }
 
+    public boolean insertRequest(CustomerRequest r) {
+        String sql = "INSERT INTO dbo.CustomerRequest (room_id, booking_id, title, description, priority, status, created_at) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, SYSDATETIME())";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                if (r.getRoomId() != null) ps.setInt(1, r.getRoomId());
+                else ps.setNull(1, java.sql.Types.INTEGER);
+                
+                if (r.getBookingId() != null) ps.setInt(2, r.getBookingId());
+                else ps.setNull(2, java.sql.Types.INTEGER);
+                
+                ps.setString(3, r.getTitle());
+                ps.setString(4, r.getDescription());
+                ps.setString(5, r.getPriority());
+                ps.setString(6, r.getStatus());
+                return ps.executeUpdate() > 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public List<CustomerRequest> getRequestsByCustomer(int accountId) {
+        List<CustomerRequest> list = new ArrayList<>();
+        String sql = "SELECT cr.request_id, cr.room_id, " +
+                     "       COALESCE(rm.room_number, ( " +
+                     "           SELECT STRING_AGG(r2.room_number, ', ') " +
+                     "           FROM dbo.RoomAssignment ra " +
+                     "           JOIN dbo.Room r2 ON ra.room_id = r2.room_id " +
+                     "           WHERE ra.booking_id = cr.booking_id " +
+                     "       )) AS room_number, " +
+                     "       cr.booking_id, bk.customer_name, cr.title, cr.description, " +
+                     "       cr.priority, cr.status, cr.assigned_staff_id, acc.full_name AS staff_name, " +
+                     "       cr.created_at, cr.completed_at " +
+                     "FROM dbo.CustomerRequest cr " +
+                     "LEFT JOIN dbo.Room rm ON cr.room_id = rm.room_id " +
+                     "LEFT JOIN dbo.Account acc ON cr.assigned_staff_id = acc.account_id " +
+                     "INNER JOIN dbo.Booking bk ON cr.booking_id = bk.booking_id " +
+                     "WHERE bk.account_id = ? " +
+                     "ORDER BY cr.created_at DESC, cr.request_id DESC";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, accountId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        list.add(mapRow(rs));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public boolean cancelRequestByCustomer(int requestId, int accountId) {
+        String sql = "UPDATE cr " +
+                     "SET cr.status = N'Cancelled', cr.updated_at = SYSDATETIME() " +
+                     "FROM dbo.CustomerRequest cr " +
+                     "INNER JOIN dbo.Booking bk ON cr.booking_id = bk.booking_id " +
+                     "WHERE cr.request_id = ? AND bk.account_id = ? AND cr.status = N'Pending'";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, requestId);
+                ps.setInt(2, accountId);
+                return ps.executeUpdate() > 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     private CustomerRequest mapRow(ResultSet rs) throws SQLException {
         CustomerRequest r = new CustomerRequest();
         r.setRequestId(rs.getInt("request_id"));
         int roomId = rs.getInt("room_id");
         if (!rs.wasNull()) r.setRoomId(roomId);
         r.setRoomNumber(rs.getString("room_number"));
+        int bookingId = rs.getInt("booking_id");
+        if (!rs.wasNull()) r.setBookingId(bookingId);
+        r.setCustomerName(rs.getString("customer_name"));
         r.setTitle(rs.getString("title"));
         r.setDescription(rs.getString("description"));
         r.setPriority(rs.getString("priority"));
@@ -278,5 +390,127 @@ public class CustomerRequestDAO {
         r.setCreatedAt(rs.getTimestamp("created_at"));
         r.setCompletedAt(rs.getTimestamp("completed_at"));
         return r;
+    }
+
+    public List<CustomerRequest> getReceptionistRequests(String statusFilter, String keyword, int offset, int pageSize) {
+        List<CustomerRequest> list = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+        StringBuilder sql = new StringBuilder(BASE_SELECT);
+        sql.append(" WHERE cr.booking_id IS NOT NULL ");
+        if (statusFilter != null && !statusFilter.trim().isEmpty() && !"All".equalsIgnoreCase(statusFilter)) {
+            if ("Pending".equalsIgnoreCase(statusFilter)) {
+                sql.append(" AND (cr.status = N'Pending' OR cr.status = N'InProgress') ");
+            } else {
+                sql.append(" AND cr.status = ? ");
+                params.add(statusFilter.trim());
+            }
+        }
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append(" AND (bk.customer_name LIKE ? OR rm.room_number LIKE ? OR cr.title LIKE ? OR CAST(cr.request_id AS VARCHAR) = ? OR ('#' + CAST(cr.request_id AS VARCHAR)) LIKE ?) ");
+            String lkw = "%" + keyword.trim() + "%";
+            params.add(lkw);
+            params.add(lkw);
+            params.add(lkw);
+            params.add(keyword.trim().replace("#REQ-", "").replace("REQ-", "").replace("#", ""));
+            params.add(lkw);
+        }
+        sql.append(" ORDER BY cr.created_at DESC, cr.request_id DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        params.add(offset);
+        params.add(pageSize);
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+                for (int i = 0; i < params.size(); i++) ps.setObject(i + 1, params.get(i));
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) list.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public int countReceptionistRequests(String statusFilter, String keyword) {
+        List<Object> params = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM dbo.CustomerRequest cr " +
+                "LEFT JOIN dbo.Room rm ON cr.room_id = rm.room_id " +
+                "LEFT JOIN dbo.Booking bk ON cr.booking_id = bk.booking_id " +
+                "LEFT JOIN dbo.Account acc ON cr.assigned_staff_id = acc.account_id ");
+        sql.append(" WHERE cr.booking_id IS NOT NULL ");
+        if (statusFilter != null && !statusFilter.trim().isEmpty() && !"All".equalsIgnoreCase(statusFilter)) {
+            if ("Pending".equalsIgnoreCase(statusFilter)) {
+                sql.append(" AND (cr.status = N'Pending' OR cr.status = N'InProgress') ");
+            } else {
+                sql.append(" AND cr.status = ? ");
+                params.add(statusFilter.trim());
+            }
+        }
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append(" AND (bk.customer_name LIKE ? OR rm.room_number LIKE ? OR cr.title LIKE ? OR CAST(cr.request_id AS VARCHAR) = ? OR ('#' + CAST(cr.request_id AS VARCHAR)) LIKE ?) ");
+            String lkw = "%" + keyword.trim() + "%";
+            params.add(lkw);
+            params.add(lkw);
+            params.add(lkw);
+            params.add(keyword.trim().replace("#REQ-", "").replace("REQ-", "").replace("#", ""));
+            params.add(lkw);
+        }
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+                for (int i = 0; i < params.size(); i++) ps.setObject(i + 1, params.get(i));
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public boolean updateStatusByReceptionist(int requestId, String newStatus, int receptionistId) {
+        String sql = "UPDATE dbo.CustomerRequest " +
+                "SET status = ?, " +
+                "    assigned_staff_id = COALESCE(assigned_staff_id, ?), " +
+                "    completed_at = CASE WHEN ? = N'Completed' THEN SYSDATETIME() ELSE NULL END, " +
+                "    updated_at = SYSDATETIME() " +
+                "WHERE request_id = ?";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, newStatus);
+                ps.setInt(2, receptionistId);
+                ps.setString(3, newStatus);
+                ps.setInt(4, requestId);
+                return ps.executeUpdate() > 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public int countReceptionistByStatus(String status) {
+        String sql = "";
+        if ("Pending".equals(status)) {
+            sql = "SELECT COUNT(*) FROM dbo.CustomerRequest WHERE (status = N'Pending' OR status = N'InProgress') AND booking_id IS NOT NULL";
+        } else {
+            sql = "SELECT COUNT(*) FROM dbo.CustomerRequest WHERE status = ? AND booking_id IS NOT NULL";
+        }
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                if (!"Pending".equals(status)) {
+                    ps.setString(1, status);
+                }
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 }

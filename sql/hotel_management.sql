@@ -1155,3 +1155,19 @@ WHERE rf.status = N'Pending'
   AND b.pend_sum > b.allowed
   AND b.allowed > 0;
 GO
+
+/* ============================================================
+   11. ADD BOOKING_ID TO CUSTOMERREQUEST TABLE
+   ============================================================ */
+IF NOT EXISTS (
+    SELECT 1 
+    FROM sys.columns 
+    WHERE object_id = OBJECT_ID(N'dbo.CustomerRequest') 
+      AND name = N'booking_id'
+)
+BEGIN
+    ALTER TABLE dbo.CustomerRequest ADD booking_id INT NULL;
+    ALTER TABLE dbo.CustomerRequest ADD CONSTRAINT FK_CustomerRequest_Booking 
+        FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id);
+END
+GO
