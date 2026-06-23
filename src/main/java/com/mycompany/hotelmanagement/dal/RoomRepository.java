@@ -22,14 +22,13 @@ public class RoomRepository {
 
     public List<RoomInfo> getAllRooms() {
         List<RoomInfo> list = new ArrayList<>();
-        String sql = "SELECT r.room_id, r.room_number, r.type_id, r.status, r.floor, " +
-                     "rt.type_name, rt.base_price, rt.bed_type, rt.area " +
-                     "FROM Room r " +
-                     "JOIN RoomType rt ON r.type_id = rt.type_id " +
-                     "ORDER BY r.room_number";
-        
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        String sql = "SELECT r.room_id, r.room_number, r.type_id, r.status, r.floor, "
+                + "rt.type_name, rt.base_price, rt.bed_type, rt.area "
+                + "FROM Room r "
+                + "JOIN RoomType rt ON r.type_id = rt.type_id "
+                + "ORDER BY r.room_number";
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -54,8 +53,7 @@ public class RoomRepository {
 
     public boolean deleteRoom(int roomId) {
         String sql = "DELETE FROM Room WHERE room_id = ?";
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setInt(1, roomId);
             int rows = ps.executeUpdate();
@@ -68,8 +66,7 @@ public class RoomRepository {
 
     public void updateRoomStatus(int roomId, String status) {
         String sql = "UPDATE Room SET status = ? WHERE room_id = ?";
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setString(1, status);
             ps.setInt(2, roomId);
@@ -81,8 +78,7 @@ public class RoomRepository {
 
     public void insertRoom(RoomInfo room) {
         String sql = "INSERT INTO Room (room_number, floor, type_id, status) VALUES (?, ?, ?, ?)";
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setString(1, room.getRoomNumber());
             ps.setString(2, room.getFloor());
@@ -96,8 +92,7 @@ public class RoomRepository {
 
     public void updateRoom(RoomInfo room) {
         String sql = "UPDATE Room SET room_number = ?, floor = ?, type_id = ?, status = ? WHERE room_id = ?";
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setString(1, room.getRoomNumber());
             ps.setString(2, room.getFloor());
@@ -107,6 +102,41 @@ public class RoomRepository {
             ps.executeUpdate();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public boolean updateRoomStatusByBooking(int bookingId, String status) {
+
+        String roomStatus;
+
+        if ("Confirmed".equals(status) || "CheckedIn".equals(status)) {
+            roomStatus = "Occupied";
+        } else {
+            roomStatus = "Available";
+        }
+
+        String sql = """
+        UPDATE Room
+        SET status = ?
+        WHERE room_id IN (
+            SELECT room_id
+            FROM RoomAssignment
+            WHERE booking_id = ?
+        )
+    """;
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            useDatabase(conn);
+
+            ps.setString(1, roomStatus);
+            ps.setInt(2, bookingId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }

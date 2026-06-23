@@ -12,18 +12,24 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * BookingDAO
- * Package harmonized to dal for HMS Hotel-Management structure.
- * Standardized database selection utilizing useDatabase helper.
- * Date: 01/6/2026
- * 
+ * BookingDAO Package harmonized to dal for HMS Hotel-Management structure.
+ * Standardized database selection utilizing useDatabase helper. Date: 01/6/2026
+ *
  * @author DUC BINH
  */
 public class BookingDAO {
 
     private static final Logger LOGGER = Logger.getLogger(BookingDAO.class.getName());
 
-    private static final Set<String> STATUS_WHITELIST = Set.of("Pending", "Confirmed", "Rejected", "Cancelled");
+    private static final Set<String> STATUS_WHITELIST
+            = Set.of(
+                    "Pending",
+                    "Confirmed",
+                    "Rejected",
+                    "Cancelled",
+                    "CheckedIn",
+                    "CheckedOut"
+            );
     private static final Set<String> FILTER_STATUS_WHITELIST = Set.of("All", "Pending", "Confirmed", "Rejected",
             "Cancelled", "CheckedIn", "CheckedOut");
 
@@ -35,36 +41,37 @@ public class BookingDAO {
         }
     }
 
-    private static final String BASE_SELECT = "SELECT b.booking_id, b.account_id, b.customer_name, " +
-            "       b.room_type_id, rt.type_name AS room_type_name, " +
-            "       b.room_quantity, b.check_in_date, b.check_out_date, " +
-            "       b.total_amount, b.status, b.note, b.group_booking_id, CAST(b.created_at AS DATE) AS created_at, " +
-            "       (SELECT STRING_AGG(r.room_number, ', ') " +
-            "        FROM dbo.RoomAssignment br " +
-            "        JOIN dbo.Room r ON br.room_id = r.room_id " +
-            "        WHERE br.booking_id = b.booking_id) AS assigned_rooms, " +
-            "       (SELECT SUM(sb.room_quantity) " +
-            "        FROM dbo.Booking sb " +
-            "        WHERE sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) AS total_room_quantity, " +
-            "       (SELECT STRING_AGG(type_name, ', ') " +
-            "        FROM ( " +
-            "            SELECT DISTINCT srt.type_name " +
-            "            FROM dbo.Booking sb " +
-            "            JOIN dbo.RoomType srt ON sb.room_type_id = srt.type_id " +
-            "            WHERE sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id " +
-            "        ) AS dt) AS group_room_type_names, " +
-            "       (SELECT COUNT(DISTINCT sb.room_type_id) " +
-            "        FROM dbo.Booking sb " +
-            "        WHERE sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) AS total_room_types, " +
-            "       (SELECT SUM(sb.total_amount) " +
-            "        FROM dbo.Booking sb " +
-            "        WHERE sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) AS overall_total_amount " +
-            "FROM dbo.Booking b " +
-            "LEFT JOIN dbo.RoomType rt ON b.room_type_id = rt.type_id ";
+    private static final String BASE_SELECT = "SELECT b.booking_id, b.account_id, b.customer_name, "
+            + "       b.room_type_id, rt.type_name AS room_type_name, "
+            + "       b.room_quantity, b.check_in_date, b.check_out_date, "
+            + "       b.total_amount, b.status, b.note, b.group_booking_id, CAST(b.created_at AS DATE) AS created_at, "
+            + "       (SELECT STRING_AGG(r.room_number, ', ') "
+            + "        FROM dbo.RoomAssignment br "
+            + "        JOIN dbo.Room r ON br.room_id = r.room_id "
+            + "        WHERE br.booking_id = b.booking_id) AS assigned_rooms, "
+            + "       (SELECT SUM(sb.room_quantity) "
+            + "        FROM dbo.Booking sb "
+            + "        WHERE sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) AS total_room_quantity, "
+            + "       (SELECT STRING_AGG(type_name, ', ') "
+            + "        FROM ( "
+            + "            SELECT DISTINCT srt.type_name "
+            + "            FROM dbo.Booking sb "
+            + "            JOIN dbo.RoomType srt ON sb.room_type_id = srt.type_id "
+            + "            WHERE sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id "
+            + "        ) AS dt) AS group_room_type_names, "
+            + "       (SELECT COUNT(DISTINCT sb.room_type_id) "
+            + "        FROM dbo.Booking sb "
+            + "        WHERE sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) AS total_room_types, "
+            + "       (SELECT SUM(sb.total_amount) "
+            + "        FROM dbo.Booking sb "
+            + "        WHERE sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) AS overall_total_amount "
+            + "FROM dbo.Booking b "
+            + "LEFT JOIN dbo.RoomType rt ON b.room_type_id = rt.type_id ";
 
     private String sanitizeLikeKeyword(String keyword) {
-        if (keyword == null)
+        if (keyword == null) {
             return "";
+        }
         return keyword.replace("[", "[[]")
                 .replace("%", "[%]")
                 .replace("_", "[_]");
@@ -129,8 +136,9 @@ public class BookingDAO {
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setInt(1, bookingId);
                 try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next())
+                    if (rs.next()) {
                         return mapRow(rs);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -147,9 +155,9 @@ public class BookingDAO {
             LOGGER.log(Level.WARNING, "Invalid new status for booking update: " + newStatus);
             return false;
         }
-        String sql = "UPDATE dbo.Booking " +
-                "SET status = ?, note = ?, updated_at = SYSDATETIME() " +
-                "WHERE booking_id = ? OR group_booking_id = ?";
+        String sql = "UPDATE dbo.Booking "
+                + "SET status = ?, note = ?, updated_at = SYSDATETIME() "
+                + "WHERE booking_id = ? OR group_booking_id = ?";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -157,7 +165,12 @@ public class BookingDAO {
                 ps.setString(2, note != null ? note.trim() : "");
                 ps.setInt(3, bookingId);
                 ps.setInt(4, bookingId);
-                return ps.executeUpdate() > 0;
+                int rows = ps.executeUpdate();
+                if (rows > 0) {
+                    syncRoomStatusByBooking(bookingId);
+                    return true;
+                }
+                return false;
             }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error in updateBookingStatus: id=" + bookingId + ", status=" + newStatus, e);
@@ -170,19 +183,20 @@ public class BookingDAO {
             LOGGER.log(Level.WARNING, "Invalid Booking entity provided for update: " + b);
             return false;
         }
-        String sql = "UPDATE dbo.Booking " +
-                "SET customer_name = ?, room_type_id = ?, room_quantity = ?, " +
-                "    check_in_date = ?, check_out_date = ?, total_amount = ?, " +
-                "    note = ?, updated_at = SYSDATETIME() " +
-                "WHERE booking_id = ? AND status = N'Pending'";
+        String sql = "UPDATE dbo.Booking "
+                + "SET customer_name = ?, room_type_id = ?, room_quantity = ?, "
+                + "    check_in_date = ?, check_out_date = ?, total_amount = ?, "
+                + "    note = ?, updated_at = SYSDATETIME() "
+                + "WHERE booking_id = ? AND status = N'Pending'";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, b.getCustomerName());
-                if (b.getRoomTypeId() != null)
+                if (b.getRoomTypeId() != null) {
                     ps.setInt(2, b.getRoomTypeId());
-                else
+                } else {
                     ps.setNull(2, Types.INTEGER);
+                }
                 ps.setInt(3, b.getRoomQuantity());
                 ps.setDate(4, b.getCheckInDate());
                 ps.setDate(5, b.getCheckOutDate());
@@ -202,9 +216,9 @@ public class BookingDAO {
         if (bookingId <= 0) {
             return false;
         }
-        String sql = "UPDATE dbo.Booking " +
-                "SET status = N'Cancelled', note = ?, updated_at = SYSDATETIME() " +
-                "WHERE (booking_id = ? OR group_booking_id = ?) AND status NOT IN (N'CheckedIn', N'CheckedOut')";
+        String sql = "UPDATE dbo.Booking "
+                + "SET status = N'Cancelled', note = ?, updated_at = SYSDATETIME() "
+                + "WHERE (booking_id = ? OR group_booking_id = ?) AND status NOT IN (N'CheckedIn', N'CheckedOut')";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -229,8 +243,9 @@ public class BookingDAO {
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, status);
                 try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next())
+                    if (rs.next()) {
                         return rs.getInt(1);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -260,12 +275,14 @@ public class BookingDAO {
         Booking b = new Booking();
         b.setBookingId(rs.getInt("booking_id"));
         int accountId = rs.getInt("account_id");
-        if (!rs.wasNull())
+        if (!rs.wasNull()) {
             b.setAccountId(accountId);
+        }
         b.setCustomerName(rs.getString("customer_name"));
         int typeId = rs.getInt("room_type_id");
-        if (!rs.wasNull())
+        if (!rs.wasNull()) {
             b.setRoomTypeId(typeId);
+        }
         b.setRoomTypeName(rs.getString("room_type_name"));
         b.setRoomQuantity(rs.getInt("room_quantity"));
         b.setCheckInDate(rs.getDate("check_in_date"));
@@ -307,12 +324,12 @@ public class BookingDAO {
     }
 
     public int getBookedRoomsCountForDates(int typeId, Date checkIn, Date checkOut) {
-        String sql = "SELECT COALESCE(SUM(room_quantity), 0) " +
-                "FROM dbo.Booking " +
-                "WHERE room_type_id = ? " +
-                "  AND status IN ('Pending', 'Confirmed', 'CheckedIn') " +
-                "  AND check_in_date < ? " +
-                "  AND check_out_date > ?";
+        String sql = "SELECT COALESCE(SUM(room_quantity), 0) "
+                + "FROM dbo.Booking "
+                + "WHERE room_type_id = ? "
+                + "  AND status IN ('Pending', 'Confirmed', 'CheckedIn') "
+                + "  AND check_in_date < ? "
+                + "  AND check_out_date > ?";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -408,23 +425,20 @@ public class BookingDAO {
     }
 
     private void ensureRoomAssignmentTableExists() {
-        String sql = "IF OBJECT_ID(N'dbo.RoomAssignment', N'U') IS NULL " +
-                "BEGIN " +
-                "    CREATE TABLE dbo.RoomAssignment ( " +
-                "        booking_id INT NOT NULL, " +
-                "        room_id INT NOT NULL, " +
-                "        assigned_by INT NULL, " +
-                "        assigned_at DATETIME2 NULL, " +
-                "        note NVARCHAR(500) NULL, " +
-                "        PRIMARY KEY (booking_id, room_id), " +
-                "        CONSTRAINT FK_RoomAssignment_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id) ON DELETE CASCADE, "
-                +
-                "        CONSTRAINT FK_RoomAssignment_Room FOREIGN KEY (room_id) REFERENCES dbo.Room(room_id) ON DELETE CASCADE, "
-                +
-                "        CONSTRAINT FK_RoomAssignment_Account FOREIGN KEY (assigned_by) REFERENCES dbo.Account(account_id) "
-                +
-                "    ); " +
-                "END";
+        String sql = "IF OBJECT_ID(N'dbo.RoomAssignment', N'U') IS NULL "
+                + "BEGIN "
+                + "    CREATE TABLE dbo.RoomAssignment ( "
+                + "        booking_id INT NOT NULL, "
+                + "        room_id INT NOT NULL, "
+                + "        assigned_by INT NULL, "
+                + "        assigned_at DATETIME2 NULL, "
+                + "        note NVARCHAR(500) NULL, "
+                + "        PRIMARY KEY (booking_id, room_id), "
+                + "        CONSTRAINT FK_RoomAssignment_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id) ON DELETE CASCADE, "
+                + "        CONSTRAINT FK_RoomAssignment_Room FOREIGN KEY (room_id) REFERENCES dbo.Room(room_id) ON DELETE CASCADE, "
+                + "        CONSTRAINT FK_RoomAssignment_Account FOREIGN KEY (assigned_by) REFERENCES dbo.Account(account_id) "
+                + "    ); "
+                + "END";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (Statement stmt = conn.createStatement()) {
@@ -437,11 +451,11 @@ public class BookingDAO {
 
     public List<Room> getRoomsByTypeId(int typeId) {
         List<Room> list = new ArrayList<>();
-        String sql = "SELECT r.room_id, r.room_number, r.status, r.floor, rt.type_name " +
-                "FROM dbo.Room r " +
-                "JOIN dbo.RoomType rt ON r.type_id = rt.type_id " +
-                "WHERE r.type_id = ? " +
-                "ORDER BY r.floor, r.room_number";
+        String sql = "SELECT r.room_id, r.room_number, r.status, r.floor, rt.type_name "
+                + "FROM dbo.Room r "
+                + "JOIN dbo.RoomType rt ON r.type_id = rt.type_id "
+                + "WHERE r.type_id = ? "
+                + "ORDER BY r.floor, r.room_number";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -466,10 +480,10 @@ public class BookingDAO {
 
     public List<Room> getAllRooms() {
         List<Room> list = new ArrayList<>();
-        String sql = "SELECT r.room_id, r.room_number, r.status, r.floor, rt.type_name " +
-                "FROM dbo.Room r " +
-                "JOIN dbo.RoomType rt ON r.type_id = rt.type_id " +
-                "ORDER BY r.floor, r.room_number";
+        String sql = "SELECT r.room_id, r.room_number, r.status, r.floor, rt.type_name "
+                + "FROM dbo.Room r "
+                + "JOIN dbo.RoomType rt ON r.type_id = rt.type_id "
+                + "ORDER BY r.floor, r.room_number";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -492,9 +506,9 @@ public class BookingDAO {
     }
 
     public CustomerDetails getCustomerDetailsByAccountId(int accountId) {
-        String sql = "SELECT a.full_name, a.email, a.phone " +
-                "FROM dbo.Account a " +
-                "WHERE a.account_id = ?";
+        String sql = "SELECT a.full_name, a.email, a.phone "
+                + "FROM dbo.Account a "
+                + "WHERE a.account_id = ?";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -562,31 +576,31 @@ public class BookingDAO {
         } finally {
             if (deletePs != null)
                 try {
-                    deletePs.close();
-                } catch (Exception e) {
-                }
+                deletePs.close();
+            } catch (Exception e) {
+            }
             if (insertPs != null)
                 try {
-                    insertPs.close();
-                } catch (Exception e) {
-                }
+                insertPs.close();
+            } catch (Exception e) {
+            }
             if (conn != null)
                 try {
-                    conn.close();
-                } catch (Exception e) {
-                }
+                conn.close();
+            } catch (Exception e) {
+            }
         }
         return false;
     }
 
     public List<Room> getAssignedRoomsForBooking(int bookingId) {
         List<Room> list = new ArrayList<>();
-        String sql = "SELECT r.room_id, r.room_number, r.status, r.floor, rt.type_name " +
-                "FROM dbo.RoomAssignment br " +
-                "JOIN dbo.Room r ON br.room_id = r.room_id " +
-                "JOIN dbo.RoomType rt ON r.type_id = rt.type_id " +
-                "WHERE br.booking_id = ? " +
-                "ORDER BY r.room_number";
+        String sql = "SELECT r.room_id, r.room_number, r.status, r.floor, rt.type_name "
+                + "FROM dbo.RoomAssignment br "
+                + "JOIN dbo.Room r ON br.room_id = r.room_id "
+                + "JOIN dbo.RoomType rt ON r.type_id = rt.type_id "
+                + "WHERE br.booking_id = ? "
+                + "ORDER BY r.room_number";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -610,11 +624,11 @@ public class BookingDAO {
     }
 
     public int createBooking(Booking b) {
-        if (b == null)
+        if (b == null) {
             return -1;
+        }
         String sql = "INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note, group_booking_id, created_at, updated_at) "
-                +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATETIME(), SYSDATETIME())";
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATETIME(), SYSDATETIME())";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -657,6 +671,7 @@ public class BookingDAO {
     }
 
     private static class BookingOverlap {
+
         Date checkIn;
         Date checkOut;
         int qty;
@@ -686,9 +701,9 @@ public class BookingDAO {
             return 0;
         }
 
-        String overlapSql = "SELECT check_in_date, check_out_date, room_quantity FROM dbo.Booking " +
-                "WHERE room_type_id = ? AND status IN (N'Pending', N'Confirmed', N'CheckedIn') " +
-                "AND check_in_date < ? AND check_out_date > ?";
+        String overlapSql = "SELECT check_in_date, check_out_date, room_quantity FROM dbo.Booking "
+                + "WHERE room_type_id = ? AND status IN (N'Pending', N'Confirmed', N'CheckedIn') "
+                + "AND check_in_date < ? AND check_out_date > ?";
 
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
@@ -731,5 +746,157 @@ public class BookingDAO {
             LOGGER.log(Level.SEVERE, "Error checking room availability for type: " + roomTypeId, e);
         }
         return 0;
+    }
+
+    public List<Booking> getCheckInBookings(String keyword, int offset, int pageSize) {
+        List<Booking> list = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder(BASE_SELECT);
+
+        sql.append("""
+        WHERE b.group_booking_id IS NULL
+        AND b.status IN ('Confirmed','CheckedIn','CheckedOut')
+    """);
+
+        List<Object> params = new ArrayList<>();
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("""
+            AND (
+                b.customer_name LIKE ?
+                OR CAST(b.booking_id AS NVARCHAR) LIKE ?
+            )
+        """);
+
+            String kw = "%" + sanitizeLikeKeyword(keyword.trim()) + "%";
+            params.add(kw);
+            params.add(kw);
+        }
+
+        sql.append("""
+        ORDER BY
+        CASE
+            WHEN b.status='Confirmed' THEN 1
+            WHEN b.status='CheckedIn' THEN 2
+            WHEN b.status='CheckedOut' THEN 3
+        END,
+        b.booking_id DESC
+        OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+    """);
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            useDatabase(conn);
+
+            int i = 1;
+            for (Object p : params) {
+                ps.setObject(i++, p);
+            }
+
+            ps.setInt(i++, offset);
+            ps.setInt(i++, pageSize);
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(mapRow(rs));
+            }
+
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error getCheckInBookings paging", e);
+        }
+
+        return list;
+    }
+
+    public int countCheckInBookings(String keyword) {
+
+        StringBuilder sql = new StringBuilder("""
+        SELECT COUNT(*)
+        FROM dbo.Booking b
+        WHERE b.group_booking_id IS NULL
+        AND b.status IN ('Confirmed','CheckedIn','CheckedOut')
+    """);
+
+        boolean hasKeyword = keyword != null && !keyword.trim().isEmpty();
+
+        if (hasKeyword) {
+            sql.append("""
+            AND (
+                b.customer_name LIKE ?
+                OR CAST(b.booking_id AS NVARCHAR) LIKE ?
+            )
+        """);
+        }
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            useDatabase(conn);
+
+            if (hasKeyword) {
+                String kw = "%" + keyword.trim() + "%";
+                ps.setString(1, kw);
+                ps.setString(2, kw);
+            }
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error countCheckInBookings", e);
+        }
+
+        return 0;
+    }
+
+    public boolean updateStatus(int bookingId, String status) {
+
+        String sql = "UPDATE dbo.Booking SET status = ? WHERE booking_id = ?";
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, status);
+            ps.setInt(2, bookingId);
+
+            boolean success = ps.executeUpdate() > 0;
+
+            if (success) {
+                syncRoomStatusByBooking(bookingId);
+            }
+
+            return success;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public void syncRoomStatusByBooking(int bookingId) {
+
+        String sql = """
+        UPDATE r
+        SET r.status =
+            CASE
+                WHEN b.status IN ('Confirmed', 'CheckedIn') THEN 'Occupied'
+                ELSE 'Available'
+            END
+        FROM dbo.Room r
+        JOIN dbo.RoomAssignment ra ON r.room_id = ra.room_id
+        JOIN dbo.Booking b ON ra.booking_id = b.booking_id
+        WHERE b.booking_id = ?
+    """;
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            useDatabase(conn);
+            ps.setInt(1, bookingId);
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
