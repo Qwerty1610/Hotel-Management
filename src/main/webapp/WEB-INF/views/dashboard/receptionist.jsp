@@ -831,7 +831,7 @@
         </div>
 
         <%-- ================================================================
-             MODAL: HUỶ booking
+             MODAL: HUỶ booking readd
              ================================================================ --%>
         <div id="modalCancel" class="modal-overlay">
             <div class="modal-container">
