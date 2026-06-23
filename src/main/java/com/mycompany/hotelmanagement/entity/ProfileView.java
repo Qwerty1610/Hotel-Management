@@ -3,16 +3,24 @@ package com.mycompany.hotelmanagement.entity;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
-public class Account implements Serializable {
+/**
+ * Read-only view model representing the personal profile of the currently
+ * logged-in user (any role). For Customer accounts it also carries the
+ * loyalty information; for other roles those fields stay null/zero.
+ */
+public class ProfileView implements Serializable {
     private int accountId;
     private String email;
-    private String password;
     private String fullName;
     private String phone;
-    private int roleId;
     private String roleName;
-    private boolean isActive;
+    private boolean active;
     private Timestamp createdAt;
+
+    // Customer-only fields (null/0 for staff & admin accounts)
+    private boolean customer;
+    private int loyaltyPoints;
+    private String membershipLevel;
 
     public int getAccountId() {
         return accountId;
@@ -22,30 +30,12 @@ public class Account implements Serializable {
         this.accountId = accountId;
     }
 
-    public Account() {
-    }
-
-    public Account(String email, String password, String fullName, String roleName) {
-        this.email = email;
-        this.password = password;
-        this.fullName = fullName;
-        this.roleName = roleName;
-    }
-
     public String getEmail() {
         return email;
     }
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public String getFullName() {
@@ -64,14 +54,6 @@ public class Account implements Serializable {
         this.phone = phone;
     }
 
-    public int getRoleId() {
-        return roleId;
-    }
-
-    public void setRoleId(int roleId) {
-        this.roleId = roleId;
-    }
-
     public String getRoleName() {
         return roleName;
     }
@@ -81,11 +63,11 @@ public class Account implements Serializable {
     }
 
     public boolean isActive() {
-        return isActive;
+        return active;
     }
 
     public void setActive(boolean active) {
-        isActive = active;
+        this.active = active;
     }
 
     public Timestamp getCreatedAt() {
@@ -94,5 +76,29 @@ public class Account implements Serializable {
 
     public void setCreatedAt(Timestamp createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public boolean isCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(boolean customer) {
+        this.customer = customer;
+    }
+
+    public int getLoyaltyPoints() {
+        return loyaltyPoints;
+    }
+
+    public void setLoyaltyPoints(int loyaltyPoints) {
+        this.loyaltyPoints = loyaltyPoints;
+    }
+
+    public String getMembershipLevel() {
+        return membershipLevel;
+    }
+
+    public void setMembershipLevel(String membershipLevel) {
+        this.membershipLevel = membershipLevel;
     }
 }

@@ -1167,7 +1167,7 @@ IF NOT EXISTS (
 )
 BEGIN
     ALTER TABLE dbo.CustomerRequest ADD booking_id INT NULL;
-    ALTER TABLE dbo.CustomerRequest ADD CONSTRAINT FK_CustomerRequest_Booking 
+    ALTER TABLE dbo.CustomerRequest ADD CONSTRAINT FK_CustomerRequest_Booking
         FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id);
 END
 GO
@@ -1221,4 +1221,65 @@ CREATE TABLE dbo.CheckInCompanion (
 );
 
 CREATE INDEX IX_CheckInCompanion_CheckInId ON dbo.CheckInCompanion(check_in_id);
+
+/* ============================================================
+   12. BOOKING CHANGE & STAY EXTENSION REQUESTS (Customer)
+   - UC 2.3.9  Request Booking Change   (request_type = 'Change')
+   - UC 2.3.14 Request Stay Extension   (request_type = 'Extension')
+   Both are tracked in one table so the customer can follow their
+   status and Reception/Manager can later review them.
+   ============================================================ */
+IF OBJECT_ID(N'dbo.BookingChangeRequest', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.BookingChangeRequest (
+        request_id        INT IDENTITY(1,1) PRIMARY KEY,
+        booking_id        INT NOT NULL,
+        account_id        INT NOT NULL,
+        request_type      NVARCHAR(20) NOT NULL,          -- 'Change' | 'Extension'
+        old_check_in      DATE NULL,
+        old_check_out     DATE NULL,
+        new_check_in      DATE NULL,
+        new_check_out     DATE NULL,
+        new_room_type_id  INT NULL,
+        new_room_quantity INT NULL,
+        additional_charge DECIMAL(18,2) NULL,             -- estimated extra charge (Extension)
+        reason            NVARCHAR(500) NULL,
+        status            NVARCHAR(20) NOT NULL DEFAULT N'Pending',  -- Pending|Approved|Rejected
+        created_at        DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        CONSTRAINT FK_BCR_Booking  FOREIGN KEY (booking_id)       REFERENCES dbo.Booking(booking_id),
+        CONSTRAINT FK_BCR_Account  FOREIGN KEY (account_id)       REFERENCES dbo.Account(account_id),
+        CONSTRAINT FK_BCR_RoomType FOREIGN KEY (new_room_type_id) REFERENCES dbo.RoomType(type_id),
+        CONSTRAINT CK_BCR_Type   CHECK (request_type IN (N'Change', N'Extension')),
+        CONSTRAINT CK_BCR_Status CHECK (status IN (N'Pending', N'Approved', N'Rejected'))
+    );
+END
+GO
+
+/* Seed a CheckedIn stay for the demo customer so Stay Extension is testable */
+IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE account_id = 5 AND customer_name = N'Customer User' AND check_in_date = '2026-06-22')
+BEGIN
+    INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note)
+    VALUES (5, N'Customer User', 1, 1, '2026-06-22', '2026-06-25', 2250000, N'CheckedIn', N'Đang lưu trú.');
+END
+GO
+
+/* Seed mock requests (idempotent) */
+IF NOT EXISTS (SELECT 1 FROM dbo.BookingChangeRequest WHERE request_type = N'Change' AND account_id = 5)
+   AND EXISTS (SELECT 1 FROM dbo.Booking WHERE account_id = 5 AND check_in_date = '2026-06-15' AND group_booking_id IS NULL)
+BEGIN
+    INSERT INTO dbo.BookingChangeRequest (booking_id, account_id, request_type, old_check_in, old_check_out, new_check_in, new_check_out, new_room_type_id, new_room_quantity, reason, status)
+    SELECT TOP 1 b.booking_id, 5, N'Change', b.check_in_date, b.check_out_date, '2026-06-16', '2026-06-19', 3, 1, N'Đổi sang ngày khác cho phù hợp lịch công tác.', N'Pending'
+    FROM dbo.Booking b
+    WHERE b.account_id = 5 AND b.check_in_date = '2026-06-15' AND b.group_booking_id IS NULL;
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.BookingChangeRequest WHERE request_type = N'Extension' AND account_id = 5)
+   AND EXISTS (SELECT 1 FROM dbo.Booking WHERE account_id = 5 AND check_in_date = '2026-06-22' AND status = N'CheckedIn')
+BEGIN
+    INSERT INTO dbo.BookingChangeRequest (booking_id, account_id, request_type, old_check_in, old_check_out, new_check_out, additional_charge, reason, status)
+    SELECT TOP 1 b.booking_id, 5, N'Extension', b.check_in_date, b.check_out_date, '2026-06-27', 1500000, N'Muốn ở thêm 2 đêm.', N'Pending'
+    FROM dbo.Booking b
+    WHERE b.account_id = 5 AND b.check_in_date = '2026-06-22' AND b.status = N'CheckedIn';
+END
 GO
