@@ -316,8 +316,8 @@ h2 {
 
     background:
         linear-gradient(
-        rgba(11,19,43,0.65),
-        rgba(11,19,43,0.82)
+            rgba(11,19,43,0.65),
+            rgba(11,19,43,0.82)
         ),
         url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=1920')
         center center / cover no-repeat;
@@ -724,15 +724,9 @@ h2 {
 
     background:
         linear-gradient(
-<<<<<<< HEAD
             to bottom,
             #ffffff,
             #f5f8fc
-=======
-        to bottom,
-        #ffffff,
-        #f5f8fc
->>>>>>> b4362f35bd0b77528710c965fe6857156e57c868
         );
 }
 
@@ -784,68 +778,6 @@ h2 {
 }
 
 /* =========================================================
-<<<<<<< HEAD
-=======
-   NEON CIRCLE LOADER (TRONG SUỐT HOÀN TOÀN Ở GIỮA)
-========================================================= */
-
-.loader-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100vh;
-    background-color: rgba(11, 19, 43, 0.15); /* Giữ nguyên nền trong suốt nhẹ của bạn */
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    transition: opacity 0.4s ease, visibility 0.4s ease;
-}
-
-/* Vòng tròn trong suốt chỉ có 1 viền duy nhất quay */
-.neon-circle {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-
-    /* Tạo đường viền cơ sở mỏng và trong suốt */
-    border: 3px solid rgba(58, 134, 255, 0.1);
-
-    /* Chỉ làm sáng 1 góc của viền (phần đỉnh) để tạo hiệu ứng vệt sáng di chuyển */
-    border-top: 3px solid var(--accent-color);
-
-    /* Hiệu ứng Neon tỏa sáng (Glow Effect) tập trung vào phần viền */
-    box-shadow: 0 0 8px rgba(58, 134, 255, 0.4),
-        inset 0 0 8px rgba(58, 134, 255, 0.4); /* Phát sáng cả hắt vào trong lõi */
-
-    animation: neon-spin 0.8s linear infinite;
-
-    /* Kích hoạt GPU tối ưu phần cứng giúp chuyển động xoay siêu mượt */
-    transform: translateZ(0);
-    will-change: transform;
-}
-
-/* Animation xoay tròn 360 độ liên tục */
-@keyframes neon-spin {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-/* Class ẩn loader mượt mà khi JavaScript xử lý xong */
-.loader-container.fade-out {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-}
-/* =========================================================
->>>>>>> b4362f35bd0b77528710c965fe6857156e57c868
    PERFORMANCE
 ========================================================= */
 
@@ -854,13 +786,9 @@ h2 {
 .value-card,
 .service-card,
 button {
-<<<<<<< HEAD
 
     transform: translateZ(0);
 
-=======
-    transform: translateZ(0);
->>>>>>> b4362f35bd0b77528710c965fe6857156e57c868
     will-change: transform;
 }
 
@@ -1107,7 +1035,6 @@ button {
 
         font-size: 26px;
     }
-<<<<<<< HEAD
 }
 
 /* =========================================================
@@ -1235,8 +1162,3 @@ button {
 .dropdown-item.logout-item:hover i {
     color: #dc2626;
 }
-
-
-=======
-}
->>>>>>> b4362f35bd0b77528710c965fe6857156e57c868
