@@ -1,8 +1,5 @@
 package com.mycompany.hotelmanagement.dal;
 
-import com.mycompany.hotelmanagement.config.DBContext;
-import com.mycompany.hotelmanagement.entity.CustomerRequest;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,6 +7,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.mycompany.hotelmanagement.config.DBContext;
+import com.mycompany.hotelmanagement.entity.CustomerRequest;
 
 /**
  * CustomerRequestDAO
@@ -23,14 +23,20 @@ import java.util.List;
  * countRequestsByStaff: tổng số công việc đã nhận của nhân viên
  * getInProgressByStaff: lấy công việc đang thực hiện của nhân viên
  * 
+ * Các hàm hỗ trợ UC Submit Service Request & View Service Request History (DINH KHANH):
+ * insertRequest: Thêm yêu cầu dịch vụ mới của khách hàng vào CSDL
+ * getRequestsByCustomer: Lấy danh sách lịch sử yêu cầu dịch vụ của khách hàng
+ * cancelRequestByCustomer: Khách hàng tự hủy yêu cầu dịch vụ (khi trạng thái là Pending)
+ *
  * Date: 02/6/2026
  * version 1.0
- * @author Pham Quoc Quy
+ * @author Pham Quoc Quy, DINH KHANH
  */
 public class CustomerRequestDAO {
 
     public CustomerRequestDAO() {
         ensureBookingIdColumnExists();
+        ensureServiceIdColumnExists();
     }
 
     private void ensureBookingIdColumnExists() {
@@ -46,6 +52,30 @@ public class CustomerRequestDAO {
                 try (Statement stmt = conn.createStatement()) {
                     stmt.execute("ALTER TABLE dbo.CustomerRequest ADD booking_id INT NULL");
                     stmt.execute("ALTER TABLE dbo.CustomerRequest ADD CONSTRAINT FK_CustomerRequest_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id)");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Tự động thêm cột service_id vào CustomerRequest nếu chưa tồn tại (idempotent).
+     * Cần thiết khi deploy trên DB cũ chưa chạy Section 12 của SQL.
+     */
+    private void ensureServiceIdColumnExists() {
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            boolean exists = false;
+            try (ResultSet rs = conn.getMetaData().getColumns("HotelManagementDB", "dbo", "CustomerRequest", "service_id")) {
+                if (rs.next()) {
+                    exists = true;
+                }
+            }
+            if (!exists) {
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.execute("ALTER TABLE dbo.CustomerRequest ADD service_id INT NULL");
+                    stmt.execute("ALTER TABLE dbo.CustomerRequest ADD CONSTRAINT FK_CustomerRequest_Service FOREIGN KEY (service_id) REFERENCES dbo.HotelService(service_id)");
                 }
             }
         } catch (Exception e) {
@@ -71,7 +101,7 @@ public class CustomerRequestDAO {
             "       )) AS room_number, " +
             "       cr.booking_id, bk.customer_name, cr.title, cr.description, " +
             "       cr.priority, cr.status, cr.assigned_staff_id, acc.full_name AS staff_name, " +
-            "       cr.created_at, cr.completed_at " +
+            "       cr.created_at, cr.completed_at, cr.service_id " +
             "FROM dbo.CustomerRequest cr " +
             "LEFT JOIN dbo.Room rm ON cr.room_id = rm.room_id " +
             "LEFT JOIN dbo.Booking bk ON cr.booking_id = bk.booking_id " +
@@ -294,22 +324,34 @@ public class CustomerRequestDAO {
         return false;
     }
 
+    /**
+     * [UC Submit Service Request - DINH KHANH]
+     * Thêm mới một yêu cầu dịch vụ (CustomerRequest) từ khách hàng vào cơ sở dữ liệu.
+     * Trạng thái mặc định khi thêm mới là 'Pending', thời điểm tạo được lấy theo SYSDATETIME() của DB.
+     * Lưu thêm service_id để khi receptionist approve có thể tra cứu giá tiền.
+     *
+     * @param r Đối tượng chứa thông tin yêu cầu dịch vụ (room_id, booking_id, service_id, title, description, priority, status)
+     * @return true nếu thêm thành công, ngược lại trả về false
+     */
     public boolean insertRequest(CustomerRequest r) {
-        String sql = "INSERT INTO dbo.CustomerRequest (room_id, booking_id, title, description, priority, status, created_at) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, SYSDATETIME())";
+        String sql = "INSERT INTO dbo.CustomerRequest (room_id, booking_id, service_id, title, description, priority, status, created_at) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, SYSDATETIME())";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 if (r.getRoomId() != null) ps.setInt(1, r.getRoomId());
                 else ps.setNull(1, java.sql.Types.INTEGER);
-                
+
                 if (r.getBookingId() != null) ps.setInt(2, r.getBookingId());
                 else ps.setNull(2, java.sql.Types.INTEGER);
-                
-                ps.setString(3, r.getTitle());
-                ps.setString(4, r.getDescription());
-                ps.setString(5, r.getPriority());
-                ps.setString(6, r.getStatus());
+
+                if (r.getServiceId() != null) ps.setInt(3, r.getServiceId());
+                else ps.setNull(3, java.sql.Types.INTEGER);
+
+                ps.setString(4, r.getTitle());
+                ps.setString(5, r.getDescription());
+                ps.setString(6, r.getPriority());
+                ps.setString(7, r.getStatus());
                 return ps.executeUpdate() > 0;
             }
         } catch (Exception e) {
@@ -318,6 +360,39 @@ public class CustomerRequestDAO {
         return false;
     }
 
+    /**
+     * Lấy một CustomerRequest theo request_id.
+     * Dùng trong ReceptionistRequestController để lấy thông tin (booking_id, service_id)
+     * trước khi tự động thêm dịch vụ vào InvoiceItem khi approve.
+     *
+     * @param requestId ID của yêu cầu dịch vụ
+     * @return CustomerRequest nếu tìm thấy, null nếu không
+     */
+    public CustomerRequest getById(int requestId) {
+        String sql = BASE_SELECT + " WHERE cr.request_id = ?";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, requestId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return mapRow(rs);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * [UC View Service Request History - DINH KHANH]
+     * Lấy toàn bộ danh sách yêu cầu dịch vụ phòng mà một khách hàng cụ thể đã gửi.
+     * Kết quả trả về kết hợp thông tin phòng (room_number) và tên nhân viên đã xử lý (staff_name) nếu có,
+     * được sắp xếp giảm dần theo thời gian tạo (yêu cầu mới nhất hiển thị đầu tiên).
+     *
+     * @param accountId ID tài khoản của khách hàng
+     * @return Danh sách các đối tượng CustomerRequest tương ứng
+     */
     public List<CustomerRequest> getRequestsByCustomer(int accountId) {
         List<CustomerRequest> list = new ArrayList<>();
         String sql = "SELECT cr.request_id, cr.room_id, " +
@@ -352,6 +427,15 @@ public class CustomerRequestDAO {
         return list;
     }
 
+    /**
+     * [UC View Service Request History - DINH KHANH]
+     * Cho phép khách hàng tự hủy yêu cầu dịch vụ của chính họ.
+     * Yêu cầu chỉ được phép hủy nếu đang ở trạng thái 'Pending' (Chờ xử lý).
+     *
+     * @param requestId ID của yêu cầu dịch vụ cần hủy
+     * @param accountId ID tài khoản của khách hàng thực hiện hủy để xác thực quyền sở hữu
+     * @return true nếu cập nhật trạng thái sang 'Cancelled' thành công, ngược lại trả về false
+     */
     public boolean cancelRequestByCustomer(int requestId, int accountId) {
         String sql = "UPDATE cr " +
                      "SET cr.status = N'Cancelled', cr.updated_at = SYSDATETIME() " +
@@ -371,6 +455,14 @@ public class CustomerRequestDAO {
         return false;
     }
 
+    /**
+     * Ánh xạ (Map) một dòng dữ liệu từ ResultSet thu được từ cơ sở dữ liệu
+     * thành một đối tượng thực thể CustomerRequest.
+     *
+     * @param rs ResultSet hiện tại từ truy vấn SQL
+     * @return Một đối tượng CustomerRequest chứa đầy đủ dữ liệu
+     * @throws SQLException nếu xảy ra lỗi truy vấn cơ sở dữ liệu
+     */
     private CustomerRequest mapRow(ResultSet rs) throws SQLException {
         CustomerRequest r = new CustomerRequest();
         r.setRequestId(rs.getInt("request_id"));
@@ -389,9 +481,22 @@ public class CustomerRequestDAO {
         r.setAssignedStaffName(rs.getString("staff_name"));
         r.setCreatedAt(rs.getTimestamp("created_at"));
         r.setCompletedAt(rs.getTimestamp("completed_at"));
+        int serviceId = rs.getInt("service_id");
+        if (!rs.wasNull()) r.setServiceId(serviceId);
         return r;
     }
 
+    /**
+     * [UC View Service Requests - DINH KHANH]
+     * Lấy danh sách phân trang các yêu cầu dịch vụ của khách hàng hiển thị trên giao diện của Lễ tân.
+     * Hỗ trợ lọc theo trạng thái (Pending/Completed/Cancelled) và tìm kiếm theo từ khóa (tên khách, phòng, mã yêu cầu).
+     *
+     * @param statusFilter Trạng thái cần lọc (All, Pending, Completed, Cancelled)
+     * @param keyword Từ khóa tìm kiếm (tên khách, số phòng, mã yêu cầu)
+     * @param offset Vị trí bắt đầu lấy bản ghi (phục vụ phân trang)
+     * @param pageSize Số lượng bản ghi tối đa trên một trang
+     * @return Danh sách các CustomerRequest thỏa mãn điều kiện
+     */
     public List<CustomerRequest> getReceptionistRequests(String statusFilter, String keyword, int offset, int pageSize) {
         List<CustomerRequest> list = new ArrayList<>();
         List<Object> params = new ArrayList<>();
@@ -431,6 +536,15 @@ public class CustomerRequestDAO {
         return list;
     }
 
+    /**
+     * [UC View Service Requests - DINH KHANH]
+     * Đếm tổng số lượng yêu cầu dịch vụ thỏa mãn điều kiện lọc và tìm kiếm từ phía Lễ tân,
+     * phục vụ tính toán số trang cho phân trang giao diện.
+     *
+     * @param statusFilter Trạng thái cần lọc
+     * @param keyword Từ khóa tìm kiếm
+     * @return Tổng số bản ghi thỏa mãn điều kiện
+     */
     public int countReceptionistRequests(String statusFilter, String keyword) {
         List<Object> params = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM dbo.CustomerRequest cr " +
@@ -469,6 +583,17 @@ public class CustomerRequestDAO {
         return 0;
     }
 
+    /**
+     * [UC View Service Requests - DINH KHANH]
+     * Cho phép Lễ tân cập nhật trạng thái yêu cầu dịch vụ (ví dụ: duyệt hoàn thành 'Completed').
+     * Nếu yêu cầu chưa có nhân viên đảm nhận, hệ thống tự động gán cho chính lễ tân duyệt (`receptionistId`),
+     * đồng thời cập nhật thời gian hoàn thành `completed_at`.
+     *
+     * @param requestId ID của yêu cầu dịch vụ
+     * @param newStatus Trạng thái mới cần cập nhật (Completed, Cancelled)
+     * @param receptionistId ID tài khoản của lễ tân đang thực hiện thao tác duyệt
+     * @return true nếu cập nhật thành công, ngược lại trả về false
+     */
     public boolean updateStatusByReceptionist(int requestId, String newStatus, int receptionistId) {
         String sql = "UPDATE dbo.CustomerRequest " +
                 "SET status = ?, " +
@@ -491,6 +616,14 @@ public class CustomerRequestDAO {
         return false;
     }
 
+    /**
+     * [UC View Service Requests - DINH KHANH]
+     * Đếm tổng số lượng yêu cầu dịch vụ của khách hàng theo trạng thái cụ thể
+     * để hiển thị trên các thẻ thống kê KPI của giao diện Lễ tân.
+     *
+     * @param status Trạng thái cần đếm (Pending, Completed, Cancelled)
+     * @return Số lượng yêu cầu tương ứng với trạng thái đó
+     */
     public int countReceptionistByStatus(String status) {
         String sql = "";
         if ("Pending".equals(status)) {

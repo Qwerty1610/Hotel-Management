@@ -143,6 +143,64 @@ public class InvoiceDAO {
         return null;
     }
 
+    /**
+     * Lấy hóa đơn theo booking_id.
+     * Dùng trong ReceptionistRequestController khi approve service request để
+     * tìm hóa đơn tương ứng với booking rồi thêm dòng dịch vụ vào InvoiceItem.
+     *
+     * @param bookingId ID của booking cần tìm hóa đơn
+     * @return Invoice đầu tiên khớp với booking_id, null nếu chưa có hóa đơn
+     */
+    public Invoice getInvoiceByBookingId(int bookingId) {
+        String sql = BASE_SELECT + "WHERE i.booking_id = ? ORDER BY i.created_at DESC";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, bookingId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return mapInvoice(rs);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Thêm một dòng dịch vụ (Service) vào hóa đơn khi Lễ tân approve service request.
+     * Nếu hóa đơn đang ở trạng thái 'Paid', giữ nguyên trạng thái (dịch vụ bổ sung).
+     * Nếu ở 'Pending', cũng giữ nguyên — tổng tiền sẽ tự động tăng do SUM(InvoiceItem.amount).
+     *
+     * @param invoiceId ID hóa đơn cần thêm dòng
+     * @param serviceName Tên dịch vụ (hiển thị trên hóa đơn)
+     * @param quantity Số lượng
+     * @param unitPrice Đơn giá (lấy từ HotelService.price)
+     * @return true nếu thêm thành công
+     */
+    public boolean addServiceItem(int invoiceId, String serviceName, int quantity, double unitPrice) {
+        String sql = "INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount) " +
+                "VALUES (?, N'Service', ?, ?, ?, ?)";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, invoiceId);
+                ps.setString(2, serviceName);
+                ps.setInt(3, quantity);
+                ps.setDouble(4, unitPrice);
+                ps.setDouble(5, quantity * unitPrice);
+                int rows = ps.executeUpdate();
+                if (rows > 0) {
+                    touchInvoice(conn, invoiceId);
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public List<InvoiceItem> getItems(int invoiceId) {
         List<InvoiceItem> list = new ArrayList<>();
         String sql = "SELECT item_id, invoice_id, item_type, description, quantity, unit_price, amount " +

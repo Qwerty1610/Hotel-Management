@@ -8,7 +8,7 @@ import java.sql.Timestamp;
  * nhân viên Housekeeping xử lý.
  *
  * Date: 02/6/2026
- * ver 1.0
+ * ver 1.1 - Thêm serviceId để liên kết với HotelService khi tự động ghi InvoiceItem
  * @author Phạm Quốc Quý
  */
 public class CustomerRequest {
@@ -26,6 +26,7 @@ public class CustomerRequest {
     private Timestamp completedAt;
     private Integer bookingId;       // có thể null, liên kết với booking của khách
     private String customerName;     // lấy kèm từ JOIN Booking để hiển thị
+    private Integer serviceId;       // null nếu request không từ danh sách dịch vụ
 
     public CustomerRequest() {}
 
@@ -68,4 +69,7 @@ public class CustomerRequest {
 
     public Timestamp getCompletedAt()         { return completedAt; }
     public void setCompletedAt(Timestamp v)   { this.completedAt = v; }
+
+    public Integer getServiceId()             { return serviceId; }
+    public void setServiceId(Integer v)       { this.serviceId = v; }
 }

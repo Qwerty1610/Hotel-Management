@@ -224,7 +224,8 @@ public class CustomerServiceController extends HttpServlet {
             CustomerRequest req = new CustomerRequest();
             req.setBookingId(bookingId);
             req.setRoomId(roomId);
-            req.setTitle(serviceName);
+            req.setTitle(selectedService.getServiceName());
+            req.setServiceId(selectedService.getServiceId()); // lưu service_id để tra cứu giá khi approve
             req.setDescription(selectedService.getDescription());
             req.setPriority("Medium");
             req.setStatus("Pending");

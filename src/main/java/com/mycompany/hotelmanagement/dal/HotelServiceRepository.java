@@ -100,4 +100,36 @@ public class HotelServiceRepository {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Lấy thông tin một dịch vụ theo service_id.
+     * Dùng trong ReceptionistRequestController để lấy tên và giá tiền
+     * khi tự động thêm dịch vụ đã approve vào InvoiceItem.
+     *
+     * @param serviceId ID dịch vụ cần tìm
+     * @return HotelService nếu tìm thấy, null nếu không
+     */
+    public HotelService getById(int serviceId) {
+        String sql = "SELECT service_id, service_name, description, price, unit, is_active FROM HotelService WHERE service_id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            useDatabase(conn);
+            ps.setInt(1, serviceId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    HotelService hs = new HotelService();
+                    hs.setServiceId(rs.getInt("service_id"));
+                    hs.setServiceName(rs.getString("service_name"));
+                    hs.setDescription(rs.getString("description"));
+                    hs.setPrice(rs.getDouble("price"));
+                    hs.setUnit(rs.getString("unit"));
+                    hs.setIsActive(rs.getBoolean("is_active"));
+                    return hs;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

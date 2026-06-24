@@ -1171,3 +1171,24 @@ BEGIN
         FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id);
 END
 GO
+
+/* ============================================================
+   12. ADD SERVICE_ID TO CUSTOMERREQUEST TABLE
+   - Liên kết CustomerRequest với HotelService để biết giá tiền
+     khi Lễ tân approve → tự động thêm dịch vụ vào InvoiceItem
+   ============================================================ */
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'dbo.CustomerRequest')
+      AND name = N'service_id'
+)
+BEGIN
+    ALTER TABLE dbo.CustomerRequest ADD service_id INT NULL;
+    ALTER TABLE dbo.CustomerRequest ADD CONSTRAINT FK_CustomerRequest_Service
+        FOREIGN KEY (service_id) REFERENCES dbo.HotelService(service_id);
+END
+GO
+
+/* Thêm method hỗ trợ: lấy Invoice theo booking_id (dùng trong InvoiceDAO) */
+/* Không cần SQL riêng — được xử lý trong Java InvoiceDAO.getInvoiceByBookingId() */
