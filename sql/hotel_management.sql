@@ -554,24 +554,39 @@ GO
 
 IF OBJECT_ID(N'dbo.Booking', N'U') IS NULL
 BEGIN
-    CREATE TABLE dbo.Booking (
-        booking_id INT IDENTITY(1,1) PRIMARY KEY,
-        account_id INT NULL,
-        customer_name NVARCHAR(100) NOT NULL,
-        room_type_id INT NULL,
-        room_quantity INT NOT NULL DEFAULT 1,
-        check_in_date DATE NOT NULL,
-        check_out_date DATE NOT NULL,
-        total_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
-        status NVARCHAR(50) NOT NULL DEFAULT N'Pending',
-        note NVARCHAR(500) NULL,
-        group_booking_id INT NULL,
-        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
-        updated_at DATETIME2 NULL,
-        CONSTRAINT FK_Booking_Account FOREIGN KEY (account_id) REFERENCES dbo.Account(account_id),
-        CONSTRAINT FK_Booking_RoomType FOREIGN KEY (room_type_id) REFERENCES dbo.RoomType(type_id),
-        CONSTRAINT FK_Booking_Group FOREIGN KEY (group_booking_id) REFERENCES dbo.Booking(booking_id)
-    );
+CREATE TABLE dbo.Booking (
+    booking_id INT IDENTITY(1,1) PRIMARY KEY,
+    account_id INT NULL,
+
+    customer_name NVARCHAR(100) NOT NULL,
+    phone NVARCHAR(20) NULL,
+    email NVARCHAR(100) NULL,
+
+    room_type_id INT NULL,
+    room_quantity INT NOT NULL DEFAULT 1,
+    check_in_date DATE NOT NULL,
+    check_out_date DATE NOT NULL,
+
+    total_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+    status NVARCHAR(50) NOT NULL DEFAULT N'Pending',
+    note NVARCHAR(500) NULL,
+    group_booking_id INT NULL,
+
+    created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    updated_at DATETIME2 NULL,
+
+    CONSTRAINT FK_Booking_Account
+        FOREIGN KEY (account_id)
+        REFERENCES dbo.Account(account_id),
+
+    CONSTRAINT FK_Booking_RoomType
+        FOREIGN KEY (room_type_id)
+        REFERENCES dbo.RoomType(type_id),
+
+    CONSTRAINT FK_Booking_Group
+        FOREIGN KEY (group_booking_id)
+        REFERENCES dbo.Booking(booking_id)
+);
 END
 GO
 
