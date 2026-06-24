@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/login.css" />
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/login.css?v=3" />
 </head>
 
 <body class="login-body">
@@ -29,6 +29,9 @@
                             <c:when test="${param.error eq 'email_exists'}">
                                 Email này đã được đăng ký trong hệ thống!
                             </c:when>
+                            <c:when test="${param.error eq 'phone_exists'}">
+                                Số điện thoại này đã được đăng ký trong hệ thống!
+                            </c:when>
                             <c:when test="${param.error eq 'passwords_dont_match'}">
                                 Mật khẩu xác nhận không trùng khớp!
                             </c:when>
@@ -36,7 +39,7 @@
                                 Định dạng Email không hợp lệ!
                             </c:when>
                             <c:when test="${param.error eq 'invalid_phone'}">
-                                Số điện thoại phải bắt đầu bằng số 0 và chỉ chứa các chữ số!
+                                Số điện thoại phải bắt đầu bằng số 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số!
                             </c:when>
                             <c:when test="${param.error eq 'invalid_password'}">
                                 Mật khẩu phải tối thiểu 8 ký tự, bao gồm cả chữ, số và ký tự đặc biệt!
@@ -75,7 +78,7 @@
                     <label for="phone">Số điện thoại</label>
                     <div class="input-wrapper">
                         <input type="tel" id="phone" name="phone" class="form-input"
-                            placeholder="0912345678" required pattern="^0[0-9]+$" title="Số điện thoại phải bắt đầu từ số 0 và chỉ gồm chữ số" value="${param.phone}" />
+                            placeholder="0912345678" required pattern="^0[35789][0-9]{8}$" title="Số điện thoại phải bắt đầu bằng số 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số" value="${param.phone}" />
                         <i class="fa-solid fa-phone"></i>
                     </div>
                 </div>
@@ -132,8 +135,8 @@
                 errorMessage = 'Định dạng Email không hợp lệ!';
             }
             // 3. Phone validation
-            else if (!/^0[0-9]+$/.test(phone)) {
-                errorMessage = 'Số điện thoại phải bắt đầu bằng số 0 và chỉ chứa các chữ số!';
+            else if (!/^0[35789][0-9]{8}$/.test(phone)) {
+                errorMessage = 'Số điện thoại phải bắt đầu bằng số 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số!';
             }
             // 4. Password strength validation
             else {

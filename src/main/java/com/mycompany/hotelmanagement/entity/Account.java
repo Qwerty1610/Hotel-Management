@@ -1,13 +1,18 @@
 package com.mycompany.hotelmanagement.entity;
 
 import java.io.Serializable;
+import java.sql.Timestamp;
 
 public class Account implements Serializable {
     private int accountId;
     private String email;
     private String password;
     private String fullName;
+    private String phone;
+    private int roleId;
     private String roleName;
+    private boolean isActive;
+    private Timestamp createdAt;
 
     public int getAccountId() {
         return accountId;
@@ -51,11 +56,43 @@ public class Account implements Serializable {
         this.fullName = fullName;
     }
 
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public int getRoleId() {
+        return roleId;
+    }
+
+    public void setRoleId(int roleId) {
+        this.roleId = roleId;
+    }
+
     public String getRoleName() {
         return roleName;
     }
 
     public void setRoleName(String roleName) {
         this.roleName = roleName;
+    }
+
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setActive(boolean active) {
+        isActive = active;
+    }
+
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
     }
 }

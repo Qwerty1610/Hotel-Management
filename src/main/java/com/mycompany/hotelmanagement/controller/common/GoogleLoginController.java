@@ -5,15 +5,9 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
 import com.mycompany.hotelmanagement.config.ConfigUtil;
-import com.mycompany.hotelmanagement.config.DBContext;
-import org.mindrot.jbcrypt.BCrypt;
+import com.mycompany.hotelmanagement.service.AuthService;
+import com.mycompany.hotelmanagement.service.LoginResult;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -25,12 +19,14 @@ import jakarta.servlet.http.HttpSession;
 /**
  * Controller xử lý đăng nhập bằng Google OAuth2.
  * Nhận authorization code, đổi lấy access token, lấy thông tin tài khoản người dùng,
- * sau đó đăng nhập hoặc tự động đăng ký tài khoản khách hàng mới nếu chưa có trong DB.
+ * sau đó ủy thác việc đăng nhập/đăng ký tự động cho AuthService.
  * 
  * @author TùngNQ
  */
 @WebServlet(name = "GoogleLoginController", urlPatterns = {"/login-google"})
 public class GoogleLoginController extends HttpServlet {
+
+    private final AuthService authService = new AuthService();
 
     private static final String CLIENT_ID = ConfigUtil.get("google.client.id",
             System.getProperty("google.client.id", "your-google-client-id"));
@@ -71,8 +67,31 @@ public class GoogleLoginController extends HttpServlet {
                 return;
             }
 
-            // 3. Check and authenticate or register in DB
-            authenticateOrRegisterUser(email, name, request, response);
+            // 3. Delegate authentication and register logic to AuthService
+            LoginResult result = authService.loginOrRegisterGoogle(email, name);
+
+            if (result.isSuccess()) {
+                HttpSession session = request.getSession();
+                session.setAttribute("user", result.getDisplayName());
+                session.setAttribute("role", result.getRole());
+                session.setAttribute("email", email != null ? email.trim() : "");
+                
+                String redirectUrl = null;
+                if ("CUSTOMER".equals(result.getRole())) {
+                    redirectUrl = (String) session.getAttribute("redirectAfterLogin");
+                    session.removeAttribute("redirectAfterLogin");
+                } else {
+                    session.removeAttribute("redirectAfterLogin");
+                }
+
+                if (redirectUrl != null && !redirectUrl.isEmpty()) {
+                    response.sendRedirect(redirectUrl);
+                } else {
+                    response.sendRedirect(request.getContextPath() + result.getRedirectUrl());
+                }
+            } else {
+                response.sendRedirect(request.getContextPath() + "/home/login?error=invalid_credentials");
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -120,142 +139,6 @@ public class GoogleLoginController extends HttpServlet {
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         return response.body();
-    }
-
-    /**
-     * Xác thực người dùng bằng Email:
-     * - Nếu email tồn tại trong DB, xác định vai trò của người dùng và thiết lập Session đăng nhập.
-     * - Nếu email chưa tồn tại, tự động đăng ký một tài khoản mới dưới vai trò Customer trong Database thông qua Transaction.
-     */
-    private void authenticateOrRegisterUser(String email, String name, HttpServletRequest request, HttpServletResponse response) throws Exception {
-        Connection conn = null;
-        PreparedStatement checkPs = null;
-        ResultSet rs = null;
-
-        try {
-            conn = DBContext.getConnection();
-            
-            // Query to find user and role
-            checkPs = conn.prepareStatement(
-                "SELECT a.account_id, a.email, a.full_name, r.role_name " +
-                "FROM Account a JOIN Role r ON a.role_id = r.role_id " +
-                "WHERE a.email = ? AND a.is_active = 1");
-            checkPs.setString(1, email);
-            rs = checkPs.executeQuery();
-
-            String role = null;
-            String redirectUrl = null;
-            String userDisplayName = name;
-            int accountIdVal = -1;
-
-            if (rs.next()) {
-                // User already exists, retrieve details
-                accountIdVal = rs.getInt("account_id");
-                String dbFullName = rs.getString("full_name");
-                String dbRoleName = rs.getString("role_name");
-                userDisplayName = (dbFullName != null && !dbFullName.trim().isEmpty()) ? dbFullName : name;
-
-                if ("Admin".equalsIgnoreCase(dbRoleName)) {
-                    role = "ADMIN";
-                    redirectUrl = "/admin/dashboard";
-                } else if ("Customer".equalsIgnoreCase(dbRoleName)) {
-                    role = "CUSTOMER";
-                    redirectUrl = "/home";
-                } else if ("Manager".equalsIgnoreCase(dbRoleName)) {
-                    role = "HOTEL_MANAGER";
-                    redirectUrl = "/manager/dashboard";
-                } else if ("Receptionist".equalsIgnoreCase(dbRoleName)) {
-                    role = "RECEPTIONIST";
-                    redirectUrl = "/receptionist/dashboard";
-                } else if ("Housekeeping".equalsIgnoreCase(dbRoleName) || "Housekeeper".equalsIgnoreCase(dbRoleName)) {
-                    role = "HOUSEKEEPING";
-                    redirectUrl = "/housekeeping/dashboard";
-                } else if ("Staff".equalsIgnoreCase(dbRoleName)) {
-                    role = "RECEPTIONIST";
-                    redirectUrl = "/receptionist/dashboard";
-                }
-            } else {
-                // User doesn't exist, create new Customer account
-                rs.close();
-                checkPs.close();
-
-                conn.setAutoCommit(false); // Begin Transaction
-
-                PreparedStatement insertAccountPs = null;
-                PreparedStatement insertCustomerPs = null;
-
-                try {
-                    String randomPassword = java.util.UUID.randomUUID().toString();
-                    String hashedPassword = BCrypt.hashpw(randomPassword, BCrypt.gensalt(12));
-
-                    int customerRoleId = 5; // default fallback if query fails
-                    try (PreparedStatement rolePs = conn.prepareStatement("SELECT role_id FROM Role WHERE role_name = ?")) {
-                        rolePs.setString(1, "Customer");
-                        try (ResultSet roleRs = rolePs.executeQuery()) {
-                            if (roleRs.next()) {
-                                customerRoleId = roleRs.getInt(1);
-                            }
-                        }
-                    }
-
-                    String insertAccountSql = "INSERT INTO Account (email, password, full_name, role_id, is_active, created_at) VALUES (?, ?, ?, ?, ?, ?)";
-                    insertAccountPs = conn.prepareStatement(insertAccountSql, Statement.RETURN_GENERATED_KEYS);
-                    insertAccountPs.setString(1, email);
-                    insertAccountPs.setString(2, hashedPassword);
-                    insertAccountPs.setString(3, name);
-                    insertAccountPs.setInt(4, customerRoleId); // Dynamically fetched Customer role ID
-                    insertAccountPs.setInt(5, 1); // is_active = 1
-                    insertAccountPs.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
-
-                    insertAccountPs.executeUpdate();
-
-                    int accountId = -1;
-                    try (ResultSet generatedKeys = insertAccountPs.getGeneratedKeys()) {
-                        if (generatedKeys.next()) {
-                            accountId = generatedKeys.getInt(1);
-                        } else {
-                            throw new SQLException("Creating account failed, no ID obtained.");
-                        }
-                    }
-                    accountIdVal = accountId;
-
-                    String insertCustomerSql = "INSERT INTO Customer (account_id, loyalty_points, membership_level) VALUES (?, ?, ?)";
-                    insertCustomerPs = conn.prepareStatement(insertCustomerSql);
-                    insertCustomerPs.setInt(1, accountId);
-                    insertCustomerPs.setInt(2, 0);
-                    insertCustomerPs.setString(3, "Standard");
-                    insertCustomerPs.executeUpdate();
-
-                    conn.commit(); // Commit Transaction
-                    
-                    role = "CUSTOMER";
-                    redirectUrl = "/home";
-
-                } catch (Exception e) {
-                    if (conn != null) conn.rollback();
-                    throw e;
-                } finally {
-                    if (insertAccountPs != null) insertAccountPs.close();
-                    if (insertCustomerPs != null) insertCustomerPs.close();
-                }
-            }
-
-            if (role != null) {
-                HttpSession session = request.getSession();
-                session.setAttribute("user", userDisplayName);
-                session.setAttribute("role", role);
-                session.setAttribute("email", email);
-                session.setAttribute("accountId", accountIdVal);
-                response.sendRedirect(request.getContextPath() + redirectUrl);
-            } else {
-                response.sendRedirect(request.getContextPath() + "/home/login?error=invalid_credentials");
-            }
-
-        } finally {
-            if (rs != null) rs.close();
-            if (checkPs != null) checkPs.close();
-            if (conn != null) conn.close();
-        }
     }
 
     /**

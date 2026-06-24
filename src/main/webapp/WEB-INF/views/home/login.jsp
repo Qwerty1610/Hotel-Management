@@ -11,7 +11,7 @@
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
                 rel="stylesheet" />
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-            <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/login.css" />
+            <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/login.css?v=3" />
         </head>
 
         <body class="login-body">
@@ -73,9 +73,10 @@
                         <div class="form-group">
                             <label for="password">Mật khẩu</label>
                             <div class="input-wrapper">
-                                <input type="password" id="password" name="password" class="form-input"
+                                <input type="password" id="password" name="password" class="form-input form-input-password" style="padding-right: 48px !important;"
                                     placeholder="Nhập mật khẩu" required />
                                 <i class="fa-solid fa-lock"></i>
+                                <i class="fa-regular fa-eye-slash toggle-password" id="togglePasswordBtn" style="position: absolute !important; right: 18px !important; left: auto !important; top: 50% !important; transform: translateY(-50%) !important; cursor: pointer !important; z-index: 10 !important; color: var(--text-light) !important;"></i>
                             </div>
                         </div>
 
@@ -121,7 +122,7 @@
                 </div>
             </div>
 
-            <script src="${pageContext.request.contextPath}/assets/js/login.js"></script>
+            <script src="${pageContext.request.contextPath}/assets/js/login.js?v=2"></script>
         </body>
 
         </html>

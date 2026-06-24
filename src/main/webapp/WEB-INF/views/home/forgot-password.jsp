@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/login.css" />
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/login.css?v=3" />
 </head>
 
 <body class="login-body">
@@ -69,5 +69,35 @@
         </div>
     </div>
 
+    <script>
+        document.getElementById('forgotPasswordForm').addEventListener('submit', function (e) {
+            const email = document.getElementById('email').value.trim();
+            let errorMessage = '';
+            
+            if (!email) {
+                errorMessage = 'Vui lòng nhập địa chỉ email!';
+            } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+                errorMessage = 'Định dạng Email không hợp lệ!';
+            }
+            
+            if (errorMessage) {
+                e.preventDefault(); // Stop submission
+                
+                // Display error message in the .error-alert div
+                let alertContainer = document.querySelector('.error-alert');
+                if (!alertContainer) {
+                    alertContainer = document.createElement('div');
+                    alertContainer.className = 'error-alert';
+                    alertContainer.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> <span></span>';
+                    const card = document.querySelector('.login-card');
+                    const form = document.getElementById('forgotPasswordForm');
+                    card.insertBefore(alertContainer, form);
+                }
+                
+                alertContainer.querySelector('span').innerText = errorMessage;
+                alertContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    </script>
 </body>
 </html>

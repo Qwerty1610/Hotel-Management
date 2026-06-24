@@ -18,7 +18,13 @@ public class BookingController extends HttpServlet {
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("user") == null
                 || !"CUSTOMER".equals(session.getAttribute("role"))) {
-            // Guest or unauthorized role, redirect to login page
+            // Guest or unauthorized role, save the redirect URL and redirect to login page
+            HttpSession activeSession = request.getSession(true);
+            String requestURI = request.getRequestURI();
+            String queryString = request.getQueryString();
+            String originalUrl = requestURI + (queryString != null ? "?" + queryString : "");
+            activeSession.setAttribute("redirectAfterLogin", originalUrl);
+
             response.sendRedirect(request.getContextPath() + "/home/login");
             return;
         }

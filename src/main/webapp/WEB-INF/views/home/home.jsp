@@ -4,10 +4,12 @@
 <%@ include file="../../includes/header.jsp" %>
 
 <body>
-
+    <div class="loader-container" id="page-loader">
+        <div class="neon-circle"></div>
+    </div>
     <header class="hero-section" id="trang-chu">
         <nav class="navbar">
-            <div class="logo">HotelOps</div>
+            <a href="#trang-chu" class="logo">HotelOps</a>
             <ul class="nav-links">
                 <li><a href="#trang-chu" class="active">Trang chủ</a></li>
                 <li><a href="#gioi-thieu">Giới thiệu</a></li>
@@ -234,49 +236,57 @@
     </section>
 
     <section class="services-section" id="dich-vu">
-        <div class="container text-center">
+    <div class="container text-center">
 
-            <span class="sub-title">DỊCH VỤ</span>
+        <span class="sub-title">DỊCH VỤ</span>
+        <h2>Các tiện ích cơ bản</h2>
 
-            <h2>Các tiện ích cơ bản</h2>
+        <div class="services-grid">
 
-            <div class="services-grid">
-
-                <div class="service-card">
-                    <i class="fa-solid fa-utensils"></i>
-                    <h3>Khu ăn uống</h3>
-                    <p>
-                        Phục vụ đồ ăn và nước uống cơ bản cho khách lưu trú.
-                    </p>
-                </div>
+            <c:forEach items="${services}" var="service">
 
                 <div class="service-card">
-                    <i class="fa-solid fa-tv"></i>
-                    <h3>Khu sinh hoạt chung</h3>
-                    <p>
-                        Không gian thư giãn và nghỉ ngơi dành cho khách hàng.
-                    </p>
+
+                    <div class="service-icon">
+
+                        <c:choose>
+
+                            <c:when test="${service.serviceName eq 'Bữa sáng Buffet'}">
+                                <i class="fa-solid fa-utensils"></i>
+                            </c:when>
+
+                            <c:when test="${service.serviceName eq 'Giặt ủi quần áo'}">
+                                <i class="fa-solid fa-shirt"></i>
+                            </c:when>
+
+                            <c:when test="${service.serviceName eq 'Đưa đón sân bay'}">
+                                <i class="fa-solid fa-car-side"></i>
+                            </c:when>
+
+                            <c:when test="${service.serviceName eq 'Spa thư giãn'}">
+                                <i class="fa-solid fa-spa"></i>
+                            </c:when>
+
+                            <c:otherwise>
+                                <i class="fa-solid fa-concierge-bell"></i>
+                            </c:otherwise>
+
+                        </c:choose>
+
+                    </div>
+
+                    <h3>${service.serviceName}</h3>
+
+                    <p>${service.description}</p>
+
                 </div>
 
-                <div class="service-card">
-                    <i class="fa-solid fa-shirt"></i>
-                    <h3>Dịch vụ giặt ủi</h3>
-                    <p>
-                        Hỗ trợ giặt ủi với mức chi phí hợp lý và tiện lợi.
-                    </p>
-                </div>
+            </c:forEach>
 
-                <div class="service-card">
-                    <i class="fa-solid fa-square-parking"></i>
-                    <h3>Bãi giữ xe</h3>
-                    <p>
-                        Khu vực giữ xe an toàn dành cho khách lưu trú.
-                    </p>
-                </div>
-
-            </div>
         </div>
-    </section>
+
+    </div>
+</section>
 
     <section class="testimonial-section text-center">
         <div class="container">
