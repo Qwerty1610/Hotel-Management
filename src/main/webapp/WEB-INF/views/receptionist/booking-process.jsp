@@ -86,8 +86,21 @@
                                             <c:if test="${param.error eq 'validation'}">
                                                 <div class="toast-notify toast-error" style="margin-bottom: 24px">
                                                     <i class="fa-solid fa-circle-xmark"></i>
-                                                    Thông tin không hợp lệ: vui lòng chọn đủ số phòng trống theo yêu
-                                                    cầu.
+                                                    Thông tin không hợp lệ: vui lòng chọn đủ số phòng trống theo yêu cầu.
+                                                </div>
+                                            </c:if>
+
+                                            <c:if test="${param.error eq 'conflict'}">
+                                                <div class="toast-notify toast-error" style="margin-bottom: 24px">
+                                                    <i class="fa-solid fa-circle-xmark"></i>
+                                                    Một hoặc nhiều phòng đã được phân cho khách khác trong khoảng thời gian này.
+                                                </div>
+                                            </c:if>
+
+                                            <c:if test="${param.error eq 'duplicate_room'}">
+                                                <div class="toast-notify toast-error" style="margin-bottom: 24px">
+                                                    <i class="fa-solid fa-circle-xmark"></i>
+                                                    Bạn không thể phân cùng một phòng cho nhiều yêu cầu trong cùng một đơn đặt.
                                                 </div>
                                             </c:if>
 

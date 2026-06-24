@@ -224,8 +224,40 @@ public class ReceptionistBookingProcessController extends HttpServlet {
             switch (action.toLowerCase()) {
                 case "update": {
                     if ("Pending".equals(existing.getStatus())) {
-                        // Parent assignment
+                        // Collect all submitted room IDs for validation
+                        List<Integer> allSubmittedRoomIds = new ArrayList<>();
                         String[] roomIdStrings = request.getParameterValues("roomIds");
+                        if (roomIdStrings != null && roomIdStrings.length == existing.getRoomQuantity()) {
+                            for (String rIdStr : roomIdStrings) {
+                                allSubmittedRoomIds.add(Integer.parseInt(rIdStr.trim()));
+                            }
+                        }
+                        for (Booking child : children) {
+                            String[] cRoomIdStrings = request.getParameterValues("childRoomIds_" + child.getBookingId());
+                            if (cRoomIdStrings != null && cRoomIdStrings.length == child.getRoomQuantity()) {
+                                for (String rIdStr : cRoomIdStrings) {
+                                    allSubmittedRoomIds.add(Integer.parseInt(rIdStr.trim()));
+                                }
+                            }
+                        }
+
+                        // Check duplicates within the current request
+                        java.util.Set<Integer> uniqueRoomIds = new java.util.HashSet<>(allSubmittedRoomIds);
+                        if (uniqueRoomIds.size() < allSubmittedRoomIds.size()) {
+                            response.sendRedirect(request.getContextPath() + "/receptionist/booking/process?bookingId="
+                                    + bookingId + "&error=duplicate_room");
+                            return;
+                        }
+
+                        // Check overlap with other bookings
+                        List<Integer> conflicts = bookingService.getConflictingRooms(allSubmittedRoomIds, existing.getCheckInDate(), existing.getCheckOutDate(), bookingId);
+                        if (!conflicts.isEmpty()) {
+                            response.sendRedirect(request.getContextPath() + "/receptionist/booking/process?bookingId="
+                                    + bookingId + "&error=conflict");
+                            return;
+                        }
+
+                        // Parent assignment
                         if (roomIdStrings != null && roomIdStrings.length == existing.getRoomQuantity()) {
                             List<Integer> roomIds = new ArrayList<>();
                             for (String rIdStr : roomIdStrings) {
@@ -262,6 +294,8 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                         return;
                     }
 
+                    List<Integer> allSubmittedRoomIds = new ArrayList<>();
+
                     // Validate selected room IDs for parent
                     String[] roomIdStrings = request.getParameterValues("roomIds");
                     if (roomIdStrings == null || roomIdStrings.length != existing.getRoomQuantity()) {
@@ -269,6 +303,9 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                         response.sendRedirect(request.getContextPath() + "/receptionist/booking/process?bookingId="
                                 + bookingId + "&error=validation");
                         return;
+                    }
+                    for (String rIdStr : roomIdStrings) {
+                        allSubmittedRoomIds.add(Integer.parseInt(rIdStr.trim()));
                     }
                     
                     // Validate selected room IDs for children
@@ -280,6 +317,25 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                                     + bookingId + "&error=validation");
                             return;
                         }
+                        for (String rIdStr : cRoomIdStrings) {
+                            allSubmittedRoomIds.add(Integer.parseInt(rIdStr.trim()));
+                        }
+                    }
+
+                    // Check duplicates within the current request
+                    java.util.Set<Integer> uniqueRoomIds = new java.util.HashSet<>(allSubmittedRoomIds);
+                    if (uniqueRoomIds.size() < allSubmittedRoomIds.size()) {
+                        response.sendRedirect(request.getContextPath() + "/receptionist/booking/process?bookingId="
+                                + bookingId + "&error=duplicate_room");
+                        return;
+                    }
+
+                    // Check overlap with other bookings
+                    List<Integer> conflicts = bookingService.getConflictingRooms(allSubmittedRoomIds, existing.getCheckInDate(), existing.getCheckOutDate(), bookingId);
+                    if (!conflicts.isEmpty()) {
+                        response.sendRedirect(request.getContextPath() + "/receptionist/booking/process?bookingId="
+                                + bookingId + "&error=conflict");
+                        return;
                     }
 
                     // Perform database updates

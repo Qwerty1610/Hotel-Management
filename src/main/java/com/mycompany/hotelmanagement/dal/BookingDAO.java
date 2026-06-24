@@ -748,6 +748,52 @@ public class BookingDAO {
         return 0;
     }
 
+    public List<Integer> getConflictingRooms(List<Integer> roomIds, Date checkIn, Date checkOut, int excludeParentBookingId) {
+        List<Integer> conflictingRooms = new ArrayList<>();
+        if (roomIds == null || roomIds.isEmpty() || checkIn == null || checkOut == null) {
+            return conflictingRooms;
+        }
+
+        StringBuilder placeholders = new StringBuilder();
+        for (int i = 0; i < roomIds.size(); i++) {
+            placeholders.append("?");
+            if (i < roomIds.size() - 1) {
+                placeholders.append(",");
+            }
+        }
+
+        String sql = "SELECT DISTINCT ra.room_id "
+                + "FROM dbo.RoomAssignment ra "
+                + "JOIN dbo.Booking b ON ra.booking_id = b.booking_id "
+                + "WHERE ra.room_id IN (" + placeholders.toString() + ") "
+                + "AND b.booking_id != ? AND (b.group_booking_id IS NULL OR b.group_booking_id != ?) "
+                + "AND b.status IN (N'Pending', N'Confirmed', N'CheckedIn') "
+                + "AND b.check_in_date < ? AND b.check_out_date > ?";
+
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                int index = 1;
+                for (Integer roomId : roomIds) {
+                    ps.setInt(index++, roomId);
+                }
+                ps.setInt(index++, excludeParentBookingId);
+                ps.setInt(index++, excludeParentBookingId);
+                ps.setDate(index++, checkOut);
+                ps.setDate(index++, checkIn);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        conflictingRooms.add(rs.getInt("room_id"));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in getConflictingRooms: " + e.getMessage(), e);
+        }
+        return conflictingRooms;
+    }
+
     public List<Booking> getCheckInBookings(String keyword, int offset, int pageSize) {
         List<Booking> list = new ArrayList<>();
 
