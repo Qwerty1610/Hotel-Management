@@ -63,7 +63,7 @@
 .login-card .logo {
     font-size: 34px;
     font-weight: 800;
-    color: var(--primary-color);
+    color: #0066cc;
     margin-bottom: 8px;
     letter-spacing: -1px;
     display: flex;
@@ -73,12 +73,12 @@
 }
 
 .login-card .logo i {
-    color: var(--accent-color);
+    color: #0066cc;
     font-size: 28px;
 }
 
 .login-card .logo span {
-    color: var(--accent-color);
+    color: #0066cc;
 }
 
 .login-card .subtitle {
@@ -324,3 +324,26 @@
 .login-card .back-link:hover i {
     transform: translateX(-4px);
 }
+
+/* TOGGLE PASSWORD VISIBILITY */
+.login-card .input-wrapper #togglePasswordBtn {
+    position: absolute;
+    right: 18px !important;
+    left: auto !important;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-light);
+    font-size: 16px;
+    cursor: pointer;
+    transition: var(--transition);
+    z-index: 10;
+}
+
+.login-card .input-wrapper #togglePasswordBtn:hover {
+    color: var(--accent-color);
+}
+
+.login-card .input-wrapper .form-input-password {
+    padding-right: 48px !important;
+}
+

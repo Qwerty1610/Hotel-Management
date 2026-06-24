@@ -32,4 +32,19 @@ document.addEventListener('DOMContentLoaded', function () {
         if (passwordField) passwordField.value = rememberPass;
         if (rememberCheckbox) rememberCheckbox.checked = true;
     }
+
+    // Toggle password visibility
+    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+    const passwordField = document.getElementById('password');
+
+    if (togglePasswordBtn && passwordField) {
+        togglePasswordBtn.addEventListener('click', function () {
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+            
+            // Toggle eye icon class
+            this.classList.toggle('fa-eye');
+            this.classList.toggle('fa-eye-slash');
+        });
+    }
 });

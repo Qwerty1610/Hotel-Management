@@ -23,9 +23,8 @@ public class HotelServiceRepository {
     public List<HotelService> getAllServices() {
         List<HotelService> list = new ArrayList<>();
         String sql = "SELECT service_id, service_name, description, price, unit, is_active FROM HotelService ORDER BY service_id";
-        
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -47,8 +46,7 @@ public class HotelServiceRepository {
 
     public void deleteService(int serviceId) {
         String sql = "DELETE FROM HotelService WHERE service_id = ?";
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setInt(1, serviceId);
             ps.executeUpdate();
@@ -59,8 +57,7 @@ public class HotelServiceRepository {
 
     public void toggleServiceStatus(int serviceId, boolean isActive) {
         String sql = "UPDATE HotelService SET is_active = ?, updated_at = SYSDATETIME() WHERE service_id = ?";
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setBoolean(1, isActive);
             ps.setInt(2, serviceId);
@@ -72,8 +69,7 @@ public class HotelServiceRepository {
 
     public void insertService(HotelService hs) {
         String sql = "INSERT INTO HotelService (service_name, description, price, unit, is_active) VALUES (?, ?, ?, ?, 1)";
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setString(1, hs.getServiceName());
             ps.setString(2, hs.getDescription());
@@ -87,8 +83,7 @@ public class HotelServiceRepository {
 
     public void updateService(HotelService hs) {
         String sql = "UPDATE HotelService SET service_name = ?, description = ?, price = ?, unit = ?, updated_at = SYSDATETIME() WHERE service_id = ?";
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setString(1, hs.getServiceName());
             ps.setString(2, hs.getDescription());

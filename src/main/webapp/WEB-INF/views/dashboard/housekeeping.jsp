@@ -35,7 +35,7 @@
                         <span>Cài đặt</span>
                     </a>
                 </div>
-                <div class="user-profile-card">
+                <a href="${pageContext.request.contextPath}/profile" class="user-profile-card" title="Xem hồ sơ cá nhân" style="text-decoration:none;cursor:pointer;">
                     <div class="profile-avatar">HK</div>
                     <div class="profile-info">
                         <span class="profile-name">
@@ -43,7 +43,7 @@
                         </span>
                         <span class="profile-role">Housekeeping</span>
                     </div>
-                </div>
+                </a>
             </div>
         </aside>
 

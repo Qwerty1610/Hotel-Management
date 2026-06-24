@@ -209,6 +209,13 @@ public class BookingService {
     }
 
     /**
+     * Checks if specific rooms conflict with other overlapping assignments.
+     */
+    public List<Integer> getConflictingRooms(List<Integer> roomIds, Date checkIn, Date checkOut, int excludeBookingId) {
+        return bookingDAO.getConflictingRooms(roomIds, checkIn, checkOut, excludeBookingId);
+    }
+
+    /**
      * Gets the total count of rooms of a specific type in the database.
      */
     private int getRoomCountByTypeId(int typeId) {
