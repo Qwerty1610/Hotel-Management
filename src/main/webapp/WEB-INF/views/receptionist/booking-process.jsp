@@ -489,37 +489,28 @@
                                                             <c:out value="${customer.fullName}" />
                                                         </span>
                                                     </div>
+                                                </c:when>
+                                                <c:otherwise>
                                                     <div class="info-row">
                                                         <label>Email:</label>
                                                         <span>
-                                                            <c:out value="${not empty booking.email ? booking.email : (not empty customer ? customer.email : '—')}" />
+                                                            <c:out value="${customer.email}" />
                                                         </span>
                                                     </div>
                                                     <div class="info-row" style="border-bottom:none; padding-bottom:0">
                                                         <label>Số điện thoại:</label>
                                                         <span>
-                                                            <c:out value="${not empty booking.phone ? booking.phone : (not empty customer and not empty customer.phone ? customer.phone : '—')}" />
+                                                            <c:out
+                                                                value="${not empty customer.phone ? customer.phone : '—'}" />
                                                         </span>
                                                     </div>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <div class="info-row">
+                                                    <div class="info-row"
+                                                         style="border-bottom:none; padding-bottom:0">
                                                         <label>Họ và tên khách:</label>
                                                         <span>
                                                             <c:out value="${booking.customerName}" />
-                                                        </span>
-                                                    </div>
-                                                    <div class="info-row">
-                                                        <label>Email:</label>
-                                                        <span>
-                                                            <c:out value="${not empty booking.email ? booking.email : '—'}" />
-                                                        </span>
-                                                    </div>
-                                                    <div class="info-row"
-                                                         style="border-bottom:none; padding-bottom:0">
-                                                        <label>Số điện thoại:</label>
-                                                        <span>
-                                                            <c:out value="${not empty booking.phone ? booking.phone : '—'}" />
                                                         </span>
                                                     </div>
                                                 </c:otherwise>
