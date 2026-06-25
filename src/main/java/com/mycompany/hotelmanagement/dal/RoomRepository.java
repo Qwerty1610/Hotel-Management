@@ -139,4 +139,76 @@ public class RoomRepository {
             return false;
         }
     }
+
+    public List<RoomInfo> getRoomMapByDate(
+            java.sql.Date checkIn,
+            java.sql.Date checkOut) {
+
+        List<RoomInfo> list = new ArrayList<>();
+
+        String sql = """
+        SELECT
+            r.room_id,
+            r.room_number,
+            r.floor,
+            rt.type_name,
+
+            CASE
+
+                WHEN r.status = 'Maintenance'
+                THEN 'Maintenance'
+
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM Booking b
+                    JOIN RoomAssignment ra
+                        ON b.booking_id = ra.booking_id
+                    WHERE ra.room_id = r.room_id
+                      AND b.status IN ('Confirmed', 'CheckedIn')
+                      AND b.check_in_date < ?
+                      AND b.check_out_date > ?
+                )
+                THEN 'Occupied'
+
+                ELSE 'Available'
+
+            END AS display_status
+
+        FROM Room r
+        JOIN RoomType rt
+            ON r.type_id = rt.type_id
+
+        ORDER BY
+            TRY_CAST(r.floor AS INT),
+            r.room_number
+        """;
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            useDatabase(conn);
+
+            ps.setDate(1, checkOut);
+            ps.setDate(2, checkIn);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+
+                RoomInfo room = new RoomInfo();
+
+                room.setRoomId(rs.getInt("room_id"));
+                room.setRoomNumber(rs.getString("room_number"));
+                room.setFloor(rs.getString("floor"));
+                room.setTypeName(rs.getString("type_name"));
+                room.setStatus(rs.getString("display_status"));
+
+                list.add(room);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
 }

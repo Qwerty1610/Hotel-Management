@@ -1042,10 +1042,108 @@ button:disabled,
     font-size: 11px;
     color: var(--text-muted);
 }
+/* ==========================
+ROOM MAP FILTER
+========================== */
 
-.status-Available { border-left: 4px solid #10b981; }
-.status-Occupied { border-left: 4px solid #ef4444; }
-.status-Maintenance { border-left: 4px solid #f59e0b; }
+.roommap-filter-form{
+    margin-bottom:20px;
+}
+
+.roommap-filter-row{
+    display:flex;
+    align-items:flex-end;
+    gap:16px;
+    flex-wrap:wrap;
+}
+
+.btn-roommap-search{
+    height:44px;
+    padding:0 20px;
+
+    border:none;
+    border-radius:12px;
+
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #1d4ed8
+    );
+
+    color:#fff;
+    font-size:13px;
+    font-weight:700;
+
+    display:flex;
+    align-items:center;
+    gap:8px;
+
+    cursor:pointer;
+    transition:.2s;
+}
+
+.btn-roommap-search:hover{
+    transform:translateY(-1px);
+    box-shadow:0 6px 16px rgba(37,99,235,.25);
+}
+
+.roommap-status-tabs{
+    margin-bottom:24px;
+}
+/* =====================================================
+ROOM MAP DATE FILTER
+===================================================== */
+
+.roommap-date-filter{
+    margin-bottom:20px;
+}
+
+.roommap-date-row{
+    display:flex;
+    gap:16px;
+    align-items:flex-end;
+    flex-wrap:wrap;
+}
+
+/* =====================================================
+ROOM STATUS COLORS
+===================================================== */
+
+.status-Available{
+    border-left:4px solid #10b981;
+}
+
+.status-Reserved{
+    border-left:4px solid #2563eb;
+}
+
+.status-Occupied{
+    border-left:4px solid #64748b;
+}
+
+.status-Maintenance{
+    border-left:4px solid #f59e0b;
+}
+
+.badge-Available{
+    background:#ecfdf5;
+    color:#16a34a;
+}
+
+.badge-Reserved{
+    background:#eff6ff;
+    color:#2563eb;
+}
+
+.badge-Occupied{
+    background:#f1f5f9;
+    color:#475569;
+}
+
+.badge-Maintenance{
+    background:#fef3c7;
+    color:#d97706;
+}
 /* =====================================================
 WALK-IN BOOKING
 ===================================================== */
