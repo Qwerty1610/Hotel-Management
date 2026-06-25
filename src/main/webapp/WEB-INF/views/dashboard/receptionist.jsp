@@ -388,33 +388,81 @@
                         </div>
 
                         <!-- FILTER -->
+                        <!-- FORM TÌM KIẾM THEO NGÀY -->
+                        <form method="get"
+                              action="${pageContext.request.contextPath}/receptionist/dashboard"
+                              class="roommap-filter-form">
+
+                            <input type="hidden" name="tab" value="roommap"/>
+
+                            <div class="roommap-filter-row">
+
+                                <div class="form-group">
+                                    <label>Từ ngày</label>
+                                    <input type="date"
+                                           name="fromDate"
+                                           value="${fromDate}"
+                                           class="walkin-input">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Đến ngày</label>
+                                    <input type="date"
+                                           name="toDate"
+                                           value="${toDate}"
+                                           class="walkin-input">
+                                </div>
+
+                                <button type="submit"
+                                        class="btn-roommap-search">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                    Kiểm tra phòng
+                                </button>
+
+                            </div>
+                        </form>
                         <form method="get"
                               action="${pageContext.request.contextPath}/receptionist/dashboard">
 
                             <input type="hidden" name="tab" value="roommap"/>
 
-                            <div class="status-tabs" style="margin-bottom:16px;">
+                            <input type="hidden"
+                                   name="fromDate"
+                                   value="${fromDate}"/>
 
-                                <button type="submit" name="status" value="All"
+                            <input type="hidden"
+                                   name="toDate"
+                                   value="${toDate}"/>
+
+                            <div class="status-tabs">
+
+                                <button type="submit"
+                                        name="status"
+                                        value="All"
                                         class="status-tab ${currentStatus eq 'All' ? 'active' : ''}">
                                     Tất cả
                                 </button>
 
-                                <button type="submit" name="status" value="Available"
+                                <button type="submit"
+                                        name="status"
+                                        value="Available"
                                         class="status-tab ${currentStatus eq 'Available' ? 'active' : ''}">
                                     Trống
                                 </button>
 
-                                <button type="submit" name="status" value="Occupied"
+                                <button type="submit"
+                                        name="status"
+                                        value="Occupied"
                                         class="status-tab ${currentStatus eq 'Occupied' ? 'active' : ''}">
-                                    Đã đặt
+                                    Đang sử dụng
                                 </button>
 
-                                <button type="submit" name="status" value="Maintenance"
+                                <button type="submit"
+                                        name="status"
+                                        value="Maintenance"
                                         class="status-tab ${currentStatus eq 'Maintenance' ? 'active' : ''}">
                                     Bảo trì
                                 </button>
-
                             </div>
                         </form>
 

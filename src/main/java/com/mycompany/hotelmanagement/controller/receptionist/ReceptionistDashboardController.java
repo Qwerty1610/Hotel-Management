@@ -289,46 +289,77 @@ public class ReceptionistDashboardController extends HttpServlet {
     private void loadRoomMapTab(HttpServletRequest request) {
 
         RoomRepository repo = new RoomRepository();
-        List<RoomInfo> roomList = repo.getAllRooms();
+
+        String fromDate = request.getParameter("fromDate");
+        String toDate = request.getParameter("toDate");
+
+        List<RoomInfo> roomList;
+
+        if (fromDate != null
+                && !fromDate.isBlank()
+                && toDate != null
+                && !toDate.isBlank()) {
+
+            roomList = repo.getRoomMapByDate(
+                    Date.valueOf(fromDate),
+                    Date.valueOf(toDate)
+            );
+
+        } else {
+
+            roomList = repo.getAllRooms();
+            for (RoomInfo room : roomList) {
+                if ("Cleaning".equalsIgnoreCase(room.getStatus())) {
+                    room.setStatus("Available");
+                }
+            }
+        }
 
         if (roomList == null) {
             roomList = new ArrayList<>();
         }
 
-        // ===== FILTER STATUS =====
         String status = request.getParameter("status");
-        if (status == null || status.isEmpty()) {
+
+        if (status == null || status.isBlank()) {
             status = "All";
         }
 
         List<RoomInfo> filtered = new ArrayList<>();
 
-        for (RoomInfo r : roomList) {
-            if ("All".equals(status) || status.equals(r.getStatus())) {
-                filtered.add(r);
+        for (RoomInfo room : roomList) {
+
+            if ("All".equalsIgnoreCase(status)
+                    || status.equalsIgnoreCase(room.getStatus())) {
+
+                filtered.add(room);
             }
         }
 
-        // ===== GROUP BY FLOOR (STRING SAFE) =====
-        Map<String, List<RoomInfo>> roomByFloor = new LinkedHashMap<>();
+        Map<String, List<RoomInfo>> roomByFloor
+                = new LinkedHashMap<>();
 
-        for (RoomInfo r : filtered) {
+        for (RoomInfo room : filtered) {
 
-            String floor = r.getFloor(); // <- STRING theo bạn nói
+            String floor = room.getFloor();
 
-            if (floor == null || floor.trim().isEmpty()) {
+            if (floor == null || floor.isBlank()) {
                 floor = "Unknown";
             }
 
-            if (!roomByFloor.containsKey(floor)) {
-                roomByFloor.put(floor, new ArrayList<>());
-            }
-
-            roomByFloor.get(floor).add(r);
+            roomByFloor
+                    .computeIfAbsent(
+                            floor,
+                            k -> new ArrayList<>())
+                    .add(room);
         }
 
         request.setAttribute("roomByFloor", roomByFloor);
+
         request.setAttribute("currentStatus", status);
+
+        request.setAttribute("fromDate", fromDate);
+        request.setAttribute("toDate", toDate);
     }
 
     private void loadWalkInBookingTab(HttpServletRequest request) {
