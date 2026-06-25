@@ -173,6 +173,22 @@
                 padding-top:10px;
                 border-top:1px solid #e2e8f0;
             }
+            .actions{
+                display:flex;
+                align-items:center;
+                gap:16px;
+            }
+
+            .actions form{
+                margin:0;
+            }
+
+            .actions button{
+                min-width:180px;
+                height:50px;
+                font-size:15px;
+                font-weight:600;
+            }
 
             /* ================= MODAL ================= */
             .modal{
@@ -242,6 +258,17 @@
                             <i class="fa-solid fa-key"></i> <span>Nhận phòng (Check-in)</span>
                         </a>
                     </li>
+                    <li class="menu-item ${currentTab eq 'roommap' ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=roommap">
+                            <i class="fa-solid fa-map"></i> <span>sơ đồ phòng</span>
+                        </a>
+                    </li>
+
+                    <li class="menu-item ${currentTab eq 'walkin-bookings' ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=walkin-bookings">
+                            <i class="fa-solid fa-user-plus"></i> <span>Đặt phòng tại quầy</span>
+                        </a>
+                    </li>
 
                     <li class="menu-item ${currentTab eq 'checkout' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkout">
@@ -274,9 +301,25 @@
                 <header class="main-topbar">
                     <div class="breadcrumb">
                         <span>Receptionist</span>
-                        <span>&gt;</span>
-                        <span>Chi tiết check in</span>
+
+                        <span class="separator">&gt;</span>
+
+                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin"
+                           style="text-decoration:none;color:var(--text-muted)">
+                            Nhận phòng (Check-in)
+                        </a>
+
+                        <span class="separator">&gt;</span>
+
+                        <span class="current">
+                            Chi tiết Check-in #${booking.bookingId}
+                        </span>
                     </div>
+
+                    <a href="${pageContext.request.contextPath}/logout" class="btn-logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        Đăng xuất
+                    </a>
                 </header>
 
                 <main class="workspace-content">
@@ -288,8 +331,8 @@
                         <div class="grid-top">
                             <div class="field"><b>Mã:</b> #${booking.bookingId}</div>
                             <div class="field"><b>Khách:</b> ${booking.customerName}</div>
-                            <div class="field"><b>SĐT:</b> ${customer.phone}</div>
-                            <div class="field"><b>Email:</b> ${customer.email}</div>
+                            <div class="field"><b>SĐT:</b> ${displayPhone}</div>
+                            <div class="field"><b>Email:</b> ${displayEmail}</div>
                         </div>
 
                         <div class="grid-bottom">

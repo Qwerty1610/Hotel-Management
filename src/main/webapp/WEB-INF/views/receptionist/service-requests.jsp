@@ -30,21 +30,20 @@
                         </a>
                     </li>
 
-                    <li class="menu-item ${currentTab eq 'roommap' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=roommap">
-                            <i class="fa-solid fa-calendar-check"></i> <span>sơ đồ phòng</span>
-                        </a>
-                    </li>
-
                     <li class="menu-item ${currentTab eq 'checkin' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin">
                             <i class="fa-solid fa-key"></i> <span>Nhận phòng (Check-in)</span>
                         </a>
                     </li>
+                    <li class="menu-item ${currentTab eq 'roommap' ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=roommap">
+                            <i class="fa-solid fa-map"></i> <span>sơ đồ phòng</span>
+                        </a>
+                    </li>
 
                     <li class="menu-item ${currentTab eq 'walkin-bookings' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=walkin-bookings">
-                            <i class="fa-solid fa-calendar-check"></i> <span>Đặt phòng tại quầy</span>
+                            <i class="fa-solid fa-user-plus"></i> <span>Đặt phòng tại quầy</span>
                         </a>
                     </li>
 
