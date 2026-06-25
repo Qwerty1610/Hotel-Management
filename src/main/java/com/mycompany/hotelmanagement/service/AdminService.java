@@ -8,6 +8,11 @@ import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.List;
 
+/**
+ * Service xử lý các nghiệp vụ quản trị hệ thống của Admin.
+ * 
+ * @author TungNQ
+ */
 public class AdminService {
     private final AccountRepository accountRepository = new AccountRepository();
 
@@ -23,12 +28,46 @@ public class AdminService {
         return accountRepository.getStaffRoles();
     }
 
+    private boolean isInvalidEmail(String email) {
+        String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+        return email == null || !email.trim().matches(emailRegex);
+    }
+
+    private boolean isInvalidPhone(String phone) {
+        if (phone == null || phone.trim().isEmpty()) {
+            return false; // phone is optional
+        }
+        return !phone.trim().matches("^0[35789]\\d{8}$");
+    }
+
+    private boolean isWeakPassword(String password) {
+        if (password == null || password.isEmpty()) {
+            return true;
+        }
+        boolean hasLetter = password.matches(".*[a-zA-Z].*");
+        boolean hasDigit = password.matches(".*[0-9].*");
+        boolean hasSpecial = password.matches(".*[^a-zA-Z0-9].*");
+        return password.length() < 8 || !hasLetter || !hasDigit || !hasSpecial;
+    }
+
     public String createStaffAccount(String email, String fullName, String phone, String password, int roleId) {
         if (email == null || email.trim().isEmpty() || fullName == null || fullName.trim().isEmpty() || password == null || password.isEmpty()) {
             return "invalid_input";
         }
+        if (isInvalidEmail(email)) {
+            return "invalid_email";
+        }
+        if (isInvalidPhone(phone)) {
+            return "invalid_phone";
+        }
+        if (isWeakPassword(password)) {
+            return "weak_password";
+        }
         if (accountRepository.existsByEmail(email.trim())) {
             return "email_exists";
+        }
+        if (phone != null && !phone.trim().isEmpty() && accountRepository.existsByPhone(phone.trim())) {
+            return "phone_exists";
         }
         String passwordHash = BCrypt.hashpw(password.trim(), BCrypt.gensalt(12));
         boolean success = accountRepository.insertStaffAccount(email.trim(), passwordHash, fullName.trim(), phone != null ? phone.trim() : null, roleId);
@@ -39,9 +78,24 @@ public class AdminService {
         if (email == null || email.trim().isEmpty() || fullName == null || fullName.trim().isEmpty()) {
             return "invalid_input";
         }
+        if (isInvalidEmail(email)) {
+            return "invalid_email";
+        }
+        if (isInvalidPhone(phone)) {
+            return "invalid_phone";
+        }
+        if (accountRepository.existsByEmailExcept(email.trim(), accountId)) {
+            return "email_exists";
+        }
+        if (phone != null && !phone.trim().isEmpty() && accountRepository.existsByPhoneExcept(phone.trim(), accountId)) {
+            return "phone_exists";
+        }
         
         String passwordHash = null;
         if (password != null && !password.trim().isEmpty()) {
+            if (isWeakPassword(password)) {
+                return "weak_password";
+            }
             passwordHash = BCrypt.hashpw(password.trim(), BCrypt.gensalt(12));
         }
         
@@ -57,9 +111,24 @@ public class AdminService {
         if (email == null || email.trim().isEmpty() || fullName == null || fullName.trim().isEmpty()) {
             return "invalid_input";
         }
+        if (isInvalidEmail(email)) {
+            return "invalid_email";
+        }
+        if (isInvalidPhone(phone)) {
+            return "invalid_phone";
+        }
+        if (accountRepository.existsByEmailExcept(email.trim(), accountId)) {
+            return "email_exists";
+        }
+        if (phone != null && !phone.trim().isEmpty() && accountRepository.existsByPhoneExcept(phone.trim(), accountId)) {
+            return "phone_exists";
+        }
         
         String passwordHash = null;
         if (password != null && !password.trim().isEmpty()) {
+            if (isWeakPassword(password)) {
+                return "weak_password";
+            }
             passwordHash = BCrypt.hashpw(password.trim(), BCrypt.gensalt(12));
         }
         

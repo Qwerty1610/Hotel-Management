@@ -96,6 +96,22 @@ public class AccountRepository {
         return false;
     }
 
+    /** True if another account (not {@code accountId}) already uses this email. */
+    public boolean existsByEmailExcept(String email, int accountId) {
+        String sql = "SELECT 1 FROM Account WHERE email = ? AND account_id <> ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
+            ps.setInt(2, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     /** Update the editable profile fields (full name + phone) of the logged-in user. */
     public boolean updateOwnProfile(int accountId, String fullName, String phone) {
         String sql = "UPDATE Account SET full_name = ?, phone = ? WHERE account_id = ?";

@@ -74,7 +74,8 @@ public class GoogleLoginController extends HttpServlet {
                 HttpSession session = request.getSession();
                 session.setAttribute("user", result.getDisplayName());
                 session.setAttribute("role", result.getRole());
-                session.setAttribute("email", email != null ? email.trim() : "");
+                session.setAttribute("email", result.getEmail() != null ? result.getEmail() : (email != null ? email.trim() : ""));
+                session.setAttribute("accountId", result.getAccountId());
                 
                 String redirectUrl = null;
                 if ("CUSTOMER".equals(result.getRole())) {
