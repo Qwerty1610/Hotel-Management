@@ -13,6 +13,12 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * Controller xử lý Dashboard quản trị của Admin.
+ * Quản lý tài khoản nhân viên và khách hàng.
+ * 
+ * @author TungNQ
+ */
 @WebServlet(name = "AdminDashboardController", urlPatterns = {"/admin/dashboard"})
 public class AdminDashboardController extends HttpServlet {
 
@@ -63,10 +69,8 @@ public class AdminDashboardController extends HttpServlet {
                 
                 if ("success".equals(result)) {
                     response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=staff&success=created");
-                } else if ("email_exists".equals(result)) {
-                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=staff&error=email_exists");
                 } else {
-                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=staff&error=create_failed");
+                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=staff&error=" + result);
                 }
                 
             } else if ("update-staff".equals(action)) {
@@ -82,7 +86,7 @@ public class AdminDashboardController extends HttpServlet {
                 if ("success".equals(result)) {
                     response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=staff&success=updated");
                 } else {
-                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=staff&error=update_failed");
+                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=staff&error=" + result);
                 }
                 
             } else if ("update-customer".equals(action)) {
@@ -99,7 +103,7 @@ public class AdminDashboardController extends HttpServlet {
                 if ("success".equals(result)) {
                     response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=customers&success=updated");
                 } else {
-                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=customers&error=update_failed");
+                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=customers&error=" + result);
                 }
                 
             } else if ("toggle-staff".equals(action) || "toggle-customer".equals(action)) {

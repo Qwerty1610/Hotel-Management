@@ -1,4 +1,4 @@
-package com.mycompany.hotelmanagement.controller.admin;
+package com.mycompany.hotelmanagement.controller.common;
 
 import com.mycompany.hotelmanagement.service.AdminService;
 import jakarta.json.bind.Jsonb;
@@ -12,20 +12,23 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 
 /**
- * Controller xử lý yêu cầu đổi mật khẩu cho tài khoản Admin.
- * Được bảo vệ tự động bởi AuthFilter (vì nằm dưới path /admin/*).
+ * Controller xử lý yêu cầu đổi mật khẩu dùng chung cho tất cả các vai trò.
+ * Ánh xạ tới các URL tương ứng với vai trò của người dùng.
  * 
- * @author TùngNQ
+ * @author TungNQ
  */
-@WebServlet(name = "AdminAuthController", urlPatterns = {"/admin/change-password"})
-public class AdminAuthController extends HttpServlet {
+@WebServlet(name = "ChangePasswordController", urlPatterns = {
+    "/admin/change-password",
+    "/manager/change-password",
+    "/receptionist/change-password",
+    "/housekeeping/change-password",
+    "/customer/change-password"
+})
+public class ChangePasswordController extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     private final AdminService adminService = new AdminService();
 
-    /**
-     * Xử lý yêu cầu đổi mật khẩu qua phương thức HTTP PUT dưới dạng JSON.
-     */
     @Override
     protected void doPut(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -33,28 +36,51 @@ public class AdminAuthController extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        // 1. Phân quyền: Kiểm tra sự tồn tại của Session và vai trò ADMIN
+        // 1. Kiểm tra sự tồn tại của phiên làm việc
         HttpSession session = request.getSession(false);
-        if (session == null || !"ADMIN".equals(session.getAttribute("role"))) {
+        if (session == null || session.getAttribute("user") == null) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("{\"success\":false,\"message\":\"Phiên làm việc đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.\"}");
+            return;
+        }
+
+        // 2. Xác thực phân quyền chéo (Cross-role validation)
+        String servletPath = request.getServletPath();
+        String sessionRole = (String) session.getAttribute("role");
+        
+        boolean authorized = false;
+        if (servletPath.startsWith("/admin") && "ADMIN".equals(sessionRole)) {
+            authorized = true;
+        } else if (servletPath.startsWith("/manager") && "HOTEL_MANAGER".equals(sessionRole)) {
+            authorized = true;
+        } else if (servletPath.startsWith("/receptionist") && "RECEPTIONIST".equals(sessionRole)) {
+            authorized = true;
+        } else if (servletPath.startsWith("/housekeeping") && "HOUSEKEEPING".equals(sessionRole)) {
+            authorized = true;
+        } else if (servletPath.startsWith("/customer") && "CUSTOMER".equals(sessionRole)) {
+            authorized = true;
+        }
+
+        if (!authorized) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("{\"success\":false,\"message\":\"Bạn không có quyền thực hiện chức năng này.\"}");
             return;
         }
 
-        // 2. Lấy Email Admin từ phiên đăng nhập
+        // 3. Lấy email của người dùng hiện tại từ session
         String email = (String) session.getAttribute("email");
         if (email == null || email.trim().isEmpty()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            response.getWriter().write("{\"success\":false,\"message\":\"Phiên làm việc hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.\"}");
+            response.getWriter().write("{\"success\":false,\"message\":\"Email không tồn tại trong phiên làm việc.\"}");
             return;
         }
 
         try {
-            // 3. Deserialize JSON payload từ request body sang request DTO
+            // 4. Đọc dữ liệu JSON payload
             Jsonb jsonb = JsonbBuilder.create();
-            AdminChangePasswordRequest req;
+            ChangePasswordRequest req;
             try {
-                req = jsonb.fromJson(request.getReader(), AdminChangePasswordRequest.class);
+                req = jsonb.fromJson(request.getReader(), ChangePasswordRequest.class);
             } catch (Exception ex) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 response.getWriter().write("{\"success\":false,\"message\":\"Dữ liệu yêu cầu không đúng định dạng JSON.\"}");
@@ -67,7 +93,7 @@ public class AdminAuthController extends HttpServlet {
                 return;
             }
 
-            // 4. Gọi service xử lý logic đổi mật khẩu
+            // 5. Gọi Service thực hiện đổi mật khẩu
             String result = adminService.changePassword(
                     email, 
                     req.getOldPassword(), 
@@ -75,7 +101,7 @@ public class AdminAuthController extends HttpServlet {
                     req.getConfirmPassword()
             );
 
-            // 5. Trả về mã trạng thái HTTP và thông báo JSON tương ứng với kết quả xử lý
+            // 6. Phản hồi dựa trên kết quả nghiệp vụ
             switch (result) {
                 case "invalid_input":
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -83,7 +109,7 @@ public class AdminAuthController extends HttpServlet {
                     break;
                 case "account_not_found":
                     response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                    response.getWriter().write("{\"success\":false,\"message\":\"Tài khoản quản trị không tồn tại trong hệ thống.\"}");
+                    response.getWriter().write("{\"success\":false,\"message\":\"Tài khoản không tồn tại trên hệ thống.\"}");
                     break;
                 case "incorrect_old_password":
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -103,7 +129,7 @@ public class AdminAuthController extends HttpServlet {
                     break;
                 case "update_failed":
                     response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    response.getWriter().write("{\"success\":false,\"message\":\"Không thể cập nhật mật khẩu mới vào cơ sở dữ liệu.\"}");
+                    response.getWriter().write("{\"success\":false,\"message\":\"Không thể lưu mật khẩu mới. Lỗi cơ sở dữ liệu.\"}");
                     break;
                 case "success":
                 default:
@@ -114,7 +140,7 @@ public class AdminAuthController extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.getWriter().write("{\"success\":false,\"message\":\"Lỗi hệ thống nghiêm trọng xảy ra. Vui lòng thử lại sau.\"}");
+            response.getWriter().write("{\"success\":false,\"message\":\"Lỗi hệ thống xảy ra khi đổi mật khẩu. Vui lòng thử lại sau.\"}");
         }
     }
 }

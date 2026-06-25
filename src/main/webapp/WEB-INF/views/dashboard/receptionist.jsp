@@ -20,18 +20,24 @@
 
         <div class="dashboard-layout">
 
-            <%-- ================= SIDEBAR ================= --%>
-            <aside class="dashboard-sidebar">
-                <div class="sidebar-brand">
-                    <i class="fa-solid fa-bell-concierge"></i> <span>HotelOps</span>
-                </div>
+    <%-- ================= SIDEBAR ================= --%>
+    <aside class="dashboard-sidebar">
+        <div class="sidebar-brand">
+            <i class="fa-solid fa-bell-concierge"></i> <span>HotelOps</span>
+        </div>
 
-                <ul class="sidebar-menu">
-                    <li class="menu-item ${currentTab eq 'bookings' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=bookings">
-                            <i class="fa-solid fa-calendar-check"></i> <span>Yêu cầu đặt phòng</span>
-                        </a>
-                    </li>
+        <ul class="sidebar-menu">
+            <li class="menu-item ${currentTab eq 'bookings' ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=bookings">
+                    <i class="fa-solid fa-calendar-check"></i> <span>Yêu cầu đặt phòng</span>
+                </a>
+            </li>
+
+            <li class="menu-item ${currentTab eq 'roommap' ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=roommap">
+                    <i class="fa-solid fa-map"></i> <span>Sơ đồ phòng</span>
+                </a>
+            </li>
 
                     <li class="menu-item ${currentTab eq 'checkin' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin">
@@ -43,70 +49,75 @@
                             <i class="fa-solid fa-map"></i> <span>Sơ đồ phòng</span>
                         </a>
                     </li>
+            <li class="menu-item ${currentTab eq 'checkin' ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin">
+                    <i class="fa-solid fa-key"></i> <span>Nhận phòng (Check-in)</span>
+                </a>
+            </li>
 
-                    <li class="menu-item ${currentTab eq 'walkin-bookings' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=walkin-bookings">
-                            <i class="fa-solid fa-user-plus"></i> <span>Đặt phòng tại quầy</span>
-                        </a>
-                    </li>
+            <li class="menu-item ${currentTab eq 'walkin-bookings' ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=walkin-bookings">
+                    <i class="fa-solid fa-user-plus"></i> <span>Đặt phòng tại quầy</span>
+                </a>
+            </li>
 
-                    <li class="menu-item ${currentTab eq 'checkout' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkout">
-                            <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh toán</span>
-                        </a>
-                    </li>
+            <li class="menu-item ${currentTab eq 'checkout' ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkout">
+                    <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh toán</span>
+                </a>
+            </li>
 
-                    <li class="menu-item ${currentTab eq 'servicerequests' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=servicerequests">
-                            <i class="fa-solid fa-bell-concierge"></i> <span>Quản lý yêu cầu dịch vụ</span>
-                        </a>
-                    </li>
-                </ul>
+            <li class="menu-item ${currentTab eq 'servicerequests' ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=servicerequests">
+                    <i class="fa-solid fa-bell-concierge"></i> <span>Quản lý yêu cầu dịch vụ</span>
+                </a>
+            </li>
+        </ul>
 
-                <div class="sidebar-footer">
-                    <div class="user-profile-card">
-                        <div class="profile-avatar">RC</div>
-                        <div class="profile-info">
-                            <span class="profile-name">${not empty sessionScope.user ? sessionScope.user : 'Receptionist'}</span>
-                            <span class="profile-role">Lễ tân</span>
-                        </div>
-                    </div>
+        <div class="sidebar-footer">
+            <a href="${pageContext.request.contextPath}/profile" class="user-profile-card" title="Xem hồ sơ cá nhân" style="text-decoration:none;cursor:pointer;">
+                <div class="profile-avatar">RC</div>
+                <div class="profile-info">
+                    <span class="profile-name">${not empty sessionScope.user ? sessionScope.user : 'Receptionist'}</span>
+                    <span class="profile-role">Lễ tân</span>
                 </div>
-            </aside>
+            </a>
+        </div>
+    </aside>
 
-            <%-- ================= MAIN CONTENT ================= --%>
-            <div class="dashboard-main">
+    <%-- ================= MAIN CONTENT ================= --%>
+    <div class="dashboard-main">
 
-                <%-- TOPBAR --%>
-                <header class="main-topbar">
-                    <div class="breadcrumb">
-                        <span>Receptionist</span>
-                        <span class="separator">&gt;</span>
-                        <span class="current">
-                            <c:choose>
-                                <c:when test="${currentTab eq 'bookings'}">Quản lý đặt phòng</c:when>
-                                <c:when test="${currentTab eq 'roommap'}">Sơ đồ phòng</c:when>
-                                <c:when test="${currentTab eq 'checkin'}">Nhận phòng (Check-in)</c:when>
-                                <c:when test="${currentTab eq 'walkin-bookings'}">Đặt phòng tại quầy</c:when>
-                                <c:when test="${currentTab eq 'checkout'}">Trả phòng & Thanh toán</c:when>
-                                <c:when test="${currentTab eq 'servicerequests'}">Quản lý yêu cầu dịch vụ</c:when>
-                                <c:otherwise>Receptionist Dashboard</c:otherwise>
-                            </c:choose>
-                        </span>
-                    </div>
-                    <a href="${pageContext.request.contextPath}/logout" class="btn-logout">
-                        <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
-                    </a>
-                </header>
+        <%-- TOPBAR --%>
+        <header class="main-topbar">
+            <div class="breadcrumb">
+                <span>Receptionist</span>
+                <span class="separator">&gt;</span>
+                <span class="current">
+                    <c:choose>
+                        <c:when test="${currentTab eq 'bookings'}">Quản lý đặt phòng</c:when>
+                        <c:when test="${currentTab eq 'roommap'}">Sơ đồ phòng</c:when>
+                        <c:when test="${currentTab eq 'checkin'}">Nhận phòng (Check-in)</c:when>
+                        <c:when test="${currentTab eq 'walkin-bookings'}">Đặt phòng tại quầy</c:when>
+                        <c:when test="${currentTab eq 'checkout'}">Trả phòng & Thanh toán</c:when>
+                        <c:when test="${currentTab eq 'servicerequests'}">Quản lý yêu cầu dịch vụ</c:when>
+                        <c:otherwise>Receptionist Dashboard</c:otherwise>
+                    </c:choose>
+                </span>
+            </div>
+            <a href="${pageContext.request.contextPath}/logout" class="btn-logout">
+                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+            </a>
+        </header>
 
-                <%-- WORKSPACE --%>
-                <main class="workspace-content">
+        <%-- WORKSPACE --%>
+        <main class="workspace-content">
 
-                    <%-- ===== BOOKING TAB ===== --%>
-                    <c:if test="${currentTab eq 'bookings'}">
+            <%-- ===== BOOKING TAB ===== --%>
+            <c:if test="${currentTab eq 'bookings'}">
 
-                        <%-- Toast notification --%>
-                        <c:if test="${param.result eq 'success'}">
+                <%-- Toast notification --%>
+                <c:if test="${param.result eq 'success'}">
                             <div class="toast-notify toast-success">
                                 <i class="fa-solid fa-circle-check"></i>
                                 <c:choose>

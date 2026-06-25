@@ -13,6 +13,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+/**
+ *
+ * @author TungNQ
+ */
 @WebFilter(filterName = "AuthFilter", urlPatterns = {
     "/admin/*", 
     "/manager/*", 
@@ -76,8 +80,8 @@ public class AuthFilter implements Filter {
         if (authorized) {
             chain.doFilter(request, response);
         } else {
-            // Unauthorized, redirect back to login page
-            res.sendRedirect(contextPath + "/home/login?error=unauthorized");
+            // Unauthorized, redirect back to staff login page
+            res.sendRedirect(contextPath + "/staff/login?error=unauthorized");
         }
     }
 

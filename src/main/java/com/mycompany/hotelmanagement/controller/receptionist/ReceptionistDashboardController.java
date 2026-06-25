@@ -55,7 +55,7 @@ public class ReceptionistDashboardController extends HttpServlet {
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("user") == null
                 || !"RECEPTIONIST".equals(session.getAttribute("role"))) {
-            response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
+            response.sendRedirect(request.getContextPath() + "/staff/login?error=unauthorized");
             return;
         }
 
@@ -90,7 +90,7 @@ public class ReceptionistDashboardController extends HttpServlet {
 
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error in doGet of ReceptionistDashboardController", e);
-            response.sendRedirect(request.getContextPath() + "/home/login?error=unknown");
+            response.sendRedirect(request.getContextPath() + "/staff/login?error=unknown");
         }
     }
 

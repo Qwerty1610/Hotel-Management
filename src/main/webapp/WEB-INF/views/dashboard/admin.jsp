@@ -40,10 +40,6 @@
                             </div>
 
                             <div class="topbar-actions" style="display: flex; align-items: center; gap: 12px;">
-                                <button type="button" class="btn-change-password-header"
-                                    onclick="openChangePasswordModal()">
-                                    <i class="fa-solid fa-key"></i> Đổi mật khẩu
-                                </button>
                                 <a href="${pageContext.request.contextPath}/logout" class="btn-logout"
                                     style="margin-left: 0;">
                                     <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
@@ -80,6 +76,11 @@
                                         <c:choose>
                                             <c:when test="${param.error eq 'email_exists'}">Lỗi: Email này đã được sử
                                                 dụng trong hệ thống!</c:when>
+                                            <c:when test="${param.error eq 'phone_exists'}">Lỗi: Số điện thoại này đã được sử
+                                                dụng trong hệ thống!</c:when>
+                                            <c:when test="${param.error eq 'invalid_email'}">Lỗi: Định dạng email không hợp lệ!</c:when>
+                                            <c:when test="${param.error eq 'invalid_phone'}">Lỗi: Số điện thoại phải bắt đầu bằng 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số!</c:when>
+                                            <c:when test="${param.error eq 'weak_password'}">Lỗi: Mật khẩu phải từ 8 ký tự trở lên, chứa cả chữ, số và ký tự đặc biệt!</c:when>
                                             <c:when test="${param.error eq 'create_failed'}">Lỗi: Không thể thêm tài
                                                 khoản mới vào cơ sở dữ liệu.</c:when>
                                             <c:when test="${param.error eq 'update_failed'}">Lỗi: Cập nhật thông tin tài

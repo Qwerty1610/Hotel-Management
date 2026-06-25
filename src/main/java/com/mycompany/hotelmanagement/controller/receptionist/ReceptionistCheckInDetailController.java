@@ -125,14 +125,14 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
         Object obj = session.getAttribute("accountId");
 
         if (obj == null) {
-            response.sendRedirect(request.getContextPath() + "/home/login");
+            response.sendRedirect(request.getContextPath() + "/staff/login");
             return;
         }
 
         Integer receptionistId = (Integer) obj;
 
         if (receptionistId == null) {
-            response.sendRedirect(request.getContextPath() + "/home/login");
+            response.sendRedirect(request.getContextPath() + "/staff/login");
             return;
         }
 

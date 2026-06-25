@@ -36,13 +36,15 @@ public class ProfileController extends HttpServlet {
         Integer accountId = resolveAccountId(session);
         if (accountId == null) {
             // E1 - Session expired / not logged in
-            response.sendRedirect(request.getContextPath() + "/home/login?error=session_timeout");
+            String loginPath = request.getServletPath().startsWith("/customer") ? "/home/login" : "/staff/login";
+            response.sendRedirect(request.getContextPath() + loginPath + "?error=session_timeout");
             return;
         }
 
         ProfileView profile = profileService.getProfile(accountId);
         if (profile == null) {
-            response.sendRedirect(request.getContextPath() + "/home/login?error=session_timeout");
+            String loginPath = request.getServletPath().startsWith("/customer") ? "/home/login" : "/staff/login";
+            response.sendRedirect(request.getContextPath() + loginPath + "?error=session_timeout");
             return;
         }
 
@@ -60,7 +62,8 @@ public class ProfileController extends HttpServlet {
         // so the post-redirect-get stays on the same URL for every role.
         String selfPath = request.getContextPath() + request.getServletPath();
         if (accountId == null) {
-            response.sendRedirect(request.getContextPath() + "/home/login?error=session_timeout");
+            String loginPath = request.getServletPath().startsWith("/customer") ? "/home/login" : "/staff/login";
+            response.sendRedirect(request.getContextPath() + loginPath + "?error=session_timeout");
             return;
         }
 

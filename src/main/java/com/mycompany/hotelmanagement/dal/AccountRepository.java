@@ -11,6 +11,10 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ *
+ * @author TungNQ
+ */
 public class AccountRepository {
 
     public Account getAccountByEmail(String email) {
@@ -86,6 +90,22 @@ public class AccountRepository {
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, phone);
+            ps.setInt(2, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /** True if another account (not {@code accountId}) already uses this email. */
+    public boolean existsByEmailExcept(String email, int accountId) {
+        String sql = "SELECT 1 FROM Account WHERE email = ? AND account_id <> ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
             ps.setInt(2, accountId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
