@@ -4,6 +4,7 @@ import com.mycompany.hotelmanagement.dal.BookingDAO;
 import com.mycompany.hotelmanagement.dal.CustomerRequestDAO;
 import com.mycompany.hotelmanagement.dal.RoomRepository;
 import com.mycompany.hotelmanagement.dal.RoomTypeRepository;
+import com.mycompany.hotelmanagement.dal.WalkInBookingDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.CustomerRequest;
 import com.mycompany.hotelmanagement.entity.Room;
@@ -17,6 +18,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,16 +27,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * ReceptionistDashboardController URL: /receptionist/dashboard
- *
- * Quản lý tab sidebar và load dữ liệu booking tương ứng. Tab mặc định:
- * "bookings" Standardized imports utilizing dal instead of dao.
- *
- * Date: 01/6/2026
- *
- * @author BinhHD
- */
 @WebServlet(name = "ReceptionistDashboardController", urlPatterns = {"/receptionist/dashboard"})
 public class ReceptionistDashboardController extends HttpServlet {
 
@@ -43,7 +35,7 @@ public class ReceptionistDashboardController extends HttpServlet {
     private static final int PAGE_SIZE_CHECKIN = 11;
 
     private static final Set<String> ALLOWED_TABS
-            = Set.of("bookings", "checkin", "checkout", "servicerequests", "roommap");
+            = Set.of("bookings", "checkin", "checkout", "servicerequests", "roommap", "walkin-bookings");
     private static final Set<String> STATUS_WHITELIST = Set.of("All", "Pending", "Confirmed", "Rejected", "Cancelled",
             "CheckedIn", "CheckedOut");
 
@@ -77,6 +69,8 @@ public class ReceptionistDashboardController extends HttpServlet {
                 loadCheckInTab(request);
             } else if ("roommap".equals(tab)) {
                 loadRoomMapTab(request);
+            } else if ("walkin-bookings".equals(tab)) {
+                loadWalkInBookingTab(request);
             }
 
             // 4. Forward to view
@@ -245,7 +239,6 @@ public class ReceptionistDashboardController extends HttpServlet {
         }
     }
 
-
     private void loadCheckInTab(HttpServletRequest request) {
 
         BookingDAO dao = new BookingDAO();
@@ -336,5 +329,10 @@ public class ReceptionistDashboardController extends HttpServlet {
 
         request.setAttribute("roomByFloor", roomByFloor);
         request.setAttribute("currentStatus", status);
+    }
+
+    private void loadWalkInBookingTab(HttpServletRequest request) {
+        RoomTypeRepository roomTypeRepo = new RoomTypeRepository();
+        request.setAttribute("roomTypesList", roomTypeRepo.getAllRoomTypes());
     }
 }
