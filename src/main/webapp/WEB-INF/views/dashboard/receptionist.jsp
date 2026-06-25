@@ -40,7 +40,7 @@
                     </li>
                     <li class="menu-item ${currentTab eq 'roommap' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=roommap">
-                            <i class="fa-solid fa-map"></i> <span>sơ đồ phòng</span>
+                            <i class="fa-solid fa-map"></i> <span>Sơ đồ phòng</span>
                         </a>
                     </li>
 

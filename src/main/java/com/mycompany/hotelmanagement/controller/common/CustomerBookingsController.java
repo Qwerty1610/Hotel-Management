@@ -254,6 +254,8 @@ public class CustomerBookingsController extends HttpServlet {
             throws ServletException, IOException {
 
         String customerName = request.getParameter("customerName");
+        String phone = request.getParameter("phone");
+        String email = request.getParameter("email");
         String checkInStr = request.getParameter("checkInDate");
         String checkOutStr = request.getParameter("checkOutDate");
         String note = request.getParameter("note");
@@ -274,6 +276,8 @@ public class CustomerBookingsController extends HttpServlet {
         try {
             booking.setAccountId(accountId);
             booking.setCustomerName(customerName);
+            booking.setPhone(phone);
+            booking.setEmail(email);
             booking.setNote(note);
 
             if (checkInStr != null && !checkInStr.trim().isEmpty()) {
@@ -316,6 +320,9 @@ public class CustomerBookingsController extends HttpServlet {
                     Booking childBooking = new Booking();
                     childBooking.setAccountId(accountId);
                     childBooking.setCustomerName(customerName);
+                    
+                    childBooking.setPhone(phone);
+                    childBooking.setEmail(email);
                     childBooking.setCheckInDate(booking.getCheckInDate());
                     childBooking.setCheckOutDate(booking.getCheckOutDate());
                     childBooking.setNote(note);
@@ -366,6 +373,8 @@ public class CustomerBookingsController extends HttpServlet {
 
             // Retain inputs
             request.setAttribute("customerName", customerName);
+            request.setAttribute("phone", phone);
+            request.setAttribute("email", email);
             request.setAttribute("checkInDate", checkInStr);
             request.setAttribute("checkOutDate", checkOutStr);
             request.setAttribute("note", note);
