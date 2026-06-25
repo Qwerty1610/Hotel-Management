@@ -160,23 +160,20 @@
                                                            class="modal-input" required maxlength="100"
                                                            />
                                                 </div>
-                                                <c:if test="${not empty customer}">
-                                                    <div class="info-row"
-                                                         style="margin-top:12px">
-                                                        <label>Email:</label>
-                                                        <span>
-                                                            <c:out value="${customer.email}" />
-                                                        </span>
-                                                    </div>
-                                                    <div class="info-row"
-                                                         style="border-bottom:none; padding-bottom:0">
-                                                        <label>Số điện thoại:</label>
-                                                        <span>
-                                                            <c:out
-                                                                value="${not empty customer.phone ? customer.phone : '—'}" />
-                                                        </span>
-                                                    </div>
-                                                </c:if>
+                                                <div class="info-row"
+                                                     style="margin-top:12px">
+                                                    <label>Email:</label>
+                                                    <span>
+                                                        <c:out value="${not empty booking.email ? booking.email : (not empty customer ? customer.email : '—')}" />
+                                                    </span>
+                                                </div>
+                                                <div class="info-row"
+                                                     style="border-bottom:none; padding-bottom:0">
+                                                    <label>Số điện thoại:</label>
+                                                    <span>
+                                                        <c:out value="${not empty booking.phone ? booking.phone : (not empty customer and not empty customer.phone ? customer.phone : '—')}" />
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -492,6 +489,8 @@
                                                             <c:out value="${customer.fullName}" />
                                                         </span>
                                                     </div>
+                                                </c:when>
+                                                <c:otherwise>
                                                     <div class="info-row">
                                                         <label>Email:</label>
                                                         <span>

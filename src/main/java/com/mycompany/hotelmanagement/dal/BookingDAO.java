@@ -184,7 +184,7 @@ public class BookingDAO {
             return false;
         }
         String sql = "UPDATE dbo.Booking "
-                + "SET customer_name = ?, room_type_id = ?, room_quantity = ?, "
+                + "SET customer_name = ?, phone = ?, email = ?, room_type_id = ?, room_quantity = ?, "
                 + "    check_in_date = ?, check_out_date = ?, total_amount = ?, "
                 + "    note = ?, updated_at = SYSDATETIME() "
                 + "WHERE booking_id = ? AND status = N'Pending'";
@@ -192,17 +192,19 @@ public class BookingDAO {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, b.getCustomerName());
+                ps.setString(2, b.getPhone());
+                ps.setString(3, b.getEmail());
                 if (b.getRoomTypeId() != null) {
-                    ps.setInt(2, b.getRoomTypeId());
+                    ps.setInt(4, b.getRoomTypeId());
                 } else {
-                    ps.setNull(2, Types.INTEGER);
+                    ps.setNull(4, Types.INTEGER);
                 }
-                ps.setInt(3, b.getRoomQuantity());
-                ps.setDate(4, b.getCheckInDate());
-                ps.setDate(5, b.getCheckOutDate());
-                ps.setDouble(6, b.getTotalAmount());
-                ps.setString(7, b.getNote());
-                ps.setInt(8, b.getBookingId());
+                ps.setInt(5, b.getRoomQuantity());
+                ps.setDate(6, b.getCheckInDate());
+                ps.setDate(7, b.getCheckOutDate());
+                ps.setDouble(8, b.getTotalAmount());
+                ps.setString(9, b.getNote());
+                ps.setInt(10, b.getBookingId());
 
                 return ps.executeUpdate() > 0;
             }
@@ -629,8 +631,8 @@ public class BookingDAO {
         if (b == null) {
             return -1;
         }
-        String sql = "INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note, group_booking_id, created_at, updated_at) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATETIME(), SYSDATETIME())";
+        String sql = "INSERT INTO dbo.Booking (account_id, customer_name, phone, email, room_type_id, room_quantity, check_in_date, check_out_date, total_amount, status, note, group_booking_id, created_at, updated_at) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATETIME(), SYSDATETIME())";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -640,21 +642,23 @@ public class BookingDAO {
                     ps.setNull(1, Types.INTEGER);
                 }
                 ps.setString(2, b.getCustomerName());
+                ps.setString(3, b.getPhone());
+                ps.setString(4, b.getEmail());
                 if (b.getRoomTypeId() != null) {
-                    ps.setInt(3, b.getRoomTypeId());
+                    ps.setInt(5, b.getRoomTypeId());
                 } else {
-                    ps.setNull(3, Types.INTEGER);
+                    ps.setNull(5, Types.INTEGER);
                 }
-                ps.setInt(4, b.getRoomQuantity());
-                ps.setDate(5, b.getCheckInDate());
-                ps.setDate(6, b.getCheckOutDate());
-                ps.setDouble(7, b.getTotalAmount());
-                ps.setString(8, b.getStatus() != null ? b.getStatus() : "Pending");
-                ps.setString(9, b.getNote() != null ? b.getNote().trim() : "");
+                ps.setInt(6, b.getRoomQuantity());
+                ps.setDate(7, b.getCheckInDate());
+                ps.setDate(8, b.getCheckOutDate());
+                ps.setDouble(9, b.getTotalAmount());
+                ps.setString(10, b.getStatus() != null ? b.getStatus() : "Pending");
+                ps.setString(11, b.getNote() != null ? b.getNote().trim() : "");
                 if (b.getGroupBookingId() != null) {
-                    ps.setInt(10, b.getGroupBookingId());
+                    ps.setInt(12, b.getGroupBookingId());
                 } else {
-                    ps.setNull(10, Types.INTEGER);
+                    ps.setNull(12, Types.INTEGER);
                 }
 
                 int affected = ps.executeUpdate();
