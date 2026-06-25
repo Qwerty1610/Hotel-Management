@@ -31,6 +31,25 @@ public class LoginController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        HttpSession session = request.getSession(false);
+        if (session != null && session.getAttribute("user") != null) {
+            String role = (String) session.getAttribute("role");
+            if (role != null && !"CUSTOMER".equals(role)) {
+                String redirectUrl = "/home";
+                if ("ADMIN".equals(role)) {
+                    redirectUrl = "/admin/dashboard";
+                } else if ("HOTEL_MANAGER".equals(role)) {
+                    redirectUrl = "/manager/dashboard";
+                } else if ("RECEPTIONIST".equals(role)) {
+                    redirectUrl = "/receptionist/dashboard";
+                } else if ("HOUSEKEEPING".equals(role)) {
+                    redirectUrl = "/housekeeping/dashboard";
+                }
+                response.sendRedirect(request.getContextPath() + redirectUrl);
+                return;
+            }
+        }
+
         // Pass Google Client ID from config.properties or system properties to JSP
         String googleClientId = ConfigUtil.get("google.client.id",
                 System.getProperty("google.client.id", "your-google-client-id"));
@@ -66,12 +85,12 @@ public class LoginController extends HttpServlet {
         if (result.isSuccess()) {
             String role = result.getRole();
             
-            // Only allow CUSTOMER role to log in via this customer-facing portal
+            // Reject staff on the customer portal
             if (!"CUSTOMER".equals(role)) {
                 response.sendRedirect(request.getContextPath() + "/home/login?error=not_customer");
                 return;
             }
-
+            
             // Authentication successful, establish session
             HttpSession session = request.getSession();
             session.setAttribute("user", result.getDisplayName());
@@ -117,8 +136,17 @@ public class LoginController extends HttpServlet {
                 response.addCookie(rememberMeCookie);
             }
 
-            // Redirect to dashboard page
-            response.sendRedirect(request.getContextPath() + result.getRedirectUrl());
+            // Redirect based on role
+            if ("CUSTOMER".equals(role)) {
+                String redirectUrl = (String) session.getAttribute("redirectAfterLogin");
+                session.removeAttribute("redirectAfterLogin");
+                if (redirectUrl == null || redirectUrl.isEmpty()) {
+                    redirectUrl = request.getContextPath() + "/home/login";
+                }
+                response.sendRedirect(redirectUrl);
+            } else {
+                response.sendRedirect(request.getContextPath() + result.getRedirectUrl());
+            }
         } else {
             // Authentication failed, redirect back to login page with error parameter
             response.sendRedirect(request.getContextPath() + "/home/login?error=invalid_credentials");

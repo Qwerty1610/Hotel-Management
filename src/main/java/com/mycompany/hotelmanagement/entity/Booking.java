@@ -28,10 +28,14 @@ public class Booking {
     private Date createdAt;
     private String assignedRoomsStr;
 
+    private String phone;
+    private String email;
+    
     private int totalRoomQuantity;
     private String groupRoomTypeNames;
     private double overallTotalAmount;
     private int totalRoomTypes;
+    
 
 
     /* ---------- Constructors ---------- */
@@ -149,6 +153,22 @@ public class Booking {
     }
     public void setTotalRoomTypes(int v) {
         this.totalRoomTypes = v;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
 

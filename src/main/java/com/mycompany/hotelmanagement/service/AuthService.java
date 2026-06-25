@@ -8,6 +8,10 @@ import org.mindrot.jbcrypt.BCrypt;
 import java.sql.Timestamp;
 import java.security.SecureRandom;
 
+/**
+ *
+ * @author TungNQ
+ */
 public class AuthService {
     private final AccountRepository accountRepository = new AccountRepository();
     private final PasswordResetRepository passwordResetRepository = new PasswordResetRepository();

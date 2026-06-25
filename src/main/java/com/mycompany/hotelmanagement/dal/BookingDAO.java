@@ -41,7 +41,7 @@ public class BookingDAO {
         }
     }
 
-    private static final String BASE_SELECT = "SELECT b.booking_id, b.account_id, b.customer_name, "
+    private static final String BASE_SELECT = "SELECT b.booking_id, b.account_id, b.customer_name, b.phone, b.email, "
             + "       b.room_type_id, rt.type_name AS room_type_name, "
             + "       b.room_quantity, b.check_in_date, b.check_out_date, "
             + "       b.total_amount, b.status, b.note, b.group_booking_id, CAST(b.created_at AS DATE) AS created_at, "
@@ -279,6 +279,8 @@ public class BookingDAO {
             b.setAccountId(accountId);
         }
         b.setCustomerName(rs.getString("customer_name"));
+        b.setPhone(rs.getString("phone"));
+        b.setEmail(rs.getString("email"));
         int typeId = rs.getInt("room_type_id");
         if (!rs.wasNull()) {
             b.setRoomTypeId(typeId);
@@ -748,6 +750,52 @@ public class BookingDAO {
         return 0;
     }
 
+    public List<Integer> getConflictingRooms(List<Integer> roomIds, Date checkIn, Date checkOut, int excludeParentBookingId) {
+        List<Integer> conflictingRooms = new ArrayList<>();
+        if (roomIds == null || roomIds.isEmpty() || checkIn == null || checkOut == null) {
+            return conflictingRooms;
+        }
+
+        StringBuilder placeholders = new StringBuilder();
+        for (int i = 0; i < roomIds.size(); i++) {
+            placeholders.append("?");
+            if (i < roomIds.size() - 1) {
+                placeholders.append(",");
+            }
+        }
+
+        String sql = "SELECT DISTINCT ra.room_id "
+                + "FROM dbo.RoomAssignment ra "
+                + "JOIN dbo.Booking b ON ra.booking_id = b.booking_id "
+                + "WHERE ra.room_id IN (" + placeholders.toString() + ") "
+                + "AND b.booking_id != ? AND (b.group_booking_id IS NULL OR b.group_booking_id != ?) "
+                + "AND b.status IN (N'Pending', N'Confirmed', N'CheckedIn') "
+                + "AND b.check_in_date < ? AND b.check_out_date > ?";
+
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                int index = 1;
+                for (Integer roomId : roomIds) {
+                    ps.setInt(index++, roomId);
+                }
+                ps.setInt(index++, excludeParentBookingId);
+                ps.setInt(index++, excludeParentBookingId);
+                ps.setDate(index++, checkOut);
+                ps.setDate(index++, checkIn);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        conflictingRooms.add(rs.getInt("room_id"));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in getConflictingRooms: " + e.getMessage(), e);
+        }
+        return conflictingRooms;
+    }
+
     public List<Booking> getCheckInBookings(String keyword, int offset, int pageSize) {
         List<Booking> list = new ArrayList<>();
 
@@ -898,5 +946,174 @@ public class BookingDAO {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public List<Room> getAllAssignedRoomsForGroup(int bookingId) {
+
+        List<Room> list = new ArrayList<>();
+
+        String sql = """
+        SELECT
+            r.room_id,
+            r.room_number,
+            r.status,
+            r.floor,
+            rt.type_name
+        FROM RoomAssignment ra
+        JOIN Room r
+            ON ra.room_id = r.room_id
+        JOIN RoomType rt
+            ON r.type_id = rt.type_id
+        WHERE ra.booking_id = ?
+           OR ra.booking_id IN (
+                SELECT booking_id
+                FROM Booking
+                WHERE group_booking_id = ?
+           )
+        ORDER BY r.room_number
+    """;
+
+        try (
+                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            useDatabase(conn);
+
+            ps.setInt(1, bookingId);
+            ps.setInt(2, bookingId);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+
+                Room r = new Room();
+
+                r.setRoomId(rs.getInt("room_id"));
+                r.setRoomNumber(rs.getString("room_number"));
+                r.setStatus(rs.getString("status"));
+                r.setFloor(rs.getString("floor"));
+                r.setTypeName(rs.getString("type_name"));
+
+                list.add(r);
+            }
+
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE,
+                    "Error getAllAssignedRoomsForGroup", e);
+        }
+
+        return list;
+    }
+
+    public int countBookings(String status, String keyword) {
+
+        int total = 0;
+
+        StringBuilder sql = new StringBuilder("""
+        SELECT COUNT(*)
+        FROM Booking b
+        WHERE b.group_booking_id IS NULL
+    """);
+
+        if (!"All".equalsIgnoreCase(status)) {
+            sql.append(" AND b.status = ? ");
+        }
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("""
+            AND (
+                b.customer_name LIKE ?
+                OR CAST(b.booking_id AS VARCHAR(20)) LIKE ?
+            )
+        """);
+        }
+
+        try (
+                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            int index = 1;
+
+            if (!"All".equalsIgnoreCase(status)) {
+                ps.setString(index++, status);
+            }
+
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String k = "%" + keyword.trim() + "%";
+                ps.setString(index++, k);
+                ps.setString(index++, k);
+            }
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                total = rs.getInt(1);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return total;
+    }
+
+    public List<Booking> getBookingsPaging(
+            String status,
+            String keyword,
+            int offset,
+            int pageSize) {
+
+        List<Booking> list = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder(BASE_SELECT);
+
+        sql.append(" WHERE b.group_booking_id IS NULL ");
+
+        if (!"All".equalsIgnoreCase(status)) {
+            sql.append(" AND b.status = ? ");
+        }
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("""
+            AND (
+                b.customer_name LIKE ?
+                OR CAST(b.booking_id AS VARCHAR(20)) LIKE ?
+            )
+        """);
+        }
+
+        sql.append("""
+        ORDER BY b.created_at DESC
+        OFFSET ? ROWS
+        FETCH NEXT ? ROWS ONLY
+    """);
+
+        try (
+                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            int index = 1;
+
+            if (!"All".equalsIgnoreCase(status)) {
+                ps.setString(index++, status);
+            }
+
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String k = "%" + keyword.trim() + "%";
+                ps.setString(index++, k);
+                ps.setString(index++, k);
+            }
+
+            ps.setInt(index++, offset);
+            ps.setInt(index, pageSize);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                list.add(mapRow(rs));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
     }
 }

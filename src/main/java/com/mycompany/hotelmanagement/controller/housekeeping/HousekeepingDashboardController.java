@@ -19,7 +19,7 @@ public class HousekeepingDashboardController extends HttpServlet {
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("user") == null || !"HOUSEKEEPING".equals(session.getAttribute("role"))) {
             // Unauthorized or wrong role, redirect back to login page with unauthorized error
-            response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
+            response.sendRedirect(request.getContextPath() + "/staff/login?error=unauthorized");
             return;
         }
                 HousekeepingDAO dao = new HousekeepingDAO();

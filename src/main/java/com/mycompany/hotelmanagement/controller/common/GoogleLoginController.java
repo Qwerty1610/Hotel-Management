@@ -81,15 +81,15 @@ public class GoogleLoginController extends HttpServlet {
                 if ("CUSTOMER".equals(result.getRole())) {
                     redirectUrl = (String) session.getAttribute("redirectAfterLogin");
                     session.removeAttribute("redirectAfterLogin");
+                    if (redirectUrl == null || redirectUrl.isEmpty()) {
+                        redirectUrl = request.getContextPath() + "/home/login";
+                    }
                 } else {
                     session.removeAttribute("redirectAfterLogin");
+                    redirectUrl = request.getContextPath() + result.getRedirectUrl();
                 }
 
-                if (redirectUrl != null && !redirectUrl.isEmpty()) {
-                    response.sendRedirect(redirectUrl);
-                } else {
-                    response.sendRedirect(request.getContextPath() + result.getRedirectUrl());
-                }
+                response.sendRedirect(redirectUrl);
             } else {
                 response.sendRedirect(request.getContextPath() + "/home/login?error=invalid_credentials");
             }

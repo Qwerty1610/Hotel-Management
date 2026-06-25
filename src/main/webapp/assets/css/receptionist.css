@@ -500,7 +500,7 @@ button:disabled,
 /* Room Grid */
 .room-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 12px;
     margin-top: 10px;
 }
@@ -542,10 +542,11 @@ button:disabled,
 }
 
 .badge-status {
-    font-size: 10px;
+    margin-top: 8px;
+    font-size: 11px;
     font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
     text-transform: uppercase;
     display: inline-block;
 }
@@ -678,27 +679,6 @@ button:disabled,
     .process-grid {
         grid-template-columns: 1fr;
     }
-}
-
-
-/* ---- DISABLED BUTTON STATE ---- */
-button:disabled,
-.btn-modal-confirm:disabled,
-.btn-modal-reject:disabled,
-.btn-modal-save:disabled {
-    background-color: #cbd5e1 !important;
-    color: #94a3b8 !important;
-    cursor: not-allowed !important;
-    border-color: #cbd5e1 !important;
-    transform: none !important;
-    box-shadow: none !important;
-}
-
-/* ---- TOAST WARNING VARIANT ---- */
-.toast-warning {
-    background: #fffbeb;
-    color: #d97706;
-    border: 1px solid #fde68a;
 }
 
 /* =========================================================
@@ -1048,28 +1028,9 @@ button:disabled,
     color: var(--text-navy);
 }
 
-.room-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
-}
-
-.room-card {
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    padding: 12px;
-    background: #fff;
-    transition: .2s;
-}
-
 .room-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-}
-
-.room-card-header {
-    display: flex;
-    justify-content: space-between;
 }
 
 .room-number {
@@ -1082,15 +1043,305 @@ button:disabled,
     color: var(--text-muted);
 }
 
-.badge-status {
-    margin-top: 8px;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 4px 8px;
-    border-radius: 6px;
-    display: inline-block;
-}
-
 .status-Available { border-left: 4px solid #10b981; }
 .status-Occupied { border-left: 4px solid #ef4444; }
 .status-Maintenance { border-left: 4px solid #f59e0b; }
+/* =====================================================
+   WALK-IN BOOKING
+===================================================== */
+
+.walkin-card{
+    background:#fff;
+    border:1px solid var(--border-color);
+    border-radius:18px;
+    padding:24px;
+    margin-bottom:20px;
+    box-shadow:0 4px 14px rgba(15,23,42,.04);
+}
+
+.walkin-section-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+    padding-bottom:14px;
+    border-bottom:1px solid var(--border-color);
+}
+
+.walkin-section-header div{
+    font-size:18px;
+    font-weight:700;
+    color:var(--text-navy);
+}
+
+.walkin-section-header i{
+    color:var(--brand-blue);
+    margin-right:8px;
+}
+
+/* ======================
+   CARD 1
+====================== */
+
+.walkin-contact-grid{
+    display:grid;
+    grid-template-columns:2.5fr 1fr 1.4fr;
+    gap:16px;
+}
+
+.walkin-date-grid{
+    display:grid;
+    grid-template-columns:220px 220px;
+    gap:16px;
+    margin-top:18px;
+}
+
+.customer-name-group{
+    min-width:0;
+}
+
+/* ======================
+   INPUT
+====================== */
+
+.walkin-input{
+    width:100%;
+    height:44px;
+    border:1px solid #dbe3ee;
+    border-radius:12px;
+    padding:0 14px;
+    font-size:14px;
+    box-sizing:border-box;
+    transition:.2s;
+}
+
+.walkin-input:focus{
+    outline:none;
+    border-color:var(--brand-blue);
+    box-shadow:0 0 0 4px rgba(37,99,235,.12);
+}
+
+.form-group{
+    display:flex;
+    flex-direction:column;
+}
+
+.form-group label{
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:7px;
+    color:var(--text-navy);
+}
+
+/* ======================
+   CARD 2
+====================== */
+
+.btn-add-room{
+    border:none;
+    background:var(--brand-blue);
+    color:white;
+    padding:10px 16px;
+    border-radius:10px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+.btn-add-room:hover{
+    opacity:.9;
+}
+
+.room-header-row{
+    display:grid;
+    grid-template-columns:
+        minmax(320px,1fr)
+        110px
+        110px
+        48px;
+
+    gap:12px;
+
+    margin-bottom:10px;
+
+    font-size:12px;
+    font-weight:700;
+
+    color:#64748b;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+}
+
+.room-row{
+    display:grid;
+    grid-template-columns:
+        minmax(320px,1fr)
+        110px
+        110px
+        48px;
+
+    gap:12px;
+    align-items:end;
+    margin-bottom:14px;
+}
+
+.btn-delete-row{
+    width:48px;
+    height:44px;
+
+    border:none;
+    border-radius:10px;
+
+    background:#fee2e2;
+    color:#dc2626;
+
+    cursor:pointer;
+    transition:.2s;
+}
+
+.btn-delete-row:hover{
+    background:#fecaca;
+}
+
+/* ======================
+   CARD 3
+====================== */
+
+.room-map-placeholder{
+    min-height:280px;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+
+    text-align:center;
+    color:#64748b;
+}
+
+.room-map-placeholder i{
+    font-size:52px;
+    margin-bottom:15px;
+    opacity:.5;
+}
+
+.room-map-placeholder h4{
+    margin-bottom:10px;
+}
+
+.room-map-placeholder p{
+    max-width:500px;
+    line-height:1.6;
+}
+
+/* ======================
+   CARD 4
+====================== */
+
+.walkin-note{
+    width:100%;
+    min-height:130px;
+
+    border:1px solid #dbe3ee;
+    border-radius:12px;
+
+    padding:14px;
+    resize:vertical;
+
+    font-family:inherit;
+    font-size:14px;
+}
+
+.walkin-note:focus{
+    outline:none;
+    border-color:var(--brand-blue);
+    box-shadow:0 0 0 4px rgba(37,99,235,.12);
+}
+
+/* ======================
+   FOOTER
+====================== */
+
+.walkin-footer{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    margin-top:24px;
+}
+
+.privacy-note{
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+    color:#64748b;
+    font-size:14px;
+}
+
+.privacy-note i{
+    color:#10b981;
+    font-size:18px;
+}
+
+.btn-booking-submit{
+    border:none;
+
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #1d4ed8
+    );
+
+    color:white;
+
+    padding:14px 34px;
+
+    border-radius:12px;
+
+    font-size:15px;
+    font-weight:700;
+
+    cursor:pointer;
+    transition:.2s;
+}
+
+.btn-booking-submit:hover{
+    transform:translateY(-1px);
+    box-shadow:0 8px 20px rgba(37,99,235,.25);
+}
+
+/* ======================
+   RESPONSIVE
+====================== */
+
+@media(max-width:1200px){
+
+    .walkin-contact-grid{
+        grid-template-columns:1fr;
+    }
+
+    .walkin-date-grid{
+        grid-template-columns:1fr;
+    }
+
+    .room-header-row{
+        display:none;
+    }
+
+    .room-row{
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:768px){
+
+    .walkin-footer{
+        flex-direction:column;
+        gap:16px;
+        align-items:flex-start;
+    }
+
+    .btn-booking-submit{
+        width:100%;
+    }
+}

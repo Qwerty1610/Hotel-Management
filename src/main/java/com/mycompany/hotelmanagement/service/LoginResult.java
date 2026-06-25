@@ -1,5 +1,9 @@
 package com.mycompany.hotelmanagement.service;
 
+/**
+ *
+ * @author TungNQ
+ */
 public class LoginResult {
     private final boolean success;
     private final String role;

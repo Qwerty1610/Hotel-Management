@@ -11,6 +11,10 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ *
+ * @author TungNQ
+ */
 public class AccountRepository {
 
     public Account getAccountByEmail(String email) {

@@ -62,6 +62,11 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
         int bookingId = Integer.parseInt(request.getParameter("bookingId"));
 
         Booking booking = bookingDAO.getBookingById(bookingId);
+        int rootBookingId = booking.getBookingId();
+
+        if (booking.getGroupBookingId() != null) {
+            rootBookingId = booking.getGroupBookingId();
+        }
 
         if (booking == null) {
             response.sendRedirect(request.getContextPath()
@@ -71,17 +76,27 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
 
         request.setAttribute("booking", booking);
 
+        String displayPhone = booking.getPhone();
+        String displayEmail = booking.getEmail();
+
         Integer accountId = booking.getAccountId();
 
         if (accountId != null) {
-            request.setAttribute("customer",
-                    bookingDAO.getCustomerDetailsByAccountId(accountId));
-        } else {
-            request.setAttribute("customer", null);
+
+            var customer
+                    = bookingDAO.getCustomerDetailsByAccountId(accountId);
+
+            if (customer != null) {
+                displayPhone = customer.getPhone();
+                displayEmail = customer.getEmail();
+            }
         }
 
+        request.setAttribute("displayPhone", displayPhone);
+        request.setAttribute("displayEmail", displayEmail);
+
         request.setAttribute("rooms",
-                bookingDAO.getAssignedRoomsForBooking(bookingId));
+                bookingDAO.getAllAssignedRoomsForGroup(rootBookingId));
 
         request.getRequestDispatcher("/WEB-INF/views/receptionist/checkin-detail.jsp")
                 .forward(request, response);
@@ -110,14 +125,14 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
         Object obj = session.getAttribute("accountId");
 
         if (obj == null) {
-            response.sendRedirect(request.getContextPath() + "/home/login");
+            response.sendRedirect(request.getContextPath() + "/staff/login");
             return;
         }
 
         Integer receptionistId = (Integer) obj;
 
         if (receptionistId == null) {
-            response.sendRedirect(request.getContextPath() + "/home/login");
+            response.sendRedirect(request.getContextPath() + "/staff/login");
             return;
         }
 

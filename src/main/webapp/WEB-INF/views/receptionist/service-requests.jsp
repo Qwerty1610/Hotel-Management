@@ -3,107 +3,15 @@
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quản lý yêu cầu dịch vụ - HotelOps Pro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/receptionist.css?v=5" />
-</head>
-<fmt:setLocale value="vi_VN" />
-
-<body class="dashboard-body">
-
-<div class="dashboard-layout">
-
-    <%-- ================= SIDEBAR ================= --%>
-    <aside class="dashboard-sidebar">
-        <div class="sidebar-brand">
-            <i class="fa-solid fa-bell-concierge"></i> <span>HotelOps</span>
-        </div>
-
-        <ul class="sidebar-menu">
-            <li class="menu-item">
-                <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=bookings">
-                    <i class="fa-solid fa-calendar-check"></i> <span>Yêu cầu đặt phòng</span>
-                </a>
-            </li>
-            
-            <li class="menu-item">
-                <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin">
-                    <i class="fa-solid fa-key"></i> <span>Nhận phòng (Check-in)</span>
-                </a>
-            </li>
-            
-            <li class="menu-item">
-                <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkout">
-                    <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh toán</span>
-                </a>
-            </li>
-
-            <li class="menu-item active">
-                <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=servicerequests">
-                    <i class="fa-solid fa-bell-concierge"></i> <span>Quản lý yêu cầu dịch vụ</span>
-                </a>
-            </li>
-        </ul>
-
-        <div class="sidebar-footer">
-            <a href="${pageContext.request.contextPath}/profile" class="user-profile-card" title="Xem hồ sơ cá nhân" style="text-decoration:none;cursor:pointer;">
-                <div class="profile-avatar">RC</div>
-                <div class="profile-info">
-                    <span class="profile-name">${not empty sessionScope.user ? sessionScope.user : 'Receptionist'}</span>
-                    <span class="profile-role">Lễ tân</span>
-                </div>
-            </a>
-        </div>
-    </aside>
-
-    <%-- ================= MAIN CONTENT ================= --%>
-    <div class="dashboard-main">
-
-        <%-- TOPBAR --%>
-        <header class="main-topbar">
-            <div class="breadcrumb">
-                <span>Receptionist</span>
-                <span class="separator">&gt;</span>
-                <span class="current">Quản lý yêu cầu dịch vụ</span>
-            </div>
-            <a href="${pageContext.request.contextPath}/logout" class="btn-logout">
-                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
-            </a>
-        </header>
-
-        <%-- WORKSPACE --%>
-        <main class="workspace-content">
-            
-            <%-- Toast notification --%>
-            <c:if test="${param.result eq 'success'}">
-                <div class="toast-notify toast-success">
-                    <i class="fa-solid fa-circle-check"></i>
-                    <c:choose>
-                        <c:when test="${param.action eq 'approve'}">Đã duyệt hoàn thành yêu cầu dịch vụ thành công!</c:when>
-                        <c:when test="${param.action eq 'cancel'}">Đã hủy yêu cầu dịch vụ thành công!</c:when>
-                        <c:otherwise>Thao tác thành công!</c:otherwise>
-                    </c:choose>
-                </div>
-            </c:if>
-            <c:if test="${param.result eq 'fail'}">
-                <div class="toast-notify toast-error">
-                    <i class="fa-solid fa-circle-xmark"></i>
-                    Thao tác thất bại. Vui lòng thử lại sau.
-                </div>
-            </c:if>
-            <c:if test="${not empty param.error}">
-                <div class="toast-notify toast-error">
-                    <i class="fa-solid fa-circle-xmark"></i>
-                    <c:choose>
-                        <c:when test="${param.error eq 'invalid'}">Mã yêu cầu hoặc hành động không hợp lệ.</c:when>
-                        <c:otherwise>Đã xảy ra lỗi. Vui lòng thử lại sau.</c:otherwise>
-                    </c:choose>
-                </div>
-            </c:if>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Quản lý yêu cầu dịch vụ - HotelOps Pro</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/receptionist.css?v=5" />
+    </head>
+    <fmt:setLocale value="vi_VN" />
 
     <body class="dashboard-body">
 
@@ -122,21 +30,20 @@
                         </a>
                     </li>
 
-                    <li class="menu-item ${currentTab eq 'roommap' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=roommap">
-                            <i class="fa-solid fa-calendar-check"></i> <span>sơ đồ phòng</span>
-                        </a>
-                    </li>
-
                     <li class="menu-item ${currentTab eq 'checkin' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin">
                             <i class="fa-solid fa-key"></i> <span>Nhận phòng (Check-in)</span>
                         </a>
                     </li>
+                    <li class="menu-item ${currentTab eq 'roommap' ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=roommap">
+                            <i class="fa-solid fa-map"></i> <span>sơ đồ phòng</span>
+                        </a>
+                    </li>
 
                     <li class="menu-item ${currentTab eq 'walkin-bookings' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=walkin-bookings">
-                            <i class="fa-solid fa-calendar-check"></i> <span>Đặt phòng tại quầy</span>
+                            <i class="fa-solid fa-user-plus"></i> <span>Đặt phòng tại quầy</span>
                         </a>
                     </li>
 

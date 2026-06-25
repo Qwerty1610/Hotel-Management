@@ -27,6 +27,28 @@ public class StaffLoginController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        HttpSession session = request.getSession(false);
+        if (session != null && session.getAttribute("user") != null) {
+            String role = (String) session.getAttribute("role");
+            if ("CUSTOMER".equals(role)) {
+                response.sendRedirect(request.getContextPath() + "/home/login");
+                return;
+            } else if (role != null) {
+                String redirectUrl = "/home";
+                if ("ADMIN".equals(role)) {
+                    redirectUrl = "/admin/dashboard";
+                } else if ("HOTEL_MANAGER".equals(role)) {
+                    redirectUrl = "/manager/dashboard";
+                } else if ("RECEPTIONIST".equals(role)) {
+                    redirectUrl = "/receptionist/dashboard";
+                } else if ("HOUSEKEEPING".equals(role)) {
+                    redirectUrl = "/housekeeping/dashboard";
+                }
+                response.sendRedirect(request.getContextPath() + redirectUrl);
+                return;
+            }
+        }
+
         // Forward to staff login page
         request.getRequestDispatcher("/WEB-INF/views/staff/login.jsp").forward(request, response);
     }
