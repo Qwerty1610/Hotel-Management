@@ -31,6 +31,7 @@ public class CustomerRequestDAO {
 
     public CustomerRequestDAO() {
         ensureBookingIdColumnExists();
+        ensureCancelReasonColumnExists();
     }
 
     private void ensureBookingIdColumnExists() {
@@ -46,6 +47,25 @@ public class CustomerRequestDAO {
                 try (Statement stmt = conn.createStatement()) {
                     stmt.execute("ALTER TABLE dbo.CustomerRequest ADD booking_id INT NULL");
                     stmt.execute("ALTER TABLE dbo.CustomerRequest ADD CONSTRAINT FK_CustomerRequest_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id)");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void ensureCancelReasonColumnExists() {
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            boolean exists = false;
+            try (ResultSet rs = conn.getMetaData().getColumns("HotelManagementDB", "dbo", "CustomerRequest", "cancel_reason")) {
+                if (rs.next()) {
+                    exists = true;
+                }
+            }
+            if (!exists) {
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.execute("ALTER TABLE dbo.CustomerRequest ADD cancel_reason NVARCHAR(500) NULL");
                 }
             }
         } catch (Exception e) {
@@ -71,7 +91,7 @@ public class CustomerRequestDAO {
             "       )) AS room_number, " +
             "       cr.booking_id, bk.customer_name, cr.title, cr.description, " +
             "       cr.priority, cr.status, cr.assigned_staff_id, acc.full_name AS staff_name, " +
-            "       cr.created_at, cr.completed_at " +
+            "       cr.created_at, cr.completed_at, cr.cancel_reason, cr.updated_at " +
             "FROM dbo.CustomerRequest cr " +
             "LEFT JOIN dbo.Room rm ON cr.room_id = rm.room_id " +
             "LEFT JOIN dbo.Booking bk ON cr.booking_id = bk.booking_id " +
@@ -93,6 +113,137 @@ public class CustomerRequestDAO {
             e.printStackTrace();
         }
         return list;
+    }
+
+    /**
+     * Lấy một yêu cầu theo request_id.
+     * Dùng cho Receptionist khi cần đọc thông tin (booking_id, title) trước khi approve.
+     */
+    public CustomerRequest getRequestById(int requestId) {
+        String sql = BASE_SELECT + " WHERE cr.request_id = ?";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, requestId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return mapRow(rs);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Maintenance requests (booking_id IS NULL) — dành cho Manager giao việc Housekeeping.
+     * Một trang theo bộ lọc, sắp theo thời gian mới nhất.
+     */
+    public List<CustomerRequest> getMaintenanceRequests(String roomKw, String priority,
+                                                        String staffFilter, String status,
+                                                        int offset, int pageSize) {
+        List<CustomerRequest> list = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+        String sql = BASE_SELECT
+                + " WHERE cr.booking_id IS NULL "
+                + buildMaintenanceFilter(roomKw, priority, staffFilter, status, params)
+                + " ORDER BY cr.created_at DESC, cr.request_id DESC "
+                + " OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+        params.add(offset);
+        params.add(pageSize);
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                for (int i = 0; i < params.size(); i++) ps.setObject(i + 1, params.get(i));
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) list.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    /** Tổng số Maintenance requests khớp bộ lọc (phân trang cho Manager). */
+    public int countMaintenanceRequests(String roomKw, String priority,
+                                        String staffFilter, String status) {
+        List<Object> params = new ArrayList<>();
+        String sql = "SELECT COUNT(*) FROM dbo.CustomerRequest cr "
+                + "LEFT JOIN dbo.Room rm ON cr.room_id = rm.room_id "
+                + " WHERE cr.booking_id IS NULL "
+                + buildMaintenanceFilter(roomKw, priority, staffFilter, status, params);
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                for (int i = 0; i < params.size(); i++) ps.setObject(i + 1, params.get(i));
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    /** Số Maintenance requests đang ở trạng thái Pending (chưa gán) — KPI cho Manager. */
+    public int countMaintenanceByStatus(String status) {
+        String sql;
+        if ("Pending".equals(status)) {
+            sql = "SELECT COUNT(*) FROM dbo.CustomerRequest "
+                + "WHERE booking_id IS NULL AND status IN (N'Pending', N'InProgress')";
+        } else {
+            sql = "SELECT COUNT(*) FROM dbo.CustomerRequest "
+                + "WHERE booking_id IS NULL AND status = ?";
+        }
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                if (!"Pending".equals(status)) ps.setString(1, status);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    /**
+     * Xây phần điều kiện bổ sung (AND ...) cho Maintenance requests.
+     * Khác với buildReqWhere: không có điều kiện WHERE đầu vì caller đã có
+     * "WHERE cr.booking_id IS NULL".
+     */
+    private String buildMaintenanceFilter(String roomKw, String priority,
+                                          String staffFilter, String status,
+                                          List<Object> params) {
+        StringBuilder w = new StringBuilder();
+        if (roomKw != null && !roomKw.trim().isEmpty()) {
+            w.append(" AND rm.room_number LIKE ? ");
+            params.add("%" + roomKw.trim() + "%");
+        }
+        if (priority != null && !priority.trim().isEmpty() && !"all".equalsIgnoreCase(priority)) {
+            w.append(" AND cr.priority = ? ");
+            params.add(priority);
+        }
+        if (status != null && !status.trim().isEmpty() && !"all".equalsIgnoreCase(status)) {
+            w.append(" AND cr.status = ? ");
+            params.add(status);
+        }
+        if (staffFilter != null && !staffFilter.trim().isEmpty() && !"all".equalsIgnoreCase(staffFilter)) {
+            if ("unassigned".equalsIgnoreCase(staffFilter)) {
+                w.append(" AND cr.assigned_staff_id IS NULL ");
+            } else {
+                try {
+                    int sid = Integer.parseInt(staffFilter.trim());
+                    w.append(" AND cr.assigned_staff_id = ? ");
+                    params.add(sid);
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+        return w.toString();
     }
 
     /** Xây WHERE lọc yêu cầu theo phòng / ưu tiên / nhân viên / trạng thái. */
@@ -319,8 +470,13 @@ public class CustomerRequestDAO {
     }
 
     public List<CustomerRequest> getRequestsByCustomer(int accountId) {
+        return getRequestsByCustomer(accountId, "All");
+    }
+
+    public List<CustomerRequest> getRequestsByCustomer(int accountId, String statusFilter) {
         List<CustomerRequest> list = new ArrayList<>();
-        String sql = "SELECT cr.request_id, cr.room_id, " +
+        StringBuilder sql = new StringBuilder(
+                     "SELECT cr.request_id, cr.room_id, " +
                      "       COALESCE(rm.room_number, ( " +
                      "           SELECT STRING_AGG(r2.room_number, ', ') " +
                      "           FROM dbo.RoomAssignment ra " +
@@ -329,17 +485,29 @@ public class CustomerRequestDAO {
                      "       )) AS room_number, " +
                      "       cr.booking_id, bk.customer_name, cr.title, cr.description, " +
                      "       cr.priority, cr.status, cr.assigned_staff_id, acc.full_name AS staff_name, " +
-                     "       cr.created_at, cr.completed_at " +
+                     "       cr.created_at, cr.completed_at, cr.cancel_reason, cr.updated_at " +
                      "FROM dbo.CustomerRequest cr " +
                      "LEFT JOIN dbo.Room rm ON cr.room_id = rm.room_id " +
                      "LEFT JOIN dbo.Account acc ON cr.assigned_staff_id = acc.account_id " +
                      "INNER JOIN dbo.Booking bk ON cr.booking_id = bk.booking_id " +
-                     "WHERE bk.account_id = ? " +
-                     "ORDER BY cr.created_at DESC, cr.request_id DESC";
+                     "WHERE bk.account_id = ? "
+        );
+        List<Object> params = new ArrayList<>();
+        params.add(accountId);
+
+        if (statusFilter != null && !statusFilter.trim().isEmpty() && !"All".equalsIgnoreCase(statusFilter)) {
+            sql.append(" AND cr.status = ? ");
+            params.add(statusFilter.trim());
+        }
+
+        sql.append("ORDER BY cr.created_at DESC, cr.request_id DESC");
+
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setInt(1, accountId);
+            try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+                for (int i = 0; i < params.size(); i++) {
+                    ps.setObject(i + 1, params.get(i));
+                }
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         list.add(mapRow(rs));
@@ -389,6 +557,8 @@ public class CustomerRequestDAO {
         r.setAssignedStaffName(rs.getString("staff_name"));
         r.setCreatedAt(rs.getTimestamp("created_at"));
         r.setCompletedAt(rs.getTimestamp("completed_at"));
+        r.setCancelReason(rs.getString("cancel_reason"));
+        r.setUpdatedAt(rs.getTimestamp("updated_at"));
         return r;
     }
 
@@ -470,10 +640,15 @@ public class CustomerRequestDAO {
     }
 
     public boolean updateStatusByReceptionist(int requestId, String newStatus, int receptionistId) {
+        return updateStatusByReceptionist(requestId, newStatus, receptionistId, null);
+    }
+
+    public boolean updateStatusByReceptionist(int requestId, String newStatus, int receptionistId, String cancelReason) {
         String sql = "UPDATE dbo.CustomerRequest " +
                 "SET status = ?, " +
                 "    assigned_staff_id = COALESCE(assigned_staff_id, ?), " +
                 "    completed_at = CASE WHEN ? = N'Completed' THEN SYSDATETIME() ELSE NULL END, " +
+                "    cancel_reason = CASE WHEN ? = N'Cancelled' THEN ? ELSE cancel_reason END, " +
                 "    updated_at = SYSDATETIME() " +
                 "WHERE request_id = ?";
         try (Connection conn = DBContext.getConnection()) {
@@ -482,7 +657,9 @@ public class CustomerRequestDAO {
                 ps.setString(1, newStatus);
                 ps.setInt(2, receptionistId);
                 ps.setString(3, newStatus);
-                ps.setInt(4, requestId);
+                ps.setString(4, newStatus);
+                ps.setString(5, cancelReason);
+                ps.setInt(6, requestId);
                 return ps.executeUpdate() > 0;
             }
         } catch (Exception e) {

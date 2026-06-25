@@ -690,6 +690,7 @@ BEGIN
         created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
         updated_at DATETIME2 NULL,
         completed_at DATETIME2 NULL,
+        cancel_reason NVARCHAR(500) NULL,
         CONSTRAINT FK_CustomerRequest_Room FOREIGN KEY (room_id) REFERENCES dbo.Room(room_id),
         CONSTRAINT FK_CustomerRequest_Staff FOREIGN KEY (assigned_staff_id) REFERENCES dbo.Account(account_id),
         CONSTRAINT CK_CustomerRequest_Priority CHECK (priority IN (N'Low', N'Medium', N'High', N'Urgent')),
@@ -1282,4 +1283,67 @@ BEGIN
     FROM dbo.Booking b
     WHERE b.account_id = 5 AND b.check_in_date = '2026-06-22' AND b.status = N'CheckedIn';
 END
+GO
+/* ============================================================
+   13. PHAN LOAI YEU CAU: DAM BAO SEED MAINTENANCE KHONG CO booking_id
+   Maintenance requests (giao Housekeeping): booking_id IS NULL
+   Service requests (Receptionist duyet -> InvoiceItem): booking_id IS NOT NULL
+   ============================================================ */
+
+/* Dam bao cac seed maintenance request khong bi gan booking_id nham (idempotent). */
+UPDATE dbo.CustomerRequest
+SET booking_id = NULL
+WHERE booking_id IS NOT NULL
+  AND title IN (
+      N'Yeu cau them khan tam',
+      N'Dieu hoa khong mat',
+      N'Nuoc nong yeu',
+      N'Yeu cau don phong som',
+      N'Thay ga giuong',
+      N'Bo sung nuoc uong',
+      N'Ve sinh nha tam',
+      N'Thay bong den',
+      N'Dat them giuong phu',
+      N'Giat nhanh quan ao'
+  );
+GO
+
+/* Seed mau: Service requests tu Customer (co booking_id) de test Receptionist duyet -> Invoice.
+   Chi chen khi chua co service request nao co booking_id. */
+IF NOT EXISTS (SELECT 1 FROM dbo.CustomerRequest WHERE booking_id IS NOT NULL)
+BEGIN
+    DECLARE @svcBookingId INT;
+    SELECT TOP 1 @svcBookingId = b.booking_id
+    FROM dbo.Booking b
+    WHERE b.account_id = 5 AND b.status IN (N'CheckedIn', N'Confirmed')
+    ORDER BY b.booking_id DESC;
+
+    IF @svcBookingId IS NOT NULL
+    BEGIN
+        DECLARE @svcRoomId INT = NULL;
+        SELECT TOP 1 @svcRoomId = ra.room_id
+        FROM dbo.RoomAssignment ra
+        WHERE ra.booking_id = @svcBookingId;
+
+        INSERT INTO dbo.CustomerRequest (room_id, booking_id, title, description, priority, status, created_at)
+        VALUES
+        (@svcRoomId, @svcBookingId, N'Bua sang Buffet',
+            N'Khach dat bua sang buffet tai nha hang.', N'Medium', N'Pending',
+            DATEADD(HOUR, -1, SYSDATETIME())),
+        (@svcRoomId, @svcBookingId, N'Dua don san bay',
+            N'Khach can xe dua ra san bay luc 14h00.', N'High', N'Pending',
+            DATEADD(MINUTE, -30, SYSDATETIME()));
+    END
+END
+GO
+
+/* Test query: Kiem tra phan loai */
+SELECT
+    CASE WHEN cr.booking_id IS NULL THEN N'Maintenance' ELSE N'Service' END AS request_type,
+    cr.request_id, rm.room_number, cr.title, cr.priority, cr.status,
+    cr.booking_id, acc.full_name AS staff_name, cr.created_at
+FROM dbo.CustomerRequest cr
+LEFT JOIN dbo.Room rm ON cr.room_id = rm.room_id
+LEFT JOIN dbo.Account acc ON cr.assigned_staff_id = acc.account_id
+ORDER BY request_type, cr.created_at DESC;
 GO

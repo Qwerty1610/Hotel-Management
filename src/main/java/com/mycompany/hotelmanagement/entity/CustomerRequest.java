@@ -26,6 +26,7 @@ public class CustomerRequest {
     private Timestamp completedAt;
     private Integer bookingId;       // có thể null, liên kết với booking của khách
     private String customerName;     // lấy kèm từ JOIN Booking để hiển thị
+    private String cancelReason;     // Lý do hủy yêu cầu từ phía Lễ tân
 
     public CustomerRequest() {}
 
@@ -68,4 +69,11 @@ public class CustomerRequest {
 
     public Timestamp getCompletedAt()         { return completedAt; }
     public void setCompletedAt(Timestamp v)   { this.completedAt = v; }
+
+    public String getCancelReason()           { return cancelReason; }
+    public void setCancelReason(String v)     { this.cancelReason = v; }
+
+    private Timestamp updatedAt;
+    public Timestamp getUpdatedAt()           { return updatedAt; }
+    public void setUpdatedAt(Timestamp v)     { this.updatedAt = v; }
 }

@@ -304,28 +304,21 @@
                                                     </c:choose>
                                                 </td>
 
-                                                <%-- Thao tác --%>
                                                 <td>
                                                     <c:choose>
                                                         <c:when test="${r.status eq 'Pending' || r.status eq 'InProgress'}">
                                                             <div class="actions-cell">
                                                                 <%-- Duyệt hoàn thành --%>
-                                                                <form action="${pageContext.request.contextPath}/receptionist/servicerequest" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn duyệt hoàn thành yêu cầu này không?');">
-                                                                    <input type="hidden" name="requestId" value="${r.requestId}" />
-                                                                    <input type="hidden" name="action" value="approve" />
-                                                                    <button type="submit" class="btn-req-action btn-req-approve" title="Duyệt hoàn thành">
-                                                                        <i class="fa-solid fa-check"></i>
-                                                                    </button>
-                                                                </form>
+                                                                <button type="button" class="btn-req-action btn-req-approve" title="Duyệt hoàn thành" 
+                                                                        onclick="openApproveServiceModal('${r.requestId}', '${fn:escapeXml(r.customerName)}', '${fn:escapeXml(r.title)}')">
+                                                                    <i class="fa-solid fa-check"></i>
+                                                                </button>
 
                                                                 <%-- Hủy yêu cầu --%>
-                                                                <form action="${pageContext.request.contextPath}/receptionist/servicerequest" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn hủy yêu cầu này không?');">
-                                                                    <input type="hidden" name="requestId" value="${r.requestId}" />
-                                                                    <input type="hidden" name="action" value="cancel" />
-                                                                    <button type="submit" class="btn-req-action btn-req-cancel" title="Hủy yêu cầu">
-                                                                        <i class="fa-solid fa-xmark"></i>
-                                                                    </button>
-                                                                </form>
+                                                                <button type="button" class="btn-req-action btn-req-cancel" title="Hủy/Từ chối yêu cầu" 
+                                                                        onclick="openRejectServiceModal('${r.requestId}', '${fn:escapeXml(r.customerName)}', '${fn:escapeXml(r.title)}')">
+                                                                    <i class="fa-solid fa-xmark"></i>
+                                                                </button>
                                                             </div>
                                                         </c:when>
                                                         <c:otherwise>
@@ -380,6 +373,84 @@
             </div><%-- end dashboard-main --%>
         </div><%-- end dashboard-layout --%>
 
+        <%-- MODAL DIALOGS FOR SERVICE REQUEST ACTIONS --%>
+        <!-- Approve Modal -->
+        <div class="modal-overlay" id="approveRequestModal">
+            <div class="modal-container" style="max-width: 480px;">
+                <div class="modal-header">
+                    <h3>Xác nhận duyệt yêu cầu</h3>
+                    <button class="btn-close-modal" onclick="closeModal('approveRequestModal')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <form id="approveRequestForm" action="${pageContext.request.contextPath}/receptionist/servicerequest" method="post">
+                        <input type="hidden" name="requestId" id="approveRequestId" value="" />
+                        <input type="hidden" name="action" value="approve" />
+                        
+                        <div style="margin-bottom: 20px; text-align: center; color: var(--text-navy);">
+                            <i class="fa-solid fa-circle-question" style="font-size: 48px; color: var(--brand-blue); margin-bottom: 16px;"></i>
+                            <p style="font-size: 15px; font-weight: 600; line-height: 1.5; margin: 0 0 8px 0;">
+                                Bạn có chắc chắn muốn duyệt hoàn thành yêu cầu này không?
+                            </p>
+                            <p style="font-size: 13px; color: var(--text-muted); margin: 0;" id="approveRequestDetail">
+                                Yêu cầu dịch vụ #...
+                            </p>
+                        </div>
+
+                        <div class="modal-footer-row">
+                            <button type="button" class="btn-modal-cancel" onclick="closeModal('approveRequestModal')">Hủy bỏ</button>
+                            <button type="submit" class="btn-modal-save">Duyệt hoàn thành</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reject Modal -->
+        <div class="modal-overlay" id="rejectRequestModal">
+            <div class="modal-container" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3>Xác nhận hủy yêu cầu</h3>
+                    <button class="btn-close-modal" onclick="closeModal('rejectRequestModal')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <form id="rejectRequestForm" action="${pageContext.request.contextPath}/receptionist/servicerequest" method="post">
+                        <input type="hidden" name="requestId" id="rejectRequestId" value="" />
+                        <input type="hidden" name="action" value="cancel" />
+
+                        <div style="margin-bottom: 16px; font-size: 14px; color: var(--text-navy);">
+                            Đang xử lý yêu cầu <strong id="rejectRequestDetailText">#...</strong>
+                        </div>
+
+                        <div class="modal-form-group">
+                            <label for="rejectCancelReason" style="font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px;">
+                                Mô tả lý do hủy <span style="font-weight: normal; color: var(--text-muted); font-size: 11px;">(Có thể bỏ trống)</span>
+                            </label>
+                            <textarea id="rejectCancelReason" name="cancelReason" class="modal-textarea" placeholder="Nhập lý do chi tiết từ chối/hủy yêu cầu dịch vụ..." style="min-height: 120px;"></textarea>
+                        </div>
+
+                        <div class="modal-footer-row">
+                            <button type="button" class="btn-modal-cancel" onclick="closeModal('rejectRequestModal')">Hủy bỏ</button>
+                            <button type="submit" class="btn-modal-reject">Từ chối yêu cầu</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <script src="${pageContext.request.contextPath}/assets/js/receptionist.js?v=5" charset="UTF-8"></script>
+        <script>
+            function openApproveServiceModal(requestId, customerName, serviceTitle) {
+                document.getElementById('approveRequestId').value = requestId;
+                document.getElementById('approveRequestDetail').innerText = "Yêu cầu dịch vụ #" + requestId + " (" + serviceTitle + " - Khách hàng: " + customerName + ")";
+                openModal('approveRequestModal');
+            }
+
+            function openRejectServiceModal(requestId, customerName, serviceTitle) {
+                document.getElementById('rejectRequestId').value = requestId;
+                document.getElementById('rejectRequestDetailText').innerText = "#" + requestId + " - " + serviceTitle + " (Khách: " + customerName + ")";
+                document.getElementById('rejectCancelReason').value = '';
+                openModal('rejectRequestModal');
+            }
+        </script>
     </body>
 </html>
