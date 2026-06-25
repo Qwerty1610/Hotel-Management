@@ -40,10 +40,6 @@
                             </div>
 
                             <div class="topbar-actions" style="display: flex; align-items: center; gap: 12px;">
-                                <button type="button" class="btn-change-password-header"
-                                    onclick="openChangePasswordModal()">
-                                    <i class="fa-solid fa-key"></i> Đổi mật khẩu
-                                </button>
                                 <a href="${pageContext.request.contextPath}/logout" class="btn-logout"
                                     style="margin-left: 0;">
                                     <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất

@@ -32,6 +32,9 @@
                                     <c:when test="${param.error eq 'unauthorized'}">
                                         Vui lòng đăng nhập để truy cập hệ thống.
                                     </c:when>
+                                    <c:when test="${param.error eq 'not_customer'}">
+                                        Tài khoản nhân sự không được phép đăng nhập cổng này!
+                                    </c:when>
                                     <c:otherwise>
                                         Lỗi hệ thống. Vui lòng thử lại.
                                     </c:otherwise>
@@ -114,6 +117,10 @@
 
                     <div class="signup-prompt">
                         Chưa có tài khoản? <a href="${pageContext.request.contextPath}/home/register">Đăng ký ngay</a>
+                    </div>
+
+                    <div class="signup-prompt" style="margin-top: 10px; font-size: 13px; border-top: 1px dashed rgba(15, 23, 42, 0.08); padding-top: 12px;">
+                        Bạn là nhân viên? <a href="${pageContext.request.contextPath}/staff/login" style="color: #0066cc; font-weight: 700;">Đăng nhập tại đây</a>
                     </div>
 
                     <a href="${pageContext.request.contextPath}/home" class="back-link">

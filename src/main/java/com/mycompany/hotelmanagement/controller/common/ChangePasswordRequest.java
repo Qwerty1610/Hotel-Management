@@ -1,20 +1,21 @@
-package com.mycompany.hotelmanagement.controller.admin;
+package com.mycompany.hotelmanagement.controller.common;
 
 import java.io.Serializable;
 
 /**
- * Đối tượng DTO để map dữ liệu JSON nhận từ client khi đổi mật khẩu Admin.
+ * Request payload class for changing password.
+ * Used by all roles.
  * 
- * @author TùngNQ
+ * @author TungNQ
  */
-public class AdminChangePasswordRequest implements Serializable {
+public class ChangePasswordRequest implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String oldPassword;
     private String newPassword;
     private String confirmPassword;
 
-    public AdminChangePasswordRequest() {
+    public ChangePasswordRequest() {
     }
 
     public String getOldPassword() {

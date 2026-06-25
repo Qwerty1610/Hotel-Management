@@ -27,6 +27,9 @@ public class ResetPasswordController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // Set portal attribute to preserve it in the view
+        String portal = request.getParameter("portal");
+        request.setAttribute("portal", portal);
         // Forward to the reset password page
         request.getRequestDispatcher("/WEB-INF/views/home/reset-password.jsp").forward(request, response);
     }
@@ -42,6 +45,8 @@ public class ResetPasswordController extends HttpServlet {
         String otp = request.getParameter("otp");
         String newPassword = request.getParameter("newPassword");
         String confirmPassword = request.getParameter("confirmPassword");
+        String portal = request.getParameter("portal");
+        String portalParam = (portal != null && !portal.trim().isEmpty()) ? "&portal=" + encode(portal) : "";
 
         String result = authService.resetPassword(email, otp, newPassword, confirmPassword);
         String contextPath = request.getContextPath();
@@ -49,29 +54,33 @@ public class ResetPasswordController extends HttpServlet {
 
         switch (result) {
             case "success":
-                // Success, redirect to login page
-                response.sendRedirect(contextPath + "/home/login?success=password_reset");
+                // Redirect to appropriate login page based on portal context
+                if ("staff".equalsIgnoreCase(portal)) {
+                    response.sendRedirect(contextPath + "/staff/login?success=password_reset");
+                } else {
+                    response.sendRedirect(contextPath + "/home/login?success=password_reset");
+                }
                 break;
                 
             case "invalid_input":
-                response.sendRedirect(contextPath + "/home/reset-password?error=invalid_input&email=" + encodedEmail);
+                response.sendRedirect(contextPath + "/home/reset-password?error=invalid_input&email=" + encodedEmail + portalParam);
                 break;
                 
             case "invalid_password":
-                response.sendRedirect(contextPath + "/home/reset-password?error=invalid_password&email=" + encodedEmail);
+                response.sendRedirect(contextPath + "/home/reset-password?error=invalid_password&email=" + encodedEmail + portalParam);
                 break;
                 
             case "passwords_dont_match":
-                response.sendRedirect(contextPath + "/home/reset-password?error=passwords_dont_match&email=" + encodedEmail);
+                response.sendRedirect(contextPath + "/home/reset-password?error=passwords_dont_match&email=" + encodedEmail + portalParam);
                 break;
                 
             case "invalid_otp":
-                response.sendRedirect(contextPath + "/home/reset-password?error=invalid_otp&email=" + encodedEmail);
+                response.sendRedirect(contextPath + "/home/reset-password?error=invalid_otp&email=" + encodedEmail + portalParam);
                 break;
                 
             case "server_error":
             default:
-                response.sendRedirect(contextPath + "/home/reset-password?error=server_error&email=" + encodedEmail);
+                response.sendRedirect(contextPath + "/home/reset-password?error=server_error&email=" + encodedEmail + portalParam);
                 break;
         }
     }

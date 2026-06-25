@@ -69,7 +69,7 @@
                 </div>
             </c:if>
 
-            <form action="${pageContext.request.contextPath}/home/reset-password" method="POST" id="resetPasswordForm">
+            <form action="${pageContext.request.contextPath}/home/reset-password?portal=${portal}" method="POST" id="resetPasswordForm">
                 <div class="form-group">
                     <label for="email">Địa chỉ Email</label>
                     <div class="input-wrapper">
@@ -112,7 +112,7 @@
             </form>
 
             <div class="signup-prompt" style="margin-top: 25px;">
-                Quay lại trang <a href="${pageContext.request.contextPath}/home/login">Đăng nhập ngay</a>
+                Quay lại trang <a href="${pageContext.request.contextPath}/${portal eq 'staff' ? 'staff/login' : 'home/login'}">Đăng nhập ngay</a>
             </div>
         </div>
     </div>

@@ -33,7 +33,7 @@
             </div>
         </div>
         <div class="footer-bottom text-center">
-            <p>&copy; 2026 HotelOps Pro. All rights reserved.</p>
+            <p>&copy; 2026 HotelOps Pro. All rights reserved. | <a href="${pageContext.request.contextPath}/staff/login" style="color: #6c757d; text-decoration: none; font-size: 12px;"><i class="fa-solid fa-user-tie"></i> Cổng nhân sự</a></p>
         </div>
     </footer>
 
