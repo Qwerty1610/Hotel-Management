@@ -24,14 +24,17 @@ public class RequestManagementService {
         return requestDAO.getAllRequests();
     }
 
-    /* ---------- Danh sách yêu cầu: lọc + phân trang server-side ---------- */
+    /* ---------- Danh sách yêu cầu Maintenance (booking_id IS NULL): lọc + phân trang ----------
+     * Manager chỉ quản lý Maintenance requests (bảo trì phòng, giao Housekeeping).
+     * Service requests (booking_id IS NOT NULL) do Receptionist xử lý riêng.
+     */
     public List<CustomerRequest> getRequests(String roomKw, String priority, String staffFilter,
                                              String status, int offset, int pageSize) {
-        return requestDAO.getRequests(roomKw, priority, staffFilter, status, offset, pageSize);
+        return requestDAO.getMaintenanceRequests(roomKw, priority, staffFilter, status, offset, pageSize);
     }
 
     public int countRequests(String roomKw, String priority, String staffFilter, String status) {
-        return requestDAO.countRequests(roomKw, priority, staffFilter, status);
+        return requestDAO.countMaintenanceRequests(roomKw, priority, staffFilter, status);
     }
 
     /* ---------- Trang chi tiết nhân viên ---------- */
@@ -55,12 +58,14 @@ public class RequestManagementService {
         return staffDAO.getHousekeepingStaff();
     }
 
+    /** Số Maintenance requests đang chờ (Pending + InProgress) — KPI cho Manager. */
     public int countPending() {
-        return requestDAO.countByStatus("Pending");
+        return requestDAO.countMaintenanceByStatus("Pending");
     }
 
+    /** Số Maintenance requests đang thực hiện — KPI cho Manager. */
     public int countInProgress() {
-        return requestDAO.countByStatus("InProgress");
+        return requestDAO.countMaintenanceByStatus("InProgress");
     }
 
     public int countActiveStaff() {

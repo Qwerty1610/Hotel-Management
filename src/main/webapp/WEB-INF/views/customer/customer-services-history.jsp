@@ -38,6 +38,32 @@
                 .badge {
                     white-space: nowrap !important;
                 }
+
+                .filter-btn {
+                    padding: 8px 18px;
+                    border-radius: 20px;
+                    font-size: 13.5px;
+                    font-weight: 600;
+                    color: var(--text-muted);
+                    background-color: #ffffff;
+                    border: 1px solid var(--border-color);
+                    text-decoration: none;
+                    transition: all 0.2s;
+                    cursor: pointer;
+                    display: inline-block;
+                }
+
+                .filter-btn:hover {
+                    background-color: var(--bg-light);
+                    color: var(--brand-blue);
+                    border-color: #cbd5e1;
+                }
+
+                .filter-btn.active {
+                    background-color: var(--brand-blue-light);
+                    color: var(--brand-blue);
+                    border-color: var(--brand-blue);
+                }
             </style>
 
             <body>
@@ -183,6 +209,16 @@
                                             </h2>
                                             <p style="color: var(--text-muted); margin: 6px 0 0 0; font-size: 14.5px;">
                                                 Xem danh sách và trạng thái các yêu cầu dịch vụ phòng của bạn</p>
+                                            <div style="display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap;">
+                                                <a href="${pageContext.request.contextPath}/customer/services/history?status=All" 
+                                                   class="filter-btn ${selectedStatus eq 'All' || empty selectedStatus ? 'active' : ''}">Tất cả</a>
+                                                <a href="${pageContext.request.contextPath}/customer/services/history?status=Pending" 
+                                                   class="filter-btn ${selectedStatus eq 'Pending' ? 'active' : ''}">Chờ xử lý</a>
+                                                <a href="${pageContext.request.contextPath}/customer/services/history?status=Completed" 
+                                                   class="filter-btn ${selectedStatus eq 'Completed' ? 'active' : ''}">Đã duyệt</a>
+                                                <a href="${pageContext.request.contextPath}/customer/services/history?status=Cancelled" 
+                                                   class="filter-btn ${selectedStatus eq 'Cancelled' ? 'active' : ''}">Đã hủy</a>
+                                            </div>
                                         </div>
 
                                         <table class="booking-list-table">
@@ -240,7 +276,7 @@
                                                                             <span class="badge badge-checkedin">Đang thực hiện</span>
                                                                         </c:when>
                                                                         <c:when test="${r.status eq 'Completed'}">
-                                                                            <span class="badge badge-confirmed">Đã hoàn thành</span>
+                                                                            <span class="badge badge-confirmed">Đã duyệt</span>
                                                                         </c:when>
                                                                         <c:when test="${r.status eq 'Cancelled'}">
                                                                             <span class="badge badge-cancelled">Đã hủy</span>
@@ -248,13 +284,26 @@
                                                                     </c:choose>
                                                                 </td>
                                                                 <td>
-                                                                    <c:if test="${r.status eq 'Pending'}">
-                                                                        <button type="button" class="btn-danger"
-                                                                            style="padding: 6px 12px; font-size: 13px;"
-                                                                            onclick="confirmCancelRequest('${r.requestId}')">
-                                                                            Hủy
-                                                                        </button>
-                                                                    </c:if>
+                                                                     <div style="display: flex; gap: 8px; align-items: center;">
+                                                                         <c:if test="${r.status eq 'Pending'}">
+                                                                             <button type="button" class="btn-danger"
+                                                                                 style="padding: 6px 12px; font-size: 13px;"
+                                                                                 onclick="confirmCancelRequest('${r.requestId}')">
+                                                                                 Hủy
+                                                                             </button>
+                                                                         </c:if>
+                                                                         <c:if test="${r.status eq 'Completed' || r.status eq 'Cancelled'}">
+                                                                             <button type="button" class="btn-secondary"
+                                                                                 style="padding: 5px 12px; font-size: 13px; background-color: #ffffff; color: var(--brand-blue); border: 1px solid var(--brand-blue); border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s;"
+                                                                                 data-id="${r.requestId}"
+                                                                                 data-status="${r.status}"
+                                                                                 data-date="<fmt:formatDate value="${not empty r.completedAt ? r.completedAt : r.updatedAt}" pattern="dd/MM/yyyy HH:mm" />"
+                                                                                 data-reason="<c:out value="${r.cancelReason}" />"
+                                                                                 onclick="openDetailModal(this)">
+                                                                                 Chi tiết
+                                                                             </button>
+                                                                         </c:if>
+                                                                     </div>
                                                                 </td>
                                                             </tr>
                                                         </c:forEach>
@@ -347,7 +396,99 @@
                                         document.getElementById('cancelRequestForm').submit();
                                     }
                                 }
+
+                                function openDetailModal(button) {
+                                    var id = button.getAttribute("data-id");
+                                    var status = button.getAttribute("data-status");
+                                    var date = button.getAttribute("data-date");
+                                    var reason = button.getAttribute("data-reason");
+
+                                    document.getElementById("modalTitle").innerText = "Chi tiết yêu cầu #" + id;
+
+                                    var statusEl = document.getElementById("modalStatus");
+                                    var dateLabelEl = document.getElementById("modalDateLabel");
+                                    var reasonContainer = document.getElementById("modalReasonContainer");
+
+                                    if (status === "Completed") {
+                                        statusEl.innerText = "Đã duyệt";
+                                        statusEl.style.color = "#10b981";
+                                        dateLabelEl.innerText = "Ngày duyệt yêu cầu";
+                                        reasonContainer.style.display = "none";
+                                    } else if (status === "Cancelled") {
+                                        statusEl.innerText = "Đã hủy";
+                                        statusEl.style.color = "#ef4444";
+                                        dateLabelEl.innerText = "Ngày hủy yêu cầu";
+                                        reasonContainer.style.display = "flex";
+
+                                        var reasonText = reason ? reason.trim() : "";
+                                        if (!reasonText) {
+                                            reasonText = "Không mô tả lý do";
+                                            document.getElementById("modalReason").style.color = "#64748b";
+                                            document.getElementById("modalReason").style.backgroundColor = "#f8fafc";
+                                            document.getElementById("modalReason").style.borderColor = "#e2e8f0";
+                                        } else {
+                                            document.getElementById("modalReason").style.color = "#ef4444";
+                                            document.getElementById("modalReason").style.backgroundColor = "#fef2f2";
+                                            document.getElementById("modalReason").style.borderColor = "#fee2e2";
+                                        }
+                                        document.getElementById("modalReason").innerText = reasonText;
+                                    } else {
+                                        statusEl.innerText = status;
+                                        statusEl.style.color = "#64748b";
+                                        dateLabelEl.innerText = "Ngày xử lý";
+                                        reasonContainer.style.display = "none";
+                                    }
+
+                                    document.getElementById("modalDate").innerText = date ? date : "—";
+
+                                    var modal = document.getElementById("detailModal");
+                                    modal.style.display = "flex";
+                                }
+
+                                function closeDetailModal() {
+                                    document.getElementById("detailModal").style.display = "none";
+                                }
+
+                                window.addEventListener("click", function(event) {
+                                    var modal = document.getElementById("detailModal");
+                                    if (event.target === modal) {
+                                        closeDetailModal();
+                                    }
+                                });
                             </script>
+
+                            <div id="detailModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
+                                <div style="background-color: #ffffff; border-radius: 16px; width: 90%; max-width: 450px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); border: 1px solid #e2e8f0; overflow: hidden; animation: modalFadeIn 0.25s ease-out; margin: auto;">
+                                    <div style="padding: 20px 24px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background-color: #f8fafc;">
+                                        <h3 style="margin: 0; font-size: 16.5px; font-weight: 700; color: #0b132b;" id="modalTitle">Chi tiết yêu cầu dịch vụ</h3>
+                                        <button onclick="closeDetailModal()" style="background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; line-height: 1; padding: 0;">&times;</button>
+                                    </div>
+                                    <div style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+                                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                                            <span style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Trạng thái</span>
+                                            <span id="modalStatus" style="font-size: 14.5px; font-weight: 700;"></span>
+                                        </div>
+                                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                                            <span style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;" id="modalDateLabel">Ngày xử lý</span>
+                                            <span id="modalDate" style="font-size: 14.5px; color: #1c2541; font-weight: 600;"></span>
+                                        </div>
+                                        <div id="modalReasonContainer" style="display: flex; flex-direction: column; gap: 6px;">
+                                            <span style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Lý do từ chối/hủy</span>
+                                            <div id="modalReason" style="font-size: 14.5px; color: #ef4444; background-color: #fef2f2; border: 1px solid #fee2e2; padding: 12px; border-radius: 8px; font-weight: 500; line-height: 1.5; text-align: justify; word-break: break-word;"></div>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 16px 24px; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; background-color: #f8fafc;">
+                                        <button onclick="closeDetailModal()" style="padding: 10px 20px; background-color: var(--brand-blue); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color 0.2s;">Đóng</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <style>
+                                @keyframes modalFadeIn {
+                                    from { opacity: 0; transform: scale(0.95); }
+                                    to { opacity: 1; transform: scale(1); }
+                                }
+                            </style>
             </body>
 
             </html>

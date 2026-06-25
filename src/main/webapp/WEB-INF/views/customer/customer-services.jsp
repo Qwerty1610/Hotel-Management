@@ -256,6 +256,14 @@
                                                     phòng) để gửi yêu cầu dịch vụ.
                                                 </div>
                                             </c:when>
+                                            <c:when test="${empty allActiveServices}">
+                                                <div
+                                                    style="padding: 20px; text-align: center; background-color: #f8fafc; border-radius: 12px; color: var(--text-muted); font-size: 14.5px;">
+                                                    <i class="fa-solid fa-bell-slash"
+                                                        style="font-size: 32px; display: block; margin-bottom: 12px; color: #cbd5e1;"></i>
+                                                    Hiện tại không có dịch vụ nào khả dụng để tạo yêu cầu mới.
+                                                </div>
+                                            </c:when>
                                             <c:otherwise>
                                                 <form action="${pageContext.request.contextPath}/customer/services"
                                                     method="POST">
@@ -303,30 +311,42 @@
                                             Danh sách dịch vụ khách sạn
                                         </h2>
 
-                                        <div
-                                            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;">
-                                            <c:forEach var="s" items="${services}">
-                                                <div class="service-item-card"
-                                                    style="display: flex; flex-direction: column; justify-content: space-between; padding: 24px; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
-                                                    <div>
-                                                        <h3
-                                                            style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text-navy);">
-                                                            ${s.serviceName}</h3>
-                                                        <p
-                                                            style="margin: 8px 0; font-size: 13.5px; color: var(--text-muted); line-height: 1.5; text-align: justify;">
-                                                            ${s.description}</p>
-                                                    </div>
-                                                    <div style="margin-top: 12px;">
-                                                        <span
-                                                            style="font-size: 14.5px; font-weight: 800; color: var(--brand-blue);">
-                                                            <fmt:formatNumber value="${s.price}" type="currency"
-                                                                currencySymbol="" /> VND<span
-                                                                style="font-weight: 500; font-size: 12px; color: var(--text-muted);">${s.unit}</span>
-                                                        </span>
-                                                    </div>
+                                        <c:choose>
+                                            <c:when test="${not empty services}">
+                                                <div
+                                                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;">
+                                                    <c:forEach var="s" items="${services}">
+                                                        <div class="service-item-card"
+                                                            style="display: flex; flex-direction: column; justify-content: space-between; padding: 24px; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
+                                                            <div>
+                                                                <h3
+                                                                    style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text-navy);">
+                                                                    ${s.serviceName}</h3>
+                                                                <p
+                                                                    style="margin: 8px 0; font-size: 13.5px; color: var(--text-muted); line-height: 1.5; text-align: justify;">
+                                                                    ${s.description}</p>
+                                                            </div>
+                                                            <div style="margin-top: 12px;">
+                                                                <span
+                                                                    style="font-size: 14.5px; font-weight: 800; color: var(--brand-blue);">
+                                                                    <fmt:formatNumber value="${s.price}" type="currency"
+                                                                        currencySymbol="" /> VND<span
+                                                                        style="font-weight: 500; font-size: 12px; color: var(--text-muted);">${s.unit}</span>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </c:forEach>
                                                 </div>
-                                            </c:forEach>
-                                        </div>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <div
+                                                    style="padding: 40px; text-align: center; background-color: #f8fafc; border-radius: 16px; color: var(--text-muted); font-size: 14.5px; border: 1px dashed #cbd5e1;">
+                                                    <i class="fa-solid fa-bell-slash"
+                                                        style="font-size: 40px; display: block; margin-bottom: 15px; color: #cbd5e1;"></i>
+                                                    Hiện tại không có dịch vụ nào khả dụng.
+                                                </div>
+                                            </c:otherwise>
+                                        </c:choose>
 
                                         <!-- PHÂN TRANG -->
                                         <c:if test="${totalPages > 1}">
