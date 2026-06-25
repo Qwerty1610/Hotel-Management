@@ -160,8 +160,15 @@
                                                                         style="font-weight: 700; color: var(--text-navy);">
                                                                         ${staff.fullName}</td>
                                                                     <td>${staff.email}</td>
-                                                                    <td>${empty staff.phone ? '<span
-                                                                            class="text-muted">-</span>' : staff.phone}
+                                                                    <td>
+                                                                        <c:choose>
+                                                                            <c:when test="${empty staff.phone or staff.phone eq 'null' or staff.phone eq '-'}">
+                                                                                <span class="text-muted">-</span>
+                                                                            </c:when>
+                                                                            <c:otherwise>
+                                                                                ${staff.phone}
+                                                                            </c:otherwise>
+                                                                        </c:choose>
                                                                     </td>
                                                                     <td>
                                                                         <c:choose>
@@ -315,9 +322,16 @@
                                                                             style="font-weight: 700; color: var(--text-navy);">
                                                                             ${customer.fullName}</td>
                                                                         <td>${customer.email}</td>
-                                                                        <td>${empty customer.phone ? '<span
-                                                                                class="text-muted">-</span>' :
-                                                                            customer.phone}</td>
+                                                                        <td>
+                                                                            <c:choose>
+                                                                                <c:when test="${empty customer.phone or customer.phone eq 'null' or customer.phone eq '-'}">
+                                                                                    <span class="text-muted">-</span>
+                                                                                </c:when>
+                                                                                <c:otherwise>
+                                                                                    ${customer.phone}
+                                                                                </c:otherwise>
+                                                                            </c:choose>
+                                                                        </td>
                                                                         <td>
                                                                             <c:choose>
                                                                                 <c:when
@@ -734,7 +748,12 @@
                                 document.getElementById('editAccountId').value = id;
                                 document.getElementById('editEmail').value = email;
                                 document.getElementById('editFullName').value = name;
-                                document.getElementById('editPhone').value = phone === '-' ? '' : phone;
+                                
+                                let displayPhone = phone;
+                                if (!phone || phone === 'null' || phone === 'undefined' || phone === '-' || phone === '—') {
+                                    displayPhone = '';
+                                }
+                                document.getElementById('editPhone').value = displayPhone;
                                 document.getElementById('editRoleId').value = roleId;
                                 document.getElementById('editPassword').value = '';
                                 modal.style.display = 'flex';
@@ -750,7 +769,12 @@
                                 document.getElementById('editCustomerAccountId').value = id;
                                 document.getElementById('editCustomerEmail').value = email;
                                 document.getElementById('editCustomerFullName').value = name;
-                                document.getElementById('editCustomerPhone').value = (phone === '-' || phone === '—') ? '' : phone;
+                                
+                                let displayPhone = phone;
+                                if (!phone || phone === 'null' || phone === 'undefined' || phone === '-' || phone === '—') {
+                                    displayPhone = '';
+                                }
+                                document.getElementById('editCustomerPhone').value = displayPhone;
                                 document.getElementById('editCustomerLoyaltyPoints').value = loyaltyPoints;
                                 document.getElementById('editCustomerMembership').value = membershipLevel;
                                 document.getElementById('editCustomerPassword').value = '';
@@ -825,7 +849,92 @@
                                     }, 4000);
                                 });
 
-                                // Validation & Double-submit prevention for Edit Customer Form
+                                // Phone sanitization & validation helper
+                                function sanitizePhoneField(inputElement) {
+                                    if (!inputElement) return;
+                                    let val = inputElement.value.trim();
+                                    if (!val || val.toLowerCase() === 'null' || val.toLowerCase() === 'undefined' || val === '-' || val === '—') {
+                                        inputElement.value = '';
+                                        return;
+                                    }
+                                    let cleaned = val.replace(/[\s\-\.\(\)]/g, '');
+                                    if (cleaned.startsWith('+84')) {
+                                        cleaned = '0' + cleaned.substring(3);
+                                    }
+                                    if (inputElement.value !== cleaned) {
+                                        inputElement.value = cleaned;
+                                    }
+                                }
+
+                                function validatePhoneField(inputElement) {
+                                    if (!inputElement) return true;
+                                    sanitizePhoneField(inputElement);
+                                    let val = inputElement.value;
+                                    if (!val) return true; // Optional field
+                                    const phoneRegex = /^0[35789]\d{8}$/;
+                                    return phoneRegex.test(val);
+                                }
+
+                                // Setup dynamic cleaning on blur & change events
+                                ['phone', 'editPhone', 'editCustomerPhone'].forEach(id => {
+                                    const input = document.getElementById(id);
+                                    if (input) {
+                                        input.addEventListener('blur', function() {
+                                            sanitizePhoneField(this);
+                                        });
+                                        input.addEventListener('change', function() {
+                                            sanitizePhoneField(this);
+                                        });
+                                    }
+                                });
+
+                                // Add Staff Form Submit Handler
+                                const addStaffModal = document.getElementById('addStaffModal');
+                                if (addStaffModal) {
+                                    const form = addStaffModal.querySelector('form');
+                                    if (form) {
+                                        form.addEventListener('submit', function (e) {
+                                            const phoneInput = document.getElementById('phone');
+                                            if (!validatePhoneField(phoneInput)) {
+                                                e.preventDefault();
+                                                alert('Số điện thoại không hợp lệ! Số điện thoại phải bắt đầu bằng 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số.');
+                                                if (phoneInput) phoneInput.focus();
+                                                return;
+                                            }
+
+                                            const submitBtn = form.querySelector('button[type="submit"]');
+                                            if (submitBtn) {
+                                                submitBtn.disabled = true;
+                                                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang thêm...';
+                                            }
+                                        });
+                                    }
+                                }
+
+                                // Edit Staff Form Submit Handler
+                                const editStaffModal = document.getElementById('editStaffModal');
+                                if (editStaffModal) {
+                                    const form = editStaffModal.querySelector('form');
+                                    if (form) {
+                                        form.addEventListener('submit', function (e) {
+                                            const phoneInput = document.getElementById('editPhone');
+                                            if (!validatePhoneField(phoneInput)) {
+                                                e.preventDefault();
+                                                alert('Số điện thoại không hợp lệ! Số điện thoại phải bắt đầu bằng 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số.');
+                                                if (phoneInput) phoneInput.focus();
+                                                return;
+                                            }
+
+                                            const submitBtn = form.querySelector('button[type="submit"]');
+                                            if (submitBtn) {
+                                                submitBtn.disabled = true;
+                                                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+                                            }
+                                        });
+                                    }
+                                }
+
+                                // Edit Customer Form Submit Handler
                                 const editCustomerModal = document.getElementById('editCustomerModal');
                                 if (editCustomerModal) {
                                     const form = editCustomerModal.querySelector('form');
@@ -834,6 +943,7 @@
                                             const name = document.getElementById('editCustomerFullName').value.trim();
                                             const email = document.getElementById('editCustomerEmail').value.trim();
                                             const points = parseInt(document.getElementById('editCustomerLoyaltyPoints').value) || 0;
+                                            const phoneInput = document.getElementById('editCustomerPhone');
 
                                             if (!name || !email) {
                                                 e.preventDefault();
@@ -843,6 +953,12 @@
                                             if (points < 0) {
                                                 e.preventDefault();
                                                 alert('Điểm tích lũy không được nhỏ hơn 0.');
+                                                return;
+                                            }
+                                            if (!validatePhoneField(phoneInput)) {
+                                                e.preventDefault();
+                                                alert('Số điện thoại không hợp lệ! Số điện thoại phải bắt đầu bằng 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số.');
+                                                if (phoneInput) phoneInput.focus();
                                                 return;
                                             }
 

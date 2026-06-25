@@ -33,6 +33,21 @@ public class AdminService {
         return email == null || !email.trim().matches(emailRegex);
     }
 
+    private String sanitizePhone(String phone) {
+        if (phone == null) {
+            return null;
+        }
+        String trimmed = phone.trim();
+        if (trimmed.isEmpty() || trimmed.equalsIgnoreCase("null") || trimmed.equalsIgnoreCase("undefined") || trimmed.equals("-") || trimmed.equals("—")) {
+            return null;
+        }
+        String cleaned = trimmed.replaceAll("[\\s\\-\\.\\(\\)]", "");
+        if (cleaned.startsWith("+84")) {
+            cleaned = "0" + cleaned.substring(3);
+        }
+        return cleaned.isEmpty() ? null : cleaned;
+    }
+
     private boolean isInvalidPhone(String phone) {
         if (phone == null || phone.trim().isEmpty()) {
             return false; // phone is optional
@@ -54,6 +69,7 @@ public class AdminService {
         if (email == null || email.trim().isEmpty() || fullName == null || fullName.trim().isEmpty() || password == null || password.isEmpty()) {
             return "invalid_input";
         }
+        phone = sanitizePhone(phone);
         if (isInvalidEmail(email)) {
             return "invalid_email";
         }
@@ -66,11 +82,11 @@ public class AdminService {
         if (accountRepository.existsByEmail(email.trim())) {
             return "email_exists";
         }
-        if (phone != null && !phone.trim().isEmpty() && accountRepository.existsByPhone(phone.trim())) {
+        if (phone != null && accountRepository.existsByPhone(phone)) {
             return "phone_exists";
         }
         String passwordHash = BCrypt.hashpw(password.trim(), BCrypt.gensalt(12));
-        boolean success = accountRepository.insertStaffAccount(email.trim(), passwordHash, fullName.trim(), phone != null ? phone.trim() : null, roleId);
+        boolean success = accountRepository.insertStaffAccount(email.trim(), passwordHash, fullName.trim(), phone, roleId);
         return success ? "success" : "create_failed";
     }
 
@@ -78,6 +94,7 @@ public class AdminService {
         if (email == null || email.trim().isEmpty() || fullName == null || fullName.trim().isEmpty()) {
             return "invalid_input";
         }
+        phone = sanitizePhone(phone);
         if (isInvalidEmail(email)) {
             return "invalid_email";
         }
@@ -87,7 +104,7 @@ public class AdminService {
         if (accountRepository.existsByEmailExcept(email.trim(), accountId)) {
             return "email_exists";
         }
-        if (phone != null && !phone.trim().isEmpty() && accountRepository.existsByPhoneExcept(phone.trim(), accountId)) {
+        if (phone != null && accountRepository.existsByPhoneExcept(phone, accountId)) {
             return "phone_exists";
         }
         
@@ -99,7 +116,7 @@ public class AdminService {
             passwordHash = BCrypt.hashpw(password.trim(), BCrypt.gensalt(12));
         }
         
-        boolean success = accountRepository.updateStaffAccount(accountId, email.trim(), fullName.trim(), phone != null ? phone.trim() : null, roleId, passwordHash);
+        boolean success = accountRepository.updateStaffAccount(accountId, email.trim(), fullName.trim(), phone, roleId, passwordHash);
         return success ? "success" : "update_failed";
     }
 
@@ -111,6 +128,7 @@ public class AdminService {
         if (email == null || email.trim().isEmpty() || fullName == null || fullName.trim().isEmpty()) {
             return "invalid_input";
         }
+        phone = sanitizePhone(phone);
         if (isInvalidEmail(email)) {
             return "invalid_email";
         }
@@ -120,7 +138,7 @@ public class AdminService {
         if (accountRepository.existsByEmailExcept(email.trim(), accountId)) {
             return "email_exists";
         }
-        if (phone != null && !phone.trim().isEmpty() && accountRepository.existsByPhoneExcept(phone.trim(), accountId)) {
+        if (phone != null && accountRepository.existsByPhoneExcept(phone, accountId)) {
             return "phone_exists";
         }
         
@@ -132,7 +150,7 @@ public class AdminService {
             passwordHash = BCrypt.hashpw(password.trim(), BCrypt.gensalt(12));
         }
         
-        boolean success = accountRepository.updateCustomerAccount(accountId, email.trim(), fullName.trim(), phone != null ? phone.trim() : null, loyaltyPoints, membershipLevel, passwordHash);
+        boolean success = accountRepository.updateCustomerAccount(accountId, email.trim(), fullName.trim(), phone, loyaltyPoints, membershipLevel, passwordHash);
         return success ? "success" : "update_failed";
     }
 
