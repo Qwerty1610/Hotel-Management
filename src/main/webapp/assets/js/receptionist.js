@@ -438,9 +438,6 @@ function addRoomRow() {
                 class="walkin-input room-type-select"
                 onchange="roomTypeChanged(this)"
                 required>
-                <option value="">
-                    -- Chọn loại phòng --
-                </option>
                 ${window.roomTypeOptionsHtml}
             </select>
             <input
@@ -471,6 +468,7 @@ function addRoomRow() {
             "beforeend",
             html
             );
+    refreshRoomTypeOptions();
     updateSummary();
 }
 
@@ -484,6 +482,7 @@ function removeRoomRow(btn) {
         return;
     }
     btn.closest(".room-row").remove();
+    refreshRoomTypeOptions();
     updateSummary();
     loadAvailableRooms();
 }
@@ -495,6 +494,8 @@ function removeRoomRow(btn) {
  */
 
 function roomTypeChanged(select) {
+    refreshRoomTypeOptions();
+    
     const option =
             select.selectedOptions[0];
     const capacity =
@@ -614,44 +615,63 @@ async function loadAvailableRooms() {
         }
     }
 }
-function renderRoomGroup(
-        select,
-        rooms) {
-    const container =
-            document.getElementById(
-                    "availableRoomsContainer"
-                    );
+function renderRoomGroup(select, rooms) {
+
+    const container = document.getElementById("availableRoomsContainer");
+
     let html = `
         <div class="room-type-box">
-            <h4>
-                ${select.selectedOptions[0].text}
-            </h4>
-            <div class="room-checkbox-grid">
+
+            <h4>${select.selectedOptions[0].text}</h4>
+
+            <div class="available-room-grid">
     `;
+
     rooms.forEach(room => {
+
         html += `
-            <label class="room-card">
+            <div
+                class="walkin-room-card"
+                onclick="toggleRoomCard(this)">
 
                 <input
                     type="checkbox"
-                    class="room-checkbox"
+                    class="room-hidden-checkbox room-checkbox"
                     name="roomIds"
-                    value="${room.roomId}"
-                    onchange="updateSummary()">
+                    value="${room.roomId}">
 
-                ${room.roomNumber}
+                <div class="walkin-room-number">
+                    ${room.roomNumber}
+                </div>
 
-            </label>
+                <div class="walkin-room-type">
+                    ${select.selectedOptions[0].text}
+                </div>
+
+            </div>
         `;
     });
+
     html += `
             </div>
         </div>
     `;
-    container.insertAdjacentHTML(
-            "beforeend",
-            html
+
+    container.insertAdjacentHTML("beforeend", html);
+}
+function toggleRoomCard(card) {
+
+    const checkbox =
+            card.querySelector(".room-hidden-checkbox");
+
+    checkbox.checked = !checkbox.checked;
+
+    card.classList.toggle(
+            "selected",
+            checkbox.checked
             );
+
+    updateSummary();
 }
 
 /*
@@ -880,6 +900,7 @@ async function loadRoomTypes() {
                 </option>
             `;
         });
+        refreshRoomTypeOptions();
 
     } catch (e) {
 
@@ -1091,3 +1112,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateMode();
 });
+function refreshRoomTypeOptions() {
+
+    const selects = document.querySelectorAll(".room-type-select");
+
+    const selectedIds = [];
+
+    selects.forEach(select => {
+
+        if (select.value) {
+            selectedIds.push(select.value);
+        }
+
+    });
+
+    selects.forEach(currentSelect => {
+
+        const currentValue = currentSelect.value;
+
+        currentSelect.innerHTML = window.roomTypeOptionsHtml;
+
+        currentSelect.querySelectorAll("option").forEach(option => {
+
+            if (!option.value) return;
+
+            if (
+                option.value !== currentValue &&
+                selectedIds.includes(option.value)
+            ) {
+                option.remove();
+            }
+
+        });
+
+        currentSelect.value = currentValue;
+
+    });
+
+}
