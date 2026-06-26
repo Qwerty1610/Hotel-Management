@@ -33,7 +33,7 @@ public class AdminService {
         return email == null || !email.trim().matches(emailRegex);
     }
 
-    private String sanitizePhone(String phone) {
+    public String sanitizePhone(String phone) {
         if (phone == null) {
             return null;
         }
@@ -122,6 +122,22 @@ public class AdminService {
 
     public boolean toggleAccountStatus(int accountId, boolean active) {
         return accountRepository.toggleAccountStatus(accountId, active);
+    }
+
+    public boolean existsByEmail(String email) {
+        return accountRepository.existsByEmail(email);
+    }
+
+    public boolean existsByPhone(String phone) {
+        return accountRepository.existsByPhone(phone);
+    }
+
+    public boolean existsByEmailExcept(String email, int excludeId) {
+        return accountRepository.existsByEmailExcept(email, excludeId);
+    }
+
+    public boolean existsByPhoneExcept(String phone, int excludeId) {
+        return accountRepository.existsByPhoneExcept(phone, excludeId);
     }
 
     public String updateCustomerAccount(int accountId, String email, String fullName, String phone, String password, int loyaltyPoints, String membershipLevel) {

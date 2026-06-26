@@ -473,12 +473,14 @@
                                                     style="color:#ef4444;">*</span></label>
                                             <input type="email" id="email" name="email" class="modal-input"
                                                 placeholder="email@hotel.com" required />
+                                            <span class="validation-msg" id="email-validation-msg" style="color: #ef4444; font-size: 12.5px; margin-top: 5px; font-weight: 500; display: none;"></span>
                                         </div>
                                         <div class="modal-form-group">
                                             <label for="phone">Số điện thoại</label>
                                             <input type="tel" id="phone" name="phone" class="modal-input"
                                                 placeholder="Ví dụ: 0912345678" pattern="^0[35789][0-9]{8}$"
                                                 title="Số điện thoại phải bắt đầu bằng số 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số" />
+                                            <span class="validation-msg" id="phone-validation-msg" style="color: #ef4444; font-size: 12.5px; margin-top: 5px; font-weight: 500; display: none;"></span>
                                         </div>
                                         <div class="modal-form-group">
                                             <label for="password">Mật khẩu ban đầu <span
@@ -530,12 +532,14 @@
                                                     style="color:#ef4444;">*</span></label>
                                             <input type="email" id="editEmail" name="email" class="modal-input"
                                                 required />
+                                            <span class="validation-msg" id="editEmail-validation-msg" style="color: #ef4444; font-size: 12.5px; margin-top: 5px; font-weight: 500; display: none;"></span>
                                         </div>
                                         <div class="modal-form-group">
                                             <label for="editPhone">Số điện thoại</label>
                                             <input type="tel" id="editPhone" name="phone" class="modal-input"
                                                 placeholder="Ví dụ: 0912345678" pattern="^0[35789][0-9]{8}$"
                                                 title="Số điện thoại phải bắt đầu bằng số 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số" />
+                                            <span class="validation-msg" id="editPhone-validation-msg" style="color: #ef4444; font-size: 12.5px; margin-top: 5px; font-weight: 500; display: none;"></span>
                                         </div>
                                         <div class="modal-form-group">
                                             <label for="editPassword">Mật khẩu mới (Để trống nếu không đổi)</label>
@@ -586,12 +590,14 @@
                                                     style="color:#ef4444;">*</span></label>
                                             <input type="email" id="editCustomerEmail" name="email" class="modal-input"
                                                 required />
+                                            <span class="validation-msg" id="editCustomerEmail-validation-msg" style="color: #ef4444; font-size: 12.5px; margin-top: 5px; font-weight: 500; display: none;"></span>
                                         </div>
                                         <div class="modal-form-group">
                                             <label for="editCustomerPhone">Số điện thoại</label>
                                             <input type="tel" id="editCustomerPhone" name="phone" class="modal-input"
                                                 placeholder="Ví dụ: 0912345678" pattern="^0[35789][0-9]{8}$"
                                                 title="Số điện thoại phải bắt đầu bằng số 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số" />
+                                            <span class="validation-msg" id="editCustomerPhone-validation-msg" style="color: #ef4444; font-size: 12.5px; margin-top: 5px; font-weight: 500; display: none;"></span>
                                         </div>
                                         <div class="modal-form-group">
                                             <label for="editCustomerPassword">Mật khẩu mới (Để trống nếu không
@@ -888,24 +894,158 @@
                                     }
                                 });
 
+                                // Real-time validation for duplicates (Email and Phone)
+                                function checkDuplicate(fieldId, value, msgId, excludeId = -1) {
+                                    const msgSpan = document.getElementById(msgId);
+                                    if (!msgSpan) return;
+                                    
+                                    if (!value || value.trim() === '') {
+                                        msgSpan.style.display = 'none';
+                                        msgSpan.innerText = '';
+                                        return;
+                                    }
+                                    
+                                    const contextPath = window.location.pathname.substring(0, window.location.pathname.indexOf('/admin'));
+                                    let url = contextPath + '/admin/dashboard?action=check-duplicate';
+                                    if (fieldId === 'email' || fieldId === 'editEmail' || fieldId === 'editCustomerEmail') {
+                                        url += '&email=' + encodeURIComponent(value.trim());
+                                    } else {
+                                        url += '&phone=' + encodeURIComponent(value.trim());
+                                    }
+                                    
+                                    if (excludeId && excludeId > 0) {
+                                        url += '&excludeId=' + excludeId;
+                                    }
+                                    
+                                    fetch(url)
+                                        .then(res => res.json())
+                                        .then(data => {
+                                            if (fieldId === 'email' || fieldId === 'editEmail' || fieldId === 'editCustomerEmail') {
+                                                if (data.emailExists) {
+                                                    msgSpan.innerText = 'Lỗi: Email này đã được sử dụng trong hệ thống!';
+                                                    msgSpan.style.display = 'block';
+                                                } else {
+                                                    msgSpan.style.display = 'none';
+                                                    msgSpan.innerText = '';
+                                                }
+                                            } else {
+                                                if (data.phoneExists) {
+                                                    msgSpan.innerText = 'Lỗi: Số điện thoại này đã được sử dụng trong hệ thống!';
+                                                    msgSpan.style.display = 'block';
+                                                } else {
+                                                    msgSpan.style.display = 'none';
+                                                    msgSpan.innerText = '';
+                                                }
+                                            }
+                                        })
+                                        .catch(err => console.error("Error check duplicate:", err));
+                                }
+
+                                // Bind events for real-time validation
+                                // Add Staff
+                                const emailInput = document.getElementById('email');
+                                if (emailInput) {
+                                    emailInput.addEventListener('blur', function() {
+                                        checkDuplicate('email', this.value, 'email-validation-msg');
+                                    });
+                                    emailInput.addEventListener('input', function() {
+                                        const msgSpan = document.getElementById('email-validation-msg');
+                                        if (msgSpan) msgSpan.style.display = 'none';
+                                    });
+                                }
+                                const phoneInput = document.getElementById('phone');
+                                if (phoneInput) {
+                                    phoneInput.addEventListener('blur', function() {
+                                        checkDuplicate('phone', this.value, 'phone-validation-msg');
+                                    });
+                                    phoneInput.addEventListener('input', function() {
+                                        const msgSpan = document.getElementById('phone-validation-msg');
+                                        if (msgSpan) msgSpan.style.display = 'none';
+                                    });
+                                }
+
+                                // Edit Staff
+                                const editEmailInput = document.getElementById('editEmail');
+                                if (editEmailInput) {
+                                    editEmailInput.addEventListener('blur', function() {
+                                        const excludeId = document.getElementById('editAccountId').value;
+                                        checkDuplicate('editEmail', this.value, 'editEmail-validation-msg', excludeId);
+                                    });
+                                    editEmailInput.addEventListener('input', function() {
+                                        const msgSpan = document.getElementById('editEmail-validation-msg');
+                                        if (msgSpan) msgSpan.style.display = 'none';
+                                    });
+                                }
+                                const editPhoneInput = document.getElementById('editPhone');
+                                if (editPhoneInput) {
+                                    editPhoneInput.addEventListener('blur', function() {
+                                        const excludeId = document.getElementById('editAccountId').value;
+                                        checkDuplicate('editPhone', this.value, 'editPhone-validation-msg', excludeId);
+                                    });
+                                    editPhoneInput.addEventListener('input', function() {
+                                        const msgSpan = document.getElementById('editPhone-validation-msg');
+                                        if (msgSpan) msgSpan.style.display = 'none';
+                                    });
+                                }
+
+                                // Edit Customer
+                                const editCustomerEmailInput = document.getElementById('editCustomerEmail');
+                                if (editCustomerEmailInput) {
+                                    editCustomerEmailInput.addEventListener('blur', function() {
+                                        const excludeId = document.getElementById('editCustomerAccountId').value;
+                                        checkDuplicate('editCustomerEmail', this.value, 'editCustomerEmail-validation-msg', excludeId);
+                                    });
+                                    editCustomerEmailInput.addEventListener('input', function() {
+                                        const msgSpan = document.getElementById('editCustomerEmail-validation-msg');
+                                        if (msgSpan) msgSpan.style.display = 'none';
+                                    });
+                                }
+                                const editCustomerPhoneInput = document.getElementById('editCustomerPhone');
+                                if (editCustomerPhoneInput) {
+                                    editCustomerPhoneInput.addEventListener('blur', function() {
+                                        const excludeId = document.getElementById('editCustomerAccountId').value;
+                                        checkDuplicate('editCustomerPhone', this.value, 'editCustomerPhone-validation-msg', excludeId);
+                                    });
+                                    editCustomerPhoneInput.addEventListener('input', function() {
+                                        const msgSpan = document.getElementById('editCustomerPhone-validation-msg');
+                                        if (msgSpan) msgSpan.style.display = 'none';
+                                    });
+                                }
+
                                 // Add Staff Form Submit Handler
                                 const addStaffModal = document.getElementById('addStaffModal');
                                 if (addStaffModal) {
                                     const form = addStaffModal.querySelector('form');
                                     if (form) {
                                         form.addEventListener('submit', function (e) {
-                                            const phoneInput = document.getElementById('phone');
-                                            if (!validatePhoneField(phoneInput)) {
+                                            // Check duplicate messages
+                                            const activeErrors = form.querySelectorAll('.validation-msg');
+                                            let hasValidationError = false;
+                                            activeErrors.forEach(msg => {
+                                                if (msg.style.display === 'block') {
+                                                    hasValidationError = true;
+                                                }
+                                            });
+                                            if (hasValidationError) {
+                                                e.preventDefault();
+                                                alert('Vui lòng sửa các thông tin trùng lặp (Email hoặc Số điện thoại) trước khi gửi.');
+                                                return;
+                                            }
+
+                                            const phoneField = document.getElementById('phone');
+                                            if (!validatePhoneField(phoneField)) {
                                                 e.preventDefault();
                                                 alert('Số điện thoại không hợp lệ! Số điện thoại phải bắt đầu bằng 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số.');
-                                                if (phoneInput) phoneInput.focus();
+                                                if (phoneField) phoneField.focus();
                                                 return;
                                             }
 
                                             const submitBtn = form.querySelector('button[type="submit"]');
                                             if (submitBtn) {
-                                                submitBtn.disabled = true;
-                                                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang thêm...';
+                                                setTimeout(() => {
+                                                    submitBtn.disabled = true;
+                                                    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang thêm...';
+                                                }, 0);
                                             }
                                         });
                                     }
@@ -917,18 +1057,34 @@
                                     const form = editStaffModal.querySelector('form');
                                     if (form) {
                                         form.addEventListener('submit', function (e) {
-                                            const phoneInput = document.getElementById('editPhone');
-                                            if (!validatePhoneField(phoneInput)) {
+                                            // Check duplicate messages
+                                            const activeErrors = form.querySelectorAll('.validation-msg');
+                                            let hasValidationError = false;
+                                            activeErrors.forEach(msg => {
+                                                if (msg.style.display === 'block') {
+                                                    hasValidationError = true;
+                                                }
+                                            });
+                                            if (hasValidationError) {
+                                                e.preventDefault();
+                                                alert('Vui lòng sửa các thông tin trùng lặp (Email hoặc Số điện thoại) trước khi gửi.');
+                                                return;
+                                            }
+
+                                            const phoneField = document.getElementById('editPhone');
+                                            if (!validatePhoneField(phoneField)) {
                                                 e.preventDefault();
                                                 alert('Số điện thoại không hợp lệ! Số điện thoại phải bắt đầu bằng 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số.');
-                                                if (phoneInput) phoneInput.focus();
+                                                if (phoneField) phoneField.focus();
                                                 return;
                                             }
 
                                             const submitBtn = form.querySelector('button[type="submit"]');
                                             if (submitBtn) {
-                                                submitBtn.disabled = true;
-                                                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+                                                setTimeout(() => {
+                                                    submitBtn.disabled = true;
+                                                    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+                                                }, 0);
                                             }
                                         });
                                     }
@@ -940,10 +1096,24 @@
                                     const form = editCustomerModal.querySelector('form');
                                     if (form) {
                                         form.addEventListener('submit', function (e) {
+                                            // Check duplicate messages
+                                            const activeErrors = form.querySelectorAll('.validation-msg');
+                                            let hasValidationError = false;
+                                            activeErrors.forEach(msg => {
+                                                if (msg.style.display === 'block') {
+                                                    hasValidationError = true;
+                                                }
+                                            });
+                                            if (hasValidationError) {
+                                                e.preventDefault();
+                                                alert('Vui lòng sửa các thông tin trùng lặp (Email hoặc Số điện thoại) trước khi gửi.');
+                                                return;
+                                            }
+
                                             const name = document.getElementById('editCustomerFullName').value.trim();
                                             const email = document.getElementById('editCustomerEmail').value.trim();
                                             const points = parseInt(document.getElementById('editCustomerLoyaltyPoints').value) || 0;
-                                            const phoneInput = document.getElementById('editCustomerPhone');
+                                            const phoneField = document.getElementById('editCustomerPhone');
 
                                             if (!name || !email) {
                                                 e.preventDefault();
@@ -955,17 +1125,19 @@
                                                 alert('Điểm tích lũy không được nhỏ hơn 0.');
                                                 return;
                                             }
-                                            if (!validatePhoneField(phoneInput)) {
+                                            if (!validatePhoneField(phoneField)) {
                                                 e.preventDefault();
                                                 alert('Số điện thoại không hợp lệ! Số điện thoại phải bắt đầu bằng 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số.');
-                                                if (phoneInput) phoneInput.focus();
+                                                if (phoneField) phoneField.focus();
                                                 return;
                                             }
 
                                             const submitBtn = form.querySelector('button[type="submit"]');
                                             if (submitBtn) {
-                                                submitBtn.disabled = true;
-                                                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+                                                setTimeout(() => {
+                                                    submitBtn.disabled = true;
+                                                    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+                                                }, 0);
                                             }
                                         });
                                     }
