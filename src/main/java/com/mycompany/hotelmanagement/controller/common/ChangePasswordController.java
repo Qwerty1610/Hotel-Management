@@ -1,8 +1,6 @@
 package com.mycompany.hotelmanagement.controller.common;
 
 import com.mycompany.hotelmanagement.service.AdminService;
-import jakarta.json.bind.Jsonb;
-import jakarta.json.bind.JsonbBuilder;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -22,7 +20,8 @@ import java.io.IOException;
     "/manager/change-password",
     "/receptionist/change-password",
     "/housekeeping/change-password",
-    "/customer/change-password"
+    "/customer/change-password",
+    "/profile/change-password"
 })
 public class ChangePasswordController extends HttpServlet {
     private static final long serialVersionUID = 1L;
@@ -59,6 +58,13 @@ public class ChangePasswordController extends HttpServlet {
             authorized = true;
         } else if (servletPath.startsWith("/customer") && "CUSTOMER".equals(sessionRole)) {
             authorized = true;
+        } else if (servletPath.startsWith("/profile") && 
+                   ("ADMIN".equals(sessionRole) || 
+                    "HOTEL_MANAGER".equals(sessionRole) || 
+                    "RECEPTIONIST".equals(sessionRole) || 
+                    "HOUSEKEEPING".equals(sessionRole) || 
+                    "CUSTOMER".equals(sessionRole))) {
+            authorized = true;
         }
 
         if (!authorized) {
@@ -77,28 +83,41 @@ public class ChangePasswordController extends HttpServlet {
 
         try {
             // 4. Đọc dữ liệu JSON payload
-            Jsonb jsonb = JsonbBuilder.create();
-            ChangePasswordRequest req;
+            String oldPassword = null;
+            String newPassword = null;
+            String confirmPassword = null;
+            
             try {
-                req = jsonb.fromJson(request.getReader(), ChangePasswordRequest.class);
+                StringBuilder sb = new StringBuilder();
+                String line;
+                try (java.io.BufferedReader reader = request.getReader()) {
+                    while ((line = reader.readLine()) != null) {
+                        sb.append(line);
+                    }
+                }
+                String body = sb.toString().trim();
+                
+                oldPassword = extractJsonField(body, "oldPassword");
+                newPassword = extractJsonField(body, "newPassword");
+                confirmPassword = extractJsonField(body, "confirmPassword");
             } catch (Exception ex) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 response.getWriter().write("{\"success\":false,\"message\":\"Dữ liệu yêu cầu không đúng định dạng JSON.\"}");
                 return;
             }
 
-            if (req == null) {
+            if (oldPassword == null || newPassword == null || confirmPassword == null) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.getWriter().write("{\"success\":false,\"message\":\"Dữ liệu yêu cầu trống.\"}");
+                response.getWriter().write("{\"success\":false,\"message\":\"Dữ liệu yêu cầu trống hoặc không đầy đủ.\"}");
                 return;
             }
 
             // 5. Gọi Service thực hiện đổi mật khẩu
             String result = adminService.changePassword(
                     email, 
-                    req.getOldPassword(), 
-                    req.getNewPassword(), 
-                    req.getConfirmPassword()
+                    oldPassword, 
+                    newPassword, 
+                    confirmPassword
             );
 
             // 6. Phản hồi dựa trên kết quả nghiệp vụ
@@ -142,5 +161,64 @@ public class ChangePasswordController extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write("{\"success\":false,\"message\":\"Lỗi hệ thống xảy ra khi đổi mật khẩu. Vui lòng thử lại sau.\"}");
         }
+    }
+
+    /**
+     * Hàm helper trích xuất giá trị trường JSON đơn giản bằng biểu thức chính quy (Regex).
+     */
+    private String extractJsonField(String json, String field) {
+        if (json == null || json.isEmpty()) return null;
+        String patternStr = "\"" + field + "\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"";
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(patternStr);
+        java.util.regex.Matcher matcher = pattern.matcher(json);
+        if (matcher.find()) {
+            return unescapeJsonString(matcher.group(1));
+        }
+        return null;
+    }
+
+    /**
+     * Giải mã chuỗi ký tự JSON escape sang chuỗi Java thuần túy.
+     */
+    private String unescapeJsonString(String escaped) {
+        if (escaped == null) return null;
+        StringBuilder sb = new StringBuilder();
+        int len = escaped.length();
+        for (int i = 0; i < len; i++) {
+            char c = escaped.charAt(i);
+            if (c == '\\' && i + 1 < len) {
+                char next = escaped.charAt(i + 1);
+                switch (next) {
+                    case '"': sb.append('"'); i++; break;
+                    case '\\': sb.append('\\'); i++; break;
+                    case '/': sb.append('/'); i++; break;
+                    case 'b': sb.append('\b'); i++; break;
+                    case 'f': sb.append('\f'); i++; break;
+                    case 'n': sb.append('\n'); i++; break;
+                    case 'r': sb.append('\r'); i++; break;
+                    case 't': sb.append('\t'); i++; break;
+                    case 'u':
+                        if (i + 5 < len) {
+                            try {
+                                int code = Integer.parseInt(escaped.substring(i + 2, i + 6), 16);
+                                sb.append((char) code);
+                                i += 5;
+                            } catch (NumberFormatException e) {
+                                sb.append(c);
+                            }
+                        } else {
+                            sb.append(c);
+                        }
+                        break;
+                    default:
+                        sb.append(next);
+                        i++;
+                        break;
+                }
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 }
