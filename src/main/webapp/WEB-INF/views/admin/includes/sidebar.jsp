@@ -3,7 +3,7 @@
 <%--
     Sidebar chung cho Admin Dashboard.
     Sử dụng biến 'activePage' (request scope) để highlight menu item hiện tại.
-    Các giá trị hợp lệ: 'staff', 'customers'
+    Các giá trị hợp lệ: 'system-dashboard', 'staff', 'customers'
 --%>
 <aside class="dashboard-sidebar">
     <div class="sidebar-brand" style="color: #3a86ff !important;">
@@ -11,6 +11,11 @@
     </div>
 
     <ul class="sidebar-menu">
+        <li class="menu-item ${activePage eq 'system-dashboard' ? 'active' : ''}">
+            <a href="${pageContext.request.contextPath}/admin/system-dashboard">
+                <i class="fa-solid fa-gauge-high"></i> <span>Bảng điều khiển</span>
+            </a>
+        </li>
         <li class="menu-item ${activePage eq 'staff' ? 'active' : ''}">
             <a href="${pageContext.request.contextPath}/admin/dashboard?tab=staff">
                 <i class="fa-solid fa-user-tie"></i> <span>Quản lý nhân viên</span>

@@ -1,0 +1,74 @@
+@startuml ClassDiagram_ViewHomePage
+title Class Diagram - View Home Page (HMS)
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+hide empty members
+
+' ===================== Boundary servlet base =====================
+class HttpServlet
+
+' ===================== Controller layer =====================
+class HomeController <<Servlet>> {
+  + doGet(request: HttpServletRequest, response: HttpServletResponse): void
+  + doPost(request: HttpServletRequest, response: HttpServletResponse): void
+}
+
+' ===================== Data access layer (DAL) =====================
+class RoomTypeRepository <<DAL>> {
+  - useDatabase(conn: Connection): void
+  + getAllRoomTypes(): List<RoomTypeInfo>
+  + getRoomImagesByTypeId(typeId: int): List<String>
+}
+
+class HotelServiceRepository <<DAL>> {
+  - useDatabase(conn: Connection): void
+  + getActiveServices(): List<HotelService>
+}
+
+' ===================== Config =====================
+class DBContext <<Singleton>> {
+  - {static} dataSource: HikariDataSource
+  + {static} getConnection(): Connection
+}
+
+' ===================== Entity / Model =====================
+class RoomTypeInfo <<Entity>> {
+  - typeId: int
+  - typeName: String
+  - basePrice: double
+  - capacity: int
+  - area: String
+  - bedType: String
+  - imageUrl: String
+  + getTypeId(): int
+  + getImageUrl(): String
+  + setImageUrl(url: String): void
+}
+
+class HotelService <<Entity>> {
+  - serviceId: int
+  - serviceName: String
+  - description: String
+  - price: double
+  - unit: String
+  - isActive: boolean
+  + getServiceName(): String
+  + getPrice(): double
+}
+
+' ===================== Relationships =====================
+HomeController --|> HttpServlet
+HomeController ..> RoomTypeRepository : «use»
+HomeController ..> HotelServiceRepository : «use»
+HomeController ..> RoomTypeInfo : «use»
+HomeController ..> HotelService : «use»
+
+RoomTypeRepository ..> RoomTypeInfo : «create»
+RoomTypeRepository ..> DBContext : «use»
+
+HotelServiceRepository ..> HotelService : «create»
+HotelServiceRepository ..> DBContext : «use»
+
+@enduml

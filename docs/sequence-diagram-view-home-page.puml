@@ -1,0 +1,66 @@
+@startuml SequenceDiagram_ViewHomePage
+title Sequence Diagram - View Home Page (HMS)
+
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+autonumber
+
+actor Guest
+participant "HomeController" as HC <<Servlet>>
+participant "RoomTypeRepository" as RTR <<DAL>>
+participant "HotelServiceRepository" as HSR <<DAL>>
+participant "DBContext" as DBC <<Singleton>>
+database "HotelManagementDB" as DB
+participant "home.jsp" as View <<View>>
+
+Guest -> HC : GET /home
+activate HC
+
+' ---- Lấy danh sách loại phòng ----
+HC -> RTR : getAllRoomTypes()
+activate RTR
+RTR -> DBC : getConnection()
+activate DBC
+DBC --> RTR : Connection
+deactivate DBC
+RTR -> DB : SELECT * FROM RoomType
+DB --> RTR : rows
+RTR --> HC : List<RoomTypeInfo>
+deactivate RTR
+
+' ---- Lấy dịch vụ đang hoạt động ----
+HC -> HSR : getActiveServices()
+activate HSR
+HSR -> DBC : getConnection()
+activate DBC
+DBC --> HSR : Connection
+deactivate DBC
+HSR -> DB : SELECT ... WHERE is_active = 1
+DB --> HSR : rows
+HSR --> HC : List<HotelService>
+deactivate HSR
+
+HC -> HC : if services.size() > 4 -> subList(0, 4)
+
+' ---- Gán ảnh đại diện cho từng loại phòng ----
+loop mỗi RoomTypeInfo trong danh sách
+  HC -> RTR : getRoomImagesByTypeId(typeId)
+  activate RTR
+  RTR -> DB : SELECT image_url FROM RoomImage WHERE type_id = ?
+  DB --> RTR : image urls
+  RTR --> HC : List<String>
+  deactivate RTR
+  HC -> HC : room.setImageUrl(images.get(0))
+end
+
+HC -> HC : if roomTypes.size() > 3 -> subList(0, 3)
+HC -> HC : request.setAttribute("featuredRooms", "services")
+
+' ---- Forward sang view ----
+HC -> View : forward (RequestDispatcher)
+activate View
+View --> Guest : HTML trang chủ
+deactivate View
+deactivate HC
+
+@enduml
