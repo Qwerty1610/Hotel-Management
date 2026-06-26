@@ -159,11 +159,11 @@ public class AdminDashboardRepository {
     /** Doanh thu ghi nhận cộng dồn theo ngày tạo đơn. Key = ngày (yyyy-MM-dd). */
     public Map<String, Double> getRevenueByDay(java.sql.Date from, java.sql.Date to) {
         Map<String, Double> map = new LinkedHashMap<>();
-        String sql = "SELECT CAST(b.created_at AS DATE) AS d, SUM(b.total_amount) AS total " +
+        String sql = "SELECT CAST(b.check_in_date AS DATE) AS d, SUM(b.total_amount) AS total " +
                 "FROM dbo.Booking b " +
                 "WHERE " + REVENUE_STATUS_IN +
-                "  AND CAST(b.created_at AS DATE) BETWEEN ? AND ? " +
-                "GROUP BY CAST(b.created_at AS DATE) " +
+                "  AND CAST(b.check_in_date AS DATE) BETWEEN ? AND ? " +
+                "GROUP BY CAST(b.check_in_date AS DATE) " +
                 "ORDER BY d";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
