@@ -28,6 +28,46 @@ public class AdminDashboardController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
+        String action = request.getParameter("action");
+        if ("check-duplicate".equals(action)) {
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            String email = request.getParameter("email");
+            String phone = request.getParameter("phone");
+            String excludeIdStr = request.getParameter("excludeId");
+            int excludeId = -1;
+            if (excludeIdStr != null && !excludeIdStr.isEmpty()) {
+                try {
+                    excludeId = Integer.parseInt(excludeIdStr);
+                } catch (Exception e) {}
+            }
+            
+            boolean emailExists = false;
+            boolean phoneExists = false;
+            
+            if (email != null && !email.trim().isEmpty()) {
+                if (excludeId > 0) {
+                    emailExists = adminService.existsByEmailExcept(email.trim(), excludeId);
+                } else {
+                    emailExists = adminService.existsByEmail(email.trim());
+                }
+            }
+            
+            if (phone != null && !phone.trim().isEmpty()) {
+                String sanitized = adminService.sanitizePhone(phone);
+                if (sanitized != null) {
+                    if (excludeId > 0) {
+                        phoneExists = adminService.existsByPhoneExcept(sanitized, excludeId);
+                    } else {
+                        phoneExists = adminService.existsByPhone(sanitized);
+                    }
+                }
+            }
+            
+            response.getWriter().write(String.format("{\"emailExists\":%b, \"phoneExists\":%b}", emailExists, phoneExists));
+            return;
+        }
+        
         String tab = request.getParameter("tab");
         if (tab == null || tab.isEmpty()) {
             tab = "staff";
