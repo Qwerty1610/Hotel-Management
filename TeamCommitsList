@@ -43,9 +43,18 @@ TungNQ commits "update comment"
 QuyPQ commits "Quý_sửa validation gán việc, thêm danh sách công việc nhân viên đã nhận hoặc được gán trong detail"
 QuyPQ commits "Quý_thêm danh sách chờ refund, valid cho phần nhập tiền"
 QuyPQ commits "Quý_Dashboard-Manager_Invoice-management_Customer-Request_Track-staff-work"
+11/06/2006
+QuyPQ commits changing list rendering of Invoice, Customer_Request and Staff_detail from FrontEnd to BackEnd
 15/06/2026
 KhanhTD commits "Update UI for manage profile and refactor manager view code"
 22/06/2026
 KhanhTD commits "CustomerService and Receptionist ManageServiceRequest"
+23/06/2006
+QuyPQ commits fix bug
+QuyPQ commits Add Request Booking Change, Request Stay Extension feature
+QuyPQ commits view personal profile
 25/06/2026
 KhanhTD commits "Updated Service Request"
+26/06/2006
+QuyPQ commits Add Admin_SystemDashboard
+QuyPQ commits Add Admin_SystemDashboard
