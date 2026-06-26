@@ -344,6 +344,74 @@ public class InvoiceDAO {
         return false;
     }
 
+    /**
+     * Lấy hóa đơn theo booking_id — dùng khi Receptionist approve service request
+     * để tìm invoice cần thêm dòng dịch vụ.
+     * Trả về null nếu booking chưa có hóa đơn.
+     */
+    public Invoice getInvoiceByBookingId(int bookingId) {
+        String sql = BASE_SELECT + "WHERE i.booking_id = ?";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, bookingId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return mapInvoice(rs);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Thêm một dòng dịch vụ (Service) vào hóa đơn.
+     * Được gọi khi Receptionist duyệt (approve) một Service request của khách hàng.
+     * Hóa đơn phải ở trạng thái Pending (chưa thanh toán) thì mới cho phép thêm.
+     *
+     * @param invoiceId   ID hóa đơn cần cập nhật
+     * @param description Tên dịch vụ (title từ CustomerRequest)
+     * @param quantity    Số lượng (mặc định 1)
+     * @param unitPrice   Đơn giá lấy từ HotelService.price
+     * @return true nếu thêm thành công
+     */
+    public boolean addServiceItem(int invoiceId, String description, int quantity, double unitPrice) {
+        // Chỉ thêm khi hóa đơn chưa Paid (cho phép Pending, Refunding)
+        String checkSql = "SELECT status FROM dbo.Invoice WHERE invoice_id = ?";
+        String insertSql = "INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount) "
+                + "VALUES (?, N'Service', ?, ?, ?, ?)";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            // Kiểm tra trạng thái hóa đơn
+            String invoiceStatus = null;
+            try (PreparedStatement ps = conn.prepareStatement(checkSql)) {
+                ps.setInt(1, invoiceId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) invoiceStatus = rs.getString("status");
+                }
+            }
+            if (invoiceStatus == null || "Paid".equals(invoiceStatus) || "Cancelled".equals(invoiceStatus)) {
+                return false; // Không thêm vào hóa đơn đã đóng
+            }
+            try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
+                ps.setInt(1, invoiceId);
+                ps.setString(2, description);
+                ps.setInt(3, quantity);
+                ps.setDouble(4, unitPrice);
+                ps.setDouble(5, quantity * unitPrice);
+                int rows = ps.executeUpdate();
+                if (rows > 0) {
+                    touchInvoice(conn, invoiceId);
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     private void touchInvoice(Connection conn, int invoiceId) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(
                 "UPDATE dbo.Invoice SET updated_at = SYSDATETIME() WHERE invoice_id = ?")) {

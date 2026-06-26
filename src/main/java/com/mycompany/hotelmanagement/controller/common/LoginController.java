@@ -85,11 +85,11 @@ public class LoginController extends HttpServlet {
         if (result.isSuccess()) {
             String role = result.getRole();
             
-            // Reject staff on the customer portal
-            if (!"CUSTOMER".equals(role)) {
-                response.sendRedirect(request.getContextPath() + "/home/login?error=not_customer");
-                return;
-            }
+//            // Reject staff on the customer portal
+//            if (!"CUSTOMER".equals(role)) {
+//                response.sendRedirect(request.getContextPath() + "/home/login?error=not_customer");
+//                return;
+//            }
             
             // Authentication successful, establish session
             HttpSession session = request.getSession();

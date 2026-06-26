@@ -64,15 +64,8 @@ public class ReceptionistCheckInController extends HttpServlet {
         int bookingId = Integer.parseInt(request.getParameter("bookingId"));
 
         BookingDAO dao = new BookingDAO();
-        RoomRepository roomRepo = new RoomRepository();
 
-        // 1. update booking status
         boolean updated = dao.updateStatus(bookingId, "CheckedIn");
-
-        // 2. update room status theo booking
-        if (updated) {
-            roomRepo.updateRoomStatusByBooking(bookingId, "CheckedIn");
-        }
 
         response.sendRedirect(
                 request.getContextPath() + "/receptionist/dashboard?tab=checkin"

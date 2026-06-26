@@ -165,6 +165,19 @@
     }
 }
 
+/* Ghi chú khi biểu đồ không có dữ liệu (UC 2.7.4 - AF-1) */
+.empty-chart-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 180px;
+    color: var(--text-muted, #94a3b8);
+    font-size: 14px;
+    text-align: center;
+    padding: 20px;
+}
+
 /* Global Floating Toasts */
 .alert-toast {
     position: fixed;

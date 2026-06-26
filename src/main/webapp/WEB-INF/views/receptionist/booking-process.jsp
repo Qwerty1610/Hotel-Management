@@ -489,8 +489,6 @@
                                                             <c:out value="${customer.fullName}" />
                                                         </span>
                                                     </div>
-                                                </c:when>
-                                                <c:otherwise>
                                                     <div class="info-row">
                                                         <label>Email:</label>
                                                         <span>

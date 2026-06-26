@@ -161,8 +161,13 @@ public class CustomerServiceController extends HttpServlet {
 
     private void showRequestHistory(HttpServletRequest request, HttpServletResponse response, int accountId)
             throws ServletException, IOException {
-        List<CustomerRequest> requests = customerRequestDAO.getRequestsByCustomer(accountId);
+        String statusFilter = request.getParameter("status");
+        if (statusFilter == null || statusFilter.trim().isEmpty()) {
+            statusFilter = "All";
+        }
+        List<CustomerRequest> requests = customerRequestDAO.getRequestsByCustomer(accountId, statusFilter);
         request.setAttribute("requests", requests);
+        request.setAttribute("selectedStatus", statusFilter);
 
         // Success / Error messages
         String success = request.getParameter("success");

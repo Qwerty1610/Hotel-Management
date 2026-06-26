@@ -20,24 +20,18 @@
 
         <div class="dashboard-layout">
 
-    <%-- ================= SIDEBAR ================= --%>
-    <aside class="dashboard-sidebar">
-        <div class="sidebar-brand">
-            <i class="fa-solid fa-bell-concierge"></i> <span>HotelOps</span>
-        </div>
+            <!-- ================= SIDEBAR ================= -->
+            <aside class="dashboard-sidebar">
+                <div class="sidebar-brand">
+                    <i class="fa-solid fa-bell-concierge"></i> <span>HotelOps</span>
+                </div>
 
-        <ul class="sidebar-menu">
-            <li class="menu-item ${currentTab eq 'bookings' ? 'active' : ''}">
-                <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=bookings">
-                    <i class="fa-solid fa-calendar-check"></i> <span>Yêu cầu đặt phòng</span>
-                </a>
-            </li>
-
-            <li class="menu-item ${currentTab eq 'roommap' ? 'active' : ''}">
-                <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=roommap">
-                    <i class="fa-solid fa-map"></i> <span>Sơ đồ phòng</span>
-                </a>
-            </li>
+                <ul class="sidebar-menu">
+                    <li class="menu-item ${currentTab eq 'bookings' ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=bookings">
+                            <i class="fa-solid fa-calendar-check"></i> <span>Yêu cầu đặt phòng</span>
+                        </a>
+                    </li>
 
                     <li class="menu-item ${currentTab eq 'checkin' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin">
@@ -46,78 +40,73 @@
                     </li>
                     <li class="menu-item ${currentTab eq 'roommap' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=roommap">
-                            <i class="fa-solid fa-map"></i> <span>Sơ đồ phòng</span>
+                            <i class="fa-solid fa-map"></i> <span>sơ đồ phòng</span>
                         </a>
                     </li>
-            <li class="menu-item ${currentTab eq 'checkin' ? 'active' : ''}">
-                <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin">
-                    <i class="fa-solid fa-key"></i> <span>Nhận phòng (Check-in)</span>
-                </a>
-            </li>
 
-            <li class="menu-item ${currentTab eq 'walkin-bookings' ? 'active' : ''}">
-                <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=walkin-bookings">
-                    <i class="fa-solid fa-user-plus"></i> <span>Đặt phòng tại quầy</span>
-                </a>
-            </li>
+                    <li class="menu-item ${currentTab eq 'walkin-bookings' ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=walkin-bookings">
+                            <i class="fa-solid fa-user-plus"></i> <span>Đặt phòng tại quầy</span>
+                        </a>
+                    </li>
 
-            <li class="menu-item ${currentTab eq 'checkout' ? 'active' : ''}">
-                <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkout">
-                    <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh toán</span>
-                </a>
-            </li>
+                    <li class="menu-item ${currentTab eq 'checkout' ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkout">
+                            <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh toán</span>
+                        </a>
+                    </li>
 
-            <li class="menu-item ${currentTab eq 'servicerequests' ? 'active' : ''}">
-                <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=servicerequests">
-                    <i class="fa-solid fa-bell-concierge"></i> <span>Quản lý yêu cầu dịch vụ</span>
-                </a>
-            </li>
-        </ul>
+                    <li class="menu-item ${currentTab eq 'servicerequests' ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=servicerequests">
+                            <i class="fa-solid fa-bell-concierge"></i> <span>Quản lý yêu cầu dịch vụ</span>
+                        </a>
+                    </li>
+                </ul>
 
-        <div class="sidebar-footer">
-            <a href="${pageContext.request.contextPath}/profile" class="user-profile-card" title="Xem hồ sơ cá nhân" style="text-decoration:none;cursor:pointer;">
-                <div class="profile-avatar">RC</div>
-                <div class="profile-info">
-                    <span class="profile-name">${not empty sessionScope.user ? sessionScope.user : 'Receptionist'}</span>
-                    <span class="profile-role">Lễ tân</span>
+                <div class="sidebar-footer">
+                    <div class="user-profile-card">
+                        <div class="profile-avatar">RC</div>
+                        <div class="profile-info">
+                            <span class="profile-name">${not empty sessionScope.user ? sessionScope.user : 'Receptionist'}</span>
+                            <span class="profile-role">Lễ tân</span>
+                        </div>
+                    </div>
                 </div>
-            </a>
-        </div>
-    </aside>
+            </aside>
 
-    <%-- ================= MAIN CONTENT ================= --%>
-    <div class="dashboard-main">
+            <%-- ================= MAIN CONTENT ================= --%>
+            <div class="dashboard-main">
 
-        <%-- TOPBAR --%>
-        <header class="main-topbar">
-            <div class="breadcrumb">
-                <span>Receptionist</span>
-                <span class="separator">&gt;</span>
-                <span class="current">
-                    <c:choose>
-                        <c:when test="${currentTab eq 'bookings'}">Quản lý đặt phòng</c:when>
-                        <c:when test="${currentTab eq 'roommap'}">Sơ đồ phòng</c:when>
-                        <c:when test="${currentTab eq 'checkin'}">Nhận phòng (Check-in)</c:when>
-                        <c:when test="${currentTab eq 'walkin-bookings'}">Đặt phòng tại quầy</c:when>
-                        <c:when test="${currentTab eq 'checkout'}">Trả phòng & Thanh toán</c:when>
-                        <c:when test="${currentTab eq 'servicerequests'}">Quản lý yêu cầu dịch vụ</c:when>
-                        <c:otherwise>Receptionist Dashboard</c:otherwise>
-                    </c:choose>
-                </span>
-            </div>
-            <a href="${pageContext.request.contextPath}/logout" class="btn-logout">
-                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
-            </a>
-        </header>
+                <%-- TOPBAR --%>
+                <header class="main-topbar">
+                    <div class="breadcrumb">
+                        <span>Receptionist</span>
+                        <span class="separator">&gt;</span>
+                        <span class="current">
+                            <c:choose>
+                                <c:when test="${currentTab eq 'bookings'}">Quản lý đặt phòng</c:when>
+                                <c:when test="${currentTab eq 'roommap'}">Sơ đồ phòng</c:when>
+                                <c:when test="${currentTab eq 'checkin'}">Nhận phòng (Check-in)</c:when>
+                                <c:when test="${currentTab eq 'walkin-bookings'}">Đặt phòng tại quầy</c:when>
+                                <c:when test="${currentTab eq 'checkout'}">Trả phòng & Thanh toán</c:when>
+                                <c:when test="${currentTab eq 'servicerequests'}">Quản lý yêu cầu dịch vụ</c:when>
+                                <c:otherwise>Receptionist Dashboard</c:otherwise>
+                            </c:choose>
+                        </span>
+                    </div>
+                    <a href="${pageContext.request.contextPath}/logout" class="btn-logout">
+                        <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                    </a>
+                </header>
 
-        <%-- WORKSPACE --%>
-        <main class="workspace-content">
+                <%-- WORKSPACE --%>
+                <main class="workspace-content">
 
-            <%-- ===== BOOKING TAB ===== --%>
-            <c:if test="${currentTab eq 'bookings'}">
+                    <%-- ===== BOOKING TAB ===== --%>
+                    <c:if test="${currentTab eq 'bookings'}">
 
-                <%-- Toast notification --%>
-                <c:if test="${param.result eq 'success'}">
+                        <%-- Toast notification --%>
+                        <c:if test="${param.result eq 'success'}">
                             <div class="toast-notify toast-success">
                                 <i class="fa-solid fa-circle-check"></i>
                                 <c:choose>
@@ -399,33 +388,81 @@
                         </div>
 
                         <!-- FILTER -->
+                        <!-- FORM TÌM KIẾM THEO NGÀY -->
+                        <form method="get"
+                              action="${pageContext.request.contextPath}/receptionist/dashboard"
+                              class="roommap-filter-form">
+
+                            <input type="hidden" name="tab" value="roommap"/>
+
+                            <div class="roommap-filter-row">
+
+                                <div class="form-group">
+                                    <label>Từ ngày</label>
+                                    <input type="date"
+                                           name="fromDate"
+                                           value="${fromDate}"
+                                           class="walkin-input">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Đến ngày</label>
+                                    <input type="date"
+                                           name="toDate"
+                                           value="${toDate}"
+                                           class="walkin-input">
+                                </div>
+
+                                <button type="submit"
+                                        class="btn-roommap-search">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                    Kiểm tra phòng
+                                </button>
+
+                            </div>
+                        </form>
                         <form method="get"
                               action="${pageContext.request.contextPath}/receptionist/dashboard">
 
                             <input type="hidden" name="tab" value="roommap"/>
 
-                            <div class="status-tabs" style="margin-bottom:16px;">
+                            <input type="hidden"
+                                   name="fromDate"
+                                   value="${fromDate}"/>
 
-                                <button type="submit" name="status" value="All"
+                            <input type="hidden"
+                                   name="toDate"
+                                   value="${toDate}"/>
+
+                            <div class="status-tabs">
+
+                                <button type="submit"
+                                        name="status"
+                                        value="All"
                                         class="status-tab ${currentStatus eq 'All' ? 'active' : ''}">
                                     Tất cả
                                 </button>
 
-                                <button type="submit" name="status" value="Available"
+                                <button type="submit"
+                                        name="status"
+                                        value="Available"
                                         class="status-tab ${currentStatus eq 'Available' ? 'active' : ''}">
                                     Trống
                                 </button>
 
-                                <button type="submit" name="status" value="Occupied"
+                                <button type="submit"
+                                        name="status"
+                                        value="Occupied"
                                         class="status-tab ${currentStatus eq 'Occupied' ? 'active' : ''}">
-                                    Đã đặt
+                                    Đang sử dụng
                                 </button>
 
-                                <button type="submit" name="status" value="Maintenance"
+                                <button type="submit"
+                                        name="status"
+                                        value="Maintenance"
                                         class="status-tab ${currentStatus eq 'Maintenance' ? 'active' : ''}">
                                     Bảo trì
                                 </button>
-
                             </div>
                         </form>
 
@@ -635,235 +672,280 @@
                             </table>
                         </div>
                     </c:if>
-                    <%-- ===== WALK-IN BOOKING ===== --%>
-                    <c:if test="${currentTab eq 'walkin-bookings'}">
-
-                        <form method="post"
-                              action="${pageContext.request.contextPath}/receptionist/walkin-booking">
-                            <%-- ================= HEADER ================= --%>
-                            <div class="content-header-row">
-                                <div>
-                                    <h2>
-                                        <i class="fa-solid fa-user-plus"
-                                           style="color:var(--brand-blue);margin-right:8px"></i>
-                                        Đặt phòng tại quầy
-                                    </h2>
-                                    <p>Tạo booking trực tiếp cho khách hàng tại quầy lễ tân.</p>
-                                </div>
-                            </div>
-                            <%-- =========================================================
-                                 CARD 1 - THÔNG TIN LƯU TRÚ
-                                 ========================================================= --%>
-                            <div class="walkin-card">
-                                <div class="walkin-section-header">
-                                    <div>
-                                        <i class="fa-solid fa-address-card"></i>
-                                        Thông tin lưu trú
-                                    </div>
-                                </div>
-                                <div class="walkin-contact-grid">
-                                    <div class="form-group customer-name-group">
-                                        <label>Họ và tên *</label>
-                                        <input type="text"
-                                               name="customerName"
-                                               class="walkin-input"
-                                               placeholder="Nhập họ tên khách hàng"
-                                               required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Số điện thoại *</label>
-                                        <input type="text"
-                                               name="phone"
-                                               class="walkin-input"
-                                               placeholder="0912345678"
-                                               required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Email</label>
-                                        <input type="email"
-                                               name="email"
-                                               class="walkin-input"
-                                               placeholder="customer@email.com">
-                                    </div>
-                                </div>
-                                <div class="walkin-date-grid">
-                                    <div class="form-group">
-                                        <label>Ngày nhận phòng *</label>
-                                        <input type="date"
-                                               name="checkInDate"
-                                               class="walkin-input"
-                                               required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Ngày trả phòng *</label>
-                                        <input type="date"
-                                               name="checkOutDate"
-                                               class="walkin-input"
-                                               required>
-                                    </div>
-                                </div>
-                            </div>
-                            <%-- =========================================================
-                                 CARD 2 - CHỌN LOẠI PHÒNG
-                                 ========================================================= --%>
-                            <div class="walkin-card">
-                                <div class="walkin-section-header">
-                                    <div>
-                                        <i class="fa-solid fa-bed"></i>
-                                        Chọn loại phòng
-                                    </div>
-                                    <button type="button"
-                                            class="btn-add-room"
-                                            onclick="addRoomRow()">
-
-                                        <i class="fa-solid fa-plus"></i>
-                                        Thêm loại phòng
-                                    </button>
-                                </div>
-                                <div class="room-header-row">
-                                    <span>Loại phòng</span>
-                                    <span>Số phòng</span>
-                                    <span>Số người</span>
-                                    <span></span>
-                                </div>
-                                <div id="roomRowsContainer">
-                                    <div class="room-row">
-                                        <select name="roomTypeIds[]"
-                                                class="walkin-input">
-                                            <option value="">
-                                                -- Chọn loại phòng --
-                                            </option>
+                    <%-- ===== WALK-IN BOOKING TAB===== --%> 
+                    <c:if test="${currentTab eq 'walkin-bookings'}"> 
+                        <form method="post" 
+                              action="${pageContext.request.contextPath}/receptionist/walkin-booking" 
+                              onsubmit="return validateWalkInSubmit()"> 
+                            <input type="hidden" 
+                                   id="bookingMode" 
+                                   name="bookingMode" 
+                                   value="BOOKING"> 
+                            <%-- ================= HEADER ================= --%> 
+                            <div class="content-header-row"> 
+                                <div> 
+                                    <h2> 
+                                        <i class="fa-solid fa-user-plus" 
+                                           style="color:var(--brand-blue);margin-right:8px"></i> 
+                                        Đặt phòng tại quầy 
+                                    </h2> 
+                                    <p>
+                                        Tạo booking trực tiếp cho khách hàng tại quầy lễ tân.
+                                    </p> 
+                                </div> 
+                            </div> 
+                            <div class="walkin-mode-card"> 
+                                <label class="mode-option"> 
+                                    <input type="radio" name="walkinMode" value="booking" checked> 
+                                    <span>📅 Đặt phòng</span> </label> 
+                                <label class="mode-option"> 
+                                    <input type="radio" name="walkinMode" value="checkin"> 
+                                    <span>🏨 Check In</span> 
+                                </label> 
+                            </div> 
+                            <!-- ========================================================= 
+                                    CARD 1 - THÔNG TIN KHÁCH HÀNG 
+                            ========================================================= --> 
+                            <div class="walkin-card"> 
+                                <div class="walkin-section-header"> 
+                                    <div> 
+                                        <i class="fa-solid fa-user"></i> 
+                                        Thông tin khách hàng 
+                                    </div> </div> <div class="walkin-grid"> 
+                                    <!-- HÀNG 1 --> 
+                                    <div class="walkin-row-3"> 
+                                        <div class="form-group form-group-large"> 
+                                            <label>Họ và tên *</label> 
+                                            <input type="text" 
+                                                   id="customerName" 
+                                                   name="customerName" 
+                                                   class="walkin-input" 
+                                                   required> 
+                                        </div> 
+                                        <div class="form-group"> 
+                                            <label>Số điện thoại *</label> 
+                                            <input type="text" 
+                                                   id="phone" 
+                                                   name="phone" 
+                                                   class="walkin-input" 
+                                                   required> 
+                                        </div> 
+                                        <div class="form-group"> 
+                                            <label>Email</label> 
+                                            <input type="email" 
+                                                   id="email" 
+                                                   name="email" 
+                                                   class="walkin-input"> 
+                                        </div> 
+                                    </div> 
+                                    <!-- HÀNG 2 --> 
+                                    <div class="walkin-row-2"> 
+                                        <div class="form-group"> 
+                                            <label>Ngày nhận phòng *</label> 
+                                            <input type="date" 
+                                                   id="checkInDate" 
+                                                   name="checkInDate" 
+                                                   class="walkin-input" 
+                                                   required> </div> 
+                                        <div class="form-group"> 
+                                            <label>Ngày trả phòng *</label> 
+                                            <input type="date" 
+                                                   id="checkOutDate" 
+                                                   name="checkOutDate" 
+                                                   class="walkin-input" 
+                                                   required> 
+                                        </div> 
+                                    </div> 
+                                </div> 
+                            </div> 
+                            <%-- ========================================================= 
+                                        CARD 2 - CHỌN LOẠI PHÒNG 
+                            ========================================================= --%> 
+                            <div class="walkin-card"> 
+                                <div class="walkin-section-header"> 
+                                    <div> 
+                                        <i class="fa-solid fa-bed"></i> 
+                                        Chọn loại phòng 
+                                    </div> 
+                                    <button type="button" 
+                                            class="btn-add-room-type" 
+                                            onclick="addRoomRow()"> 
+                                        <i class="fa-solid fa-plus"></i> Thêm loại phòng 
+                                    </button> 
+                                </div> 
+                                <div class="room-header-row"> 
+                                    <span>Loại phòng</span> 
+                                    <span>Số phòng</span> 
+                                    <span>Số người</span> 
+                                    <span></span> 
+                                </div> 
+                                <div id="roomRowsContainer"> 
+                                    <div class="room-row first-room-row"> 
+                                        <select name="roomTypeIds[]" 
+                                                class="walkin-input room-type-select" 
+                                                onchange="roomTypeChanged(this)" 
+                                                required> 
+                                            <option value=""> 
+                                                -- Chọn loại phòng -- 
+                                            </option> 
                                             <c:forEach var="rt" items="${roomTypesList}">
-                                                <option value="${rt.typeId}">
+                                                <option
+                                                    value="${rt.typeId}"
+                                                    data-price="${rt.basePrice}"
+                                                    data-capacity="${rt.capacity}">
                                                     ${rt.typeName}
                                                 </option>
                                             </c:forEach>
-                                        </select>
-                                        <input type="number"
-                                               name="roomQuantities[]"
-                                               class="walkin-input"
-                                               min="1"
-                                               value="1">
-                                        <input type="number"
-                                               name="guestCounts[]"
-                                               class="walkin-input"
-                                               min="1"
-                                               value="1">
-                                        <button type="button"
-                                                class="btn-delete-row"
-                                                onclick="removeRoomRow(this)">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <%-- =========================================================
-                                 CARD 3 - SƠ ĐỒ PHÒNG
-                                 ========================================================= --%>
-                            <div class="walkin-card">
-                                <div class="walkin-section-header">
-                                    <div>
-                                        <i class="fa-solid fa-map"></i>
-                                        Sơ đồ phòng
-                                    </div>
-                                </div>
-                                <div class="room-map-placeholder">
-                                    <i class="fa-solid fa-building"></i>
-                                    <h4>Sơ đồ phòng sẽ hiển thị tại đây</h4>
-                                    <p>
-                                        Sau khi chọn loại phòng, hệ thống sẽ hiển thị
-                                        danh sách phòng trống để lễ tân gán phòng.
-                                    </p>
-                                </div>
-                            </div>
-                            <%-- =========================================================
-                                 CARD 4 - YÊU CẦU KHÁCH HÀNG
-                                 ========================================================= --%>
-                            <div class="walkin-card">
-                                <div class="walkin-section-header">
-                                    <div>
-                                        <i class="fa-solid fa-comment-dots"></i>
-                                        Yêu cầu khách hàng
-                                    </div>
-                                </div>
-                                <textarea name="note"
-                                          class="walkin-note"
-                                          rows="5"
-                                          placeholder="Ví dụ: phòng tầng cao, gần thang máy, giường phụ, yên tĩnh..."></textarea>
-                            </div>
-                            <%-- =========================================================
-                                 FOOTER
-                                 ========================================================= --%>
-                            <div class="walkin-footer">
-                                <div class="privacy-note">
-                                    <i class="fa-solid fa-shield-halved"></i>
-                                    <span>
-                                        Cam kết chính sách bảo mật của HotelOps
-                                    </span>
-                                </div>
-                                <button type="submit"
-                                        class="btn-booking-submit">
-                                    <i class="fa-solid fa-check"></i>
-                                    Đặt phòng
-                                </button>
-                            </div>
-                        </form>
-                        <script>
-
-                            function addRoomRow() {
-
-                                const container = document.getElementById("roomRowsContainer");
-
-                                const row = document.createElement("div");
-
-                                row.className = "room-row";
-
-                                row.innerHTML = `
-                                    <select name="roomTypeIds[]" class="walkin-input">
-                                        <option value="">-- Chọn loại phòng --</option>
-
-                            <c:forEach var="rt" items="${roomTypesList}">
-                                            <option value="${rt.typeId}">
-                                ${rt.typeName}
-                                            </option>
-                            </c:forEach>
-                                    </select>
-
-                                    <input type="number"
-                                           class="walkin-input"
-                                           name="roomQuantities[]"
-                                           min="1"
-                                           value="1">
-
-                                    <input type="number"
-                                           class="walkin-input"
-                                           name="guestCounts[]"
-                                           min="1"
-                                           value="1">
-
+                                        </select> 
+                                        <input type="number" 
+                                               name="roomQuantities[]" 
+                                               class="walkin-input room-qty-input" 
+                                               min="1" 
+                                               value="1" 
+                                               onchange="roomQtyChanged(this)" 
+                                               required> 
+                                        <input
+                                            type="number"
+                                            name="guestCounts[]"
+                                            class="walkin-input guest-input"
+                                            min="1"
+                                            value="1"
+                                            oninput="updateSummary()"
+                                            required>
+                                        <button type="button" 
+                                                class="btn-delete-row" 
+                                                style="display:none"> 
+                                            <i class="fa-solid fa-trash"></i> 
+                                        </button> 
+                                    </div> 
+                                </div> 
+                            </div> 
+                            <%-- ========================================================= 
+                                        CARD 3 - SƠ ĐỒ PHÒNG 
+                            ========================================================= --%> 
+                            <div class="walkin-card"> 
+                                <div class="walkin-section-header"> 
+                                    <div> 
+                                        <i class="fa-solid fa-map"></i> 
+                                        Sơ đồ phòng 
+                                    </div> 
+                                </div> 
+                                <div id="availableRoomsContainer"> 
+                                    <div class="empty-room-message"> 
+                                        Chọn ngày nhận phòng, trả phòng và loại phòng 
+                                    </div> 
+                                </div> 
+                                <%-- ========================================================= 
+                                    CARD 3.1 - BẠN ĐỒNG HÀNH 
+                                ========================================================= --%> 
+                            </div> 
+                            <div class="walkin-card" 
+                                 id="companionCard" 
+                                 style="display:none;"> 
+                                <div class="walkin-section-header"> 
+                                    <div> 
+                                        <i class="fa-solid fa-users"></i> 
+                                        Bạn đồng hành 
+                                    </div> 
                                     <button type="button"
-                                            class="btn-delete-row"
-                                            onclick="removeRoomRow(this)">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                `;
-
-                                container.appendChild(row);
-                            }
-
-                            function removeRoomRow(btn) {
-
-                                const rows = document.querySelectorAll(".room-row");
-
-                                if (rows.length <= 1) {
-                                    return;
-                                }
-
-                                btn.closest(".room-row").remove();
-                            }
-
+                                            class="btn-add-companion"
+                                            onclick="addCompanionRow()"> 
+                                        + Thêm bạn đồng hành 
+                                    </button> 
+                                </div> 
+                                <div id="companionContainer"> 
+                                </div> 
+                            </div> 
+                            <%-- ========================================================= 
+                                    CARD 4 - YÊU CẦU KHÁCH HÀNG 
+                            ========================================================= --%> 
+                            <div class="walkin-card"> 
+                                <div class="walkin-section-header"> 
+                                    <div> 
+                                        <i class="fa-solid fa-comment-dots"></i> 
+                                        Yêu cầu khách hàng 
+                                    </div> 
+                                </div> 
+                                <textarea name="note" 
+                                          class="walkin-note" 
+                                          rows="5" 
+                                          placeholder="Ví dụ: phòng tầng cao, gần thang máy, giường phụ, yên tĩnh...">                         
+                                </textarea> 
+                            </div> 
+                            <%-- ========================================================= 
+                            CARD 5 - TÓM TẮT ĐẶT PHÒNG 
+                            ========================================================= --%> 
+                            <div class="walkin-card"> 
+                                <div class="walkin-section-header"> 
+                                    <div> 
+                                        <i class="fa-solid fa-receipt"></i> 
+                                        Tóm tắt đặt phòng 
+                                    </div> 
+                                </div> 
+                                <div id="bookingSummary"> 
+                                    <div class="summary-row"> 
+                                        <span>Số đêm nghỉ</span> 
+                                        <strong id="summaryNights">0</strong> 
+                                    </div> 
+                                    <div id="summaryRoomTypes"> 
+                                    </div> 
+                                    <div class="summary-row total"> 
+                                        <span>Tổng cộng</span> 
+                                        <strong id="summaryTotal"> 0 VNĐ 
+                                        </strong> 
+                                    </div> 
+                                </div> 
+                            </div> 
+                            <%-- ========================================================= 
+                                    CARD 6- GHI CHÚ 
+                            ========================================================= --%> 
+                            <div class="walkin-card"> 
+                                <div class="walkin-section-header"> 
+                                    <div> 
+                                        <i class="fa-solid fa-clipboard"></i> 
+                                        Ghi chú lễ tân 
+                                    </div> 
+                                </div> 
+                                <textarea name="receptionistNote" 
+                                          class="walkin-note" 
+                                          rows="4" 
+                                          placeholder="Ghi chú nội bộ..."> 
+                                </textarea> 
+                            </div> 
+                            <%-- ========================================================= 
+                                        FOOTER 
+                            ========================================================= --%> 
+                            <div class="walkin-footer"> 
+                                <div class="privacy-note"> 
+                                    <i class="fa-solid fa-shield-halved"></i> 
+                                    <span> Cam kết chính sách bảo mật của HotelOps </span> 
+                                </div> 
+                                <button type="submit" 
+                                        id="bookingBtn"
+                                        class="btn-booking-submit" 
+                                        onclick="document.getElementById('bookingMode').value = 'BOOKING'"> 
+                                    <i class="fa-solid fa-calendar-check"></i> Đặt phòng 
+                                </button> 
+                                <button type="submit" 
+                                        id="checkinBtn"
+                                        class="btn-booking-submit" 
+                                        onclick="document.getElementById('bookingMode').value = 'CHECKIN'"> 
+                                    <i class="fa-solid fa-door-open"></i> 
+                                    Check In 
+                                </button> 
+                            </div> 
+                        </form> 
+                        <script>
+                            window.roomTypeOptionsHtml = `
+                            <c:forEach items="${roomTypesList}" var="rt">
+                            <option value="${rt.typeId}"
+                                    data-price="${rt.basePrice}"
+                                    data-capacity="${rt.capacity}">
+                                ${rt.typeName}
+                            </option>
+                            </c:forEach>
+                        `;
                         </script>
-
                     </c:if>
                     <%-- ===== CHECK-OUT TAB (ITERATION 3) ===== --%>
                     <c:if test="${currentTab eq 'checkout'}">
@@ -1133,7 +1215,9 @@
                 </form>
             </div>
         </div>
-
+        <script>
+            const contextPath = '${pageContext.request.contextPath}';
+        </script>
         <script src="${pageContext.request.contextPath}/assets/js/receptionist.js?v=5" charset="UTF-8"></script>
     </body>
 </html>
