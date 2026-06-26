@@ -49,12 +49,22 @@ QuyPQ commits changing list rendering of Invoice, Customer_Request and Staff_det
 KhanhTD commits "Update UI for manage profile and refactor manager view code"
 22/06/2026
 KhanhTD commits "CustomerService and Receptionist ManageServiceRequest"
+TungNQ commits "Admin control"
+TungNQ commits "Fix change password"
 23/06/2006
 QuyPQ commits fix bug
 QuyPQ commits Add Request Booking Change, Request Stay Extension feature
 QuyPQ commits view personal profile
 25/06/2026
 KhanhTD commits "Updated Service Request"
+TungNQ commits "Update login role and change password"
+TungNQ commits "fix bug login role"
+TungNQ commits "Clean code and file"
+TungNQ commits "update code"
+TungNQ commits "fix: resolve conflict in receptionist sidebar"
+TungNQ commits "validate edit"
 26/06/2006
 QuyPQ commits Add Admin_SystemDashboard
 QuyPQ commits Add Admin_SystemDashboard
+TungNQ commits "validate create staff"
+TungNQ commits "fix conflict"
