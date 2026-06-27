@@ -24,7 +24,7 @@ import java.util.logging.Logger;
  *
  * Hiển thị chi tiết (read-only) của một yêu cầu đặt phòng.
  *
- * @author BinhHD
+ * @author BinhHD, MinhTDP
  */
 @WebServlet(name = "ReceptionistBookingDetailController", urlPatterns = { "/receptionist/booking/detail" })
 public class ReceptionistBookingDetailController extends HttpServlet {

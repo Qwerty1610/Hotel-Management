@@ -27,7 +27,7 @@ import java.util.logging.Logger;
  * Standardized imports utilizing dal instead of dao.
  * Date: 01/6/2026
  * 
- * @author BinhHD
+ * @author BinhHD, MinhTDP
  */
 @WebServlet(name = "ReceptionistBookingController", urlPatterns = { "/receptionist/booking" })
 public class ReceptionistBookingController extends HttpServlet {

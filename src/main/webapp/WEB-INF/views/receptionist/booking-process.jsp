@@ -221,14 +221,21 @@
                                                         <div style="font-weight:600; color:var(--text-navy); margin-bottom:8px;">Loại phòng ${status.index + 2}</div>
                                                         <div class="modal-form-group">
                                                             <label>Loại phòng yêu cầu</label>
-                                                            <input type="text" class="modal-input" value="${child.roomTypeName}" disabled />
-                                                            <c:set var="childPrice" value="0" />
-                                                            <c:forEach var="rt" items="${roomTypesList}">
-                                                                <c:if test="${rt.typeId eq child.roomTypeId}">
-                                                                    <c:set var="childPrice" value="${rt.basePrice}" />
-                                                                </c:if>
-                                                            </c:forEach>
-                                                            <input type="hidden" id="editRoomTypeId_${child.bookingId}" value="${child.roomTypeId}" data-type-name="${child.roomTypeName}" data-price="${childPrice}" />
+                                                            <select id="editRoomTypeId_${child.bookingId}"
+                                                                    class="modal-select"
+                                                                    onchange="onChildRoomTypeChange('${child.bookingId}')">
+
+                                                                <c:forEach var="rt" items="${roomTypesList}">
+                                                                    <option value="${rt.typeId}"
+                                                                            data-price="${rt.basePrice}"
+                                                                            data-type-name="${rt.typeName}"
+                                                                            ${rt.typeId eq child.roomTypeId ? 'selected' : ''}>
+                                                                        <c:out value="${rt.typeName}" /> — 
+                                                                        <fmt:formatNumber value="${rt.basePrice}" type="number" />đ/đêm
+                                                                    </option>
+                                                                </c:forEach>
+
+                                                            </select>
                                                         </div>
                                                         <div class="modal-form-group">
                                                             <label>Số lượng phòng <span style="color:#ef4444">*</span></label>
@@ -264,11 +271,14 @@
                                                         đêm</span>
                                                 </div>
                                                 <div class="modal-form-group">
-                                                    <label>Tổng số tiền (VND) <span
-                                                            style="color:#ef4444">*</span></label>
-                                                    <input type="number" id="editTotalAmount"
-                                                           name="totalAmount" class="modal-input"
-                                                           min="0" value="${booking.totalAmount}" required />
+                                                    <label>Tổng số tiền</label>
+                                                    <div id="displayTotalAmount" class="total-amount-display">
+                                                        0 VND
+                                                    </div>
+                                                    <input
+                                                        type="hidden"
+                                                        id="editTotalAmount"
+                                                        name="totalAmount">
                                                 </div>
                                                 <div class="modal-form-group"
                                                      style="margin-bottom:0">
@@ -775,9 +785,14 @@
         </div>
 
         <script>
+            const roomPrices = {
+            <c:forEach items="${roomTypesList}" var="rt">
+                ${rt.typeId}: ${rt.basePrice},
+            </c:forEach>
+            };
             const childIds = [
             <c:forEach var="child" items="${childBookings}">
-                '${child.bookingId}',
+            '${child.bookingId}',
             </c:forEach>
             ];
 
@@ -788,19 +803,19 @@
 
             function filterRooms(suffix) {
                 let typeName = "";
+
                 if (suffix === 'parent') {
                     const sel = document.getElementById('editRoomTypeId_parent');
                     if (!sel)
                         return;
+
                     typeName = sel.selectedOptions[0]?.dataset?.typeName;
-                    const typeNameLabel = document.getElementById('typeName_parent');
-                    if (typeNameLabel)
-                        typeNameLabel.textContent = typeName;
                 } else {
-                    const hid = document.getElementById('editRoomTypeId_' + suffix);
-                    if (!hid)
+                    const sel = document.getElementById('editRoomTypeId_' + suffix);
+                    if (!sel)
                         return;
-                    typeName = hid.dataset.typeName;
+
+                    typeName = sel.selectedOptions[0]?.dataset?.typeName;
                 }
 
                 const grid = document.getElementById('roomGrid_' + suffix);
@@ -809,10 +824,12 @@
 
                 grid.querySelectorAll('.room-card').forEach(card => {
                     const cardTypeName = card.dataset.roomTypeName;
+
                     if (cardTypeName === typeName) {
                         card.style.display = 'block';
                     } else {
                         card.style.display = 'none';
+
                         const cb = card.querySelector('.room-checkbox');
                         if (cb && cb.checked) {
                             cb.checked = false;
@@ -820,6 +837,7 @@
                         }
                     }
                 });
+
                 updateSelection(suffix);
             }
 
@@ -854,14 +872,6 @@
                 const pChecked = document.querySelectorAll('#roomGrid_parent .room-checkbox:checked').length;
                 if (pChecked !== pReq)
                     allValid = false;
-
-                // Validate children
-                for (let cid of childIds) {
-                    const cReq = getRequiredQty(cid);
-                    const cChecked = document.querySelectorAll('#roomGrid_' + cid + ' .room-checkbox:checked').length;
-                    if (cChecked !== cReq)
-                        allValid = false;
-                }
 
                 // Vô hiệu/Kích hoạt nút duyệt đặt phòng
                 const btnConfirm = document.getElementById('btnConfirmBooking');
@@ -910,24 +920,68 @@
                     const cHid = document.getElementById('editRoomTypeId_' + cid);
                     const cQty = getRequiredQty(cid);
                     if (cHid) {
-                        const price = parseFloat(cHid.dataset.price || 0);
+                        const price =
+                                parseFloat(
+                                        cHid.selectedOptions[0]?.dataset?.price || 0
+                                        );
                         total += price * nights * cQty;
                     }
                 }
 
+                const display = document.getElementById('displayTotalAmount');
                 if (totalAmountInput) {
                     totalAmountInput.value = total.toFixed(0);
+                }
+                if (display) {
+                    display.textContent =
+                            Number(total).toLocaleString('vi-VN') + " VND";
                 }
             }
 
             document.addEventListener("DOMContentLoaded", function () {
+                const parentQty = document.getElementById("editRoomQuantity_parent");
+                if (parentQty) {
+                    parentQty.addEventListener("input", recalcAmount);
+                }
+                const parentType = document.getElementById("editRoomTypeId_parent");
+                if (parentType) {
+                    parentType.addEventListener("change", recalcAmount);
+                }
+                const checkIn = document.getElementById("editCheckIn");
+                if (checkIn) {
+                    checkIn.addEventListener("change", recalcAmount);
+                }
+                const checkOut = document.getElementById("editCheckOut");
+                if (checkOut) {
+                    checkOut.addEventListener("change", recalcAmount);
+                }
+                for (let cid of childIds) {
+                    const qty = document.getElementById("editRoomQuantity_" + cid);
+                    if (qty) {
+                        qty.addEventListener("input", recalcAmount);
+                    }
+                    const type = document.getElementById("editRoomTypeId_" + cid);
+                    if (type) {
+                        type.addEventListener("change", function () {
+                            onChildRoomTypeChange(cid);
+                        });
+                    }
+                }
+                recalcAmount();
+                
                 filterRooms('parent');
+                updateSelection('parent');
                 updateSelection('parent');
                 for (let cid of childIds) {
                     filterRooms(cid);
                     updateSelection(cid);
                 }
-                updateSelection();
+                for (let cid of childIds) {
+                    const sel = document.getElementById('editRoomTypeId_' + cid);
+                    if (sel) {
+                        sel.addEventListener('change', () => onChildRoomTypeChange(cid));
+                    }
+                }
 
                 // Double submit prevention cho cancelForm
                 const cForm = document.getElementById('cancelForm');
@@ -940,6 +994,7 @@
                         }
                     });
                 }
+                recalcAmount();
             });
 
             let currentReasonMode = ''; // 'reject' or 'cancel'
@@ -1081,6 +1136,18 @@
                 }
 
                 document.getElementById('processForm').submit();
+            }
+            function onChildRoomTypeChange(childId) {
+                const sel = document.getElementById('editRoomTypeId_' + childId);
+                const typeName = sel.selectedOptions[0]?.dataset?.typeName;
+                filterRooms(childId);
+                document.querySelectorAll('#roomGrid_' + childId + ' .room-checkbox').forEach(cb => {
+                    cb.checked = false;
+                    cb.closest('.room-card')?.classList.remove('selected');
+                });
+
+                updateSelection(childId);
+                recalcAmount();
             }
         </script>
     </body>

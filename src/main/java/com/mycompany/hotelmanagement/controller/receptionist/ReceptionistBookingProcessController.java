@@ -22,15 +22,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * ReceptionistBookingProcessController
- * URL: /receptionist/booking/process
+ * ReceptionistBookingProcessController URL: /receptionist/booking/process
  *
- * handles room assignment and status approvals (Confirm, Reject, Cancel)
- * for a specific booking request on a standalone page.
+ * handles room assignment and status approvals (Confirm, Reject, Cancel) for a
+ * specific booking request on a standalone page.
  *
- * @author BinhHD
+ * @author BinhHD, MinhTDP
  */
-@WebServlet(name = "ReceptionistBookingProcessController", urlPatterns = { "/receptionist/booking/process" })
+@WebServlet(name = "ReceptionistBookingProcessController", urlPatterns = {"/receptionist/booking/process"})
 public class ReceptionistBookingProcessController extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(ReceptionistBookingProcessController.class.getName());
@@ -215,10 +214,15 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                             if (cQty > 0 && cQty <= 100) {
                                 child.setRoomQuantity(cQty);
                             }
-                        } catch (NumberFormatException e) {}
+                        } catch (NumberFormatException e) {
+                        }
                     }
                     bookingService.updateBookingDetails(child);
                 }
+                double totalAmount
+                        = bookingService.calculateGroupTotalAmount(bookingId);
+                existing.setTotalAmount(totalAmount);
+                bookingService.updateBookingDetails(existing);
             }
 
             switch (action.toLowerCase()) {
@@ -307,7 +311,7 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                     for (String rIdStr : roomIdStrings) {
                         allSubmittedRoomIds.add(Integer.parseInt(rIdStr.trim()));
                     }
-                    
+
                     // Validate selected room IDs for children
                     for (Booking child : children) {
                         String[] cRoomIdStrings = request.getParameterValues("childRoomIds_" + child.getBookingId());

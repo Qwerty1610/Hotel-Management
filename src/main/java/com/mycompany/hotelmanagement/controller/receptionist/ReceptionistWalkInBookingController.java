@@ -78,15 +78,15 @@ public class ReceptionistWalkInBookingController extends HttpServlet {
                 return;
             }
 
-            int totalRequiredRooms = 0;
-            for (String qty : quantities) {
-                totalRequiredRooms
-                        += Integer.parseInt(qty);
+            int totalRequired = 0;
+            for (int i = 0; i < roomTypeIds.length; i++) {
+                totalRequired += Integer.parseInt(quantities[i]);
             }
-            if (selectedRooms.length
-                    != totalRequiredRooms) {
-                throw new RuntimeException(
-                        "Số phòng chọn không khớp");
+            if (selectedRooms == null) {
+                throw new RuntimeException("Chưa chọn phòng");
+            }
+            if (selectedRooms.length < totalRequired) {
+                throw new RuntimeException("Thiếu phòng đã chọn");
             }
 
             for (int i = 0; i < roomTypeIds.length; i++) {

@@ -12,23 +12,23 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Service xử lý các nghiệp vụ logic liên quan đến Đặt phòng (Booking).
- * Thực hiện kiểm tra ngày hợp lệ, sức chứa tối đa, tính tổng tiền, đặt cọc 30%
- * và gọi DAO lưu thông tin.
+ * Service xử lý các nghiệp vụ logic liên quan đến Đặt phòng (Booking). Thực
+ * hiện kiểm tra ngày hợp lệ, sức chứa tối đa, tính tổng tiền, đặt cọc 30% và
+ * gọi DAO lưu thông tin.
  *
  * @author BinhHD
  * @date 20/06/2026
  * @version 1.0
  */
 public class BookingService {
+
     private static final Logger LOGGER = Logger.getLogger(BookingService.class.getName());
     private final BookingDAO bookingDAO = new BookingDAO();
     private final RoomTypeRepository roomTypeRepository = new RoomTypeRepository();
 
     /**
-     * Creates a new booking with validation.
-     * Throws exception with message keys (MSG17, MSG19, MSG20, MSG03, MSG55) if
-     * validation fails.
+     * Creates a new booking with validation. Throws exception with message keys
+     * (MSG17, MSG19, MSG20, MSG03, MSG55) if validation fails.
      */
     public boolean createBooking(Booking booking) throws Exception {
         try {
@@ -144,7 +144,6 @@ public class BookingService {
     }
 
     // getBookingRooms removed in simplification
-
     /**
      * Delegates updateBookingDetails to DAO.
      */
@@ -238,5 +237,43 @@ public class BookingService {
             LOGGER.log(Level.SEVERE, "Error in getRoomCountByTypeId: typeId=" + typeId, e);
         }
         return 0;
+    }
+
+    public double calculateGroupTotalAmount(int parentBookingId) {
+        Booking parent = bookingDAO.getBookingById(parentBookingId);
+        if (parent == null) {
+            return 0;
+        }
+        long nights = parent.getNights();
+        double total = 0;
+
+        RoomTypeInfo parentType
+                = roomTypeRepository.getRoomTypeById(parent.getRoomTypeId());
+        if (parentType != null) {
+            total += parentType.getBasePrice() * parent.getRoomQuantity();
+        }
+
+        List<Booking> children = bookingDAO.getChildBookings(parentBookingId);
+        for (Booking child : children) {
+            RoomTypeInfo type
+                    = roomTypeRepository.getRoomTypeById(child.getRoomTypeId());
+            if (type != null) {
+                total += type.getBasePrice() * child.getRoomQuantity();
+            }
+        }
+        return total * nights;
+    }
+
+    public double calculateBookingAmount(Booking booking) {
+        if (booking == null || booking.getRoomTypeId() == null) {
+            return 0;
+        }
+        RoomTypeInfo roomType = roomTypeRepository.getRoomTypeById(booking.getRoomTypeId());
+        if (roomType == null) {
+            return 0;
+        }
+        return roomType.getBasePrice()
+                * booking.getRoomQuantity()
+                * booking.getNights();
     }
 }
