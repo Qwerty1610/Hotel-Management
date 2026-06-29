@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ include file="../../includes/taglibs.jsp" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ include file="../../includes/header.jsp" %>
