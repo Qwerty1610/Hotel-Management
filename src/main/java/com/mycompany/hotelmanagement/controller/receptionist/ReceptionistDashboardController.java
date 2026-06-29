@@ -17,6 +17,21 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+/**
+ * ReceptionistBookingController
+ * URL: /receptionist/booking
+ *
+ * Xử lý 4 hành động (action param):
+ * - confirm : Xác nhận booking (Pending → Confirmed)
+ * - reject : Từ chối booking (Pending → Rejected)
+ * - update : Cập nhật thông tin booking (chỉ khi Pending)
+ * - cancel : Huỷ booking
+ * 
+ * Standardized imports utilizing dal instead of dao.
+ * Date: 01/6/2026
+ * 
+ * @author BinhHD, MinhTDP
+ */
 import java.io.IOException;
 import java.sql.Date;
 import java.util.ArrayList;

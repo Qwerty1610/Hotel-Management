@@ -202,7 +202,10 @@
                                                     <div style="font-weight:600; color:var(--text-navy); margin-bottom:8px;">Loại phòng 1 (Parent)</div>
                                                     <div class="modal-form-group">
                                                         <label>Loại phòng yêu cầu <span style="color:#ef4444">*</span></label>
-                                                        <select id="editRoomTypeId_parent" name="roomTypeId" class="modal-select" onchange="recalcAmount(); filterRooms('parent');">
+                                                        <select id="editRoomTypeId_parent" 
+                                                                name="roomTypeId" 
+                                                                class="modal-select" 
+                                                                onchange="onParentRoomTypeChange()">
                                                             <c:forEach var="rt" items="${roomTypesList}">
                                                                 <option value="${rt.typeId}" data-price="${rt.basePrice}" data-type-name="${rt.typeName}" ${rt.typeId eq booking.roomTypeId ? 'selected' : ''}>
                                                                     <c:out value="${rt.typeName}" /> — <fmt:formatNumber value="${rt.basePrice}" type="number" />đ/đêm
@@ -221,14 +224,22 @@
                                                         <div style="font-weight:600; color:var(--text-navy); margin-bottom:8px;">Loại phòng ${status.index + 2}</div>
                                                         <div class="modal-form-group">
                                                             <label>Loại phòng yêu cầu</label>
-                                                            <input type="text" class="modal-input" value="${child.roomTypeName}" disabled />
-                                                            <c:set var="childPrice" value="0" />
-                                                            <c:forEach var="rt" items="${roomTypesList}">
-                                                                <c:if test="${rt.typeId eq child.roomTypeId}">
-                                                                    <c:set var="childPrice" value="${rt.basePrice}" />
-                                                                </c:if>
-                                                            </c:forEach>
-                                                            <input type="hidden" id="editRoomTypeId_${child.bookingId}" value="${child.roomTypeId}" data-type-name="${child.roomTypeName}" data-price="${childPrice}" />
+                                                            <select id="editRoomTypeId_${child.bookingId}"
+                                                                    name="childRoomTypeId_${child.bookingId}"
+                                                                    class="modal-select"
+                                                                    onchange="onChildRoomTypeChange('${child.bookingId}')">
+
+                                                                <c:forEach var="rt" items="${roomTypesList}">
+                                                                    <option value="${rt.typeId}"
+                                                                            data-price="${rt.basePrice}"
+                                                                            data-type-name="${rt.typeName}"
+                                                                            ${rt.typeId eq child.roomTypeId ? 'selected' : ''}>
+                                                                        <c:out value="${rt.typeName}" /> — 
+                                                                        <fmt:formatNumber value="${rt.basePrice}" type="number" />đ/đêm
+                                                                    </option>
+                                                                </c:forEach>
+
+                                                            </select>
                                                         </div>
                                                         <div class="modal-form-group">
                                                             <label>Số lượng phòng <span style="color:#ef4444">*</span></label>
@@ -264,11 +275,14 @@
                                                         đêm</span>
                                                 </div>
                                                 <div class="modal-form-group">
-                                                    <label>Tổng số tiền (VND) <span
-                                                            style="color:#ef4444">*</span></label>
-                                                    <input type="number" id="editTotalAmount"
-                                                           name="totalAmount" class="modal-input"
-                                                           min="0" value="${booking.totalAmount}" required />
+                                                    <label>Tổng số tiền</label>
+                                                    <div id="displayTotalAmount" class="total-amount-display">
+                                                        0 VND
+                                                    </div>
+                                                    <input
+                                                        type="hidden"
+                                                        id="editTotalAmount"
+                                                        name="totalAmount">
                                                 </div>
                                                 <div class="modal-form-group"
                                                      style="margin-bottom:0">
@@ -340,7 +354,8 @@
                                                         <div class="booking-grid-section" id="sectionGrid_${child.bookingId}" style="margin-bottom:20px;">
                                                             <h4 style="font-size: 13px; color: var(--text-navy); margin-bottom: 8px;"><i class="fa-solid fa-bed"></i> Loại ${status.index + 2}: <c:out value="${child.roomTypeName}" /></h4>
                                                             <div class="room-grid" id="roomGrid_${child.bookingId}">
-                                                                <c:set var="childRooms" value="${childAssignedRoomsMap[child.bookingId]}" />
+                                                                <c:set var="childRooms"
+                                                                       value="${empty childAssignedRoomsMap ? null : childAssignedRoomsMap[child.bookingId]}" />
                                                                 <c:forEach var="rm" items="${rooms}">
                                                                     <c:set var="isAssigned" value="false" />
                                                                     <c:if test="${not empty childRooms}">
@@ -591,7 +606,7 @@
                                                                 <fmt:formatNumber value="${booking.totalAmount}" type="number" groupingUsed="true" />đ
                                                             </td>
                                                         </tr>
-                                                        <c:forEach var="child" items="${childBookings}">
+                                                        <c:forEach var="child" items="${empty childBookings ? [] : childBookings}">
                                                             <tr style="border-bottom: 1px solid #f1f5f9;">
                                                                 <td style="padding: 6px 10px;"><span class="roomtype-badge"><c:out value="${child.roomTypeName}" /></span></td>
                                                                 <td style="padding: 6px 10px; text-align: center; font-weight: 600;">${child.roomQuantity}</td>
@@ -662,14 +677,15 @@
                                                     </div>
 
                                                     <%-- Child booking rooms --%>
-                                                    <c:forEach var="child" items="${childBookings}">
+                                                    <c:forEach var="child" items="${empty childBookings ? [] : childBookings}">
                                                         <div style="margin-bottom: 16px;">
                                                             <div style="font-size: 12px; font-weight: 700; color: var(--text-navy); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0;">
                                                                 <i class="fa-solid fa-bed" style="margin-right: 4px; color: var(--brand-blue);"></i>
                                                                 <c:out value="${child.roomTypeName}" /> (${child.roomQuantity} phòng)
                                                             </div>
                                                             <div class="assigned-rooms-list">
-                                                                <c:set var="childRooms" value="${childAssignedRoomsMap[child.bookingId]}" />
+                                                                <c:set var="childRooms"
+                                                                       value="${empty childAssignedRoomsMap ? null : childAssignedRoomsMap[child.bookingId]}" />
                                                                 <c:choose>
                                                                     <c:when test="${not empty childRooms}">
                                                                         <c:forEach var="ar" items="${childRooms}">
@@ -775,11 +791,17 @@
         </div>
 
         <script>
-            const childIds = [
-            <c:forEach var="child" items="${childBookings}">
-                '${child.bookingId}',
+            const roomPrices = {
+            <c:forEach items="${roomTypesList}" var="rt">
+                ${rt.typeId}: ${rt.basePrice},
+            </c:forEach>
+            };
+            let childIds = [
+            <c:forEach var="child" items="${childBookings}" varStatus="st">
+            '${child.bookingId}'<c:if test="${!st.last}">,</c:if>
             </c:forEach>
             ];
+            childIds = childIds.map(id => id.toString());
 
             function getRequiredQty(suffix) {
                 const qtyInput = document.getElementById('editRoomQuantity_' + suffix);
@@ -787,59 +809,54 @@
             }
 
             function filterRooms(suffix) {
-                let typeName = "";
-                if (suffix === 'parent') {
-                    const sel = document.getElementById('editRoomTypeId_parent');
-                    if (!sel)
-                        return;
-                    typeName = sel.selectedOptions[0]?.dataset?.typeName;
-                    const typeNameLabel = document.getElementById('typeName_parent');
-                    if (typeNameLabel)
-                        typeNameLabel.textContent = typeName;
+            let typeName = "";
+
+            const sel = document.getElementById(
+                suffix === 'parent'
+                    ? 'editRoomTypeId_parent'
+                    : 'editRoomTypeId_' + suffix
+            );
+
+            if (!sel) return;
+
+            typeName = sel.selectedOptions?.[0]?.dataset?.typeName;
+
+            const grid = document.getElementById('roomGrid_' + suffix);
+            if (!grid) return;
+
+            grid.querySelectorAll('.room-card').forEach(card => {
+
+                const cardTypeName = card.dataset.roomTypeName;
+
+                const match = typeName && cardTypeName === typeName;
+
+                if (match) {
+                    card.style.display = 'block';
                 } else {
-                    const hid = document.getElementById('editRoomTypeId_' + suffix);
-                    if (!hid)
-                        return;
-                    typeName = hid.dataset.typeName;
-                }
+                    card.style.display = 'none';
 
-                const grid = document.getElementById('roomGrid_' + suffix);
-                if (!grid)
-                    return;
-
-                grid.querySelectorAll('.room-card').forEach(card => {
-                    const cardTypeName = card.dataset.roomTypeName;
-                    if (cardTypeName === typeName) {
-                        card.style.display = 'block';
-                    } else {
-                        card.style.display = 'none';
-                        const cb = card.querySelector('.room-checkbox');
-                        if (cb && cb.checked) {
-                            cb.checked = false;
-                            card.classList.remove('selected');
-                        }
+                    const cb = card.querySelector('.room-checkbox');
+                    if (cb && cb.checked) {
+                        cb.checked = false;
+                        card.classList.remove('selected');
                     }
-                });
-                updateSelection(suffix);
-            }
+                }
+            });
+
+            updateSelection(suffix);
+        }
 
             function updateSelection(suffix) {
-                const grid = document.getElementById('roomGrid_' + suffix);
+                const grid = document.getElementById("roomGrid_" + suffix);
                 if (!grid)
                     return;
-                const checkboxes = grid.querySelectorAll('.room-checkbox:checked');
-                const count = checkboxes.length;
-                const reqQty = getRequiredQty(suffix);
 
-                // Làm nổi bật card phòng được chọn
-                grid.querySelectorAll('.room-card').forEach(card => {
-                    const cb = card.querySelector('.room-checkbox');
-                    if (cb) {
-                        if (cb.checked) {
-                            card.classList.add('selected');
-                        } else {
-                            card.classList.remove('selected');
-                        }
+                grid.querySelectorAll(".room-card").forEach(card => {
+                    const cb = card.querySelector(".room-checkbox");
+                    if (cb && cb.checked) {
+                        card.classList.add("selected");
+                    } else {
+                        card.classList.remove("selected");
                     }
                 });
 
@@ -849,24 +866,29 @@
             function validateAllSelections() {
                 let allValid = true;
 
-                // Validate parent
-                const pReq = getRequiredQty('parent');
-                const pChecked = document.querySelectorAll('#roomGrid_parent .room-checkbox:checked').length;
-                if (pChecked !== pReq)
-                    allValid = false;
+                const pReq = getRequiredQty("parent");
+                const pChecked = document.querySelectorAll(
+                        "#roomGrid_parent .room-checkbox:checked"
+                        ).length;
 
-                // Validate children
-                for (let cid of childIds) {
-                    const cReq = getRequiredQty(cid);
-                    const cChecked = document.querySelectorAll('#roomGrid_' + cid + ' .room-checkbox:checked').length;
-                    if (cChecked !== cReq)
-                        allValid = false;
+                if (pChecked !== pReq) {
+                    allValid = false;
                 }
 
-                // Vô hiệu/Kích hoạt nút duyệt đặt phòng
-                const btnConfirm = document.getElementById('btnConfirmBooking');
-                if (btnConfirm) {
-                    btnConfirm.disabled = !allValid;
+                childIds.forEach(cid => {
+                    const required = getRequiredQty(cid);
+                    const checked = document.querySelectorAll(
+                            "#roomGrid_" + cid + " .room-checkbox:checked"
+                            ).length;
+
+                    if (checked !== required) {
+                        allValid = false;
+                    }
+                });
+                
+                const btn = document.getElementById("btnConfirmBooking");
+                if (btn) {
+                    btn.disabled = !allValid;
                 }
             }
 
@@ -907,27 +929,79 @@
 
                 // Children price
                 for (let cid of childIds) {
-                    const cHid = document.getElementById('editRoomTypeId_' + cid);
+                    const cSel = document.getElementById('editRoomTypeId_' + cid);
                     const cQty = getRequiredQty(cid);
-                    if (cHid) {
-                        const price = parseFloat(cHid.dataset.price || 0);
-                        total += price * nights * cQty;
-                    }
+
+                    if (!cSel)
+                        continue;
+
+                    const price = parseFloat(
+                            cSel.options[cSel.selectedIndex]?.dataset?.price || 0
+                            );
+
+                    total += price * nights * cQty;
                 }
 
+                const display = document.getElementById('displayTotalAmount');
                 if (totalAmountInput) {
                     totalAmountInput.value = total.toFixed(0);
                 }
+                if (display) {
+                    display.textContent =
+                            Number(total).toLocaleString('vi-VN') + " VND";
+                }
+            }
+            function onParentRoomTypeChange() {
+                filterRooms("parent");
+                document.querySelectorAll("#roomGrid_parent .room-checkbox").forEach(cb=>{
+                    cb.checked=false;
+                    cb.closest(".room-card").classList.remove("selected");
+                });
+                updateSelection("parent");
+                recalcAmount();
+                refreshRoomTypeOptions();
             }
 
             document.addEventListener("DOMContentLoaded", function () {
-                filterRooms('parent');
-                updateSelection('parent');
-                for (let cid of childIds) {
-                    filterRooms(cid);
-                    updateSelection(cid);
+                const parentQty = document.getElementById("editRoomQuantity_parent");
+                if (parentQty) {
+                    parentQty.addEventListener("input", recalcAmount);
                 }
-                updateSelection();
+                const checkIn = document.getElementById("editCheckIn");
+                if (checkIn) {
+                    checkIn.addEventListener("change", onDateChange);
+                }
+                const checkOut = document.getElementById("editCheckOut");
+                if (checkOut) {
+                    checkOut.addEventListener("change", onDateChange);
+                }
+                for (let cid of childIds) {
+                    const qty = document.getElementById("editRoomQuantity_" + cid);
+                    if (qty) {
+                        qty.addEventListener("input", recalcAmount);
+                    }
+                    const type = document.getElementById("editRoomTypeId_" + cid);
+                    if (type) {
+                        type.addEventListener("change", function () {
+                            onChildRoomTypeChange(cid);
+                        });
+                    }
+                }
+                recalcAmount();
+                refreshRoomTypeOptions();
+
+                requestAnimationFrame(() => {
+                    filterRooms('parent');
+                    updateSelection('parent');
+
+                    if (Array.isArray(childIds)) {
+                        childIds.forEach(cid => {
+                            filterRooms(cid);
+                            updateSelection(cid);
+                        });
+                    }
+                });
+                refreshRoomTypeOptions();
 
                 // Double submit prevention cho cancelForm
                 const cForm = document.getElementById('cancelForm');
@@ -940,6 +1014,7 @@
                         }
                     });
                 }
+                recalcAmount();
             });
 
             let currentReasonMode = ''; // 'reject' or 'cancel'
@@ -980,69 +1055,70 @@
 
                 let allValid = true;
 
-                // Check validation
                 const pReq = getRequiredQty('parent');
                 const pChecked = document.querySelectorAll('#roomGrid_parent .room-checkbox:checked').length;
-                if (pChecked !== pReq)
-                    allValid = false;
+
+                if (pChecked !== pReq) allValid = false;
 
                 for (let cid of childIds) {
                     const cReq = getRequiredQty(cid);
                     const cChecked = document.querySelectorAll('#roomGrid_' + cid + ' .room-checkbox:checked').length;
-                    if (cChecked !== cReq)
-                        allValid = false;
+                    if (cChecked !== cReq) allValid = false;
+                }
+
+                if (action === 'confirm' && !allValid) {
+                    errDiv.textContent = "Vui lòng chọn đủ phòng cho tất cả loại phòng.";
+                    errDiv.style.display = 'block';
+                    return;
+                }
+
+                const container = document.getElementById('hiddenRoomIdsContainer');
+                container.innerHTML = '';
+
+                document.querySelectorAll('#roomGrid_parent .room-checkbox:checked').forEach(cb => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'roomIds';
+                    input.value = cb.value;
+                    container.appendChild(input);
+                });
+
+                for (let cid of childIds) {
+                    const typeSel = document.getElementById('editRoomTypeId_' + cid);
+
+                    if (typeSel) {
+                        const hiddenType = document.createElement('input');
+                        hiddenType.type = 'hidden';
+                        hiddenType.name = 'childRoomTypeId_' + cid;
+                        hiddenType.value = typeSel.value;
+                        container.appendChild(hiddenType);
+                    }
+
+                    document.querySelectorAll('#roomGrid_' + cid + ' .room-checkbox:checked')
+                        .forEach(cb => {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'childRoomIds_' + cid;
+                            input.value = cb.value;
+                            container.appendChild(input);
+                        });
                 }
 
                 if (action === 'confirm') {
-                    if (!allValid) {
-                        errDiv.textContent = `Vui lòng chọn đủ và đúng số lượng phòng yêu cầu cho tất cả các loại phòng.`;
-                        errDiv.style.display = 'block';
-                        return;
-                    }
-
-                    // Ngăn chặn double submit
                     const btn = document.getElementById('btnConfirmBooking');
                     if (btn) {
                         btn.disabled = true;
-                        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang duyệt...';
-                    }
-                }
-
-                // Đẩy các phòng đã chọn vào hidden input
-                const container = document.getElementById('hiddenRoomIdsContainer');
-                if (container) {
-                    container.innerHTML = '';
-
-                    // Thêm phòng của parent
-                    document.querySelectorAll('#roomGrid_parent .room-checkbox:checked').forEach(cb => {
-                        const hiddenInput = document.createElement('input');
-                        hiddenInput.type = 'hidden';
-                        hiddenInput.name = 'roomIds';
-                        hiddenInput.value = cb.value;
-                        container.appendChild(hiddenInput);
-                    });
-
-                    // Thêm phòng của child
-                    for (let cid of childIds) {
-                        document.querySelectorAll('#roomGrid_' + cid + ' .room-checkbox:checked').forEach(cb => {
-                            const hiddenInput = document.createElement('input');
-                            hiddenInput.type = 'hidden';
-                            hiddenInput.name = 'childRoomIds_' + cid;
-                            hiddenInput.value = cb.value;
-                            container.appendChild(hiddenInput);
-                        });
+                        btn.innerHTML = 'Đang duyệt...';
                     }
                 }
 
                 if (action === 'update') {
-                    // Ngăn chặn double submit
                     const btn = document.getElementById('btnUpdateBooking');
                     if (btn) {
                         btn.disabled = true;
-                        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+                        btn.innerHTML = 'Đang lưu...';
                     }
                 }
-
                 document.getElementById('processForm').submit();
             }
 
@@ -1081,6 +1157,125 @@
                 }
 
                 document.getElementById('processForm').submit();
+            }
+            function onChildRoomTypeChange(childId) {
+                filterRooms(childId);
+                document.querySelectorAll("#roomGrid_"+childId+" .room-checkbox").forEach(cb=>{
+                    cb.checked=false;
+                    cb.closest(".room-card").classList.remove("selected");
+                });
+                updateSelection(childId);
+                recalcAmount();
+                refreshRoomTypeOptions();
+            }
+            function applyRoomFilterAllGrids() {
+                filterRooms('parent');
+
+                for (let cid of childIds) {
+                    filterRooms(cid);
+                }
+            }
+            let debounceTimer;
+
+            function reloadRooms() {
+                clearTimeout(debounceTimer);
+
+                debounceTimer = setTimeout(() => {
+                    fetchAvailableRooms();
+                }, 300);
+            }
+            function fetchAvailableRooms() {
+                const checkIn = document.getElementById("editCheckIn").value;
+                const checkOut = document.getElementById("editCheckOut").value;
+
+                if (!checkIn || !checkOut) return Promise.resolve();
+
+                const url = `${window.contextPath || ''}/receptionist/room/available`
+                    + `?checkIn=${checkIn}&checkOut=${checkOut}`;
+
+                fetch(url)
+                    .then(res => res.json())
+                    .then(data => {
+                        updateRoomGrid(data);
+                    })
+                    .catch(err => console.error("Room fetch error:", err));
+            }
+            function updateRoomGrid(availableRooms) {
+                const availableSet = new Set(
+                    availableRooms.map(r => String(r.roomId))
+                );
+
+                document.querySelectorAll(".room-card").forEach(card => {
+                    const roomId = String(card.dataset.roomId);
+
+                    const checkbox = card.querySelector(".room-checkbox");
+
+                    const isAvailable = availableSet.has(roomId);
+
+                    // reset trạng thái cơ bản
+                    card.classList.remove("card-disabled");
+
+                    if (isAvailable) {
+                        card.classList.add("card-avail");
+
+                        if (checkbox) checkbox.disabled = false;
+
+                    } else {
+                        card.classList.add("card-disabled");
+
+                        if (checkbox) {
+                            checkbox.checked = false;
+                            checkbox.disabled = true;
+                        }
+                    }
+                });
+
+                applyRoomFilterAllGrids();
+                validateAllSelections();
+            }
+            function onDateChange() {
+                recalcAmount();
+
+                fetchAvailableRooms().then(() => {
+                    applyRoomFilterAllGrids();
+                });
+            }
+            function refreshRoomTypeOptions() {
+                const selects = [];
+                const parent = document.getElementById("editRoomTypeId_parent");
+
+                if(parent){
+                    selects.push(parent);
+                }
+
+                childIds.forEach(id=>{
+                    const s=document.getElementById("editRoomTypeId_"+id);
+                    if(s){
+                        selects.push(s);
+                    }
+                });
+
+                selects.forEach(select=>{
+                    [...select.options].forEach(option=>{
+                        option.disabled=false;
+                    });
+                });
+
+                selects.forEach(current=>{
+                    const used=new Set();
+                    selects.forEach(other=>{
+                        if(other===current) return;
+                        used.add(other.value);
+                    });
+                    [...current.options].forEach(option=>{
+                        if(option.value===current.value){
+                            return;
+                        }
+                        if(used.has(option.value)){
+                            option.disabled=true;
+                        }
+                    });
+                });
             }
         </script>
     </body>

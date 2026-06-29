@@ -379,46 +379,330 @@ function formatVND(amount) {
 // =====================================================================
 
 let roomRowIndex = 0;
+let maxRoomTypeCount = 0;
+let roomTypeMessageTimer = null;
+let walkInToastTimer = null;
+let modePopupTimer = null;
+let hasSubmittedWalkIn = false;
+let isSubmittingWalkIn = false;
+const WALKIN_STORAGE_KEY = "walkinFormState";
+const WALKIN_MODE_KEY = "walkinMode";
 
 /*
  ==================================================
  INIT
  ==================================================
  */
-document.addEventListener("DOMContentLoaded", () => {
+function getWalkInState() {
+    const data = sessionStorage.getItem(WALKIN_STORAGE_KEY);
 
-    if (document.getElementById("checkInDate")) {
-        initWalkInBooking();
+    if (!data) {
+        return {};
     }
 
+    try {
+        return JSON.parse(data);
+    } catch (e) {
+        return {};
+    }
+}
+
+function saveWalkInState() {
+
+    const state = {};
+    state.mode = document.getElementById("bookingMode")?.value || "BOOKING";
+    state.customerName = document.getElementById("customerName")?.value || "";
+    state.phone = document.getElementById("phone")?.value || "";
+    state.email = document.getElementById("email")?.value || "";
+    state.note = document.getElementById("note")?.value || "";
+    state.checkInDate = document.getElementById("checkInDate")?.value || "";
+    state.checkOutDate = document.getElementById("checkOutDate")?.value || "";
+    state.roomRows = [];
+
+    document.querySelectorAll(".room-row").forEach(row => {
+        state.roomRows.push({
+            roomTypeId:
+                    row.querySelector(".room-type-select")?.value || "",
+            qty:
+                    row.querySelector(".room-qty-input")?.value || 1,
+            guest:
+                    row.querySelector(".guest-input")?.value || 1
+        });
+    });
+    state.selectedRooms = [];
+    document.querySelectorAll(".room-checkbox:checked").forEach(cb => {
+        state.selectedRooms.push(cb.value);
+    });
+    state.companions = [];
+    document.querySelectorAll("input[name='companions[]']").forEach(input => {
+
+        state.companions.push(input.value);
+    });
+    sessionStorage.setItem(
+            WALKIN_STORAGE_KEY,
+            JSON.stringify(state)
+            );
+}
+function saveWalkInMode() {
+    const selected = document.querySelector('input[name="walkinMode"]:checked')?.value;
+    if (!selected)
+        return;
+    const mode = selected.toUpperCase();
+    sessionStorage.setItem(WALKIN_MODE_KEY, mode);
+    const hidden = document.getElementById("bookingMode");
+    if (hidden)
+        hidden.value = mode;
+}
+document.querySelectorAll('input[name="walkinMode"]').forEach(r => {
+    r.addEventListener("change", () => {
+        saveWalkInMode();
+    });
+});
+function clearWalkInState() {
+    sessionStorage.removeItem(WALKIN_STORAGE_KEY);
+}
+function autoSaveWalkIn() {
+    document.addEventListener("input", () => {
+        if (!isSubmittingWalkIn && document.getElementById("customerName")) {
+            saveWalkInState();
+        }
+    });
+    document.addEventListener("change", () => {
+        if (!isSubmittingWalkIn && document.getElementById("customerName")) {
+            saveWalkInState();
+        }
+    });
+}
+async function restoreWalkInState() {
+
+    const state = getWalkInState();
+    if (!state || Object.keys(state).length === 0) {
+        return;
+    }
+    if (isSubmittingWalkIn)
+        return;
+    document.getElementById("customerName").value = state.customerName || "";
+    document.getElementById("phone").value = state.phone || "";
+    document.getElementById("email").value = state.email || "";
+    document.getElementById("note").value = state.note || "";
+    document.getElementById("checkInDate").value = state.checkInDate || "";
+    document.getElementById("checkOutDate").value = state.checkOutDate || "";
+    if (state.mode) {
+        document.getElementById("bookingMode").value = state.mode;
+        const radio = document.querySelector(
+                `input[name="walkinMode"][value="${state.mode.toLowerCase()}"]`
+                );
+        if (radio) {
+            radio.checked = true;
+            updateModeUI(state.mode.toLowerCase());
+        }
+    }
+    await loadRoomTypes();
+    const container = document.getElementById("roomRowsContainer");
+    container.querySelectorAll(".room-row:not(.first-room-row)")
+            .forEach(r => r.remove());
+    roomRowIndex = 0;
+    if (state.roomRows && state.roomRows.length > 0) {
+        const firstRow = container.querySelector(".first-room-row");
+        firstRow.querySelector(".room-type-select").value =
+                state.roomRows[0].roomTypeId || "";
+        firstRow.querySelector(".room-qty-input").value =
+                state.roomRows[0].qty || 1;
+        firstRow.querySelector(".guest-input").value =
+                state.roomRows[0].guest || 1;
+        for (let i = 1; i < state.roomRows.length; i++) {
+            addRoomRow();
+            const row = container.lastElementChild;
+            row.querySelector(".room-type-select").value =
+                    state.roomRows[i].roomTypeId || "";
+            row.querySelector(".room-qty-input").value =
+                    state.roomRows[i].qty || 1;
+            row.querySelector(".guest-input").value =
+                    state.roomRows[i].guest || 1;
+        }
+    }
+    refreshRoomTypeOptions();
+    await loadAvailableRooms();
+
+    document.querySelectorAll(".room-checkbox").forEach(cb => {
+
+        if (state.selectedRooms &&
+                state.selectedRooms.includes(cb.value)) {
+
+            cb.checked = true;
+            cb.closest(".walkin-room-card")
+                    ?.classList.add("selected");
+        }
+
+    });
+
+    const companionContainer =
+            document.getElementById("companionContainer");
+    companionContainer.innerHTML = "";
+    if (state.companions) {
+        state.companions.forEach(name => {
+            addCompanionRow();
+            companionContainer
+                    .lastElementChild
+                    .querySelector("input")
+                    .value = name;
+        });
+    }
+    updateSummary();
+}
+function restoreWalkInMode() {
+    const mode = sessionStorage.getItem(WALKIN_MODE_KEY) || "BOOKING";
+    const radioValue = mode.toLowerCase();
+    const radio = document.querySelector(
+            `input[name="walkinMode"][value="${radioValue}"]`
+            );
+    if (radio) {
+        radio.checked = true;
+        updateModeUI(radioValue);
+    }
+    const hidden = document.getElementById("bookingMode");
+    if (hidden)
+        hidden.value = mode;
+}
+window.addEventListener("pageshow", function () {
+    isSubmittingWalkIn = false;
+});
+function updateModeUI(selected) {
+    const companionCard = document.getElementById("companionCard");
+    const bookingBtn = document.getElementById("bookingBtn");
+    const checkinBtn = document.getElementById("checkinBtn");
+    const modeOptions = document.querySelectorAll(".mode-option");
+
+    modeOptions.forEach(o => o.classList.remove("active"));
+
+    document.querySelector(`input[name="walkinMode"][value="${selected}"]`)
+            ?.closest(".mode-option")
+            ?.classList.add("active");
+
+    if (selected === "checkin") {
+        companionCard.style.display = "block";
+        bookingBtn.style.display = "none";
+        checkinBtn.style.display = "inline-flex";
+    } else {
+        companionCard.style.display = "none";
+        bookingBtn.style.display = "inline-flex";
+        checkinBtn.style.display = "none";
+    }
+}
+function clearWalkInAllState() {
+    sessionStorage.removeItem(WALKIN_STORAGE_KEY);
+    sessionStorage.removeItem(WALKIN_MODE_KEY);
+}
+function resetWalkInFormKeepMode() {
+
+    const mode = sessionStorage.getItem(WALKIN_MODE_KEY);
+    sessionStorage.removeItem(WALKIN_STORAGE_KEY); // FIX QUAN TRỌNG
+    document.querySelector("#customerName").value = "";
+    document.querySelector("#phone").value = "";
+    document.querySelector("#email").value = "";
+    document.querySelector("#checkInDate").value = "";
+    document.querySelector("#checkOutDate").value = "";
+    document.querySelector("#note").value = "";
+    document.querySelector("#receptionistNote").value = "";
+    const container = document.getElementById("roomRowsContainer");
+    container.innerHTML = "";
+    addRoomRow();
+    document.querySelectorAll(".room-checkbox").forEach(cb => {
+        cb.checked = false;
+    });
+    document.getElementById("companionContainer").innerHTML = "";
+    updateSummary();
+
+    const radio = document.querySelector(
+            `input[name="walkinMode"][value="${mode?.toLowerCase()}"]`
+            );
+    if (radio) {
+        radio.checked = true;
+        updateModeUI(mode?.toLowerCase());
+    }
+}
+document.addEventListener("DOMContentLoaded", async () => {
+    restoreWalkInMode();
+    if (document.getElementById("checkInDate")) {
+        await initWalkInBooking();
+        await restoreWalkInState();
+    }
+    const checkIn = document.getElementById("checkInDate");
+    const checkOut = document.getElementById("checkOutDate");
+    const customerName = document.getElementById("customerName");
+    const phone = document.getElementById("phone");
+    [
+        customerName,
+        phone,
+        checkIn,
+        checkOut
+    ].forEach(input => {
+        if (input) {
+            input.addEventListener("input", validateCustomerInfoMessage);
+            input.addEventListener("change", validateCustomerInfoMessage);
+        }
+    });
+    if (checkIn && checkOut) {
+        checkIn.addEventListener("change", loadRoomTypes);
+        checkOut.addEventListener("change", loadRoomTypes);
+    }
+
+// WALK-IN MODE INIT
+    const modeRadios = document.querySelectorAll('input[name="walkinMode"]');
+    const companionCard = document.getElementById("companionCard");
+    const bookingBtn = document.getElementById("bookingBtn");
+    const checkinBtn = document.getElementById("checkinBtn");
+    const modeOptions = document.querySelectorAll(".mode-option");
+
+    function updateMode() {
+        const selected = document.querySelector('input[name="walkinMode"]:checked')?.value;
+        if (!selected)
+            return;
+        updateModeUI(selected);
+        saveWalkInMode();
+    }
+
+    modeRadios.forEach(r => {
+        r.addEventListener("change", () => {
+            updateMode();
+            const selected = document.querySelector(
+                    'input[name="walkinMode"]:checked'
+                    )?.value;
+            if (selected === "booking") {
+                showModePopup("Bạn đang ở chế độ ĐẶT PHÒNG");
+            } else {
+                showModePopup("Bạn đang ở chế độ CHECK IN");
+            }
+        });
+    });
+    updateMode();
+    if (window.walkInSuccessMessage) {
+        showWalkInToast(window.walkInSuccessMessage, "success");
+    }
+    if (window.walkInErrorMessage) {
+        showWalkInToast(window.walkInErrorMessage, "error");
+    }
 });
 
-function initWalkInBooking() {
+async function initWalkInBooking() {
 
-    const checkIn =
-            document.getElementById("checkInDate");
-    const checkOut =
-            document.getElementById("checkOutDate");
+    const checkIn = document.getElementById("checkInDate");
+    const checkOut = document.getElementById("checkOutDate");
 
-    if (checkIn) {
-        checkIn.addEventListener(
-                "change",
-                () => {
+    if (checkIn && checkOut) {
+
+        const trigger = () => {
             loadRoomTypes();
             loadAvailableRooms();
             updateSummary();
-        });
-    }
+        };
 
-    if (checkOut) {
-        checkOut.addEventListener(
-                "change",
-                () => {
-            loadRoomTypes();
-            loadAvailableRooms();
-            updateSummary();
-        });
+        checkIn.addEventListener("change", trigger);
+        checkOut.addEventListener("change", trigger);
+
+        trigger();
     }
+    autoSaveWalkIn();
     updateSummary();
 }
 
@@ -431,13 +715,25 @@ function addRoomRow() {
     const container =
             document.getElementById("roomRowsContainer");
 
+    const currentRows = container.querySelectorAll(".room-row").length;
+
+    if (!window.roomTypeOptionsHtml || maxRoomTypeCount === 0) {
+        showRoomTypeMessage("Chưa tải loại phòng");
+        return;
+    }
+
+    if (currentRows >= maxRoomTypeCount) {
+        showRoomTypeMessage("Không thể thêm thêm loại phòng nữa");
+        return;
+    }
+
     const html = `
         <div class="room-row">
-            <select
-                name="roomTypeIds[]"
-                class="walkin-input room-type-select"
-                onchange="roomTypeChanged(this)"
-                required>
+            <span class="room-row-error hidden"></span>
+            <select name="roomTypeIds[]"
+                    class="walkin-input room-type-select"
+                    onchange="roomTypeChanged(this)">
+                <option value="">-- Chọn loại phòng --</option>
                 ${window.roomTypeOptionsHtml}
             </select>
             <input
@@ -446,16 +742,14 @@ function addRoomRow() {
                 class="walkin-input room-qty-input"
                 min="1"
                 value="1"
-                onchange="roomQtyChanged(this)"
-                required>
+                onchange="roomQtyChanged(this)">
             <input
                 type="number"
                 name="guestCounts[]"
                 class="walkin-input guest-input"
                 min="1"
                 value="1"
-                oninput="updateSummary()"
-                required>
+                oninput="updateSummary()">
             <button
                 type="button"
                 class="btn-delete-row"
@@ -470,6 +764,7 @@ function addRoomRow() {
             );
     refreshRoomTypeOptions();
     updateSummary();
+    saveWalkInState();
 }
 
 function removeRoomRow(btn) {
@@ -485,6 +780,7 @@ function removeRoomRow(btn) {
     refreshRoomTypeOptions();
     updateSummary();
     loadAvailableRooms();
+    saveWalkInState();
 }
 
 /*
@@ -495,7 +791,7 @@ function removeRoomRow(btn) {
 
 function roomTypeChanged(select) {
     refreshRoomTypeOptions();
-    
+
     const option =
             select.selectedOptions[0];
     const capacity =
@@ -517,7 +813,14 @@ function roomTypeChanged(select) {
     guestInput.max =
             qty * capacity;
     loadAvailableRooms();
+    setTimeout(() => {
+        validateRoomQuantityAvailable();
+    }, 100);
     updateSummary();
+    if (hasSubmittedWalkIn) {
+        validateRoomSelection(false);
+    }
+    saveWalkInState();
 }
 
 function roomQtyChanged(input) {
@@ -550,6 +853,14 @@ function roomQtyChanged(input) {
     }
     updateSummary();
     loadAvailableRooms();
+    setTimeout(() => {
+        validateRoomQuantityAvailable();
+    }, 100);
+
+    if (hasSubmittedWalkIn) {
+        validateRoomSelection(false);
+    }
+    saveWalkInState();
 }
 
 /*
@@ -559,6 +870,10 @@ function roomQtyChanged(input) {
  */
 
 async function loadAvailableRooms() {
+    const selectedRooms = [];
+    document.querySelectorAll(".room-checkbox:checked").forEach(cb => {
+        selectedRooms.push(cb.value);
+    });
 
     const checkInDate =
             document.getElementById("checkInDate").value;
@@ -614,15 +929,27 @@ async function loadAvailableRooms() {
                     );
         }
     }
+    document.querySelectorAll(".room-checkbox").forEach(cb => {
+        if (selectedRooms.includes(cb.value)) {
+            cb.checked = true;
+            cb.closest(".walkin-room-card")
+                    ?.classList.add("selected");
+        }
+    });
+    saveWalkInState();
 }
 function renderRoomGroup(select, rooms) {
 
     const container = document.getElementById("availableRoomsContainer");
 
     let html = `
-        <div class="room-type-box">
+        <div class="room-type-box"
+            data-type-id="${select.value}">
 
-            <h4>${select.selectedOptions[0].text}</h4>
+            <h4 class="room-group-title">
+                ${select.selectedOptions[0].text}
+                <span class="room-selection-message hidden"></span>
+            </h4>
 
             <div class="available-room-grid">
     `;
@@ -672,6 +999,10 @@ function toggleRoomCard(card) {
             );
 
     updateSummary();
+    if (hasSubmittedWalkIn) {
+        validateRoomSelection(false);
+    }
+    saveWalkInState();
 }
 
 /*
@@ -726,72 +1057,68 @@ function renderAvailableRooms(data) {
 
 function updateSummary() {
 
-    const summary =
-            document.getElementById("bookingSummary");
-
+    const summary = document.getElementById("bookingSummary");
     if (!summary)
         return;
 
-    const checkIn =
-            document.getElementById("checkInDate")?.value;
-
-    const checkOut =
-            document.getElementById("checkOutDate")?.value;
+    const checkIn = document.getElementById("checkInDate")?.value;
+    const checkOut = document.getElementById("checkOutDate")?.value;
 
     let nights = 0;
 
     if (checkIn && checkOut) {
-
-        nights =
-                (new Date(checkOut)
-                        - new Date(checkIn))
+        nights = (new Date(checkOut) - new Date(checkIn))
                 / (1000 * 60 * 60 * 24);
     }
 
     let total = 0;
 
-    let html = "";
+    let html = `
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>Loại phòng</th>
+                    <th>Số phòng</th>
+                    <th>Giá</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
 
-    document.querySelectorAll(".room-row")
-            .forEach(row => {
+    document.querySelectorAll(".room-row").forEach(row => {
 
-                const select =
-                        row.querySelector(".room-type-select");
+        const select = row.querySelector(".room-type-select");
+        const option = select.selectedOptions[0];
 
-                const option =
-                        select.selectedOptions[0];
+        const qty =
+                parseInt(row.querySelector(".room-qty-input").value) || 0;
 
-                const qty =
-                        parseInt(
-                                row.querySelector(".room-qty-input").value
-                                ) || 0;
+        const price =
+                parseFloat(option?.dataset.price || 0);
 
-                const price =
-                        parseFloat(
-                                option.dataset.price || 0
-                                );
+        total += qty * price * nights;
 
-                total += qty * price * nights;
-
-                html += `
-                <div class="summary-item">
-                    ${option.text}
-                    x ${qty}
-                    (${formatVND(price)})
-                </div>
-            `;
-            });
+        html += `
+            <tr>
+                <td>${option?.text || "-"}</td>
+                <td>${qty}</td>
+                <td>${formatVND(price)}</td>
+            </tr>
+        `;
+    });
 
     html += `
-        <hr>
+            </tbody>
+        </table>
 
-        <div>
-            <b>Số đêm:</b> ${nights}
+        <div class="summary-line">
+            <span>Số đêm lưu trú</span>
+            <span>${nights}</span>
         </div>
 
-        <div>
-            <b>Tổng cộng:</b>
-            ${formatVND(total)}
+        <div class="summary-total">
+            <span>Tổng số tiền</span>
+            <span>${formatVND(total)}</span>
         </div>
     `;
 
@@ -853,11 +1180,6 @@ function validateWalkInBooking() {
     return true;
 }
 
-const checkIn = document.getElementById("checkInDate");
-const checkOut = document.getElementById("checkOutDate");
-checkIn.addEventListener("change", loadRoomTypes);
-checkOut.addEventListener("change", loadRoomTypes);
-
 async function loadRoomTypes() {
 
     const checkInDate =
@@ -883,11 +1205,23 @@ async function loadRoomTypes() {
 
         const roomTypes =
                 await response.json();
+        if (!Array.isArray(roomTypes)) {
+            console.warn("roomTypes invalid:", roomTypes);
+            return;
+        }
+        maxRoomTypeCount = roomTypes.length || 0;
+        if (!roomTypes || roomTypes.length === 0) {
+            maxRoomTypeCount = 0;
+            window.roomTypeOptionsHtml = `
+                <option value="">-- Chọn loại phòng --</option>
+            `;
+            refreshRoomTypeOptions();
+            return;
+        }
 
-        window.roomTypeOptionsHtml =
-                `<option value="">
-                    -- Chọn loại phòng --
-                 </option>`;
+        window.roomTypeOptionsHtml = `
+            <option value="">-- Chọn loại phòng --</option>
+        `;
 
         roomTypes.forEach(rt => {
 
@@ -900,6 +1234,11 @@ async function loadRoomTypes() {
                 </option>
             `;
         });
+        if (!window.roomTypeOptionsHtml || window.roomTypeOptionsHtml.trim() === "") {
+            window.roomTypeOptionsHtml = `
+                <option value="">-- Chọn loại phòng --</option>
+            `;
+        }
         refreshRoomTypeOptions();
 
     } catch (e) {
@@ -927,66 +1266,87 @@ function getSelectedRoomCount() {
                     )
             .length;
 }
-function validateRoomSelection() {
-    const required =
-            getRequiredRoomCount();
-    const selected =
-            getSelectedRoomCount();
-    if (required !== selected) {
-        alert(
-                `Bạn phải chọn đúng ${required} phòng`
+function validateRoomSelection(scroll = false) {
+    let valid = true;
+    document.querySelectorAll(".room-type-box").forEach(box => {
+        const typeId = box.dataset.typeId;
+        const row = [...document.querySelectorAll(".room-row")]
+                .find(r =>
+                    r.querySelector(".room-type-select").value === typeId
                 );
-        return false;
+        if (!row)
+            return;
+        const required =
+                parseInt(row.querySelector(".room-qty-input").value) || 0;
+        const selected =
+                box.querySelectorAll(".room-checkbox:checked").length;
+        if (selected !== required) {
+            showRoomSelectionMessage(
+                    box,
+                    `Bạn cần phải chọn ${required} phòng`
+                    );
+            valid = false;
+        } else {
+            showRoomSelectionMessage(box, "");
+        }
+    });
+    if (!valid && scroll) {
+        scrollToRoomMapCard();
     }
-    return true;
+    return valid;
+}
+function validateRoomQuantityAvailable() {
+    let valid = true;
+    document.querySelectorAll(".room-type-box").forEach(box => {
+        const typeId = box.dataset.typeId;
+        const row = [...document.querySelectorAll(".room-row")]
+                .find(r =>
+                    r.querySelector(".room-type-select").value === typeId
+                );
+        if (!row)
+            return;
+        const required =
+                parseInt(row.querySelector(".room-qty-input").value) || 0;
+        const available =
+                box.querySelectorAll(".room-checkbox").length;
+        if (required > available) {
+            showRoomRowError(
+                    row,
+                    `Chỉ còn ${available} phòng trống`
+                    );
+            valid = false;
+        } else {
+            showRoomRowError(row, "");
+        }
+    });
+    document.querySelectorAll(".room-row").forEach(row => {
+        const select = row.querySelector(".room-type-select");
+        if (!select.value) {
+            showRoomRowError(row, "");
+        }
+    });
+    return valid;
 }
 function validateWalkInSubmit() {
 
-    const customerName =
-            document.querySelector(
-                    "[name='customerName']"
-                    ).value.trim();
+    hasSubmittedWalkIn = true;
 
-    const phone =
-            document.querySelector(
-                    "[name='phone']"
-                    ).value.trim();
-
-    const checkIn =
-            document.getElementById(
-                    "checkInDate"
-                    ).value;
-
-    const checkOut =
-            document.getElementById(
-                    "checkOutDate"
-                    ).value;
-
-    if (!customerName) {
-        alert("Nhập họ tên");
+    if (!validateCustomerInfoMessage()) {
         return false;
     }
 
-    if (!phone) {
-        alert("Nhập số điện thoại");
+    if (!validateRoomTypeMessage()) {
+        return false;
+    }
+    if (!validateRoomQuantityAvailable()) {
         return false;
     }
 
-    if (!checkIn || !checkOut) {
-        alert("Chọn ngày");
+    if (!validateRoomSelection(true)) {
         return false;
     }
-    if (
-            new Date(checkOut)
-            <=
-            new Date(checkIn)
-            ) {
-        alert(
-                "Ngày trả phòng phải lớn hơn ngày nhận phòng"
-                );
-        return false;
-    }
-    return validateRoomSelection();
+
+    return true;
 }
 function addCompanionRow() {
 
@@ -1016,11 +1376,13 @@ function addCompanionRow() {
         </div>
         `
             );
+    saveWalkInState();
 }
 function removeCompanion(btn) {
     btn.closest(
             ".companion-row"
             ).remove();
+    saveWalkInState();
 }
 function setBookingMode(mode) {
     document.getElementById(
@@ -1035,118 +1397,284 @@ function setBookingMode(mode) {
     }
     document.querySelector("form").submit();
 }
-document.addEventListener("DOMContentLoaded", () => {
 
-    const modeRadios =
-            document.querySelectorAll(
-                    'input[name="walkinMode"]'
-                    );
-
-    const companionCard =
-            document.getElementById(
-                    "companionCard"
-                    );
-
-    const bookingBtn =
-            document.getElementById(
-                    "bookingBtn"
-                    );
-
-    const checkinBtn =
-            document.getElementById(
-                    "checkinBtn"
-                    );
-
-    const modeOptions =
-            document.querySelectorAll(
-                    ".mode-option"
-                    );
-
-    function updateMode() {
-
-        const selected =
-                document.querySelector(
-                        'input[name="walkinMode"]:checked'
-                        ).value;
-
-        modeOptions.forEach(
-                option => option.classList.remove("active")
-        );
-
-        const activeOption =
-                document.querySelector(
-                        'input[name="walkinMode"]:checked'
-                        ).closest(".mode-option");
-
-        activeOption.classList.add("active");
-
-        if (selected === "checkin") {
-
-            companionCard.style.display =
-                    "block";
-
-            bookingBtn.style.display =
-                    "none";
-
-            checkinBtn.style.display =
-                    "inline-flex";
-        } else {
-
-            companionCard.style.display =
-                    "none";
-
-            bookingBtn.style.display =
-                    "inline-flex";
-
-            checkinBtn.style.display =
-                    "none";
-        }
-    }
-
-    modeRadios.forEach(radio => {
-        radio.addEventListener(
-                "change",
-                updateMode
-                );
-    });
-
-    updateMode();
-});
 function refreshRoomTypeOptions() {
+    if (!window.roomTypeOptionsHtml)
+        return;
 
     const selects = document.querySelectorAll(".room-type-select");
 
     const selectedIds = [];
-
     selects.forEach(select => {
-
-        if (select.value) {
+        if (select.value)
             selectedIds.push(select.value);
-        }
-
     });
 
     selects.forEach(currentSelect => {
 
         const currentValue = currentSelect.value;
 
-        currentSelect.innerHTML = window.roomTypeOptionsHtml;
+        currentSelect.innerHTML =
+                `<option value="">-- Chọn loại phòng --</option>` +
+                window.roomTypeOptionsHtml.replace(
+                        `<option value="">-- Chọn loại phòng --</option>`,
+                        ""
+                        );
 
         currentSelect.querySelectorAll("option").forEach(option => {
 
-            if (!option.value) return;
+            if (!option.value)
+                return;
 
             if (
-                option.value !== currentValue &&
-                selectedIds.includes(option.value)
-            ) {
+                    option.value !== currentValue &&
+                    selectedIds.includes(option.value)
+                    ) {
                 option.remove();
             }
-
         });
 
         currentSelect.value = currentValue;
-
     });
+}
+function showModePopup(message) {
+    const popup = document.getElementById("modePopup");
+    document.getElementById("modePopupMessage").textContent = message;
+    popup.classList.remove("hidden");
+    requestAnimationFrame(() => {
+        popup.classList.add("show");
+    });
+    clearTimeout(modePopupTimer);
+    modePopupTimer = setTimeout(() => {
+        hideModePopup();
+    }, 3000);
+}
 
+function hideModePopup() {
+    const popup = document.getElementById("modePopup");
+    popup.classList.remove("show");
+    setTimeout(() => {
+        popup.classList.add("hidden");
+    }, 250);
+}
+function showWalkInToast(message, type = "success") {
+    const toast = document.getElementById("walkinToast");
+    const text = document.getElementById("walkinToastMessage");
+    if (!toast)
+        return;
+    toast.classList.remove("success", "error");
+    toast.classList.add(type);
+    text.textContent = message;
+    toast.classList.add("show");
+    clearTimeout(walkInToastTimer);
+    walkInToastTimer = setTimeout(() => {
+        hideWalkInToast();
+    }, 4000);
+}
+
+function hideWalkInToast() {
+    const toast = document.getElementById("walkinToast");
+    if (!toast)
+        return;
+    toast.classList.remove("show");
+}
+
+function hideWalkInToast() {
+    const toast = document.getElementById("walkinToast");
+    if (!toast)
+        return;
+    toast.classList.remove("show");
+}
+function showRoomTypeMessage(text) {
+
+    const box = document.getElementById("roomTypeMessage");
+    if (!box)
+        return;
+
+    if (roomTypeMessageTimer) {
+        clearTimeout(roomTypeMessageTimer);
+        roomTypeMessageTimer = null;
+    }
+
+    if (!text) {
+        box.textContent = "";
+        box.classList.add("hidden");
+        return;
+    }
+
+    box.textContent = text;
+    box.classList.remove("hidden");
+
+    roomTypeMessageTimer = setTimeout(() => {
+        box.textContent = "";
+        box.classList.add("hidden");
+        roomTypeMessageTimer = null;
+    }, 3000);
+}
+function showRoomRowError(row, text) {
+
+    const span = row.querySelector(".room-row-error");
+
+    if (!span)
+        return;
+
+    if (!text) {
+        span.textContent = "";
+        span.classList.add("hidden");
+        return;
+    }
+
+    span.textContent = text;
+    span.classList.remove("hidden");
+}
+function showCustomerInfoMessage(text) {
+
+    const box = document.getElementById("customerInfoMessage");
+    if (!box)
+        return;
+
+    if (!text) {
+        box.textContent = "";
+        box.classList.add("hidden");
+        return;
+    }
+
+    box.textContent = text;
+    box.classList.remove("hidden");
+}
+function showRoomSelectionMessage(roomBox, text) {
+
+    const span = roomBox.querySelector(".room-selection-message");
+    if (!span)
+        return;
+
+    if (!text) {
+        span.textContent = "";
+        span.classList.add("hidden");
+        return;
+    }
+
+    span.textContent = text;
+    span.classList.remove("hidden");
+}
+function scrollToCustomerCard() {
+
+    const card = document.getElementById("customerName")?.closest(".walkin-card");
+
+    if (!card)
+        return;
+
+    card.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+}
+function scrollToRoomTypeCard() {
+
+    const card = document.querySelector(".room-type-select")?.closest(".walkin-card");
+
+    if (!card)
+        return;
+
+    card.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+}
+function scrollToRoomMapCard() {
+
+    const card = document.getElementById("availableRoomsContainer")?.closest(".walkin-card");
+
+    if (!card)
+        return;
+
+    card.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+}
+function validateRoomTypeMessage() {
+
+    const selects = document.querySelectorAll(".room-type-select");
+
+    for (const select of selects) {
+        if (!select.value) {
+            showRoomTypeMessage("Hãy chọn loại phòng");
+            scrollToRoomTypeCard();
+            return false;
+        }
+    }
+
+    showRoomTypeMessage("");
+    return true;
+}
+function validateCustomerInfoMessage() {
+    if (!hasSubmittedWalkIn) {
+        showCustomerInfoMessage("");
+        return true;
+    }
+
+    const customerName = document.getElementById("customerName").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const checkIn = document.getElementById("checkInDate").value;
+    const checkOut = document.getElementById("checkOutDate").value;
+    if (!customerName) {
+        showCustomerInfoMessage("Hãy điền Họ và tên");
+        scrollToCustomerCard();
+        return false;
+    }
+    if (!phone) {
+        showCustomerInfoMessage("Hãy điền Số điện thoại");
+        scrollToCustomerCard();
+        return false;
+    }
+    const phoneRegex = /^(0|\+84)(3|5|7|8|9)\d{8}$/;
+    if (!phoneRegex.test(phone)) {
+        showCustomerInfoMessage("Số điện thoại không hợp lệ");
+        scrollToCustomerCard();
+        return false;
+    }
+    if (!checkIn) {
+        showCustomerInfoMessage("Hãy điền Ngày nhận phòng");
+        scrollToCustomerCard();
+        return false;
+    }
+    if (!checkOut) {
+        showCustomerInfoMessage("Hãy điền Ngày trả phòng");
+        scrollToCustomerCard();
+        return false;
+    }
+    if (new Date(checkOut) <= new Date(checkIn)) {
+        showCustomerInfoMessage("Ngày trả phòng phải lớn hơn ngày nhận phòng");
+        scrollToCustomerCard();
+        return false;
+    }
+    showCustomerInfoMessage("");
+    return true;
+}
+document.addEventListener("DOMContentLoaded", function () {
+
+    const phone = document.getElementById("phone");
+
+    if (phone) {
+        phone.addEventListener("input", function () {
+            this.value = this.value.replace(/\D/g, "");
+        });
+    }
+
+});
+function beforeWalkInSubmit(mode, event) {
+    document.getElementById("bookingMode").value = mode;
+    sessionStorage.setItem(WALKIN_MODE_KEY, mode);
+
+    hasSubmittedWalkIn = true;
+    isSubmittingWalkIn = true;
+
+    if (!validateWalkInSubmit()) {
+        isSubmittingWalkIn = false;
+        event?.preventDefault();
+        return false;
+    }
+
+    return true;
 }

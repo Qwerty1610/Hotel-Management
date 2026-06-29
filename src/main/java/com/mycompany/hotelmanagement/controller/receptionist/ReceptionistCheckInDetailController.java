@@ -21,7 +21,7 @@ import java.util.Arrays;
 
 /**
  *
- * @author FPT SHOP
+ * @author MinhTDP
  */
 @WebServlet(name = "ReceptionistCheckinDetailController", urlPatterns = {"/receptionist/checkin-detail"})
 public class ReceptionistCheckInDetailController extends HttpServlet {
@@ -62,38 +62,19 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
         int bookingId = Integer.parseInt(request.getParameter("bookingId"));
 
         Booking booking = bookingDAO.getBookingById(bookingId);
-        int rootBookingId = booking.getBookingId();
-
-        if (booking.getGroupBookingId() != null) {
-            rootBookingId = booking.getGroupBookingId();
-        }
 
         if (booking == null) {
             response.sendRedirect(request.getContextPath()
-                    + "/receptionist/dashboard?tab=checkin&success=1");
+                    + "/receptionist/dashboard?tab=checkin&error=notfound");
             return;
         }
 
+        int rootBookingId
+                = booking.getGroupBookingId() != null
+                ? booking.getGroupBookingId()
+                : booking.getBookingId();
+
         request.setAttribute("booking", booking);
-
-        String displayPhone = booking.getPhone();
-        String displayEmail = booking.getEmail();
-
-        Integer accountId = booking.getAccountId();
-
-        if (accountId != null) {
-
-            var customer
-                    = bookingDAO.getCustomerDetailsByAccountId(accountId);
-
-            if (customer != null) {
-                displayPhone = customer.getPhone();
-                displayEmail = customer.getEmail();
-            }
-        }
-
-        request.setAttribute("displayPhone", displayPhone);
-        request.setAttribute("displayEmail", displayEmail);
 
         request.setAttribute("rooms",
                 bookingDAO.getAllAssignedRoomsForGroup(rootBookingId));
@@ -122,14 +103,12 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
 
         HttpSession session = request.getSession();
 
-        Object obj = session.getAttribute("accountId");
+        Integer receptionistId = (Integer) session.getAttribute("accountId");
 
-        if (obj == null) {
-            response.sendRedirect(request.getContextPath() + "/staff/login");
+        if (receptionistId == null) {
+            response.sendRedirect(request.getContextPath() + "/home/login");
             return;
         }
-
-        Integer receptionistId = (Integer) obj;
 
         if (receptionistId == null) {
             response.sendRedirect(request.getContextPath() + "/staff/login");
@@ -152,9 +131,16 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
             }
 
             bookingDAO.updateStatus(bookingId, "CheckedIn");
+            Booking booking = bookingDAO.getBookingById(bookingId);
+
+            String customerName = (booking != null && booking.getCustomerName() != null)
+                    ? booking.getCustomerName()
+                    : "khách";
 
             response.sendRedirect(request.getContextPath()
-                    + "/receptionist/checkin?success=1");
+                    + "/receptionist/dashboard?tab=checkin"
+                    + "&checkinSuccess=1"
+                    + "&customerName=" + java.net.URLEncoder.encode(customerName, "UTF-8"));
 
         } catch (Exception e) {
             e.printStackTrace();

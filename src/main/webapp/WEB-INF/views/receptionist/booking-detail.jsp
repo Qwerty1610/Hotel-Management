@@ -515,7 +515,7 @@
                                                                         style="font-size: 12px; color: var(--text-muted)">Đặt
                                                                         phòng đã hoàn tất xác nhận và gán phòng. Lễ
                                                                         tân vẫn có thể thực hiện Hủy đặt phòng bằng
-                                                                        nút Cập nhật ở trên.</span>
+                                                                        nút Cập nhật.</span>
                                                                 </div>
                                                             </c:when>
 

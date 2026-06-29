@@ -8,7 +8,7 @@ import java.sql.Date;
 /**
  *
  * Date: 31/5/2026
- * @author DUC BINH
+ * @author BinhHD, MinhTDP
  */
 
 public class Booking {
