@@ -70,14 +70,14 @@
                             </ul>
 
                             <div class="sidebar-footer">
-                                <div class="user-profile-card">
+                                <a href="${pageContext.request.contextPath}/profile" class="user-profile-card" title="Xem hồ sơ cá nhân" style="text-decoration:none;cursor:pointer;">
                                     <div class="profile-avatar">RC</div>
                                     <div class="profile-info">
                                         <span class="profile-name">${not empty sessionScope.user ? sessionScope.user :
                                             'Receptionist'}</span>
                                         <span class="profile-role">Lễ tân</span>
                                     </div>
-                                </div>
+                                </a>
                             </div>
                         </aside>
 
