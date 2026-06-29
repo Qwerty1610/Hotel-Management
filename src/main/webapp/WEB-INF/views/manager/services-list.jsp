@@ -235,7 +235,7 @@
                     </div>
 
                     <%-- Shared pagination/table utility --%>
-                        <script src="${pageContext.request.contextPath}/assets/js/manager-table.js"></script>
+                        <script src="${pageContext.request.contextPath}/assets/js/manager-table.js" charset="UTF-8"></script>
 
                         <%-- JavaScript: Services Management Logic --%>
                             <script>

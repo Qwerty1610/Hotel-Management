@@ -1,16 +1,7 @@
 /* =========================================================
    ADMIN DASHBOARD PAGE
 ========================================================= */
-.dashboard-body {
-    font-family: 'Inter', sans-serif;
-    background-color: #f8fafc;
-    margin: 0;
-    padding: 40px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 80vh;
-}
+
 
 .dashboard-card {
     background: white;
@@ -29,7 +20,7 @@
 
 .dashboard-card p {
     color: #6c757d;
-    margin-bottom: 30px;
+    margin-bottom: 0px;
 }
 
 .dashboard-card .btn-logout {
@@ -56,9 +47,9 @@
 
 /* Header Change Password Button */
 .btn-change-password-header {
-    background: rgba(58, 134, 255, 0.1);
-    border: 1px solid rgba(58, 134, 255, 0.25);
-    color: #3a86ff;
+    background: var(--brand-blue-light);
+    border: 1px solid rgba(0, 86, 179, 0.25);
+    color: var(--brand-blue);
     padding: 8px 16px;
     border-radius: 6px;
     font-weight: 600;
@@ -72,9 +63,9 @@
 }
 
 .btn-change-password-header:hover {
-    background: #3a86ff;
+    background: var(--brand-blue-hover);
     color: #ffffff;
-    box-shadow: 0 4px 12px rgba(58, 134, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 86, 179, 0.2);
     transform: translateY(-1px);
 }
 
@@ -124,7 +115,7 @@
 }
 
 .password-strength-hint i {
-    color: #3a86ff;
+    color: var(--brand-blue);
     margin-right: 3px;
 }
 

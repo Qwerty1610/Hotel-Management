@@ -210,7 +210,12 @@ public class AdminService {
             return "passwords_dont_match";
         }
 
-        // 5. Tiến hành mã hóa mật khẩu mới và lưu vào database
+        // 5. Kiểm tra mật khẩu mới không được trùng với mật khẩu hiện tại
+        if (oldPassword.trim().equals(newPassword.trim())) {
+            return "password_same_as_current";
+        }
+
+        // 6. Tiến hành mã hóa mật khẩu mới và lưu vào database
         String hashedPassword = BCrypt.hashpw(newPassword.trim(), BCrypt.gensalt(12));
         boolean success = accountRepository.updatePassword(email.trim(), hashedPassword);
         return success ? "success" : "update_failed";

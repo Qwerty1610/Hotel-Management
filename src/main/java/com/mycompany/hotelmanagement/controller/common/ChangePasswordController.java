@@ -142,6 +142,10 @@ public class ChangePasswordController extends HttpServlet {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                     response.getWriter().write("{\"success\":false,\"message\":\"Mật khẩu mới phải bao gồm cả chữ, số và ký tự đặc biệt!\"}");
                     break;
+                case "password_same_as_current":
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    response.getWriter().write("{\"success\":false,\"message\":\"Mật khẩu mới không được trùng với mật khẩu hiện tại!\"}");
+                    break;
                 case "passwords_dont_match":
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                     response.getWriter().write("{\"success\":false,\"message\":\"Mật khẩu xác nhận không trùng khớp!\"}");

@@ -84,7 +84,7 @@
                 </div>
             </div>
 
-            <script src="${pageContext.request.contextPath}/assets/js/login.js?v=2"></script>
+            <script src="${pageContext.request.contextPath}/assets/js/login.js?v=2" charset="UTF-8"></script>
         </body>
 
         </html>
