@@ -76,25 +76,6 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
 
         request.setAttribute("booking", booking);
 
-        String displayPhone = booking.getPhone();
-        String displayEmail = booking.getEmail();
-
-        Integer accountId = booking.getAccountId();
-
-        if (accountId != null) {
-
-            var customer
-                    = bookingDAO.getCustomerDetailsByAccountId(accountId);
-
-            if (customer != null) {
-                displayPhone = customer.getPhone();
-                displayEmail = customer.getEmail();
-            }
-        }
-
-        request.setAttribute("displayPhone", displayPhone);
-        request.setAttribute("displayEmail", displayEmail);
-
         request.setAttribute("rooms",
                 bookingDAO.getAllAssignedRoomsForGroup(rootBookingId));
 

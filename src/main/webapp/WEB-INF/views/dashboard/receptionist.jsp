@@ -485,7 +485,12 @@
                                         <div class="floor-block">
 
                                             <div class="floor-title">
-                                                Tầng ${entry.key}
+                                                <div class="floor-name">
+                                                    Tầng ${entry.key}
+                                                </div>
+                                                <div class="floor-room-count">
+                                                    ${fn:length(entry.value)} phòng
+                                                </div>
                                             </div>
 
                                             <div class="room-grid">
@@ -711,6 +716,21 @@
                                         <span>🏨 Check In</span> 
                                     </label> 
                                 </div> 
+                            </div>
+                            <div id="searchAccountMessage"
+                                 class="search-account-message hidden"></div>
+                            <div class="walkin-search-account">
+                                <input
+                                    id="searchAccountKeyword"
+                                    class="walkin-input"
+                                    placeholder="Nhập Email hoặc SĐT">
+                                <button
+                                    type="button"
+                                    class="btn-search-account"
+                                    onclick="searchAccount()">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                    Tìm tài khoản
+                                </button>
                             </div>
                             <!-- ========================================================= 
                                     CARD 1 - THÔNG TIN KHÁCH HÀNG 
@@ -1335,6 +1355,93 @@
 
                 }, 3000);
             });
+            async function searchAccount() {
+
+                hideSearchAccountMessage();
+
+                const keyword = document
+                        .getElementById("searchAccountKeyword")
+                        .value
+                        .trim();
+
+                if (!keyword) {
+                    showSearchAccountMessage("Vui lòng nhập Email hoặc SĐT");
+                    return;
+                }
+
+                try {
+
+                    const response = await fetch(
+                            contextPath
+                            + "/receptionist/walkin-booking"
+                            + "?action=searchAccount"
+                            + "&keyword="
+                            + encodeURIComponent(keyword)
+                            );
+
+                    const account = await response.json();
+
+                    if (!account.fullName) {
+                        showSearchAccountMessage("Không tìm thấy tài khoản");
+                        return;
+                    }
+
+                    document.getElementById("customerName").value = account.fullName || "";
+                    document.getElementById("phone").value = account.phone || "";
+                    document.getElementById("email").value = account.email || "";
+
+                    saveWalkInState();
+
+                    showSearchAccountMessage("Đã tìm thấy tài khoản", "success");
+
+                } catch (e) {
+
+                    console.error(e);
+                    showSearchAccountMessage("Có lỗi xảy ra khi tìm kiếm");
+
+                }
+            }
+            function showSearchAccountError(message) {
+                const box = document.getElementById("searchAccountError");
+
+                box.textContent = message;
+                box.classList.remove("hidden");
+            }
+
+            function hideSearchAccountError() {
+                const box = document.getElementById("searchAccountError");
+
+                box.textContent = "";
+                box.classList.add("hidden");
+            }
+            let searchAccountTimer = null;
+
+            function showSearchAccountMessage(message, type = "error") {
+
+                const box = document.getElementById("searchAccountMessage");
+                if (!box)
+                    return;
+
+                clearTimeout(searchAccountTimer);
+
+                box.className = "search-account-message " + type;
+                box.textContent = message;
+                box.classList.remove("hidden");
+
+                searchAccountTimer = setTimeout(() => {
+                    hideSearchAccountMessage();
+                }, 3000);
+            }
+
+            function hideSearchAccountMessage() {
+
+                const box = document.getElementById("searchAccountMessage");
+                if (!box)
+                    return;
+
+                box.classList.add("hidden");
+                box.textContent = "";
+            }
         </script>
         <script src="${pageContext.request.contextPath}/assets/js/receptionist.js?v=5" charset="UTF-8"></script>
     </body>

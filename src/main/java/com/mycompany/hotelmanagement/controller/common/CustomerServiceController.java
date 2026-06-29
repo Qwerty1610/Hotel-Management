@@ -221,7 +221,9 @@ public class CustomerServiceController extends HttpServlet {
 
             // Get room assignment if checked in
             Integer roomId = null;
-            List<Room> assignedRooms = bookingService.getAssignedRoomsForBooking(bookingId);
+            List<Room> assignedRooms = bookingService.getAssignedRoomsForBooking(bookingId,
+                    booking.getCheckInDate(),
+                    booking.getCheckOutDate());
             if (assignedRooms != null && !assignedRooms.isEmpty()) {
                 roomId = assignedRooms.get(0).getRoomId();
             }

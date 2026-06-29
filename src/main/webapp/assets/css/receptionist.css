@@ -1030,11 +1030,33 @@ button:disabled,
     padding: 16px;
 }
 
-.floor-title {
-    font-size: 15px;
-    font-weight: 800;
-    margin-bottom: 12px;
-    color: var(--text-navy);
+.floor-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:14px;
+    padding-bottom:10px;
+    border-bottom:1px solid var(--border-color);
+    font-size:15px;
+    font-weight:700;
+}
+.floor-name{
+    color:var(--text-navy);
+    font-weight:800;
+}
+
+.floor-room-count{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:5px 12px;
+    background:#eef5ff;
+    color:var(--brand-blue);
+    border:1px solid #c8dcff;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:700;
+    min-width:72px;
 }
 
 .room-card:hover {
@@ -2057,4 +2079,70 @@ RESPONSIVE
         transform:
             translate(-50%,0);
     }
+}
+.walkin-search-account{
+    display:flex;
+    max-width:500px;
+
+    border:1px solid #dbeafe;
+    border-radius:12px;
+    overflow:hidden;
+
+    box-shadow:0 2px 8px rgba(59,130,246,.08);
+    transition:.25s;
+}
+
+.walkin-search-account:focus-within{
+    border-color:#60a5fa;
+    box-shadow:0 0 0 3px rgba(59,130,246,.12);
+}
+
+.walkin-search-account .walkin-input{
+    flex:1;
+    height:44px;
+    border:none;
+    outline:none;
+    padding:0 14px;
+    font-size:14px;
+    background:#fff;
+}
+
+.btn-search-account{
+    min-width:135px;
+    border:none;
+    background:#2563eb;
+    color:#fff;
+    font-weight:600;
+    cursor:pointer;
+    transition:all .25s ease;
+}
+
+.btn-search-account:hover{
+    background:#3b82f6;
+    transform:translateY(-2px);
+    box-shadow:0 6px 14px rgba(59,130,246,.22);
+}
+.search-account-message{
+    margin-bottom:10px;
+    padding:10px 14px;
+    border-radius:8px;
+    font-size:14px;
+    font-weight:600;
+    transition:.25s;
+}
+
+.search-account-message.hidden{
+    display:none;
+}
+
+.search-account-message.error{
+    background:#fff1f2;
+    color:#dc2626;
+    border:1px solid #fecaca;
+}
+
+.search-account-message.success{
+    background:#eff6ff;
+    color:#2563eb;
+    border:1px solid #bfdbfe;
 }

@@ -168,22 +168,22 @@ public class BookingService {
     /**
      * Returns all rooms in the hotel with their type name and current status.
      */
-    public List<Room> getAllRooms() {
-        return bookingDAO.getAllRooms();
+    public List<Room> getAllRooms(Date checkIn, Date checkOut) {
+        return bookingDAO.getAllRooms(checkIn, checkOut);
     }
 
     /**
      * Returns rooms filtered by room type ID.
      */
-    public List<Room> getRoomsByTypeId(int typeId) {
-        return bookingDAO.getRoomsByTypeId(typeId);
+    public List<Room> getRoomsByTypeId(int typeId, Date checkIn, Date checkOut) {
+        return bookingDAO.getRoomsByTypeId(typeId, checkIn, checkOut);
     }
 
     /**
      * Returns rooms already assigned to a specific booking via RoomAssignment.
      */
-    public List<Room> getAssignedRoomsForBooking(int bookingId) {
-        return bookingDAO.getAssignedRoomsForBooking(bookingId);
+    public List<Room> getAssignedRoomsForBooking(int bookingId, Date checkIn, Date checkOut) {
+        return bookingDAO.getAssignedRoomsForBooking(bookingId, checkIn, checkOut);
     }
 
     /**

@@ -1058,7 +1058,8 @@ function renderAvailableRooms(data) {
 function updateSummary() {
 
     const summary = document.getElementById("bookingSummary");
-    if (!summary) return;
+    if (!summary)
+        return;
 
     const checkIn = document.getElementById("checkInDate")?.value;
     const checkOut = document.getElementById("checkOutDate")?.value;
@@ -1651,8 +1652,16 @@ function validateCustomerInfoMessage() {
     showCustomerInfoMessage("");
     return true;
 }
-document.getElementById("phone").addEventListener("input", function () {
-    this.value = this.value.replace(/\D/g, "");
+document.addEventListener("DOMContentLoaded", function () {
+
+    const phone = document.getElementById("phone");
+
+    if (phone) {
+        phone.addEventListener("input", function () {
+            this.value = this.value.replace(/\D/g, "");
+        });
+    }
+
 });
 function beforeWalkInSubmit(mode, event) {
     document.getElementById("bookingMode").value = mode;
