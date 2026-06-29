@@ -14,9 +14,9 @@ import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
  * RoomsController
  * URL: /rooms
  *
- * Xử lý các hành động:
- *   - Xem danh sách loại phòng (View Room Type)
- *   - Tìm kiếm phòng trống theo bộ lọc loại phòng, số khách và khoảng giá (Search Available Room)
+ * Xử lý các hành động liên quan đến hiển thị và tìm kiếm loại phòng:
+ * - view GET (/rooms): Hiển thị danh sách thông tin các loại phòng đang có (UC-30: View Room Types)
+ * - search GET (/rooms với bộ lọc): Tìm kiếm và lọc danh sách phòng trống theo loại phòng, số lượng khách, khoảng giá (UC-03: Search Available Rooms)
  * 
  * Date: 01/6/2026
  * @author DINH KHANH

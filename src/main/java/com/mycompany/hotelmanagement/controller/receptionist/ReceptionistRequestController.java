@@ -22,17 +22,14 @@ import java.util.logging.Logger;
  * ReceptionistRequestController
  * URL: /receptionist/servicerequest
  *
- * Xử lý duyệt hoặc hủy yêu cầu dịch vụ của khách hàng từ phía lễ tân.
- *
- * Khi approve (duyệt):
- *   1. Đọc CustomerRequest để lấy booking_id và title (tên dịch vụ).
- *   2. Tra giá trong HotelService theo tên dịch vụ.
- *   3. Tìm Invoice của booking đó.
- *   4. Tạo InvoiceItem loại 'Service' vào Invoice → hóa đơn được cập nhật tự động.
- *   5. Set CustomerRequest.status = Completed.
- *
- * Khi cancel (hủy):
- *   - Set CustomerRequest.status = Cancelled.
+ * Xử lý các hành động duyệt hoặc hủy yêu cầu dịch vụ của khách hàng từ phía lễ tân (UC-35: View Service Requests):
+ * - approve POST: Duyệt yêu cầu dịch vụ. Thực hiện các bước:
+ *   1. Đọc BookingServiceRequest để lấy bookingId và tên dịch vụ.
+ *   2. Tra cứu đơn giá dịch vụ trong HotelService.
+ *   3. Tìm Invoice tương ứng của booking.
+ *   4. Thêm InvoiceItem loại 'Service' với đơn giá tra cứu được để tự động cập nhật tổng hóa đơn.
+ *   5. Cập nhật trạng thái yêu cầu dịch vụ thành Completed.
+ * - cancel POST: Hủy yêu cầu dịch vụ, ghi nhận người thực hiện và lý do hủy, cập nhật trạng thái yêu cầu thành Cancelled.
  *
  * Date: 21/6/2026 — updated 25/6/2026
  * @author DINH KHANH

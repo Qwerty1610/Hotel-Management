@@ -22,8 +22,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Controller xử lý yêu cầu dịch vụ của khách hàng (Customer).
- * Cho phép xem danh sách dịch vụ, gửi yêu cầu dịch vụ và xem lịch sử yêu cầu.
+ * CustomerServiceController
+ * URL: /customer/services, /customer/services/history, /customer/services/cancel
+ *
+ * Xử lý các hành động của khách hàng (Customer) liên quan đến dịch vụ khách sạn:
+ * - view/default GET (/customer/services): Xem danh sách các dịch vụ đang hoạt động (tên, mô tả, đơn giá) để lựa chọn đặt phòng/phòng đang ở (UC-09: View Available Service)
+ * - submit POST (/customer/services): Khách hàng đang lưu trú gửi yêu cầu dịch vụ cho phòng của mình (UC-10: Submit Service Request)
+ * - history GET (/customer/services/history): Xem danh sách lịch sử yêu cầu dịch vụ đã gửi cùng trạng thái hiện tại (Pending, Completed, Cancelled) (UC-64: View Service Request History)
+ * - cancel POST (/customer/services/cancel): Khách hàng tự hủy yêu cầu dịch vụ ở trạng thái chờ xử lý (Pending) (UC-64: View Service Request History - Action Cancel)
+ * 
  * Date: 21/6/2026
  * @author DINH KHANH
  */
@@ -92,6 +99,10 @@ public class CustomerServiceController extends HttpServlet {
         }
     }
 
+    /**
+     * UC-09: View Available Service
+     * Hiển thị danh sách dịch vụ đang hoạt động kèm phân trang và form gửi yêu cầu.
+     */
     private void showServicesAndForm(HttpServletRequest request, HttpServletResponse response, int accountId)
             throws ServletException, IOException {
         // Fetch all active services
@@ -159,6 +170,10 @@ public class CustomerServiceController extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/views/customer/customer-services.jsp").forward(request, response);
     }
 
+    /**
+     * UC-64: View Service Request History
+     * Hiển thị danh sách lịch sử yêu cầu dịch vụ của khách hàng.
+     */
     private void showRequestHistory(HttpServletRequest request, HttpServletResponse response, int accountId)
             throws ServletException, IOException {
         String statusFilter = request.getParameter("status");
@@ -184,6 +199,10 @@ public class CustomerServiceController extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/views/customer/customer-services-history.jsp").forward(request, response);
     }
 
+    /**
+     * UC-10: Submit Service Request
+     * Tiếp nhận và xử lý lưu thông tin yêu cầu dịch vụ của khách hàng vào cơ sở dữ liệu.
+     */
     private void handleSubmitRequest(HttpServletRequest request, HttpServletResponse response, int accountId)
             throws ServletException, IOException {
         String bookingIdStr = request.getParameter("bookingId");
@@ -247,6 +266,10 @@ public class CustomerServiceController extends HttpServlet {
         }
     }
 
+    /**
+     * UC-64: View Service Request History (Action Cancel)
+     * Cho phép khách hàng tự hủy yêu cầu dịch vụ của họ nếu yêu cầu đó đang ở trạng thái chờ xử lý (Pending).
+     */
     private void handleCancelRequest(HttpServletRequest request, HttpServletResponse response, int accountId)
             throws ServletException, IOException {
         String requestIdStr = request.getParameter("requestId");

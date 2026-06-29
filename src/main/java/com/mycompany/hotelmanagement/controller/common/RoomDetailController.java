@@ -13,8 +13,8 @@ import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
  * RoomDetailController
  * URL: /rooms/detail
  *
- * Xử lý hành động:
- *   - Xem thông tin chi tiết của loại phòng (View Room Type Detail)
+ * Xử lý các hành động liên quan đến chi tiết loại phòng:
+ * - view GET (/rooms/detail?id=...): Hiển thị thông tin chi tiết, hình ảnh, tiện nghi và số phòng còn trống của một loại phòng được chọn trước khi đặt phòng (UC-31: View Room Type Detail)
  * 
  * Date: 01/6/2026
  * @author DINH KHANH
