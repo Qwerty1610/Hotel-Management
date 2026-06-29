@@ -1,12 +1,12 @@
 package com.mycompany.hotelmanagement.controller.receptionist;
 
 import com.mycompany.hotelmanagement.dal.BookingDAO;
-import com.mycompany.hotelmanagement.dal.CustomerRequestDAO;
+import com.mycompany.hotelmanagement.dal.BookingServiceRequestDAO;
 import com.mycompany.hotelmanagement.dal.RoomRepository;
 import com.mycompany.hotelmanagement.dal.RoomTypeRepository;
 import com.mycompany.hotelmanagement.dal.WalkInBookingDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
-import com.mycompany.hotelmanagement.entity.CustomerRequest;
+import com.mycompany.hotelmanagement.entity.BookingServiceRequest;
 import com.mycompany.hotelmanagement.entity.Room;
 import com.mycompany.hotelmanagement.entity.RoomInfo;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
@@ -194,7 +194,7 @@ public class ReceptionistDashboardController extends HttpServlet {
 
     private void loadServiceRequestsTab(HttpServletRequest request) {
         try {
-            CustomerRequestDAO dao = new CustomerRequestDAO();
+            BookingServiceRequestDAO dao = new BookingServiceRequestDAO();
             String statusFilter = request.getParameter("status");
             String keyword = request.getParameter("keyword");
 
@@ -228,7 +228,7 @@ public class ReceptionistDashboardController extends HttpServlet {
             }
             int offset = (page - 1) * pageSize;
 
-            List<CustomerRequest> requestList = dao.getReceptionistRequests(statusFilter, keyword, offset, pageSize);
+            List<BookingServiceRequest> requestList = dao.getReceptionistRequests(statusFilter, keyword, offset, pageSize);
 
             // KPI Counts (overall counts for the cards)
             int kpiTotal = dao.countReceptionistRequests("All", null);

@@ -1,8 +1,8 @@
 package com.mycompany.hotelmanagement.controller.common;
 
-import com.mycompany.hotelmanagement.dal.CustomerRequestDAO;
+import com.mycompany.hotelmanagement.dal.BookingServiceRequestDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
-import com.mycompany.hotelmanagement.entity.CustomerRequest;
+import com.mycompany.hotelmanagement.entity.BookingServiceRequest;
 import com.mycompany.hotelmanagement.entity.HotelService;
 import com.mycompany.hotelmanagement.entity.Room;
 import com.mycompany.hotelmanagement.service.BookingService;
@@ -36,7 +36,7 @@ public class CustomerServiceController extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(CustomerServiceController.class.getName());
     private final BookingService bookingService = new BookingService();
     private final HotelServiceService hotelServiceService = new HotelServiceService();
-    private final CustomerRequestDAO customerRequestDAO = new CustomerRequestDAO();
+    private final BookingServiceRequestDAO customerRequestDAO = new BookingServiceRequestDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -165,7 +165,7 @@ public class CustomerServiceController extends HttpServlet {
         if (statusFilter == null || statusFilter.trim().isEmpty()) {
             statusFilter = "All";
         }
-        List<CustomerRequest> requests = customerRequestDAO.getRequestsByCustomer(accountId, statusFilter);
+        List<BookingServiceRequest> requests = customerRequestDAO.getRequestsByCustomer(accountId, statusFilter);
         request.setAttribute("requests", requests);
         request.setAttribute("selectedStatus", statusFilter);
 
@@ -228,7 +228,7 @@ public class CustomerServiceController extends HttpServlet {
                 roomId = assignedRooms.get(0).getRoomId();
             }
 
-            CustomerRequest req = new CustomerRequest();
+            BookingServiceRequest req = new BookingServiceRequest();
             req.setBookingId(bookingId);
             req.setRoomId(roomId);
             req.setTitle(serviceName);
