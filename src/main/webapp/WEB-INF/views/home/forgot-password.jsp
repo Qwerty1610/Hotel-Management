@@ -44,7 +44,7 @@
                 </div>
             </c:if>
 
-            <form action="${pageContext.request.contextPath}/home/forgot-password" method="POST" id="forgotPasswordForm">
+            <form action="${pageContext.request.contextPath}/home/forgot-password?portal=${portal}" method="POST" id="forgotPasswordForm">
                 <div class="form-group">
                     <label for="email">Địa chỉ Email</label>
                     <div class="input-wrapper">
@@ -60,7 +60,7 @@
             </form>
 
             <div class="signup-prompt" style="margin-top: 30px;">
-                Nhớ mật khẩu? <a href="${pageContext.request.contextPath}/home/login">Đăng nhập ngay</a>
+                Nhớ mật khẩu? <a href="${pageContext.request.contextPath}/${portal eq 'staff' ? 'staff/login' : 'home/login'}">Đăng nhập ngay</a>
             </div>
 
             <a href="${pageContext.request.contextPath}/home" class="back-link">

@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
 <%@ include file="../../includes/taglibs.jsp" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ include file="../../includes/header.jsp" %>
@@ -212,9 +212,12 @@
                             </div>
                         </c:if>
 
-                        <div class="profile-actions">
+                        <div class="profile-actions" style="display: flex; gap: 12px; flex-wrap: wrap;">
                             <button type="button" class="profile-btn profile-btn-primary" onclick="profileShowEdit()">
                                 <i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa hồ sơ
+                            </button>
+                            <button type="button" class="profile-btn profile-btn-ghost" onclick="openChangePasswordModal()" style="border: 1px solid var(--pf-border);">
+                                <i class="fa-solid fa-key" style="color: var(--pf-blue);"></i> Đổi mật khẩu
                             </button>
                         </div>
                     </div>
@@ -303,5 +306,10 @@
         }
     })();
 </script>
+<script>
+    window.CHANGE_PASSWORD_API_URL = "${pageContext.request.contextPath}/${sessionScope.role eq 'ADMIN' ? 'admin' : (sessionScope.role eq 'HOTEL_MANAGER' ? 'manager' : (sessionScope.role eq 'RECEPTIONIST' ? 'receptionist' : (sessionScope.role eq 'HOUSEKEEPING' ? 'housekeeping' : 'customer')))}/change-password";
+</script>
+<script src="${pageContext.request.contextPath}/assets/js/change-password.js" charset="UTF-8"></script>
+<jsp:include page="/WEB-INF/views/admin/includes/change-password-modal.jsp" />
 </body>
 </html>

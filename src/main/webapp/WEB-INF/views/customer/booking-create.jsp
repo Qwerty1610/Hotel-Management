@@ -2,7 +2,7 @@
 <%@ include file="../../includes/taglibs.jsp" %>
 <%@ include file="../../includes/header.jsp" %>
 
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/customer_booking.css?v=21" />
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/customer_booking.css?v=22" />
 <fmt:setLocale value="vi_VN" />
 
 <body>
@@ -146,6 +146,16 @@
                                            value="${not empty customerName ? customerName : sessionScope.user}" />
                                 </div>
                                 <div class="form-group">
+                                    <label for="phone">Số điện thoại *</label>
+                                    <input type="tel" name="phone" id="phone" required placeholder="Nhập số điện thoại"
+                                           value="${phone}" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">Email *</label>
+                                    <input type="email" name="email" id="email" required placeholder="Nhập email liên hệ"
+                                           value="${email}" />
+                                </div>
+                                <div class="form-group">
                                     <label for="checkInDate">Ngày nhận phòng *</label>
                                     <input type="date" name="checkInDate" id="checkInDate" required value="${checkInDate}" onchange="calculatePricing()" />
                                 </div>
@@ -165,13 +175,13 @@
                                     <i class="fa-solid fa-circle-info" style="color: var(--accent-gold); margin-right: 8px;"></i>
                                     Chọn loại phòng & Khách nghỉ
                                 </h2>
-                                <div class="form-grid">
+                                <div class="single-room-grid">
                                     <div class="form-group">
                                         <label for="roomTypeId">Loại phòng</label>
                                         <select name="roomTypeId" id="roomTypeId" onchange="calculatePricing(); validateForm()">
                                             <c:forEach var="rt" items="${roomTypes}">
                                                 <option value="${rt.typeId}" data-price="${rt.basePrice}" data-capacity="${rt.capacity}">
-                                                    ${rt.typeName} - <fmt:formatNumber value="${rt.basePrice}" type="currency" currencySymbol="" /> VND / đêm (Tối đa ${rt.capacity} khách)
+                                                    ${rt.typeName} - <fmt:formatNumber value="${rt.basePrice}" type="number" pattern="#,##0" /> VND / đêm (Tối đa ${rt.capacity} khách)
                                                 </option>
                                             </c:forEach>
                                         </select>
@@ -248,6 +258,9 @@
                         <button type="submit" class="btn-primary" id="submitBtn">
                             <i class="fa-solid fa-credit-card"></i> Tiến hành đặt phòng
                         </button>
+                        <a href="${pageContext.request.contextPath}/rooms" class="btn-secondary" style="margin-top: 10px; display: block; text-align: center; text-decoration: none; padding: 12px; border-radius: var(--radius-md);">
+                            Hủy đặt phòng
+                        </a>
                     </div>
                 </div>
 
@@ -315,7 +328,16 @@
             // If we are in multi mode initially, initialize rows
             const initialType = document.querySelector('input[name="bookingType"]:checked').value;
             if (initialType === 'multi') {
-                addRoomRow(); // add at least one row
+                <c:choose>
+                    <c:when test="${not empty paramValues['roomTypeId[]']}">
+                        <c:forEach var="rtId" items="${paramValues['roomTypeId[]']}" varStatus="status">
+                            addRoomRow('${rtId}', '${paramValues["roomQuantity[]"][status.index]}', '${paramValues["guestCount[]"][status.index]}');
+                        </c:forEach>
+                    </c:when>
+                    <c:otherwise>
+                        addRoomRow(); // add at least one row
+                    </c:otherwise>
+                </c:choose>
             }
 
             calculatePricing();
@@ -374,7 +396,7 @@
         }
 
         // Add room selection row for multi-room booking
-        function addRoomRow() {
+        function addRoomRow(typeId = '', qty = '1', guests = '1') {
             const container = document.getElementById('multiRoomRowsContainer');
             const index = container.children.length;
             
@@ -384,8 +406,8 @@
 
             let optionsHtml = '';
             <c:forEach var="rt" items="${roomTypes}">
-                optionsHtml += '<option value="${rt.typeId}" data-price="${rt.basePrice}" data-capacity="${rt.capacity}">' +
-                    '${rt.typeName} (${rt.capacity} khách)' +
+                optionsHtml += '<option value="${rt.typeId}" data-price="${rt.basePrice}" data-capacity="${rt.capacity}" ' + (typeId == '${rt.typeId}' ? 'selected' : '') + '>' +
+                    '${rt.typeName} - <fmt:formatNumber value="${rt.basePrice}" type="number" pattern="#,##0" /> VND / đêm (Tối đa ${rt.capacity} khách)' +
                 '</option>';
             </c:forEach>
 
@@ -398,17 +420,13 @@
                 '</div>' +
                 '<div class="form-group">' +
                 '    <label>Số lượng</label>' +
-                '    <input type="number" name="roomQuantity[]" min="1" max="10" value="1" required oninput="calculatePricing(); validateForm()" />' +
+                '    <input type="number" name="roomQuantity[]" min="1" max="10" value="' + qty + '" required oninput="calculatePricing(); validateForm()" />' +
                 '</div>' +
                 '<div class="form-group">' +
                 '    <label>Lượng người ở</label>' +
-                '    <input type="number" name="guestCount[]" min="1" value="1" required oninput="validateForm()" />' +
+                '    <input type="number" name="guestCount[]" min="1" value="' + guests + '" required oninput="validateForm()" />' +
                 '</div>' +
-                '<div class="form-group">' +
-                '    <label>Tên thành viên khác</label>' +
-                '    <input type="text" name="guestName[]" placeholder="Nhập tên thành viên..." value="" />' +
-                '</div>' +
-                '<button type="button" class="btn-danger" style="margin-top: 25px;" onclick="removeRoomRow(' + index + ')">' +
+                '<button type="button" class="btn-danger" style="margin-bottom: 2px;" onclick="removeRoomRow(' + index + ')">' +
                 '    <i class="fa-solid fa-trash-can"></i>' +
                 '</button>';
 

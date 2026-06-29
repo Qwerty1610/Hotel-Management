@@ -50,7 +50,7 @@ public class ReceptionistRequestController extends HttpServlet {
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("user") == null
                 || !"RECEPTIONIST".equals(session.getAttribute("role"))) {
-            response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
+            response.sendRedirect(request.getContextPath() + "/staff/login?error=unauthorized");
             return;
         }
 
@@ -74,7 +74,7 @@ public class ReceptionistRequestController extends HttpServlet {
 
             Integer receptionistId = (Integer) session.getAttribute("accountId");
             if (receptionistId == null) {
-                response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
+                response.sendRedirect(request.getContextPath() + "/staff/login?error=unauthorized");
                 return;
             }
 

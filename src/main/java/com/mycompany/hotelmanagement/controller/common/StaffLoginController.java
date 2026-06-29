@@ -1,7 +1,6 @@
 package com.mycompany.hotelmanagement.controller.common;
 
 import java.io.IOException;
-import com.mycompany.hotelmanagement.config.ConfigUtil;
 import com.mycompany.hotelmanagement.entity.Account;
 import com.mycompany.hotelmanagement.service.AuthService;
 
@@ -14,27 +13,27 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Cookie;
 
 /**
- * Controller xử lý đăng nhập hệ thống.
- * Thực hiện xác thực thông tin đăng nhập của tài khoản qua Database thông qua AuthService,
- * phân vai trò người dùng để điều hướng phù hợp, đồng thời quản lý Cookie Remember Me.
+ * Controller xử lý đăng nhập dành riêng cho nhân viên và quản trị viên.
+ * Chỉ cho phép các vai trò ADMIN, HOTEL_MANAGER, RECEPTIONIST, HOUSEKEEPING.
  * 
- * @author TùngNQ
+ * @author TungNQ
  */
-@WebServlet(name = "LoginController", urlPatterns = { "/home/login" })
-public class LoginController extends HttpServlet {
+@WebServlet(name = "StaffLoginController", urlPatterns = { "/staff/login" })
+public class StaffLoginController extends HttpServlet {
+    private static final long serialVersionUID = 1L;
 
     private final AuthService authService = new AuthService();
 
-    /**
-     * Chuyển hướng người dùng đến trang đăng nhập độc lập và cấu hình ID đăng nhập Google.
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         HttpSession session = request.getSession(false);
         if (session != null && session.getAttribute("user") != null) {
             String role = (String) session.getAttribute("role");
-            if (role != null && !"CUSTOMER".equals(role)) {
+            if ("CUSTOMER".equals(role)) {
+                response.sendRedirect(request.getContextPath() + "/home/login");
+                return;
+            } else if (role != null) {
                 String redirectUrl = "/home";
                 if ("ADMIN".equals(role)) {
                     redirectUrl = "/admin/dashboard";
@@ -50,20 +49,10 @@ public class LoginController extends HttpServlet {
             }
         }
 
-        // Pass Google Client ID from config.properties or system properties to JSP
-        String googleClientId = ConfigUtil.get("google.client.id",
-                System.getProperty("google.client.id", "your-google-client-id"));
-        request.setAttribute("googleClientId", googleClientId);
-        
-        // Forward to standalone login page
-        request.getRequestDispatcher("/WEB-INF/views/home/login.jsp").forward(request, response);
+        // Forward to staff login page
+        request.getRequestDispatcher("/WEB-INF/views/staff/login.jsp").forward(request, response);
     }
 
-    /**
-     * Thực hiện kiểm tra thông tin tài khoản, mật khẩu nhập vào:
-     * - Nếu khớp trong DB: Tạo Session, lưu thông tin định danh và vai trò, thiết lập Cookie nếu có check "Remember Me".
-     * - Nếu không khớp: Cho phép fallback thử tài khoản Mock (Admin/Customer), hoặc redirect báo lỗi.
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -85,12 +74,12 @@ public class LoginController extends HttpServlet {
         if (result.isSuccess()) {
             String role = result.getRole();
             
-            // Reject staff on the customer portal
-            if (!"CUSTOMER".equals(role)) {
-                response.sendRedirect(request.getContextPath() + "/home/login?error=not_customer");
+            // Reject customers on the staff portal
+            if ("CUSTOMER".equals(role)) {
+                response.sendRedirect(request.getContextPath() + "/staff/login?error=not_staff");
                 return;
             }
-            
+
             // Authentication successful, establish session
             HttpSession session = request.getSession();
             session.setAttribute("user", result.getDisplayName());
@@ -136,21 +125,11 @@ public class LoginController extends HttpServlet {
                 response.addCookie(rememberMeCookie);
             }
 
-            // Redirect based on role
-            if ("CUSTOMER".equals(role)) {
-                String redirectUrl = (String) session.getAttribute("redirectAfterLogin");
-                session.removeAttribute("redirectAfterLogin");
-                if (redirectUrl == null || redirectUrl.isEmpty()) {
-                    redirectUrl = request.getContextPath() + "/home/login";
-                }
-                response.sendRedirect(redirectUrl);
-            } else {
-                response.sendRedirect(request.getContextPath() + result.getRedirectUrl());
-            }
+            // Redirect to dashboard page
+            response.sendRedirect(request.getContextPath() + result.getRedirectUrl());
         } else {
             // Authentication failed, redirect back to login page with error parameter
-            response.sendRedirect(request.getContextPath() + "/home/login?error=invalid_credentials");
+            response.sendRedirect(request.getContextPath() + "/staff/login?error=invalid_credentials");
         }
     }
-
 }

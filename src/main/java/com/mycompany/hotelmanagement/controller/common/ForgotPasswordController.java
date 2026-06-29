@@ -27,6 +27,9 @@ public class ForgotPasswordController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // Set portal attribute to preserve it in the view
+        String portal = request.getParameter("portal");
+        request.setAttribute("portal", portal);
         // Forward to forgot password page
         request.getRequestDispatcher("/WEB-INF/views/home/forgot-password.jsp").forward(request, response);
     }
@@ -42,6 +45,8 @@ public class ForgotPasswordController extends HttpServlet {
         if (email != null) {
             email = email.trim();
         }
+        String portal = request.getParameter("portal");
+        String portalParam = (portal != null && !portal.trim().isEmpty()) ? "&portal=" + encode(portal) : "";
 
         String result = authService.requestPasswordReset(email);
         String contextPath = request.getContextPath();
@@ -49,21 +54,21 @@ public class ForgotPasswordController extends HttpServlet {
 
         switch (result) {
             case "invalid_input":
-                response.sendRedirect(contextPath + "/home/forgot-password?error=invalid_input");
+                response.sendRedirect(contextPath + "/home/forgot-password?error=invalid_input" + portalParam);
                 break;
                 
             case "email_not_found":
-                response.sendRedirect(contextPath + "/home/forgot-password?error=email_not_found&email=" + encodedEmail);
+                response.sendRedirect(contextPath + "/home/forgot-password?error=email_not_found&email=" + encodedEmail + portalParam);
                 break;
                 
             case "server_error":
-                response.sendRedirect(contextPath + "/home/forgot-password?error=server_error&email=" + encodedEmail);
+                response.sendRedirect(contextPath + "/home/forgot-password?error=server_error&email=" + encodedEmail + portalParam);
                 break;
                 
             case "success":
             default:
                 // Redirect to Reset Password input form
-                response.sendRedirect(contextPath + "/home/reset-password?email=" + encodedEmail + "&success=otp_sent");
+                response.sendRedirect(contextPath + "/home/reset-password?email=" + encodedEmail + "&success=otp_sent" + portalParam);
                 break;
         }
     }

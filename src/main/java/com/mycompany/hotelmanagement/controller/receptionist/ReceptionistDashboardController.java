@@ -4,6 +4,7 @@ import com.mycompany.hotelmanagement.dal.BookingDAO;
 import com.mycompany.hotelmanagement.dal.CustomerRequestDAO;
 import com.mycompany.hotelmanagement.dal.RoomRepository;
 import com.mycompany.hotelmanagement.dal.RoomTypeRepository;
+import com.mycompany.hotelmanagement.dal.WalkInBookingDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.CustomerRequest;
 import com.mycompany.hotelmanagement.entity.Room;
@@ -16,7 +17,23 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+/**
+ * ReceptionistBookingController
+ * URL: /receptionist/booking
+ *
+ * Xử lý 4 hành động (action param):
+ * - confirm : Xác nhận booking (Pending → Confirmed)
+ * - reject : Từ chối booking (Pending → Rejected)
+ * - update : Cập nhật thông tin booking (chỉ khi Pending)
+ * - cancel : Huỷ booking
+ * 
+ * Standardized imports utilizing dal instead of dao.
+ * Date: 01/6/2026
+ * 
+ * @author BinhHD, MinhTDP
+ */
 import java.io.IOException;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,23 +42,15 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * ReceptionistDashboardController URL: /receptionist/dashboard
- *
- * Quản lý tab sidebar và load dữ liệu booking tương ứng. Tab mặc định:
- * "bookings" Standardized imports utilizing dal instead of dao.
- *
- * Date: 01/6/2026
- *
- * @author BinhHD
- */
 @WebServlet(name = "ReceptionistDashboardController", urlPatterns = {"/receptionist/dashboard"})
 public class ReceptionistDashboardController extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(ReceptionistDashboardController.class.getName());
+    private static final int PAGE_SIZE = 8;
+    private static final int PAGE_SIZE_CHECKIN = 11;
 
     private static final Set<String> ALLOWED_TABS
-            = Set.of("bookings", "checkin", "checkout", "servicerequests", "roommap");
+            = Set.of("bookings", "checkin", "checkout", "servicerequests", "roommap", "walkin-bookings");
     private static final Set<String> STATUS_WHITELIST = Set.of("All", "Pending", "Confirmed", "Rejected", "Cancelled",
             "CheckedIn", "CheckedOut");
 
@@ -53,7 +62,7 @@ public class ReceptionistDashboardController extends HttpServlet {
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("user") == null
                 || !"RECEPTIONIST".equals(session.getAttribute("role"))) {
-            response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
+            response.sendRedirect(request.getContextPath() + "/staff/login?error=unauthorized");
             return;
         }
 
@@ -75,6 +84,8 @@ public class ReceptionistDashboardController extends HttpServlet {
                 loadCheckInTab(request);
             } else if ("roommap".equals(tab)) {
                 loadRoomMapTab(request);
+            } else if ("walkin-bookings".equals(tab)) {
+                loadWalkInBookingTab(request);
             }
 
             // 4. Forward to view
@@ -88,7 +99,7 @@ public class ReceptionistDashboardController extends HttpServlet {
 
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error in doGet of ReceptionistDashboardController", e);
-            response.sendRedirect(request.getContextPath() + "/home/login?error=unknown");
+            response.sendRedirect(request.getContextPath() + "/staff/login?error=unknown");
         }
     }
 
@@ -107,6 +118,20 @@ public class ReceptionistDashboardController extends HttpServlet {
             String statusFilter = request.getParameter("status");
             String keyword = request.getParameter("keyword");
 
+            int page = 1;
+            try {
+                String pageStr = request.getParameter("page");
+                if (pageStr != null) {
+                    page = Integer.parseInt(pageStr);
+                }
+            } catch (Exception e) {
+                page = 1;
+            }
+
+            if (page < 1) {
+                page = 1;
+            }
+
             if (statusFilter == null || !STATUS_WHITELIST.contains(statusFilter.trim())) {
                 statusFilter = "All";
             } else {
@@ -114,7 +139,28 @@ public class ReceptionistDashboardController extends HttpServlet {
             }
 
             // Load danh sách
-            List<Booking> bookingList = dao.getBookings(statusFilter, keyword);
+            int totalItems = dao.countBookings(statusFilter, keyword);
+
+            int totalPages
+                    = (int) Math.ceil(totalItems / (double) PAGE_SIZE);
+
+            if (totalPages < 1) {
+                totalPages = 1;
+            }
+
+            if (page > totalPages) {
+                page = totalPages;
+            }
+
+            int offset = (page - 1) * PAGE_SIZE;
+
+            List<Booking> bookingList
+                    = dao.getBookingsPaging(
+                            statusFilter,
+                            keyword,
+                            offset,
+                            PAGE_SIZE
+                    );
 
             // Load danh sách loại phòng để cập nhật thông tin loại phòng trong modal edit
             List<RoomTypeInfo> roomTypesList = roomTypeRepo.getAllRoomTypes();
@@ -136,6 +182,10 @@ public class ReceptionistDashboardController extends HttpServlet {
             request.setAttribute("cntConfirmed", cntConfirmed);
             request.setAttribute("cntRejected", cntRejected);
             request.setAttribute("cntCancelled", cntCancelled);
+
+            request.setAttribute("currentPage", page);
+            request.setAttribute("totalPages", totalPages);
+            request.setAttribute("totalItems", totalItems);
 
         } catch (Exception e) {
             throw new RuntimeException("Error in loadBookingTab of ReceptionistDashboardController", e);
@@ -204,8 +254,6 @@ public class ReceptionistDashboardController extends HttpServlet {
         }
     }
 
-    private static final int PAGE_SIZE = 10;
-
     private void loadCheckInTab(HttpServletRequest request) {
 
         BookingDAO dao = new BookingDAO();
@@ -229,7 +277,7 @@ public class ReceptionistDashboardController extends HttpServlet {
 
         // total
         int totalItems = dao.countCheckInBookings(keyword);
-        int totalPages = (int) Math.ceil(totalItems / (double) PAGE_SIZE);
+        int totalPages = (int) Math.ceil(totalItems / (double) PAGE_SIZE_CHECKIN);
 
         if (totalPages < 1) {
             totalPages = 1;
@@ -238,11 +286,11 @@ public class ReceptionistDashboardController extends HttpServlet {
             page = totalPages;
         }
 
-        int offset = (page - 1) * PAGE_SIZE;
+        int offset = (page - 1) * PAGE_SIZE_CHECKIN;
 
         // DATA
         List<Booking> checkInList
-                = dao.getCheckInBookings(keyword, offset, PAGE_SIZE);
+                = dao.getCheckInBookings(keyword, offset, PAGE_SIZE_CHECKIN);
 
         // SET ATTRIBUTES
         request.setAttribute("checkInList", checkInList);
@@ -256,45 +304,81 @@ public class ReceptionistDashboardController extends HttpServlet {
     private void loadRoomMapTab(HttpServletRequest request) {
 
         RoomRepository repo = new RoomRepository();
-        List<RoomInfo> roomList = repo.getAllRooms();
+
+        String fromDate = request.getParameter("fromDate");
+        String toDate = request.getParameter("toDate");
+
+        List<RoomInfo> roomList;
+
+        if (fromDate != null
+                && !fromDate.isBlank()
+                && toDate != null
+                && !toDate.isBlank()) {
+
+            roomList = repo.getRoomMapByDate(
+                    Date.valueOf(fromDate),
+                    Date.valueOf(toDate)
+            );
+
+        } else {
+
+            roomList = repo.getAllRooms();
+            for (RoomInfo room : roomList) {
+                if ("Cleaning".equalsIgnoreCase(room.getStatus())) {
+                    room.setStatus("Available");
+                }
+            }
+        }
 
         if (roomList == null) {
             roomList = new ArrayList<>();
         }
 
-        // ===== FILTER STATUS =====
         String status = request.getParameter("status");
-        if (status == null || status.isEmpty()) {
+
+        if (status == null || status.isBlank()) {
             status = "All";
         }
 
         List<RoomInfo> filtered = new ArrayList<>();
 
-        for (RoomInfo r : roomList) {
-            if ("All".equals(status) || status.equals(r.getStatus())) {
-                filtered.add(r);
+        for (RoomInfo room : roomList) {
+
+            if ("All".equalsIgnoreCase(status)
+                    || status.equalsIgnoreCase(room.getStatus())) {
+
+                filtered.add(room);
             }
         }
 
-        // ===== GROUP BY FLOOR (STRING SAFE) =====
-        Map<String, List<RoomInfo>> roomByFloor = new LinkedHashMap<>();
+        Map<String, List<RoomInfo>> roomByFloor
+                = new LinkedHashMap<>();
 
-        for (RoomInfo r : filtered) {
+        for (RoomInfo room : filtered) {
 
-            String floor = r.getFloor(); // <- STRING theo bạn nói
+            String floor = room.getFloor();
 
-            if (floor == null || floor.trim().isEmpty()) {
+            if (floor == null || floor.isBlank()) {
                 floor = "Unknown";
             }
 
-            if (!roomByFloor.containsKey(floor)) {
-                roomByFloor.put(floor, new ArrayList<>());
-            }
-
-            roomByFloor.get(floor).add(r);
+            roomByFloor
+                    .computeIfAbsent(
+                            floor,
+                            k -> new ArrayList<>())
+                    .add(room);
         }
 
         request.setAttribute("roomByFloor", roomByFloor);
+
         request.setAttribute("currentStatus", status);
+
+        request.setAttribute("fromDate", fromDate);
+        request.setAttribute("toDate", toDate);
+    }
+
+    private void loadWalkInBookingTab(HttpServletRequest request) {
+        RoomTypeRepository roomTypeRepo = new RoomTypeRepository();
+        request.setAttribute("roomTypesList", roomTypeRepo.getAllRoomTypes());
     }
 }

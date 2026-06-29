@@ -3,14 +3,19 @@
 <%--
     Sidebar chung cho Admin Dashboard.
     Sử dụng biến 'activePage' (request scope) để highlight menu item hiện tại.
-    Các giá trị hợp lệ: 'staff', 'customers'
+    Các giá trị hợp lệ: 'system-dashboard', 'staff', 'customers'
 --%>
 <aside class="dashboard-sidebar">
-    <div class="sidebar-brand" style="color: #3a86ff !important;">
-        <i class="fa-solid fa-hotel" style="color: #3a86ff !important;"></i> <span>HotelOps</span>
+    <div class="sidebar-brand">
+        <i class="fa-solid fa-hotel"></i> <span>HotelOps</span>
     </div>
 
     <ul class="sidebar-menu">
+        <li class="menu-item ${activePage eq 'system-dashboard' ? 'active' : ''}">
+            <a href="${pageContext.request.contextPath}/admin/system-dashboard">
+                <i class="fa-solid fa-gauge-high"></i> <span>Bảng điều khiển</span>
+            </a>
+        </li>
         <li class="menu-item ${activePage eq 'staff' ? 'active' : ''}">
             <a href="${pageContext.request.contextPath}/admin/dashboard?tab=staff">
                 <i class="fa-solid fa-user-tie"></i> <span>Quản lý nhân viên</span>
@@ -24,8 +29,14 @@
     </ul>
 
     <div class="sidebar-footer">
+        <div class="menu-item">
+            <a href="#" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: #475569; text-decoration: none; font-weight: 600; font-size: 14px;">
+                <i class="fa-solid fa-gear"></i> <span>Cài đặt</span>
+            </a>
+        </div>
+
         <a href="${pageContext.request.contextPath}/profile" class="user-profile-card" title="Xem hồ sơ cá nhân" style="text-decoration:none;cursor:pointer;">
-            <div class="profile-avatar" style="background: linear-gradient(135deg, #3a86ff, #0056b3) !important;">
+            <div class="profile-avatar">
                 <c:choose>
                     <c:when test="${not empty sessionScope.user}">
                         ${sessionScope.user.substring(0, 1).toUpperCase()}

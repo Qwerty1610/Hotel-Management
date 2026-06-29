@@ -8,6 +8,10 @@ import org.mindrot.jbcrypt.BCrypt;
 import java.sql.Timestamp;
 import java.security.SecureRandom;
 
+/**
+ *
+ * @author TungNQ
+ */
 public class AuthService {
     private final AccountRepository accountRepository = new AccountRepository();
     private final PasswordResetRepository passwordResetRepository = new PasswordResetRepository();
@@ -39,12 +43,16 @@ public class AuthService {
         String role = null;
         String redirectUrl = null;
         String displayName = null;
+        String emailVal = null;
+        int accountIdVal = -1;
 
         // 1. Authenticate using database via AccountRepository
         Account account = authenticate(username, password);
         if (account != null) {
             String dbRoleName = account.getRoleName();
             String fullName = account.getFullName();
+            emailVal = account.getEmail();
+            accountIdVal = account.getAccountId();
 
             if ("Admin".equalsIgnoreCase(dbRoleName)) {
                 role = "ADMIN";
@@ -82,15 +90,31 @@ public class AuthService {
                 role = "ADMIN";
                 redirectUrl = "/admin/dashboard";
                 displayName = "Admin User";
+                Account mockAcc = accountRepository.getAccountByEmail("admin@hotel.com");
+                if (mockAcc != null) {
+                    emailVal = mockAcc.getEmail();
+                    accountIdVal = mockAcc.getAccountId();
+                } else {
+                    emailVal = "admin@hotel.com";
+                    accountIdVal = 1;
+                }
             } else if ("customer".equalsIgnoreCase(username) && "customer123".equals(password)) {
                 role = "CUSTOMER";
                 redirectUrl = "/home";
                 displayName = "Customer User";
+                Account mockAcc = accountRepository.getAccountByEmail("customer@hotel.com");
+                if (mockAcc != null) {
+                    emailVal = mockAcc.getEmail();
+                    accountIdVal = mockAcc.getAccountId();
+                } else {
+                    emailVal = "customer@hotel.com";
+                    accountIdVal = 5;
+                }
             }
         }
 
         if (role != null) {
-            return new LoginResult(true, role, displayName, redirectUrl);
+            return new LoginResult(true, role, displayName, redirectUrl, emailVal, accountIdVal);
         } else {
             return new LoginResult(false, null, null, null);
         }
@@ -108,11 +132,15 @@ public class AuthService {
         String role = null;
         String redirectUrl = null;
         String userDisplayName = name;
+        String emailVal = null;
+        int accountIdVal = -1;
 
         if (account != null) {
             String dbFullName = account.getFullName();
             String dbRoleName = account.getRoleName();
             userDisplayName = (dbFullName != null && !dbFullName.trim().isEmpty()) ? dbFullName : name;
+            emailVal = account.getEmail();
+            accountIdVal = account.getAccountId();
 
             if ("Admin".equalsIgnoreCase(dbRoleName)) {
                 role = "ADMIN";
@@ -147,11 +175,18 @@ public class AuthService {
             if (registered) {
                 role = "CUSTOMER";
                 redirectUrl = "/home";
+                Account newAcc = accountRepository.getAccountByEmail(email);
+                if (newAcc != null) {
+                    emailVal = newAcc.getEmail();
+                    accountIdVal = newAcc.getAccountId();
+                } else {
+                    emailVal = email;
+                }
             }
         }
 
         if (role != null) {
-            return new LoginResult(true, role, userDisplayName, redirectUrl);
+            return new LoginResult(true, role, userDisplayName, redirectUrl, emailVal, accountIdVal);
         } else {
             return new LoginResult(false, null, null, null);
         }

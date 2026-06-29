@@ -1,16 +1,7 @@
 /* =========================================================
    ADMIN DASHBOARD PAGE
 ========================================================= */
-.dashboard-body {
-    font-family: 'Inter', sans-serif;
-    background-color: #f8fafc;
-    margin: 0;
-    padding: 40px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 80vh;
-}
+
 
 .dashboard-card {
     background: white;
@@ -29,7 +20,7 @@
 
 .dashboard-card p {
     color: #6c757d;
-    margin-bottom: 30px;
+    margin-bottom: 0px;
 }
 
 .dashboard-card .btn-logout {
@@ -56,9 +47,9 @@
 
 /* Header Change Password Button */
 .btn-change-password-header {
-    background: rgba(58, 134, 255, 0.1);
-    border: 1px solid rgba(58, 134, 255, 0.25);
-    color: #3a86ff;
+    background: var(--brand-blue-light);
+    border: 1px solid rgba(0, 86, 179, 0.25);
+    color: var(--brand-blue);
     padding: 8px 16px;
     border-radius: 6px;
     font-weight: 600;
@@ -72,9 +63,9 @@
 }
 
 .btn-change-password-header:hover {
-    background: #3a86ff;
+    background: var(--brand-blue-hover);
     color: #ffffff;
-    box-shadow: 0 4px 12px rgba(58, 134, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 86, 179, 0.2);
     transform: translateY(-1px);
 }
 
@@ -124,7 +115,7 @@
 }
 
 .password-strength-hint i {
-    color: #3a86ff;
+    color: var(--brand-blue);
     margin-right: 3px;
 }
 
@@ -162,5 +153,91 @@
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+/* Ghi chú khi biểu đồ không có dữ liệu (UC 2.7.4 - AF-1) */
+.empty-chart-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 180px;
+    color: var(--text-muted, #94a3b8);
+    font-size: 14px;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Global Floating Toasts */
+.alert-toast {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 10000;
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14.5px;
+    font-weight: 600;
+    line-height: 1.5;
+    min-width: 320px;
+    max-width: 450px;
+    backdrop-filter: blur(8px);
+    transition: all 0.5s ease;
+    animation: toastSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.alert-toast.success-toast {
+    background-color: rgba(240, 253, 244, 0.95);
+    border: 1px solid rgba(74, 222, 128, 0.4);
+    color: #15803d;
+}
+
+.alert-toast.error-toast {
+    background-color: rgba(254, 242, 242, 0.95);
+    border: 1px solid rgba(248, 113, 113, 0.4);
+    color: #b91c1c;
+}
+
+.alert-toast i {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.alert-toast span {
+    flex-grow: 1;
+}
+
+.toast-close-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.6;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.toast-close-btn:hover {
+    opacity: 1;
+    transform: scale(1.15);
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
     }
 }

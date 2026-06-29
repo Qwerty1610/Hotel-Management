@@ -168,6 +168,6 @@
             </footer>
         </div>
     </div>
-    <script src="${pageContext.request.contextPath}/assets/js/housekeeping.js"></script>
+    <script src="${pageContext.request.contextPath}/assets/js/housekeeping.js" charset="UTF-8"></script>
 </body>
 </html>

@@ -13,6 +13,12 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * Controller xử lý Dashboard quản trị của Admin.
+ * Quản lý tài khoản nhân viên và khách hàng.
+ * 
+ * @author TungNQ
+ */
 @WebServlet(name = "AdminDashboardController", urlPatterns = {"/admin/dashboard"})
 public class AdminDashboardController extends HttpServlet {
 
@@ -21,6 +27,46 @@ public class AdminDashboardController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        
+        String action = request.getParameter("action");
+        if ("check-duplicate".equals(action)) {
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            String email = request.getParameter("email");
+            String phone = request.getParameter("phone");
+            String excludeIdStr = request.getParameter("excludeId");
+            int excludeId = -1;
+            if (excludeIdStr != null && !excludeIdStr.isEmpty()) {
+                try {
+                    excludeId = Integer.parseInt(excludeIdStr);
+                } catch (Exception e) {}
+            }
+            
+            boolean emailExists = false;
+            boolean phoneExists = false;
+            
+            if (email != null && !email.trim().isEmpty()) {
+                if (excludeId > 0) {
+                    emailExists = adminService.existsByEmailExcept(email.trim(), excludeId);
+                } else {
+                    emailExists = adminService.existsByEmail(email.trim());
+                }
+            }
+            
+            if (phone != null && !phone.trim().isEmpty()) {
+                String sanitized = adminService.sanitizePhone(phone);
+                if (sanitized != null) {
+                    if (excludeId > 0) {
+                        phoneExists = adminService.existsByPhoneExcept(sanitized, excludeId);
+                    } else {
+                        phoneExists = adminService.existsByPhone(sanitized);
+                    }
+                }
+            }
+            
+            response.getWriter().write(String.format("{\"emailExists\":%b, \"phoneExists\":%b}", emailExists, phoneExists));
+            return;
+        }
         
         String tab = request.getParameter("tab");
         if (tab == null || tab.isEmpty()) {
@@ -63,10 +109,8 @@ public class AdminDashboardController extends HttpServlet {
                 
                 if ("success".equals(result)) {
                     response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=staff&success=created");
-                } else if ("email_exists".equals(result)) {
-                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=staff&error=email_exists");
                 } else {
-                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=staff&error=create_failed");
+                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=staff&error=" + result);
                 }
                 
             } else if ("update-staff".equals(action)) {
@@ -82,7 +126,7 @@ public class AdminDashboardController extends HttpServlet {
                 if ("success".equals(result)) {
                     response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=staff&success=updated");
                 } else {
-                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=staff&error=update_failed");
+                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=staff&error=" + result);
                 }
                 
             } else if ("update-customer".equals(action)) {
@@ -99,7 +143,7 @@ public class AdminDashboardController extends HttpServlet {
                 if ("success".equals(result)) {
                     response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=customers&success=updated");
                 } else {
-                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=customers&error=update_failed");
+                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=customers&error=" + result);
                 }
                 
             } else if ("toggle-staff".equals(action) || "toggle-customer".equals(action)) {

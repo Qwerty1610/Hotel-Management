@@ -27,7 +27,7 @@ import java.util.logging.Logger;
  * Standardized imports utilizing dal instead of dao.
  * Date: 01/6/2026
  * 
- * @author BinhHD
+ * @author BinhHD, MinhTDP
  */
 @WebServlet(name = "ReceptionistBookingController", urlPatterns = { "/receptionist/booking" })
 public class ReceptionistBookingController extends HttpServlet {
@@ -42,7 +42,7 @@ public class ReceptionistBookingController extends HttpServlet {
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("user") == null
                 || !"RECEPTIONIST".equals(session.getAttribute("role"))) {
-            response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
+            response.sendRedirect(request.getContextPath() + "/staff/login?error=unauthorized");
             return;
         }
 

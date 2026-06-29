@@ -42,7 +42,7 @@
                                 Số điện thoại phải bắt đầu bằng số 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số!
                             </c:when>
                             <c:when test="${param.error eq 'invalid_password'}">
-                                Mật khẩu phải tối thiểu 8 ký tự, bao gồm cả chữ, số và ký tự đặc biệt!
+                                Mật khẩu mới phải bao gồm cả chữ, số và ký tự đặc biệt!
                             </c:when>
                             <c:when test="${param.error eq 'invalid_input'}">
                                 Vui lòng điền đầy đủ và đúng định dạng các trường!
@@ -147,7 +147,7 @@
                 if (password.length < 8) {
                     errorMessage = 'Mật khẩu phải tối thiểu từ 8 ký tự trở lên!';
                 } else if (!hasLetter || !hasDigit || !hasSpecial) {
-                    errorMessage = 'Mật khẩu phải bao gồm cả chữ, số và ký tự đặc biệt!';
+                    errorMessage = 'Mật khẩu mới phải bao gồm cả chữ, số và ký tự đặc biệt!';
                 }
                 // 5. Confirm password validation
                 else if (password !== confirmPassword) {

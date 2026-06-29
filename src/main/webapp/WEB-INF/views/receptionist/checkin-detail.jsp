@@ -22,20 +22,48 @@
 
             .section-card{
                 background:#fff;
-                border-radius:14px;
-                padding:18px;
-                margin-bottom:16px;
-                box-shadow:0 2px 12px rgba(0,0,0,0.06);
-                border:1px solid #eef2f7;
+                border-radius:16px;
+                padding:22px;
+                margin-bottom:20px;
+                box-shadow:0 8px 24px rgba(15,23,42,.06);
+                border:1px solid #e6edf5;
+                position:relative;
+                overflow:hidden;
+            }
+            .section-card::before{
+                content:"";
+                position:absolute;
+                left:0;
+                top:0;
+                width:5px;
+                height:100%;
+                background:linear-gradient(
+                    180deg,
+                    #0ea5e9,
+                    #2563eb
+                    );
             }
 
-            .section-card h3{
-                font-size:14px;
-                font-weight:700;
-                color:#1e293b;
-                margin-bottom:12px;
+            .section-card::before{
+                content:"";
+                position:absolute;
+                left:0;
+                top:0;
+                width:5px;
+                height:100%;
+                background:linear-gradient(
+                    180deg,
+                    #0ea5e9,
+                    #2563eb
+                    );
             }
-
+            .section-card h3::before{
+                content:"";
+                width:10px;
+                height:10px;
+                border-radius:50%;
+                background:#0ea5e9;
+            }
             /* ================= SECTION 1 LAYOUT ================= */
             .grid-top{
                 display:grid;
@@ -51,10 +79,25 @@
             }
 
             .field{
-                padding:10px 12px;
-                background:#f8fafc;
-                border-radius:10px;
-                font-size:13px;
+                background:#f8fbff;
+                border:1px solid #dbeafe;
+                border-radius:12px;
+                padding:14px 16px;
+
+                display:flex;
+                flex-direction:column;
+                gap:6px;
+
+                transition:.25s;
+            }
+            .field:hover{
+                border-color:#60a5fa;
+                box-shadow:0 6px 18px rgba(59,130,246,.08);
+            }
+            .field b{
+                color:#64748b;
+                font-size:12px;
+                font-weight:600;
             }
 
             /* ================= TABLE PMS STYLE ================= */
@@ -65,113 +108,189 @@
             }
 
             .room-table th{
-                text-align:left;
-                padding:10px;
-                background:#f1f5f9;
-                font-size:12px;
-                color:#64748b;
+                background:#eff6ff;
+                color:#2563eb;
+                font-weight:700;
+                font-size:13px;
+                padding:14px;
+                border-bottom:2px solid #dbeafe;
+            }
+            .room-table th:not(:last-child),
+            .room-table td:not(:last-child){
+                border-right:2px solid #dbeafe;
             }
 
             .room-table td{
-                padding:10px;
-                border-bottom:1px solid #f1f5f9;
+                padding:14px;
+                border-bottom:1px solid #edf2f7;
             }
 
             .room-table tr:hover{
-                background:#f8fafc;
+                background:#f8fabff;
+                transition:.2s;
             }
 
             /* ================= COMPANION LAYOUT ================= */
+            #companionBody td{
+                padding:10px;
+                vertical-align:middle;
+            }
             #companionBody td:first-child{
-                width:85%;
+                width:auto;
             }
 
             #companionBody td:last-child{
-                width:15%;
+                width:120px;
                 text-align:center;
             }
 
             #companionBody input{
                 width:100%;
+                box-sizing:border-box;
                 padding:10px 12px;
-                border:1px solid #e2e8f0;
-                border-radius:10px;
-                transition:0.2s;
+                border:1px solid #cbd5e1;
+                border-radius:8px;
+                background:#fff;
+                transition:.2s;
             }
 
             #companionBody input:focus{
-                border-color:#0ea5e9;
                 outline:none;
-                box-shadow:0 0 0 3px rgba(14,165,233,0.15);
+                border-color:#3b82f6;
+                box-shadow:0 0 0 3px rgba(59,130,246,.15);
             }
 
             /* ================= BUTTON STYLE ================= */
+
+            /* ---------- Add Companion ---------- */
             .add-btn{
-                background:#0ea5e9;
+                background:linear-gradient(135deg,#0ea5e9,#2563eb);
                 color:#fff;
                 border:none;
-                padding:8px 12px;
                 border-radius:10px;
+                padding:10px 16px;
+                font-weight:600;
                 cursor:pointer;
-                transition:0.2s;
+
+                box-shadow:0 5px 14px rgba(37,99,235,.18);
+
+                transition:
+                    transform .25s ease,
+                    box-shadow .25s ease;
             }
 
             .add-btn:hover{
-                background:#0284c7;
-                transform:translateY(-1px);
+                transform:translateY(-3px);
+                box-shadow:0 10px 24px rgba(37,99,235,.28);
             }
 
+
+            /* ---------- Confirm ---------- */
+            .btn-confirm{
+                background:linear-gradient(135deg,#22c55e,#16a34a);
+                color:#fff;
+
+                border:none;
+                outline:none;
+
+                border-radius:10px;
+
+                min-width:180px;
+                height:50px;
+
+                padding:10px 18px;
+
+                display:flex;
+                justify-content:center;
+                align-items:center;
+
+                font-size:15px;
+                font-weight:600;
+
+                cursor:pointer;
+
+                box-shadow:0 5px 14px rgba(34,197,94,.20);
+
+                transition:
+                    transform .25s ease,
+                    box-shadow .25s ease;
+            }
+
+            .btn-confirm:hover{
+                transform:translateY(-3px);
+                box-shadow:0 10px 24px rgba(34,197,94,.30);
+            }
+
+
+            /* ---------- Back ---------- */
             .btn-back{
                 background:#64748b;
                 color:#fff;
                 border:none;
-                padding:10px 14px;
                 border-radius:10px;
+
+                padding:10px 14px;
+
                 cursor:pointer;
-                transition:0.2s;
+
+                transition:
+                    transform .25s ease,
+                    box-shadow .25s ease,
+                    background .25s ease;
             }
 
             .btn-back:hover{
                 background:#475569;
+                transform:translateY(-3px);
             }
 
-            .btn-confirm{
-                background:#16a34a;
-                color:#fff;
-                border:none;
-                padding:10px 14px;
-                border-radius:10px;
-                cursor:pointer;
-                transition:0.2s;
-            }
 
-            .btn-confirm:hover{
-                background:#15803d;
-                transform:translateY(-1px);
-            }
-
+            /* ---------- Danger ---------- */
             .danger-btn{
-                background:#ef4444;
-                color:#fff;
-                border:none;
-                padding:6px 10px;
+                background:#fee2e2;
+                color:#dc2626;
+                border:1px solid #fecaca;
                 border-radius:8px;
+                padding:8px 12px;
+                font-weight:600;
                 cursor:pointer;
-                transition:0.2s;
+                transition:
+                    transform .25s ease,
+                    box-shadow .25s ease,
+                    background .25s ease,
+                    color .25s ease;
             }
 
             .danger-btn:hover{
                 background:#dc2626;
+                color:#fff;
+                transform:translateY(-2px);
             }
 
             /* ================= FOOTER ================= */
             .footer-bar{
+                margin-top:24px;
+                padding-top:20px;
+                border-top:2px solid #e5e7eb;
                 display:flex;
                 justify-content:space-between;
                 align-items:center;
-                margin-top:20px;
-                padding-top:10px;
-                border-top:1px solid #e2e8f0;
+            }
+            .actions{
+                display:flex;
+                align-items:center;
+                gap:16px;
+            }
+
+            .actions form{
+                margin:0;
+            }
+
+            .actions button{
+                min-width:180px;
+                height:50px;
+                font-size:15px;
+                font-weight:600;
             }
 
             /* ================= MODAL ================= */
@@ -215,6 +334,29 @@
                 transform: scale(1.05);
                 transition: 0.2s ease;
             }
+            input[type=text],
+            textarea{
+                width:100%;
+                border:1px solid #d6dce5;
+                border-radius:12px;
+                padding:12px 14px;
+                font-size:14px;
+                font-family:'Inter',sans-serif;
+                background:#fff;
+                transition:.25s;
+            }
+            input[type=text]:focus,
+            textarea:focus{
+                outline:none;
+                border-color:#0ea5e9;
+                box-shadow:
+                    0 0 0 4px rgba(14,165,233,.15);
+            }
+            textarea{
+                resize:vertical;
+                min-height:90px;
+                line-height:1.6;
+            }
         </style>
     </head>
 
@@ -240,6 +382,17 @@
                     <li class="menu-item ${currentTab eq 'checkin' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin">
                             <i class="fa-solid fa-key"></i> <span>Nhận phòng (Check-in)</span>
+                        </a>
+                    </li>
+                    <li class="menu-item ${currentTab eq 'roommap' ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=roommap">
+                            <i class="fa-solid fa-map"></i> <span>sơ đồ phòng</span>
+                        </a>
+                    </li>
+
+                    <li class="menu-item ${currentTab eq 'walkin-bookings' ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=walkin-bookings">
+                            <i class="fa-solid fa-user-plus"></i> <span>Đặt phòng tại quầy</span>
                         </a>
                     </li>
 
@@ -274,9 +427,25 @@
                 <header class="main-topbar">
                     <div class="breadcrumb">
                         <span>Receptionist</span>
-                        <span>&gt;</span>
-                        <span>Chi tiết check in</span>
+
+                        <span class="separator">&gt;</span>
+
+                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin"
+                           style="text-decoration:none;color:var(--text-muted)">
+                            Nhận phòng (Check-in)
+                        </a>
+
+                        <span class="separator">&gt;</span>
+
+                        <span class="current">
+                            Chi tiết Check-in #${booking.bookingId}
+                        </span>
                     </div>
+
+                    <a href="${pageContext.request.contextPath}/logout" class="btn-logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        Đăng xuất
+                    </a>
                 </header>
 
                 <main class="workspace-content">
@@ -288,8 +457,8 @@
                         <div class="grid-top">
                             <div class="field"><b>Mã:</b> #${booking.bookingId}</div>
                             <div class="field"><b>Khách:</b> ${booking.customerName}</div>
-                            <div class="field"><b>SĐT:</b> ${customer.phone}</div>
-                            <div class="field"><b>Email:</b> ${customer.email}</div>
+                            <div class="field"><b>SĐT:</b> ${booking.phone}</div>
+                            <div class="field"><b>Email:</b> ${booking.email}</div>
                         </div>
 
                         <div class="grid-bottom">
@@ -382,7 +551,7 @@
 
                                         <div id="hiddenCompanions"></div>
 
-                                        <button type="submit" class="btn btn-confirm">
+                                        <button type="submit" class="btn-confirm">
                                             Xác nhận check in
                                         </button>
 

@@ -207,13 +207,13 @@
                                                                     title="${r.assignedStaffId != null ? 'Đổi NV' : 'Gán việc'}"
                                                                     data-title="<c:out value='${r.title}' />"
                                                                     data-room="<c:out value='${r.roomNumber}' />"
-                                                                    onclick="openAssignModal(${r.requestId}, this)"><i
+                                                                    onclick="openAssignModal('${r.requestId}', this)"><i
                                                                         class="fa-solid fa-user-plus"></i></button>
                                                                 <c:choose>
                                                                     <c:when test="${r.assignedStaffId != null}">
                                                                         <button class="btn-action done"
                                                                             title="Hoàn thành"
-                                                                            onclick="changeStatus(${r.requestId}, 'Completed')"><i
+                                                                            onclick="changeStatus('${r.requestId}', 'Completed')"><i
                                                                                 class="fa-solid fa-check"></i></button>
                                                                     </c:when>
                                                                     <c:otherwise>
@@ -225,7 +225,7 @@
                                                                     </c:otherwise>
                                                                 </c:choose>
                                                                 <button class="btn-action delete" title="Huỷ"
-                                                                    onclick="changeStatus(${r.requestId}, 'Cancelled')"><i
+                                                                    onclick="changeStatus('${r.requestId}', 'Cancelled')"><i
                                                                         class="fa-solid fa-xmark"></i></button>
                                                             </c:when>
                                                             <c:otherwise><span

@@ -8,6 +8,11 @@ import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.List;
 
+/**
+ * Service xử lý các nghiệp vụ quản trị hệ thống của Admin.
+ * 
+ * @author TungNQ
+ */
 public class AdminService {
     private final AccountRepository accountRepository = new AccountRepository();
 
@@ -23,15 +28,65 @@ public class AdminService {
         return accountRepository.getStaffRoles();
     }
 
+    private boolean isInvalidEmail(String email) {
+        String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+        return email == null || !email.trim().matches(emailRegex);
+    }
+
+    public String sanitizePhone(String phone) {
+        if (phone == null) {
+            return null;
+        }
+        String trimmed = phone.trim();
+        if (trimmed.isEmpty() || trimmed.equalsIgnoreCase("null") || trimmed.equalsIgnoreCase("undefined") || trimmed.equals("-") || trimmed.equals("—")) {
+            return null;
+        }
+        String cleaned = trimmed.replaceAll("[\\s\\-\\.\\(\\)]", "");
+        if (cleaned.startsWith("+84")) {
+            cleaned = "0" + cleaned.substring(3);
+        }
+        return cleaned.isEmpty() ? null : cleaned;
+    }
+
+    private boolean isInvalidPhone(String phone) {
+        if (phone == null || phone.trim().isEmpty()) {
+            return false; // phone is optional
+        }
+        return !phone.trim().matches("^0[35789]\\d{8}$");
+    }
+
+    private boolean isWeakPassword(String password) {
+        if (password == null || password.isEmpty()) {
+            return true;
+        }
+        boolean hasLetter = password.matches(".*[a-zA-Z].*");
+        boolean hasDigit = password.matches(".*[0-9].*");
+        boolean hasSpecial = password.matches(".*[^a-zA-Z0-9].*");
+        return password.length() < 8 || !hasLetter || !hasDigit || !hasSpecial;
+    }
+
     public String createStaffAccount(String email, String fullName, String phone, String password, int roleId) {
         if (email == null || email.trim().isEmpty() || fullName == null || fullName.trim().isEmpty() || password == null || password.isEmpty()) {
             return "invalid_input";
         }
+        phone = sanitizePhone(phone);
+        if (isInvalidEmail(email)) {
+            return "invalid_email";
+        }
+        if (isInvalidPhone(phone)) {
+            return "invalid_phone";
+        }
+        if (isWeakPassword(password)) {
+            return "weak_password";
+        }
         if (accountRepository.existsByEmail(email.trim())) {
             return "email_exists";
         }
+        if (phone != null && accountRepository.existsByPhone(phone)) {
+            return "phone_exists";
+        }
         String passwordHash = BCrypt.hashpw(password.trim(), BCrypt.gensalt(12));
-        boolean success = accountRepository.insertStaffAccount(email.trim(), passwordHash, fullName.trim(), phone != null ? phone.trim() : null, roleId);
+        boolean success = accountRepository.insertStaffAccount(email.trim(), passwordHash, fullName.trim(), phone, roleId);
         return success ? "success" : "create_failed";
     }
 
@@ -39,13 +94,29 @@ public class AdminService {
         if (email == null || email.trim().isEmpty() || fullName == null || fullName.trim().isEmpty()) {
             return "invalid_input";
         }
+        phone = sanitizePhone(phone);
+        if (isInvalidEmail(email)) {
+            return "invalid_email";
+        }
+        if (isInvalidPhone(phone)) {
+            return "invalid_phone";
+        }
+        if (accountRepository.existsByEmailExcept(email.trim(), accountId)) {
+            return "email_exists";
+        }
+        if (phone != null && accountRepository.existsByPhoneExcept(phone, accountId)) {
+            return "phone_exists";
+        }
         
         String passwordHash = null;
         if (password != null && !password.trim().isEmpty()) {
+            if (isWeakPassword(password)) {
+                return "weak_password";
+            }
             passwordHash = BCrypt.hashpw(password.trim(), BCrypt.gensalt(12));
         }
         
-        boolean success = accountRepository.updateStaffAccount(accountId, email.trim(), fullName.trim(), phone != null ? phone.trim() : null, roleId, passwordHash);
+        boolean success = accountRepository.updateStaffAccount(accountId, email.trim(), fullName.trim(), phone, roleId, passwordHash);
         return success ? "success" : "update_failed";
     }
 
@@ -53,17 +124,49 @@ public class AdminService {
         return accountRepository.toggleAccountStatus(accountId, active);
     }
 
+    public boolean existsByEmail(String email) {
+        return accountRepository.existsByEmail(email);
+    }
+
+    public boolean existsByPhone(String phone) {
+        return accountRepository.existsByPhone(phone);
+    }
+
+    public boolean existsByEmailExcept(String email, int excludeId) {
+        return accountRepository.existsByEmailExcept(email, excludeId);
+    }
+
+    public boolean existsByPhoneExcept(String phone, int excludeId) {
+        return accountRepository.existsByPhoneExcept(phone, excludeId);
+    }
+
     public String updateCustomerAccount(int accountId, String email, String fullName, String phone, String password, int loyaltyPoints, String membershipLevel) {
         if (email == null || email.trim().isEmpty() || fullName == null || fullName.trim().isEmpty()) {
             return "invalid_input";
         }
+        phone = sanitizePhone(phone);
+        if (isInvalidEmail(email)) {
+            return "invalid_email";
+        }
+        if (isInvalidPhone(phone)) {
+            return "invalid_phone";
+        }
+        if (accountRepository.existsByEmailExcept(email.trim(), accountId)) {
+            return "email_exists";
+        }
+        if (phone != null && accountRepository.existsByPhoneExcept(phone, accountId)) {
+            return "phone_exists";
+        }
         
         String passwordHash = null;
         if (password != null && !password.trim().isEmpty()) {
+            if (isWeakPassword(password)) {
+                return "weak_password";
+            }
             passwordHash = BCrypt.hashpw(password.trim(), BCrypt.gensalt(12));
         }
         
-        boolean success = accountRepository.updateCustomerAccount(accountId, email.trim(), fullName.trim(), phone != null ? phone.trim() : null, loyaltyPoints, membershipLevel, passwordHash);
+        boolean success = accountRepository.updateCustomerAccount(accountId, email.trim(), fullName.trim(), phone, loyaltyPoints, membershipLevel, passwordHash);
         return success ? "success" : "update_failed";
     }
 
@@ -107,7 +210,12 @@ public class AdminService {
             return "passwords_dont_match";
         }
 
-        // 5. Tiến hành mã hóa mật khẩu mới và lưu vào database
+        // 5. Kiểm tra mật khẩu mới không được trùng với mật khẩu hiện tại
+        if (oldPassword.trim().equals(newPassword.trim())) {
+            return "password_same_as_current";
+        }
+
+        // 6. Tiến hành mã hóa mật khẩu mới và lưu vào database
         String hashedPassword = BCrypt.hashpw(newPassword.trim(), BCrypt.gensalt(12));
         boolean success = accountRepository.updatePassword(email.trim(), hashedPassword);
         return success ? "success" : "update_failed";

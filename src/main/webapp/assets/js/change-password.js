@@ -1,16 +1,15 @@
 // =================================================================
-// ADMIN DASHBOARD LOGIC - CHANGE PASSWORD FUNCTIONALITY
+// SHARED CHANGE PASSWORD MODAL INTERACTION LOGIC
 // =================================================================
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log("Admin Dashboard initialized successfully.");
-    
-    // Bind change password form submit event
+    console.log("Change Password JS initialized successfully.");
+
     const changePasswordForm = document.getElementById('changePasswordForm');
     if (changePasswordForm) {
         changePasswordForm.addEventListener('submit', function (e) {
             e.preventDefault();
-            
+
             const msg = window.MSG_CHANGE_PASSWORD || {
                 emptyFields: 'Vui lòng điền đầy đủ các trường mật khẩu!',
                 passwordShort: 'Mật khẩu mới phải tối thiểu từ 8 ký tự trở lên!',
@@ -21,21 +20,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 systemError: 'Lỗi hệ thống khi cập nhật mật khẩu.',
                 success: 'Đổi mật khẩu thành công!'
             };
-            
+
             const currentPassword = document.getElementById('currentPassword').value;
             const newPassword = document.getElementById('newPassword').value;
             const confirmNewPassword = document.getElementById('confirmNewPassword').value;
-            
-            // 1. Kiểm tra tính hợp lệ dữ liệu ở Front-end (trùng khớp với trang Đăng ký)
+
+            // 1. Kiểm tra tính hợp lệ dữ liệu ở Front-end
             let errorMessage = '';
-            
+
             if (!currentPassword || !newPassword || !confirmNewPassword) {
                 errorMessage = msg.emptyFields;
             } else {
                 const hasLetter = /[a-zA-Z]/.test(newPassword);
                 const hasDigit = /[0-9]/.test(newPassword);
                 const hasSpecial = /[^a-zA-Z0-9]/.test(newPassword);
-                
+
                 if (newPassword.length < 8) {
                     errorMessage = msg.passwordShort;
                 } else if (!hasLetter || !hasDigit || !hasSpecial) {
@@ -46,25 +45,40 @@ document.addEventListener('DOMContentLoaded', function () {
                     errorMessage = msg.passwordSameAsCurrent;
                 }
             }
-            
+
             if (errorMessage) {
                 showModalAlert('error', errorMessage);
                 return;
             }
-            
-            // 2. Gửi API bằng Fetch PUT dưới dạng JSON
+
+            // 2. Gửi API qua Fetch PUT dưới dạng JSON
             const submitBtn = document.getElementById('btnChangePasswordSubmit');
             const originalBtnContent = submitBtn.innerHTML;
-            
-            // Thiết lập trạng thái loading trên button
+
             submitBtn.disabled = true;
             submitBtn.innerHTML = msg.updating;
             hideModalAlert();
-            
-            // Tìm contextPath động dựa trên URL hiện tại
-            const contextPath = window.location.pathname.substring(0, window.location.pathname.indexOf('/admin'));
-            const apiUrl = contextPath + '/admin/change-password';
-            
+
+            // Lấy API URL từ JSP khai báo, hoặc sử dụng fallback
+            let apiUrl = window.CHANGE_PASSWORD_API_URL;
+            if (!apiUrl) {
+                const pathName = window.location.pathname;
+                const contextPath = pathName.substring(0, pathName.indexOf('/', 1));
+                if (pathName.includes('/admin')) {
+                    apiUrl = contextPath + '/admin/change-password';
+                } else if (pathName.includes('/manager')) {
+                    apiUrl = contextPath + '/manager/change-password';
+                } else if (pathName.includes('/receptionist')) {
+                    apiUrl = contextPath + '/receptionist/change-password';
+                } else if (pathName.includes('/housekeeping')) {
+                    apiUrl = contextPath + '/housekeeping/change-password';
+                } else if (pathName.includes('/customer')) {
+                    apiUrl = contextPath + '/customer/change-password';
+                } else {
+                    apiUrl = contextPath + '/profile/change-password';
+                }
+            }
+
             fetch(apiUrl, {
                 method: 'PUT',
                 headers: {
@@ -88,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 showModalAlert('success', data.message || msg.success);
                 changePasswordForm.reset();
-                
+
                 // Tự động đóng modal sau 2 giây
                 setTimeout(() => {
                     closeChangePasswordModal();
@@ -106,17 +120,15 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 /* Hiển thị / Ẩn Modal Đổi mật khẩu */
-function openChangePasswordModal() {
-    console.log("openChangePasswordModal (external admin.js) has been called!");
+window.openChangePasswordModal = function () {
     const modal = document.getElementById('changePasswordModal');
-    console.log("Modal element in admin.js:", modal);
     if (modal) {
         modal.style.display = 'flex';
         hideModalAlert();
         const form = document.getElementById('changePasswordForm');
         if (form) form.reset();
-        
-        // Reset các trường mật khẩu về kiểu ẩn 'password'
+
+        // Đặt lại các trường mật khẩu về kiểu password ẩn
         ['currentPassword', 'newPassword', 'confirmNewPassword'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.setAttribute('type', 'password');
@@ -125,20 +137,20 @@ function openChangePasswordModal() {
             icon.className = 'fa-solid fa-eye-slash';
         });
     }
-}
+};
 
-function closeChangePasswordModal() {
+window.closeChangePasswordModal = function () {
     const modal = document.getElementById('changePasswordModal');
     if (modal) {
         modal.style.display = 'none';
     }
-}
+};
 
 /* Ẩn/Hiện mật khẩu trực tiếp */
-function togglePasswordVisibility(inputId, btn) {
+window.togglePasswordVisibility = function (inputId, btn) {
     const input = document.getElementById(inputId);
     if (!input) return;
-    
+
     const icon = btn.querySelector('i');
     if (input.getAttribute('type') === 'password') {
         input.setAttribute('type', 'text');
@@ -147,21 +159,21 @@ function togglePasswordVisibility(inputId, btn) {
         input.setAttribute('type', 'password');
         if (icon) icon.className = 'fa-solid fa-eye-slash';
     }
-}
+};
 
-/* Quản lý hộp thông báo alert bên trong Modal */
+/* Quản lý hộp thông báo bên trong Modal */
 function showModalAlert(type, message) {
     const alertBox = document.getElementById('changePasswordAlert');
     const alertText = document.getElementById('changePasswordAlertText');
     if (!alertBox || !alertText) return;
-    
+
     alertBox.className = 'alert-toast-inline ' + (type === 'success' ? 'success-alert' : 'error-alert');
-    
+
     const icon = alertBox.querySelector('i');
     if (icon) {
         icon.className = type === 'success' ? 'fa-solid fa-circle-check' : 'fa-solid fa-triangle-exclamation';
     }
-    
+
     alertText.innerText = message;
     alertBox.style.display = 'flex';
 }

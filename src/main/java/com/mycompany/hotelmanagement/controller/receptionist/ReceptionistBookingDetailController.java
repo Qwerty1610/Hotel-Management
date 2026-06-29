@@ -19,14 +19,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * ReceptionistBookingDetailController
- * URL: /receptionist/booking/detail
+ * ReceptionistBookingDetailController URL: /receptionist/booking/detail
  *
  * Hiển thị chi tiết (read-only) của một yêu cầu đặt phòng.
  *
- * @author BinhHD
+ * @author BinhHD, MinhTDP
  */
-@WebServlet(name = "ReceptionistBookingDetailController", urlPatterns = { "/receptionist/booking/detail" })
+@WebServlet(name = "ReceptionistBookingDetailController", urlPatterns = {"/receptionist/booking/detail"})
 public class ReceptionistBookingDetailController extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(ReceptionistBookingDetailController.class.getName());
@@ -39,7 +38,7 @@ public class ReceptionistBookingDetailController extends HttpServlet {
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("user") == null
                 || !"RECEPTIONIST".equals(session.getAttribute("role"))) {
-            response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
+            response.sendRedirect(request.getContextPath() + "/staff/login?error=unauthorized");
             return;
         }
 
@@ -66,7 +65,9 @@ public class ReceptionistBookingDetailController extends HttpServlet {
             }
 
             // Load assigned rooms for parent booking
-            java.util.List<Room> assignedRooms = bookingService.getAssignedRoomsForBooking(bookingId);
+            java.util.List<Room> assignedRooms = bookingService.getAssignedRoomsForBooking(bookingId,
+                    booking.getCheckInDate(),
+                    booking.getCheckOutDate());
 
             // Load child bookings (for group booking support)
             java.util.List<Booking> childBookings = bookingService.getChildBookings(bookingId);
@@ -74,7 +75,9 @@ public class ReceptionistBookingDetailController extends HttpServlet {
             // Load assigned rooms for each child booking
             Map<Integer, java.util.List<Room>> childAssignedRoomsMap = new HashMap<>();
             for (Booking child : childBookings) {
-                java.util.List<Room> childRooms = bookingService.getAssignedRoomsForBooking(child.getBookingId());
+                java.util.List<Room> childRooms = bookingService.getAssignedRoomsForBooking(child.getBookingId(),
+                        booking.getCheckInDate(),
+                        booking.getCheckOutDate());
                 childAssignedRoomsMap.put(child.getBookingId(), childRooms);
             }
 

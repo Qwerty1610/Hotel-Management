@@ -74,21 +74,22 @@ public class GoogleLoginController extends HttpServlet {
                 HttpSession session = request.getSession();
                 session.setAttribute("user", result.getDisplayName());
                 session.setAttribute("role", result.getRole());
-                session.setAttribute("email", email != null ? email.trim() : "");
+                session.setAttribute("email", result.getEmail() != null ? result.getEmail() : (email != null ? email.trim() : ""));
+                session.setAttribute("accountId", result.getAccountId());
                 
                 String redirectUrl = null;
                 if ("CUSTOMER".equals(result.getRole())) {
                     redirectUrl = (String) session.getAttribute("redirectAfterLogin");
                     session.removeAttribute("redirectAfterLogin");
+                    if (redirectUrl == null || redirectUrl.isEmpty()) {
+                        redirectUrl = request.getContextPath() + "/home/login";
+                    }
                 } else {
                     session.removeAttribute("redirectAfterLogin");
+                    redirectUrl = request.getContextPath() + result.getRedirectUrl();
                 }
 
-                if (redirectUrl != null && !redirectUrl.isEmpty()) {
-                    response.sendRedirect(redirectUrl);
-                } else {
-                    response.sendRedirect(request.getContextPath() + result.getRedirectUrl());
-                }
+                response.sendRedirect(redirectUrl);
             } else {
                 response.sendRedirect(request.getContextPath() + "/home/login?error=invalid_credentials");
             }

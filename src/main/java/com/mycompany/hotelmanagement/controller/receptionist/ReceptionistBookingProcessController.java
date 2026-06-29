@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpSession;
 import com.mycompany.hotelmanagement.service.RoomTypeService;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,15 +23,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * ReceptionistBookingProcessController
- * URL: /receptionist/booking/process
+ * ReceptionistBookingProcessController URL: /receptionist/booking/process
  *
- * handles room assignment and status approvals (Confirm, Reject, Cancel)
- * for a specific booking request on a standalone page.
+ * handles room assignment and status approvals (Confirm, Reject, Cancel) for a
+ * specific booking request on a standalone page.
  *
- * @author BinhHD
+ * @author BinhHD, MinhTDP
  */
-@WebServlet(name = "ReceptionistBookingProcessController", urlPatterns = { "/receptionist/booking/process" })
+@WebServlet(name = "ReceptionistBookingProcessController", urlPatterns = {"/receptionist/booking/process"})
 public class ReceptionistBookingProcessController extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(ReceptionistBookingProcessController.class.getName());
@@ -41,9 +41,15 @@ public class ReceptionistBookingProcessController extends HttpServlet {
 
         // 1. Authorization
         HttpSession session = request.getSession(false);
+        String action = request.getParameter("action");
+
+        if ("loadRooms".equals(action)) {
+            loadRooms(request, response);
+            return;
+        }
         if (session == null || session.getAttribute("user") == null
                 || !"RECEPTIONIST".equals(session.getAttribute("role"))) {
-            response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
+            response.sendRedirect(request.getContextPath() + "/staff/login?error=unauthorized");
             return;
         }
 
@@ -70,10 +76,16 @@ public class ReceptionistBookingProcessController extends HttpServlet {
             }
 
             // Load all rooms in the hotel (to support dynamic client-side filtering)
-            List<Room> rooms = bookingService.getAllRooms();
+            List<Room> rooms = bookingService.getAllRooms(
+                    booking.getCheckInDate(),
+                    booking.getCheckOutDate());
 
             // Load assigned rooms if any
-            List<Room> assignedRooms = bookingService.getAssignedRoomsForBooking(bookingId);
+            List<Room> assignedRooms = bookingService.getAssignedRoomsForBooking(
+                    bookingId,
+                    booking.getCheckInDate(),
+                    booking.getCheckOutDate()
+            );
 
             List<RoomTypeInfo> roomTypesList = new RoomTypeService().getAllRoomTypes();
 
@@ -83,7 +95,9 @@ public class ReceptionistBookingProcessController extends HttpServlet {
             // Load assigned rooms for each child booking
             Map<Integer, List<Room>> childAssignedRoomsMap = new HashMap<>();
             for (Booking child : childBookings) {
-                List<Room> childRooms = bookingService.getAssignedRoomsForBooking(child.getBookingId());
+                List<Room> childRooms = bookingService.getAssignedRoomsForBooking(child.getBookingId(),
+                        booking.getCheckInDate(),
+                        booking.getCheckOutDate());
                 childAssignedRoomsMap.put(child.getBookingId(), childRooms);
             }
 
@@ -115,7 +129,7 @@ public class ReceptionistBookingProcessController extends HttpServlet {
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("user") == null
                 || !"RECEPTIONIST".equals(session.getAttribute("role"))) {
-            response.sendRedirect(request.getContextPath() + "/home/login?error=unauthorized");
+            response.sendRedirect(request.getContextPath() + "/staff/login?error=unauthorized");
             return;
         }
 
@@ -199,7 +213,9 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                 if (note != null) {
                     existing.setNote(note.trim());
                 }
-
+                existing.setTotalAmount(
+                        bookingService.calculateBookingAmount(existing)
+                );
                 bookingService.updateBookingDetails(existing);
 
                 // Update child bookings
@@ -209,14 +225,19 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                     child.setCustomerName(existing.getCustomerName());
 
                     String cQtyStr = request.getParameter("childRoomQuantity_" + child.getBookingId());
-                    if (cQtyStr != null && !cQtyStr.trim().isEmpty()) {
-                        try {
-                            int cQty = Integer.parseInt(cQtyStr.trim());
-                            if (cQty > 0 && cQty <= 100) {
-                                child.setRoomQuantity(cQty);
-                            }
-                        } catch (NumberFormatException e) {}
+                    if (cQtyStr != null && !cQtyStr.isBlank()) {
+                        child.setRoomQuantity(Integer.parseInt(cQtyStr));
                     }
+
+                    String cTypeStr = request.getParameter("childRoomTypeId_" + child.getBookingId());
+                    if (cTypeStr != null && !cTypeStr.isBlank()) {
+                        child.setRoomTypeId(Integer.parseInt(cTypeStr));
+                    }
+
+                    child.setTotalAmount(
+                            bookingService.calculateBookingAmount(child)
+                    );
+
                     bookingService.updateBookingDetails(child);
                 }
             }
@@ -307,7 +328,7 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                     for (String rIdStr : roomIdStrings) {
                         allSubmittedRoomIds.add(Integer.parseInt(rIdStr.trim()));
                     }
-                    
+
                     // Validate selected room IDs for children
                     for (Booking child : children) {
                         String[] cRoomIdStrings = request.getParameterValues("childRoomIds_" + child.getBookingId());
@@ -425,5 +446,69 @@ public class ReceptionistBookingProcessController extends HttpServlet {
             LOGGER.log(Level.SEVERE, "Unexpected error in ReceptionistBookingProcessController doPost", e);
             response.sendRedirect(request.getContextPath() + "/receptionist/dashboard?tab=bookings&error=unknown");
         }
+    }
+
+    private void loadRooms(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+
+        response.setContentType("application/json;charset=UTF-8");
+        response.setCharacterEncoding("UTF-8");
+
+        try {
+
+            int roomTypeId = Integer.parseInt(request.getParameter("roomTypeId"));
+            java.sql.Date checkIn = java.sql.Date.valueOf(request.getParameter("checkInDate"));
+            java.sql.Date checkOut = java.sql.Date.valueOf(request.getParameter("checkOutDate"));
+
+            BookingService bookingService = new BookingService();
+
+            List<Room> rooms = bookingService.getRoomsByTypeId(
+                    roomTypeId,
+                    checkIn,
+                    checkOut
+            );
+
+            StringBuilder json = new StringBuilder();
+            json.append("[");
+
+            for (int i = 0; i < rooms.size(); i++) {
+
+                Room r = rooms.get(i);
+
+                json.append("{")
+                        .append("\"roomId\":").append(r.getRoomId()).append(",")
+                        .append("\"roomNumber\":\"").append(escapeJson(r.getRoomNumber())).append("\",")
+                        .append("\"status\":\"").append(escapeJson(r.getStatus())).append("\",")
+                        .append("\"floor\":\"").append(escapeJson(r.getFloor())).append("\",")
+                        .append("\"typeName\":\"").append(escapeJson(r.getTypeName())).append("\"")
+                        .append("}");
+
+                if (i < rooms.size() - 1) {
+                    json.append(",");
+                }
+            }
+
+            json.append("]");
+
+            PrintWriter out = response.getWriter();
+            out.print(json.toString());
+            out.flush();
+
+        } catch (Exception ex) {
+            LOGGER.log(Level.SEVERE, "loadRooms error", ex);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().print("[]");
+        }
+    }
+
+    private String escapeJson(String text) {
+        if (text == null) {
+            return "";
+        }
+        return text
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "")
+                .replace("\r", "");
     }
 }
