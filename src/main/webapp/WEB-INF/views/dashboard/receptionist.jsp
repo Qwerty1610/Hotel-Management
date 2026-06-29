@@ -485,7 +485,12 @@
                                         <div class="floor-block">
 
                                             <div class="floor-title">
-                                                Tầng ${entry.key}
+                                                <div class="floor-name">
+                                                    Tầng ${entry.key}
+                                                </div>
+                                                <div class="floor-room-count">
+                                                    ${fn:length(entry.value)} phòng
+                                                </div>
                                             </div>
 
                                             <div class="room-grid">
@@ -520,7 +525,16 @@
                     </c:if>
                     <%-- ===== CHECK-IN TAB (ITERATION 2/3) ===== --%>
                     <c:if test="${currentTab eq 'checkin'}">
+                        <c:if test="${param.checkinSuccess == '1'}">
+                            <div id="toastCheckin" class="checkin-toast">
+                                <span>
+                                    Đã check in thành công cho khách
+                                    <b>${param.customerName}</b>
+                                </span>
 
+                                <button class="toast-close" onclick="closeCheckinToast()">×</button>
+                            </div>
+                        </c:if>
                         <div class="content-header-row">
                             <div>
                                 <h2>
@@ -673,7 +687,7 @@
                         </div>
                     </c:if>
                     <%-- ===== WALK-IN BOOKING TAB===== --%> 
-                    <c:if test="${currentTab eq 'walkin-bookings'}"> 
+                    <c:if test="${currentTab eq 'walkin-bookings'}">
                         <form method="post" 
                               action="${pageContext.request.contextPath}/receptionist/walkin-booking" 
                               onsubmit="return validateWalkInSubmit()"> 
@@ -682,7 +696,7 @@
                                    name="bookingMode" 
                                    value="BOOKING"> 
                             <%-- ================= HEADER ================= --%> 
-                            <div class="content-header-row"> 
+                            <div class="content-header-row">
                                 <div> 
                                     <h2> 
                                         <i class="fa-solid fa-user-plus" 
@@ -692,26 +706,44 @@
                                     <p>
                                         Tạo booking trực tiếp cho khách hàng tại quầy lễ tân.
                                     </p> 
+                                </div>
+                                <div class="walkin-mode-card">
+                                    <label class="mode-option"> 
+                                        <input type="radio" name="walkinMode" value="booking" checked> 
+                                        <span>📅 Đặt phòng</span> </label> 
+                                    <label class="mode-option"> 
+                                        <input type="radio" name="walkinMode" value="checkin"> 
+                                        <span>🏨 Check In</span> 
+                                    </label> 
                                 </div> 
-                            </div> 
-                            <div class="walkin-mode-card"> 
-                                <label class="mode-option"> 
-                                    <input type="radio" name="walkinMode" value="booking" checked> 
-                                    <span>📅 Đặt phòng</span> </label> 
-                                <label class="mode-option"> 
-                                    <input type="radio" name="walkinMode" value="checkin"> 
-                                    <span>🏨 Check In</span> 
-                                </label> 
-                            </div> 
+                            </div>
+                            <div id="searchAccountMessage"
+                                 class="search-account-message hidden"></div>
+                            <div class="walkin-search-account">
+                                <input
+                                    id="searchAccountKeyword"
+                                    class="walkin-input"
+                                    placeholder="Nhập Email hoặc SĐT">
+                                <button
+                                    type="button"
+                                    class="btn-search-account"
+                                    onclick="searchAccount()">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                    Tìm tài khoản
+                                </button>
+                            </div>
                             <!-- ========================================================= 
                                     CARD 1 - THÔNG TIN KHÁCH HÀNG 
                             ========================================================= --> 
                             <div class="walkin-card"> 
-                                <div class="walkin-section-header"> 
+                                <div class="walkin-section-header">
                                     <div> 
-                                        <i class="fa-solid fa-user"></i> 
-                                        Thông tin khách hàng 
-                                    </div> </div> <div class="walkin-grid"> 
+                                        <i class="fa-solid fa-user"></i>
+                                        Thông tin khách hàng
+                                        <span id="customerInfoMessage" class="customer-info-message hidden"></span>
+                                    </div>
+                                </div>
+                                <div class="walkin-grid"> 
                                     <!-- HÀNG 1 --> 
                                     <div class="walkin-row-3"> 
                                         <div class="form-group form-group-large"> 
@@ -719,16 +751,16 @@
                                             <input type="text" 
                                                    id="customerName" 
                                                    name="customerName" 
-                                                   class="walkin-input" 
-                                                   required> 
+                                                   class="walkin-input"> 
                                         </div> 
                                         <div class="form-group"> 
                                             <label>Số điện thoại *</label> 
                                             <input type="text" 
                                                    id="phone" 
                                                    name="phone" 
-                                                   class="walkin-input" 
-                                                   required> 
+                                                   class="walkin-input"
+                                                   maxlength="10"
+                                                   inputmode="numeric"> 
                                         </div> 
                                         <div class="form-group"> 
                                             <label>Email</label> 
@@ -745,15 +777,13 @@
                                             <input type="date" 
                                                    id="checkInDate" 
                                                    name="checkInDate" 
-                                                   class="walkin-input" 
-                                                   required> </div> 
+                                                   class="walkin-input"> </div> 
                                         <div class="form-group"> 
                                             <label>Ngày trả phòng *</label> 
                                             <input type="date" 
                                                    id="checkOutDate" 
                                                    name="checkOutDate" 
-                                                   class="walkin-input" 
-                                                   required> 
+                                                   class="walkin-input"> 
                                         </div> 
                                     </div> 
                                 </div> 
@@ -765,8 +795,11 @@
                                 <div class="walkin-section-header"> 
                                     <div> 
                                         <i class="fa-solid fa-bed"></i> 
-                                        Chọn loại phòng 
-                                    </div> 
+                                        Chọn loại phòng
+                                        <span id="roomTypeMessage"
+                                              class="room-type-message hidden">
+                                        </span>
+                                    </div>
                                     <button type="button" 
                                             class="btn-add-room-type" 
                                             onclick="addRoomRow()"> 
@@ -779,12 +812,12 @@
                                     <span>Số người</span> 
                                     <span></span> 
                                 </div> 
-                                <div id="roomRowsContainer"> 
-                                    <div class="room-row first-room-row"> 
+                                <div id="roomRowsContainer">
+                                    <div class="room-row first-room-row">
+                                        <span class="room-row-error hidden"></span>
                                         <select name="roomTypeIds[]" 
                                                 class="walkin-input room-type-select" 
-                                                onchange="roomTypeChanged(this)" 
-                                                required> 
+                                                onchange="roomTypeChanged(this)"> 
                                             <option value=""> 
                                                 -- Chọn loại phòng -- 
                                             </option> 
@@ -866,7 +899,8 @@
                                         Yêu cầu khách hàng 
                                     </div> 
                                 </div> 
-                                <textarea name="note" 
+                                <textarea name="note"
+                                          id="note"
                                           class="walkin-note" 
                                           rows="5" 
                                           placeholder="Ví dụ: phòng tầng cao, gần thang máy, giường phụ, yên tĩnh...">                         
@@ -882,18 +916,38 @@
                                         Tóm tắt đặt phòng 
                                     </div> 
                                 </div> 
-                                <div id="bookingSummary"> 
-                                    <div class="summary-row"> 
-                                        <span>Số đêm nghỉ</span> 
-                                        <strong id="summaryNights">0</strong> 
-                                    </div> 
-                                    <div id="summaryRoomTypes"> 
-                                    </div> 
-                                    <div class="summary-row total"> 
-                                        <span>Tổng cộng</span> 
-                                        <strong id="summaryTotal"> 0 VNĐ 
-                                        </strong> 
-                                    </div> 
+                                <div id="bookingSummary">
+                                    <!-- Bảng loại phòng -->
+                                    <table class="summary-room-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Loại phòng</th>
+                                                <th>Số phòng</th>
+                                                <th>Giá</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="summaryRoomTableBody">
+                                        </tbody>
+                                    </table>
+                                    <div class="summary-row">
+                                        <span class="summary-label">
+                                            Số đêm lưu trú
+                                        </span>
+                                        <span class="summary-value"
+                                              id="summaryNight">
+                                            0
+                                        </span>
+                                    </div>
+
+                                    <div class="summary-row total">
+                                        <span class="summary-label">
+                                            Tổng số tiền
+                                        </span>
+                                        <span class="summary-value total-price"
+                                              id="summaryTotal">
+                                            0 VNĐ
+                                        </span>
+                                    </div>
                                 </div> 
                             </div> 
                             <%-- ========================================================= 
@@ -923,18 +977,67 @@
                                 <button type="submit" 
                                         id="bookingBtn"
                                         class="btn-booking-submit" 
-                                        onclick="document.getElementById('bookingMode').value = 'BOOKING'"> 
+                                        onclick="return beforeWalkInSubmit('BOOKING')"> 
                                     <i class="fa-solid fa-calendar-check"></i> Đặt phòng 
                                 </button> 
                                 <button type="submit" 
                                         id="checkinBtn"
                                         class="btn-booking-submit" 
-                                        onclick="document.getElementById('bookingMode').value = 'CHECKIN'"> 
+                                        onclick="return beforeWalkInSubmit('CHECKIN')"> 
                                     <i class="fa-solid fa-door-open"></i> 
                                     Check In 
                                 </button> 
                             </div> 
-                        </form> 
+                        </form>
+                        <div id="modePopup" class="mode-popup hidden">
+                            <div class="mode-popup-icon">
+                                <i class="fa-solid fa-circle-info"></i>
+                            </div>
+                            <div class="mode-popup-content">
+                                <div class="mode-popup-title">
+                                    Chế độ
+                                </div>
+                                <div id="modePopupMessage">
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                class="mode-popup-close"
+                                onclick="hideModePopup()">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div id="walkinToast" class="walkin-toast">
+                            <c:if test="${not empty success}">
+                                <script>
+                                    window.walkInSuccessMessage = "${fn:escapeXml(success)}";
+                                </script>
+                                <c:remove var="success" scope="session"/>
+                            </c:if>
+
+                            <c:if test="${not empty error}">
+                                <script>
+                                    window.walkInErrorMessage = "${fn:escapeXml(error)}";
+                                </script>
+                                <c:remove var="error" scope="session"/>
+                            </c:if>
+                            <span id="walkinToastMessage"></span>
+
+                            <button
+                                type="button"
+                                class="walkin-toast-close"
+                                onclick="hideWalkInToast()">
+                                ×
+                            </button>
+                        </div>
+                        <c:if test="${not empty success}">
+                            <script>
+                                window.addEventListener("DOMContentLoaded", function () {
+                                    clearWalkInAllState();
+                                    resetWalkInFormKeepMode();
+                                });
+                            </script>
+                        </c:if>
                         <script>
                             window.roomTypeOptionsHtml = `
                             <c:forEach items="${roomTypesList}" var="rt">
@@ -1217,6 +1320,128 @@
         </div>
         <script>
             const contextPath = '${pageContext.request.contextPath}';
+        </script>
+        <script>
+            function closeCheckinToast() {
+                const toast = document.getElementById("toastCheckin");
+                if (toast) {
+                    toast.remove();
+                }
+
+                const url = new URL(window.location);
+                url.searchParams.delete("checkinSuccess");
+                url.searchParams.delete("customerName");
+                window.history.replaceState({}, document.title, url.pathname + url.search);
+            }
+
+            window.addEventListener("DOMContentLoaded", function () {
+                const toast = document.getElementById("toastCheckin");
+
+                if (!toast)
+                    return;
+
+                setTimeout(() => {
+                    toast.style.opacity = "0";
+
+                    setTimeout(() => {
+                        toast.remove();
+
+                        const url = new URL(window.location);
+                        url.searchParams.delete("checkinSuccess");
+                        url.searchParams.delete("customerName");
+                        window.history.replaceState({}, document.title, url.pathname + url.search);
+
+                    }, 400);
+
+                }, 3000);
+            });
+            async function searchAccount() {
+
+                hideSearchAccountMessage();
+
+                const keyword = document
+                        .getElementById("searchAccountKeyword")
+                        .value
+                        .trim();
+
+                if (!keyword) {
+                    showSearchAccountMessage("Vui lòng nhập Email hoặc SĐT");
+                    return;
+                }
+
+                try {
+
+                    const response = await fetch(
+                            contextPath
+                            + "/receptionist/walkin-booking"
+                            + "?action=searchAccount"
+                            + "&keyword="
+                            + encodeURIComponent(keyword)
+                            );
+
+                    const account = await response.json();
+
+                    if (!account.fullName) {
+                        showSearchAccountMessage("Không tìm thấy tài khoản");
+                        return;
+                    }
+
+                    document.getElementById("customerName").value = account.fullName || "";
+                    document.getElementById("phone").value = account.phone || "";
+                    document.getElementById("email").value = account.email || "";
+
+                    saveWalkInState();
+
+                    showSearchAccountMessage("Đã tìm thấy tài khoản", "success");
+
+                } catch (e) {
+
+                    console.error(e);
+                    showSearchAccountMessage("Có lỗi xảy ra khi tìm kiếm");
+
+                }
+            }
+            function showSearchAccountError(message) {
+                const box = document.getElementById("searchAccountError");
+
+                box.textContent = message;
+                box.classList.remove("hidden");
+            }
+
+            function hideSearchAccountError() {
+                const box = document.getElementById("searchAccountError");
+
+                box.textContent = "";
+                box.classList.add("hidden");
+            }
+            let searchAccountTimer = null;
+
+            function showSearchAccountMessage(message, type = "error") {
+
+                const box = document.getElementById("searchAccountMessage");
+                if (!box)
+                    return;
+
+                clearTimeout(searchAccountTimer);
+
+                box.className = "search-account-message " + type;
+                box.textContent = message;
+                box.classList.remove("hidden");
+
+                searchAccountTimer = setTimeout(() => {
+                    hideSearchAccountMessage();
+                }, 3000);
+            }
+
+            function hideSearchAccountMessage() {
+
+                const box = document.getElementById("searchAccountMessage");
+                if (!box)
+                    return;
+
+                box.classList.add("hidden");
+                box.textContent = "";
+            }
         </script>
         <script src="${pageContext.request.contextPath}/assets/js/receptionist.js?v=5" charset="UTF-8"></script>
     </body>

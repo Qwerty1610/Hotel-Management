@@ -167,7 +167,6 @@ public class BookingDAO {
                 ps.setInt(4, bookingId);
                 int rows = ps.executeUpdate();
                 if (rows > 0) {
-                    syncRoomStatusByBooking(bookingId);
                     return true;
                 }
                 return false;
@@ -453,23 +452,71 @@ public class BookingDAO {
         }
     }
 
-    public List<Room> getRoomsByTypeId(int typeId) {
+    public List<Room> getRoomsByTypeId(
+            int typeId,
+            Date checkIn,
+            Date checkOut) {
         List<Room> list = new ArrayList<>();
-        String sql = "SELECT r.room_id, r.room_number, r.status, r.floor, rt.type_name "
-                + "FROM dbo.Room r "
-                + "JOIN dbo.RoomType rt ON r.type_id = rt.type_id "
-                + "WHERE r.type_id = ? "
-                + "ORDER BY r.floor, r.room_number";
+        String sql = """
+                     SELECT
+                         r.room_id,
+                         r.room_number,
+                     
+                         CASE
+                         
+                             WHEN EXISTS (
+                         
+                                 SELECT 1
+                                 FROM RoomAssignment ra
+                                 JOIN Booking b
+                                     ON ra.booking_id = b.booking_id
+                         
+                                 WHERE ra.room_id = r.room_id
+                                   AND b.status IN ('Confirmed','CheckedIn')
+                                   AND b.check_in_date < ?
+                                   AND b.check_out_date > ?
+                         
+                             )
+                         
+                             THEN 'Occupied'
+                         
+                             WHEN r.status='Maintenance'
+                                 THEN 'Maintenance'
+                         
+                             WHEN r.status='OutOfService'
+                                 THEN 'OutOfService'
+                         
+                             ELSE 'Available'
+                         
+                         END AS display_status,
+                     
+                         r.floor,
+                     
+                         rt.type_name
+                     
+                     FROM Room r
+                     
+                     JOIN RoomType rt
+                     ON rt.type_id=r.type_id
+                     
+                     WHERE r.type_id=?
+                     
+                     ORDER BY
+                     r.floor,
+                     r.room_number
+                     """;
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setInt(1, typeId);
+                ps.setDate(1, checkOut);
+                ps.setDate(2, checkIn);
+                ps.setInt(3, typeId);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         Room r = new Room();
                         r.setRoomId(rs.getInt("room_id"));
                         r.setRoomNumber(rs.getString("room_number"));
-                        r.setStatus(rs.getString("status"));
+                        r.setStatus(rs.getString("display_status"));
                         r.setFloor(rs.getString("floor"));
                         r.setTypeName(rs.getString("type_name"));
                         list.add(r);
@@ -482,29 +529,72 @@ public class BookingDAO {
         return list;
     }
 
-    public List<Room> getAllRooms() {
+    public List<Room> getAllRooms(Date checkIn, Date checkOut) {
         List<Room> list = new ArrayList<>();
-        String sql = "SELECT r.room_id, r.room_number, r.status, r.floor, rt.type_name "
-                + "FROM dbo.Room r "
-                + "JOIN dbo.RoomType rt ON r.type_id = rt.type_id "
-                + "ORDER BY r.floor, r.room_number";
-        try (Connection conn = DBContext.getConnection()) {
+
+        String sql = """
+                SELECT
+                    r.room_id,
+                    r.room_number,
+
+                    CASE
+                        WHEN EXISTS (
+                            SELECT 1
+                            FROM RoomAssignment ra
+                            JOIN Booking b ON ra.booking_id = b.booking_id
+                            WHERE ra.room_id = r.room_id
+                              AND b.status IN ('Confirmed','CheckedIn')
+                              AND b.check_in_date < ?
+                              AND b.check_out_date > ?
+                        )
+                        THEN 'Occupied'
+
+                        WHEN r.status='Maintenance'
+                            THEN 'Maintenance'
+
+                        WHEN r.status='OutOfService'
+                            THEN 'OutOfService'
+
+                        ELSE 'Available'
+                    END AS display_status,
+
+                    r.floor,
+                    rt.type_name
+
+                FROM Room r
+                JOIN RoomType rt ON rt.type_id=r.type_id
+
+                ORDER BY r.floor, r.room_number
+                """;
+
+        try (
+                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setDate(1, checkOut);
+            ps.setDate(2, checkIn);
             useDatabase(conn);
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        Room r = new Room();
-                        r.setRoomId(rs.getInt("room_id"));
-                        r.setRoomNumber(rs.getString("room_number"));
-                        r.setStatus(rs.getString("status"));
-                        r.setFloor(rs.getString("floor"));
-                        r.setTypeName(rs.getString("type_name"));
-                        list.add(r);
-                    }
-                }
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+
+                Room room = new Room();
+
+                room.setRoomId(rs.getInt("room_id"));
+                room.setRoomNumber(rs.getString("room_number"));
+                room.setFloor(rs.getString("floor"));
+                room.setTypeName(rs.getString("type_name"));
+
+                room.setStatus(rs.getString("display_status"));
+
+                list.add(room);
+
             }
+
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error in getAllRooms", e);
+
+            LOGGER.log(Level.SEVERE,
+                    "Error getAllRooms", e);
+
         }
         return list;
     }
@@ -597,24 +687,63 @@ public class BookingDAO {
         return false;
     }
 
-    public List<Room> getAssignedRoomsForBooking(int bookingId) {
+    public List<Room> getAssignedRoomsForBooking(int bookingId, Date checkIn, Date checkOut) {
         List<Room> list = new ArrayList<>();
-        String sql = "SELECT r.room_id, r.room_number, r.status, r.floor, rt.type_name "
-                + "FROM dbo.RoomAssignment br "
-                + "JOIN dbo.Room r ON br.room_id = r.room_id "
-                + "JOIN dbo.RoomType rt ON r.type_id = rt.type_id "
-                + "WHERE br.booking_id = ? "
-                + "ORDER BY r.room_number";
+        String sql = """
+                     SELECT
+                     
+                         r.room_id,
+                         r.room_number,
+                     
+                         CASE
+                             WHEN b.status IN ('Confirmed','CheckedIn')
+                                  AND b.check_in_date < ?
+                                  AND b.check_out_date > ?
+                             THEN 'Occupied'
+                         
+                             WHEN r.status='Maintenance'
+                                 THEN 'Maintenance'
+                         
+                             WHEN r.status='OutOfService'
+                                 THEN 'OutOfService'
+                         
+                             ELSE 'Available'
+                         END AS display_status,
+                     
+                         r.floor,
+                     
+                         rt.type_name
+                     
+                     FROM RoomAssignment ra
+                     
+                     JOIN Room r
+                     
+                     ON ra.room_id=r.room_id
+                     
+                     JOIN RoomType rt
+                     
+                     ON rt.type_id=r.type_id
+                     
+                     JOIN Booking b
+                     
+                     ON b.booking_id=ra.booking_id
+                     
+                     WHERE ra.booking_id=?
+                     
+                     ORDER BY r.room_number
+                     """;
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setInt(1, bookingId);
+                ps.setDate(1, checkOut);
+                ps.setDate(2, checkIn);
+                ps.setInt(3, bookingId);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         Room r = new Room();
                         r.setRoomId(rs.getInt("room_id"));
                         r.setRoomNumber(rs.getString("room_number"));
-                        r.setStatus(rs.getString("status"));
+                        r.setStatus(rs.getString("display_status"));
                         r.setFloor(rs.getString("floor"));
                         r.setTypeName(rs.getString("type_name"));
                         list.add(r);
@@ -911,45 +1040,13 @@ public class BookingDAO {
             ps.setString(1, status);
             ps.setInt(2, bookingId);
 
-            boolean success = ps.executeUpdate() > 0;
-
-            if (success) {
-                syncRoomStatusByBooking(bookingId);
-            }
-
-            return success;
+            return ps.executeUpdate() > 0;
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         return false;
-    }
-
-    public void syncRoomStatusByBooking(int bookingId) {
-
-        String sql = """
-        UPDATE r
-        SET r.status =
-            CASE
-                WHEN b.status IN ('Confirmed', 'CheckedIn') THEN 'Occupied'
-                ELSE 'Available'
-            END
-        FROM dbo.Room r
-        JOIN dbo.RoomAssignment ra ON r.room_id = ra.room_id
-        JOIN dbo.Booking b ON ra.booking_id = b.booking_id
-        WHERE b.booking_id = ?
-    """;
-
-        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            useDatabase(conn);
-            ps.setInt(1, bookingId);
-            ps.executeUpdate();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     public List<Room> getAllAssignedRoomsForGroup(int bookingId) {

@@ -1,6 +1,7 @@
 package com.mycompany.hotelmanagement.dal;
 
 import com.mycompany.hotelmanagement.config.DBContext;
+import com.mycompany.hotelmanagement.entity.Account;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.Room;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
@@ -1072,5 +1073,45 @@ public class WalkInBookingDAO {
 
             ps.executeUpdate();
         }
+    }
+
+    public Account findAccountByEmailOrPhone(String keyword) {
+
+        String sql = """
+        SELECT
+            full_name,
+            phone,
+            email
+        FROM Account
+        WHERE phone = ?
+           OR email = ?
+        """;
+
+        try (
+                Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            useDatabase(con);
+
+            ps.setString(1, keyword.trim());
+            ps.setString(2, keyword.trim());
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+
+                Account a = new Account();
+
+                a.setFullName(rs.getString("full_name"));
+                a.setPhone(rs.getString("phone"));
+                a.setEmail(rs.getString("email"));
+
+                return a;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 }
