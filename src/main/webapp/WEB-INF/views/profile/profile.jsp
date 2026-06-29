@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
 <%@ include file="../../includes/taglibs.jsp" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ include file="../../includes/header.jsp" %>
@@ -309,7 +309,7 @@
 <script>
     window.CHANGE_PASSWORD_API_URL = "${pageContext.request.contextPath}/${sessionScope.role eq 'ADMIN' ? 'admin' : (sessionScope.role eq 'HOTEL_MANAGER' ? 'manager' : (sessionScope.role eq 'RECEPTIONIST' ? 'receptionist' : (sessionScope.role eq 'HOUSEKEEPING' ? 'housekeeping' : 'customer')))}/change-password";
 </script>
-<script src="${pageContext.request.contextPath}/assets/js/change-password.js"></script>
+<script src="${pageContext.request.contextPath}/assets/js/change-password.js" charset="UTF-8"></script>
 <jsp:include page="/WEB-INF/views/admin/includes/change-password-modal.jsp" />
 </body>
 </html>

@@ -53,10 +53,10 @@
                                 Mã OTP không chính xác hoặc đã hết hạn!
                             </c:when>
                             <c:when test="${param.error eq 'passwords_dont_match'}">
-                                Mật khẩu xác nhận mới không trùng khớp!
+                                Mật khẩu xác nhận không trùng khớp!
                             </c:when>
                             <c:when test="${param.error eq 'invalid_password'}">
-                                Mật khẩu phải tối thiểu 8 ký tự, bao gồm cả chữ, số và ký tự đặc biệt!
+                                Mật khẩu mới phải bao gồm cả chữ, số và ký tự đặc biệt!
                             </c:when>
                             <c:when test="${param.error eq 'invalid_input'}">
                                 Vui lòng nhập đầy đủ thông tin yêu cầu!
@@ -143,11 +143,11 @@
                 if (newPassword.length < 8) {
                     errorMessage = 'Mật khẩu phải tối thiểu từ 8 ký tự trở lên!';
                 } else if (!hasLetter || !hasDigit || !hasSpecial) {
-                    errorMessage = 'Mật khẩu phải bao gồm cả chữ, số và ký tự đặc biệt!';
+                    errorMessage = 'Mật khẩu mới phải bao gồm cả chữ, số và ký tự đặc biệt!';
                 }
                 // 4. Confirm password validation
                 else if (newPassword !== confirmPassword) {
-                    errorMessage = 'Mật khẩu xác nhận mới không trùng khớp!';
+                    errorMessage = 'Mật khẩu xác nhận không trùng khớp!';
                 }
             }
             

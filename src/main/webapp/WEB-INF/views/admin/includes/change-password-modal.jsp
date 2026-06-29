@@ -1,13 +1,25 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
 <%--
     Modal đổi mật khẩu tài khoản Admin.
     @author TùngNQ
 --%>
 <!-- MODAL ĐỔI MẬT KHẨU ADMIN -->
+<script>
+    window.MSG_CHANGE_PASSWORD = {
+        emptyFields: 'Vui lòng điền đầy đủ các trường mật khẩu!',
+        passwordShort: 'Mật khẩu mới phải tối thiểu từ 8 ký tự trở lên!',
+        passwordWeak: 'Mật khẩu mới phải bao gồm cả chữ, số và ký tự đặc biệt!',
+        passwordMismatch: 'Mật khẩu xác nhận không trùng khớp!',
+        passwordSameAsCurrent: 'Mật khẩu mới không được trùng với mật khẩu hiện tại!',
+        updating: '<i class="fa-solid fa-spinner fa-spin"></i> Đang cập nhật...',
+        systemError: 'Lỗi hệ thống khi cập nhật mật khẩu.',
+        success: 'Đổi mật khẩu thành công!'
+    };
+</script>
 <div id="changePasswordModal" class="modal-overlay" style="display: none;">
     <div class="modal-container" style="max-width: 440px;">
         <div class="modal-header">
-            <h3><i class="fa-solid fa-key" style="color: #3a86ff;"></i> Đổi mật khẩu tài khoản</h3>
+            <h3><i class="fa-solid fa-key" style="color: var(--brand-blue);"></i> Đổi mật khẩu tài khoản</h3>
             <button type="button" class="btn-close-modal" onclick="closeChangePasswordModal()">&times;</button>
         </div>
         <form id="changePasswordForm" novalidate>
@@ -41,7 +53,7 @@
                         </button>
                     </div>
                     <small class="password-strength-hint">
-                        <i class="fa-solid fa-circle-info"></i> Mật khẩu phải từ 8 ký tự trở lên, bao gồm cả chữ, số và ký tự đặc biệt.
+                        <i class="fa-solid fa-circle-info"></i> Mật khẩu mới phải bao gồm cả chữ, số và ký tự đặc biệt!
                     </small>
                 </div>
 

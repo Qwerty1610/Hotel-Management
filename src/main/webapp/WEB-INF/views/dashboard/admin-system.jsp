@@ -30,11 +30,9 @@
                     <span class="current">Bảng điều khiển hệ thống</span>
                 </div>
 
-                <div class="topbar-actions" style="display: flex; align-items: center; gap: 12px;">
-                    <a href="${pageContext.request.contextPath}/logout" class="btn-logout" style="margin-left: 0;">
-                        <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
-                    </a>
-                </div>
+                <a href="${pageContext.request.contextPath}/logout" class="btn-logout">
+                    <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                </a>
             </header>
 
             <!-- DASHBOARD WORKSPACE -->

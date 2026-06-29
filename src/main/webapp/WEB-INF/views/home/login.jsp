@@ -148,9 +148,6 @@
                                 Chưa có tài khoản? <a href="${pageContext.request.contextPath}/home/register">Đăng ký ngay</a>
                             </div>
 
-                            <div class="signup-prompt" style="margin-top: 10px; font-size: 13px; border-top: 1px dashed rgba(15, 23, 42, 0.08); padding-top: 12px;">
-                                Bạn là nhân viên? <a href="${pageContext.request.contextPath}/staff/login" style="color: #0066cc; font-weight: 700;">Đăng nhập tại đây</a>
-                            </div>
 
                             <a href="${pageContext.request.contextPath}/home" class="back-link">
                                 <i class="fa-solid fa-arrow-left"></i>Quay lại trang chủ
@@ -160,7 +157,7 @@
                 </c:choose>
             </div>
 
-            <script src="${pageContext.request.contextPath}/assets/js/login.js?v=2"></script>
+            <script src="${pageContext.request.contextPath}/assets/js/login.js?v=2" charset="UTF-8"></script>
         </body>
 
         </html>

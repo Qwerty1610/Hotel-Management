@@ -11,6 +11,17 @@ document.addEventListener('DOMContentLoaded', function () {
         changePasswordForm.addEventListener('submit', function (e) {
             e.preventDefault();
             
+            const msg = window.MSG_CHANGE_PASSWORD || {
+                emptyFields: 'Vui lòng điền đầy đủ các trường mật khẩu!',
+                passwordShort: 'Mật khẩu mới phải tối thiểu từ 8 ký tự trở lên!',
+                passwordWeak: 'Mật khẩu mới phải bao gồm cả chữ, số và ký tự đặc biệt!',
+                passwordMismatch: 'Mật khẩu xác nhận không trùng khớp!',
+                passwordSameAsCurrent: 'Mật khẩu mới không được trùng với mật khẩu hiện tại!',
+                updating: '<i class="fa-solid fa-spinner fa-spin"></i> Đang cập nhật...',
+                systemError: 'Lỗi hệ thống khi cập nhật mật khẩu.',
+                success: 'Đổi mật khẩu thành công!'
+            };
+            
             const currentPassword = document.getElementById('currentPassword').value;
             const newPassword = document.getElementById('newPassword').value;
             const confirmNewPassword = document.getElementById('confirmNewPassword').value;
@@ -19,20 +30,20 @@ document.addEventListener('DOMContentLoaded', function () {
             let errorMessage = '';
             
             if (!currentPassword || !newPassword || !confirmNewPassword) {
-                errorMessage = 'Vui lòng điền đầy đủ các trường mật khẩu!';
+                errorMessage = msg.emptyFields;
             } else {
                 const hasLetter = /[a-zA-Z]/.test(newPassword);
                 const hasDigit = /[0-9]/.test(newPassword);
                 const hasSpecial = /[^a-zA-Z0-9]/.test(newPassword);
                 
                 if (newPassword.length < 8) {
-                    errorMessage = 'Mật khẩu mới phải tối thiểu từ 8 ký tự trở lên!';
+                    errorMessage = msg.passwordShort;
                 } else if (!hasLetter || !hasDigit || !hasSpecial) {
-                    errorMessage = 'Mật khẩu mới phải bao gồm cả chữ, số và ký tự đặc biệt!';
+                    errorMessage = msg.passwordWeak;
                 } else if (newPassword !== confirmNewPassword) {
-                    errorMessage = 'Mật khẩu xác nhận không trùng khớp!';
+                    errorMessage = msg.passwordMismatch;
                 } else if (currentPassword === newPassword) {
-                    errorMessage = 'Mật khẩu mới không được trùng với mật khẩu hiện tại!';
+                    errorMessage = msg.passwordSameAsCurrent;
                 }
             }
             
@@ -47,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function () {
             
             // Thiết lập trạng thái loading trên button
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang cập nhật...';
+            submitBtn.innerHTML = msg.updating;
             hideModalAlert();
             
             // Tìm contextPath động dựa trên URL hiện tại
@@ -69,13 +80,13 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => {
                 return response.json().then(data => {
                     if (!response.ok) {
-                        throw new Error(data.message || 'Lỗi hệ thống khi cập nhật mật khẩu.');
+                        throw new Error(data.message || msg.systemError);
                     }
                     return data;
                 });
             })
             .then(data => {
-                showModalAlert('success', data.message || 'Đổi mật khẩu thành công!');
+                showModalAlert('success', data.message || msg.success);
                 changePasswordForm.reset();
                 
                 // Tự động đóng modal sau 2 giây
