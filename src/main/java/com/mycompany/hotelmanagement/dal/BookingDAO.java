@@ -499,7 +499,7 @@ public class BookingDAO {
                      JOIN RoomType rt
                      ON rt.type_id=r.type_id
                      
-                     WHERE r.type_id=?
+                      WHERE r.type_id=? AND r.is_deleted = 0
                      
                      ORDER BY
                      r.floor,
@@ -563,6 +563,7 @@ public class BookingDAO {
 
                 FROM Room r
                 JOIN RoomType rt ON rt.type_id=r.type_id
+                WHERE r.is_deleted = 0
 
                 ORDER BY r.floor, r.room_number
                 """;
@@ -820,7 +821,7 @@ public class BookingDAO {
 
     public int checkRoomAvailability(int roomTypeId, Date checkIn, Date checkOut) {
         int totalRooms = 0;
-        String countSql = "SELECT COUNT(*) FROM dbo.Room WHERE type_id = ? AND status <> N'Maintenance'";
+        String countSql = "SELECT COUNT(*) FROM dbo.Room WHERE type_id = ? AND status <> N'Maintenance' AND is_deleted = 0";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(countSql)) {

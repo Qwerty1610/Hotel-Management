@@ -34,6 +34,7 @@ public class WalkInBookingDAO {
         JOIN RoomType rt
             ON r.type_id = rt.type_id
         WHERE r.type_id = ?
+        AND r.is_deleted = 0
         AND r.status NOT IN
         (
             'Maintenance',
@@ -89,6 +90,7 @@ public class WalkInBookingDAO {
         JOIN RoomType rt
             ON r.type_id = rt.type_id
         WHERE r.type_id = ?
+        AND r.is_deleted = 0
         AND r.status NOT IN
         (
             'Maintenance',
@@ -181,7 +183,7 @@ public class WalkInBookingDAO {
         String sql = """
         SELECT *
         FROM Room
-        WHERE type_id = ?
+        WHERE type_id = ? AND is_deleted = 0
         AND status NOT IN
         (
             'Maintenance',
@@ -223,7 +225,7 @@ public class WalkInBookingDAO {
         String sql = """
         SELECT COUNT(*)
         FROM Room
-        WHERE type_id=?
+        WHERE type_id=? AND is_deleted = 0
         AND status NOT IN
         (
             'Maintenance',
@@ -726,7 +728,7 @@ public class WalkInBookingDAO {
         String roomSql = """
             SELECT status
             FROM Room
-            WHERE room_id=?
+            WHERE room_id=? AND is_deleted = 0
         """;
 
         try (PreparedStatement ps
@@ -817,6 +819,7 @@ public class WalkInBookingDAO {
                 SELECT 1
                 FROM Room r
                 WHERE r.type_id = rt.type_id
+                AND r.is_deleted = 0
                 AND r.status NOT IN
                 (
                     'Maintenance',
@@ -887,7 +890,7 @@ public class WalkInBookingDAO {
         String sql = """
     SELECT COUNT(*)
     FROM Room r
-    WHERE r.type_id = ?
+    WHERE r.type_id = ? AND r.is_deleted = 0
     AND r.status NOT IN
     (
         'Maintenance',

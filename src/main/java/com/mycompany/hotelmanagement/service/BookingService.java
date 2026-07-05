@@ -218,7 +218,7 @@ public class BookingService {
      * Gets the total count of rooms of a specific type in the database.
      */
     private int getRoomCountByTypeId(int typeId) {
-        String sql = "SELECT COUNT(*) FROM Room WHERE type_id = ?";
+        String sql = "SELECT COUNT(*) FROM Room WHERE type_id = ? AND is_deleted = 0";
         try (java.sql.Connection conn = com.mycompany.hotelmanagement.config.DBContext.getConnection()) {
             try (java.sql.Statement stmt = conn.createStatement()) {
                 stmt.execute("USE HotelManagementDB");
