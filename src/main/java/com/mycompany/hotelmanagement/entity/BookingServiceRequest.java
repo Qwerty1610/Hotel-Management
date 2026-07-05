@@ -25,6 +25,8 @@ public class BookingServiceRequest implements Serializable {
     private String roomNumber;
     private String customerName;
     private String assignedStaffName;
+    private String unit;
+    private double unitPrice;
 
     public BookingServiceRequest() {
     }
@@ -163,5 +165,25 @@ public class BookingServiceRequest implements Serializable {
 
     public void setPriority(String priority) {
         this.priority = priority;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
+
+    public double getUnitPrice() {
+        return unitPrice;
+    }
+
+    public void setUnitPrice(double unitPrice) {
+        this.unitPrice = unitPrice;
+    }
+
+    public double getEstimatedAmount() {
+        return quantity * unitPrice;
     }
 }

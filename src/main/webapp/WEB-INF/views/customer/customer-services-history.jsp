@@ -229,7 +229,9 @@
                                                     <th>Đặt phòng</th>
                                                     <th>Phòng</th>
                                                     <th>Dịch vụ</th>
-                                                    <th>Mô tả</th>
+                                                    <th>Số lượng</th>
+                                                    <th>Tạm tính</th>
+                                                    <th>Ghi chú</th>
                                                     <th>Trạng thái</th>
                                                     <th>Hành động</th>
                                                 </tr>
@@ -263,9 +265,22 @@
                                                                 <td style="font-weight: 700; color: var(--brand-blue);">
                                                                     ${r.title}
                                                                 </td>
-                                                                <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                                                                <td style="font-weight: 600;">
+                                                                    ${r.quantity} <c:if test="${not empty r.unit}">/ ${r.unit}</c:if>
+                                                                </td>
+                                                                <td style="font-weight: 700; color: var(--brand-blue);">
+                                                                    <fmt:formatNumber value="${r.estimatedAmount}" type="currency" currencySymbol="" /> VND
+                                                                </td>
+                                                                <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
                                                                     title="${r.description}">
-                                                                    ${r.description}
+                                                                    <c:choose>
+                                                                        <c:when test="${not empty r.description}">
+                                                                            <c:out value="${r.description}" />
+                                                                        </c:when>
+                                                                        <c:otherwise>
+                                                                            <span style="color: var(--text-muted);">—</span>
+                                                                        </c:otherwise>
+                                                                    </c:choose>
                                                                 </td>
                                                                 <td>
                                                                     <c:choose>
@@ -310,7 +325,7 @@
                                                     </c:when>
                                                     <c:otherwise>
                                                         <tr>
-                                                            <td colspan="8"
+                                                            <td colspan="10"
                                                                 style="text-align: center; padding: 40px; color: var(--text-muted);">
                                                                 <i class="fa-solid fa-bell-slash"
                                                                     style="font-size: 40px; margin-bottom: 15px; display: block; color: #cbd5e1;"></i>

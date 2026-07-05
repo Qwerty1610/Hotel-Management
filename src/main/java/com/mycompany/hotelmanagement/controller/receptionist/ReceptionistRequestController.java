@@ -91,15 +91,17 @@ public class ReceptionistRequestController extends HttpServlet {
 
                     // ── Bước 2: Nếu là Service request (có booking_id), tạo InvoiceItem ──
                     if (req.getBookingId() != null) {
-                        double servicePrice = 0.0;
+                        double servicePrice = req.getUnitPrice();
 
-                        // Tra giá dịch vụ từ HotelService theo tên (title của request)
-                        HotelServiceRepository hsRepo = new HotelServiceRepository();
-                        List<HotelService> allServices = hsRepo.getAllServices();
-                        for (HotelService hs : allServices) {
-                            if (hs.getServiceName().equalsIgnoreCase(req.getTitle()) && hs.isIsActive()) {
-                                servicePrice = hs.getPrice();
-                                break;
+                        // Nếu unitPrice <= 0 thì fallback tìm trong HotelServiceRepository như code cũ
+                        if (servicePrice <= 0.0) {
+                            HotelServiceRepository hsRepo = new HotelServiceRepository();
+                            List<HotelService> allServices = hsRepo.getAllServices();
+                            for (HotelService hs : allServices) {
+                                if (hs.getServiceName().equalsIgnoreCase(req.getTitle()) && hs.isIsActive()) {
+                                    servicePrice = hs.getPrice();
+                                    break;
+                                }
                             }
                         }
 
@@ -112,8 +114,8 @@ public class ReceptionistRequestController extends HttpServlet {
                             boolean itemAdded = invoiceDAO.addServiceItem(
                                     invoice.getInvoiceId(),
                                     req.getTitle(),   // tên dịch vụ
-                                    1,                // số lượng mặc định 1
-                                    servicePrice      // đơn giá từ HotelService (0 nếu không tìm thấy)
+                                    req.getQuantity() > 0 ? req.getQuantity() : 1, // số lượng khách yêu cầu
+                                    servicePrice      // đơn giá (0 nếu không tìm thấy)
                             );
                             if (!itemAdded) {
                                 // Invoice đã Paid / Cancelled — vẫn approve request nhưng cảnh báo

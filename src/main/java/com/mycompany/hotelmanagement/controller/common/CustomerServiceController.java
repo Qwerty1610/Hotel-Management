@@ -164,7 +164,15 @@ public class CustomerServiceController extends HttpServlet {
         }
         String error = request.getParameter("error");
         if (error != null) {
-            request.setAttribute("errorMessage", "Không thể gửi yêu cầu. Vui lòng thử lại sau.");
+            if ("invalid_quantity".equals(error)) {
+                request.setAttribute("errorMessage", "Số lượng không hợp lệ. Vui lòng nhập số từ 1 đến 99.");
+            } else if ("unauthorized".equals(error)) {
+                request.setAttribute("errorMessage", "Bạn không có quyền thực hiện yêu cầu này.");
+            } else if ("service_not_found".equals(error)) {
+                request.setAttribute("errorMessage", "Dịch vụ không tồn tại hoặc đã bị vô hiệu hóa.");
+            } else {
+                request.setAttribute("errorMessage", "Không thể gửi yêu cầu. Vui lòng thử lại sau.");
+            }
         }
 
         request.getRequestDispatcher("/WEB-INF/views/customer/customer-services.jsp").forward(request, response);
@@ -207,10 +215,40 @@ public class CustomerServiceController extends HttpServlet {
             throws ServletException, IOException {
         String bookingIdStr = request.getParameter("bookingId");
         String serviceName = request.getParameter("serviceName");
+        String quantityStr = request.getParameter("quantity");
+        String notesParam = request.getParameter("notes");
 
         if (bookingIdStr == null || serviceName == null || bookingIdStr.isEmpty() || serviceName.isEmpty()) {
             response.sendRedirect(request.getContextPath() + "/customer/services?error=invalid_input");
             return;
+        }
+
+        int quantity = 1;
+        try {
+            if (quantityStr != null) {
+                quantity = Integer.parseInt(quantityStr.trim());
+            } else {
+                response.sendRedirect(request.getContextPath() + "/customer/services?error=invalid_quantity");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            response.sendRedirect(request.getContextPath() + "/customer/services?error=invalid_quantity");
+            return;
+        }
+
+        if (quantity < 1 || quantity > 99) {
+            response.sendRedirect(request.getContextPath() + "/customer/services?error=invalid_quantity");
+            return;
+        }
+
+        String notes = null;
+        if (notesParam != null) {
+            notes = notesParam.trim();
+            if (notes.isEmpty()) {
+                notes = null;
+            } else if (notes.length() > 500) {
+                notes = notes.substring(0, 500);
+            }
         }
 
         try {
@@ -250,8 +288,10 @@ public class CustomerServiceController extends HttpServlet {
             BookingServiceRequest req = new BookingServiceRequest();
             req.setBookingId(bookingId);
             req.setRoomId(roomId);
+            req.setServiceId(selectedService.getServiceId());
             req.setTitle(serviceName);
-            req.setDescription(selectedService.getDescription());
+            req.setDescription(notes);
+            req.setQuantity(quantity);
             req.setPriority("Medium");
             req.setStatus("Pending");
 

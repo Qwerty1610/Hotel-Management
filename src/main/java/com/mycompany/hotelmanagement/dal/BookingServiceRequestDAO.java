@@ -40,7 +40,7 @@ public class BookingServiceRequestDAO {
         String sql = "SELECT bsr.service_request_id AS request_id, bsr.booking_id, bsr.room_id, bsr.service_id, " +
                      "       hs.service_name AS title, bsr.notes AS description, bsr.quantity, bsr.status, " +
                      "       bsr.processed_by_staff_id, bsr.created_at, bsr.updated_at, bsr.completed_at, bsr.cancel_reason, " +
-                     "       r.room_number, a.full_name AS staff_name " +
+                     "       r.room_number, a.full_name AS staff_name, hs.unit AS unit, hs.price AS unit_price " +
                      "FROM dbo.BookingServiceRequest bsr " +
                      "JOIN dbo.Booking b ON bsr.booking_id = b.booking_id " +
                      "JOIN dbo.HotelService hs ON bsr.service_id = hs.service_id " +
@@ -81,7 +81,7 @@ public class BookingServiceRequestDAO {
      */
     public boolean insertRequest(BookingServiceRequest r) {
         String sql = "INSERT INTO dbo.BookingServiceRequest (booking_id, room_id, service_id, notes, quantity, status, created_at) " +
-                     "VALUES (?, ?, (SELECT TOP 1 service_id FROM dbo.HotelService WHERE service_name = ?), ?, ?, ?, SYSDATETIME())";
+                     "VALUES (?, ?, ?, ?, ?, ?, SYSDATETIME())";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -89,7 +89,9 @@ public class BookingServiceRequestDAO {
                 if (r.getRoomId() != null) ps.setInt(2, r.getRoomId());
                 else ps.setNull(2, java.sql.Types.INTEGER);
                 
-                ps.setString(3, r.getTitle());
+                if (r.getServiceId() != null) ps.setInt(3, r.getServiceId());
+                else ps.setNull(3, java.sql.Types.INTEGER);
+                
                 ps.setString(4, r.getDescription());
                 ps.setInt(5, r.getQuantity() > 0 ? r.getQuantity() : 1);
                 ps.setString(6, r.getStatus());
@@ -132,7 +134,7 @@ public class BookingServiceRequestDAO {
         String sql = "SELECT bsr.service_request_id AS request_id, bsr.booking_id, bsr.room_id, bsr.service_id, " +
                      "       hs.service_name AS title, bsr.notes AS description, bsr.quantity, bsr.status, " +
                      "       bsr.processed_by_staff_id, bsr.created_at, bsr.updated_at, bsr.completed_at, bsr.cancel_reason, " +
-                     "       r.room_number, a.full_name AS staff_name " +
+                     "       r.room_number, a.full_name AS staff_name, hs.unit AS unit, hs.price AS unit_price " +
                      "FROM dbo.BookingServiceRequest bsr " +
                      "JOIN dbo.HotelService hs ON bsr.service_id = hs.service_id " +
                      "LEFT JOIN dbo.Room r ON bsr.room_id = r.room_id " +
@@ -169,7 +171,7 @@ public class BookingServiceRequestDAO {
         String sql = "SELECT bsr.service_request_id AS request_id, bsr.booking_id, bsr.room_id, bsr.service_id, " +
                      "       hs.service_name AS title, bsr.notes AS description, bsr.quantity, bsr.status, " +
                      "       bsr.processed_by_staff_id, bsr.created_at, bsr.updated_at, bsr.completed_at, bsr.cancel_reason, " +
-                     "       r.room_number, a.full_name AS staff_name, c.full_name AS customer_name " +
+                     "       r.room_number, a.full_name AS staff_name, c.full_name AS customer_name, hs.unit AS unit, hs.price AS unit_price " +
                      "FROM dbo.BookingServiceRequest bsr " +
                      "JOIN dbo.Booking b ON bsr.booking_id = b.booking_id " +
                      "JOIN dbo.HotelService hs ON bsr.service_id = hs.service_id " +
@@ -337,6 +339,14 @@ public class BookingServiceRequestDAO {
         
         try {
             r.setAssignedStaffName(rs.getString("staff_name"));
+        } catch (Exception ignored) {}
+
+        try {
+            r.setUnit(rs.getString("unit"));
+        } catch (Exception ignored) {}
+
+        try {
+            r.setUnitPrice(rs.getDouble("unit_price"));
         } catch (Exception ignored) {}
 
         return r;
