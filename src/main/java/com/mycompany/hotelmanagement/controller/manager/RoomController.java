@@ -117,7 +117,14 @@ public class RoomController extends HttpServlet {
                 }
             }
 
-            roomService.saveRoom(room);
+            String result = roomService.saveRoom(room);
+            if ("duplicateNumber".equals(result)) {
+                response.sendRedirect(request.getContextPath() + "/manager/rooms?error=duplicateNumber");
+                return;
+            } else if ("error".equals(result)) {
+                response.sendRedirect(request.getContextPath() + "/manager/rooms?error=saveError");
+                return;
+            }
         }
 
         response.sendRedirect(request.getContextPath() + "/manager/rooms?success=saved");

@@ -9,9 +9,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * RoomTypeService
+ * Tầng nghiệp vụ (Service) quản lý thông tin các loại phòng.
+ * Phục vụ các usecase xem thông tin phòng công cộng và tìm kiếm phòng.
+ *
+ * Date: 01/6/2026
+ * @author DINH KHANH
+ */
 public class RoomTypeService {
     private final RoomTypeRepository roomTypeRepository = new RoomTypeRepository();
 
+    /**
+     * UC-30: View Room Types
+     * Lấy toàn bộ danh sách loại phòng từ cơ sở dữ liệu kèm theo hình ảnh đầu tiên và danh sách tiện nghi.
+     *
+     * @return danh sách đối tượng RoomTypeInfo đầy đủ thông tin
+     */
     public List<RoomTypeInfo> getAllRoomTypes() {
         List<RoomTypeInfo> allRoomTypes = roomTypeRepository.getAllRoomTypes();
         Map<Integer, List<String>> typeImages = roomTypeRepository.getAllRoomImages();
@@ -40,6 +54,16 @@ public class RoomTypeService {
         return allRoomTypes;
     }
 
+    /**
+     * UC-03: Search Available Rooms
+     * Lọc danh sách các loại phòng theo tên loại phòng, số lượng khách tối đa và khoảng giá.
+     *
+     * @param typeFilter tên loại phòng cần tìm kiếm (chấp nhận tìm gần đúng)
+     * @param guestsFilter số lượng khách tối thiểu phòng phải đáp ứng
+     * @param minPriceFilter mức giá thuê tối thiểu
+     * @param maxPriceFilter mức giá thuê tối đa
+     * @return danh sách loại phòng thỏa mãn các tiêu chí lọc
+     */
     public List<RoomTypeInfo> getFilteredRoomTypes(String typeFilter, int guestsFilter, double minPriceFilter,
             double maxPriceFilter) {
         List<RoomTypeInfo> allRoomTypes = getAllRoomTypes();
@@ -71,6 +95,13 @@ public class RoomTypeService {
         return filteredRoomTypes;
     }
 
+    /**
+     * UC-31: View Room Type Detail
+     * Lấy thông tin chi tiết của một loại phòng cụ thể, bao gồm toàn bộ danh sách hình ảnh, tiện nghi chi tiết và số phòng hiện tại còn trống.
+     *
+     * @param typeId ID loại phòng cần lấy thông tin chi tiết
+     * @return thông tin chi tiết của loại phòng hoặc null nếu không tồn tại
+     */
     public RoomTypeInfo getRoomTypeDetail(int typeId) {
         RoomTypeInfo roomDetail = roomTypeRepository.getRoomTypeById(typeId);
         if (roomDetail != null) {

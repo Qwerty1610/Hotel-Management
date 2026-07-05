@@ -61,6 +61,12 @@
                         Không thể xóa phòng này vì nó đang được liên kết với dữ liệu khác trong hệ thống (ví dụ: booking, hóa đơn).
                     </div>
                 </c:if>
+                <c:if test="${param.error eq 'saveError'}">
+                    <div class="alert-banner alert-danger">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        Đã xảy ra lỗi khi lưu thông tin phòng. Vui lòng thử lại sau.
+                    </div>
+                </c:if>
                 <c:if test="${param.success eq 'saved'}">
                     <div class="alert-banner alert-success">
                         <i class="fa-solid fa-circle-check"></i>

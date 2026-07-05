@@ -18,19 +18,19 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 /**
- * ReceptionistBookingController
- * URL: /receptionist/booking
+ * ReceptionistDashboardController
+ * URL: /receptionist/dashboard
  *
- * Xử lý 4 hành động (action param):
- * - confirm : Xác nhận booking (Pending → Confirmed)
- * - reject : Từ chối booking (Pending → Rejected)
- * - update : Cập nhật thông tin booking (chỉ khi Pending)
- * - cancel : Huỷ booking
+ * Quản lý dashboard chính của Lễ tân, xử lý hiển thị và tải dữ liệu cho các tab công việc:
+ * - bookings: Xem và tìm kiếm danh sách đặt phòng (UC-12: Process Booking Request)
+ * - checkin: Xem danh sách chờ nhận phòng và làm thủ tục check-in (UC-14: Check In Customer)
+ * - checkout: Xem danh sách chờ trả phòng và làm thủ tục check-out (UC-16: Check Out Customer)
+ * - servicerequests: Xem danh sách yêu cầu dịch vụ của khách hàng để duyệt/hủy (UC-35: View Service Requests)
+ * - roommap: Xem sơ đồ phòng theo thời gian thực (UC-38: View Room Map)
+ * - walkin-bookings: Tạo đặt phòng trực tiếp tại quầy (UC-15: Create Walk-in Booking)
  * 
- * Standardized imports utilizing dal instead of dao.
  * Date: 01/6/2026
- * 
- * @author BinhHD, MinhTDP
+ * @author BinhHD, MinhTDP, DINH KHANH
  */
 import java.io.IOException;
 import java.sql.Date;
@@ -192,6 +192,10 @@ public class ReceptionistDashboardController extends HttpServlet {
         }
     }
 
+    /**
+     * UC-35: View Service Requests
+     * Tải danh sách yêu cầu dịch vụ của khách hàng để hiển thị trên tab của Lễ tân, hỗ trợ tìm kiếm, lọc theo trạng thái và phân trang.
+     */
     private void loadServiceRequestsTab(HttpServletRequest request) {
         try {
             BookingServiceRequestDAO dao = new BookingServiceRequestDAO();

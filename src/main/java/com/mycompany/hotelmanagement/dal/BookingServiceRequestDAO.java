@@ -11,6 +11,14 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * BookingServiceRequestDAO
+ * Lớp truy xuất dữ liệu (DAO) cho các yêu cầu dịch vụ phòng (Booking Service Request).
+ * Phục vụ các usecase gửi yêu cầu dịch vụ của khách hàng và phê duyệt yêu cầu từ lễ tân.
+ *
+ * Date: 21/6/2026
+ * @author DINH KHANH
+ */
 public class BookingServiceRequestDAO {
 
     private void useDatabase(Connection conn) throws SQLException {
@@ -19,12 +27,20 @@ public class BookingServiceRequestDAO {
         }
     }
 
+    /**
+     * UC-64: View Service Request History
+     * Lấy danh sách lịch sử yêu cầu dịch vụ của khách hàng theo accountId và trạng thái lọc.
+     *
+     * @param accountId ID tài khoản của khách hàng
+     * @param statusFilter trạng thái cần lọc (All, Pending, Completed, Cancelled)
+     * @return danh sách các yêu cầu dịch vụ của khách hàng
+     */
     public List<BookingServiceRequest> getRequestsByCustomer(int accountId, String statusFilter) {
         List<BookingServiceRequest> list = new ArrayList<>();
         String sql = "SELECT bsr.service_request_id AS request_id, bsr.booking_id, bsr.room_id, bsr.service_id, " +
                      "       hs.service_name AS title, bsr.notes AS description, bsr.quantity, bsr.status, " +
                      "       bsr.processed_by_staff_id, bsr.created_at, bsr.updated_at, bsr.completed_at, bsr.cancel_reason, " +
-                     "       r.room_number, a.full_name AS staff_name " +
+                     "       r.room_number, a.full_name AS staff_name, hs.unit AS unit, hs.price AS unit_price " +
                      "FROM dbo.BookingServiceRequest bsr " +
                      "JOIN dbo.Booking b ON bsr.booking_id = b.booking_id " +
                      "JOIN dbo.HotelService hs ON bsr.service_id = hs.service_id " +
@@ -56,9 +72,16 @@ public class BookingServiceRequestDAO {
         return list;
     }
 
+    /**
+     * UC-10: Submit Service Request
+     * Thêm mới một yêu cầu dịch vụ phòng của khách hàng vào cơ sở dữ liệu.
+     *
+     * @param r đối tượng BookingServiceRequest chứa thông tin yêu cầu
+     * @return true nếu thêm thành công, ngược lại là false
+     */
     public boolean insertRequest(BookingServiceRequest r) {
         String sql = "INSERT INTO dbo.BookingServiceRequest (booking_id, room_id, service_id, notes, quantity, status, created_at) " +
-                     "VALUES (?, ?, (SELECT TOP 1 service_id FROM dbo.HotelService WHERE service_name = ?), ?, ?, ?, SYSDATETIME())";
+                     "VALUES (?, ?, ?, ?, ?, ?, SYSDATETIME())";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -66,7 +89,9 @@ public class BookingServiceRequestDAO {
                 if (r.getRoomId() != null) ps.setInt(2, r.getRoomId());
                 else ps.setNull(2, java.sql.Types.INTEGER);
                 
-                ps.setString(3, r.getTitle());
+                if (r.getServiceId() != null) ps.setInt(3, r.getServiceId());
+                else ps.setNull(3, java.sql.Types.INTEGER);
+                
                 ps.setString(4, r.getDescription());
                 ps.setInt(5, r.getQuantity() > 0 ? r.getQuantity() : 1);
                 ps.setString(6, r.getStatus());
@@ -78,6 +103,14 @@ public class BookingServiceRequestDAO {
         return false;
     }
 
+    /**
+     * UC-64: View Service Request History (Action Cancel)
+     * Khách hàng thực hiện hủy yêu cầu dịch vụ của họ (chỉ cho phép khi trạng thái là Pending).
+     *
+     * @param requestId ID yêu cầu dịch vụ cần hủy
+     * @param accountId ID tài khoản khách hàng sở hữu yêu cầu
+     * @return true nếu hủy thành công, ngược lại là false
+     */
     public boolean cancelRequestByCustomer(int requestId, int accountId) {
         String sql = "UPDATE bsr " +
                      "SET bsr.status = N'Cancelled', bsr.updated_at = SYSDATETIME(), bsr.cancel_reason = N'Cancelled by customer' " +
@@ -101,7 +134,7 @@ public class BookingServiceRequestDAO {
         String sql = "SELECT bsr.service_request_id AS request_id, bsr.booking_id, bsr.room_id, bsr.service_id, " +
                      "       hs.service_name AS title, bsr.notes AS description, bsr.quantity, bsr.status, " +
                      "       bsr.processed_by_staff_id, bsr.created_at, bsr.updated_at, bsr.completed_at, bsr.cancel_reason, " +
-                     "       r.room_number, a.full_name AS staff_name " +
+                     "       r.room_number, a.full_name AS staff_name, hs.unit AS unit, hs.price AS unit_price " +
                      "FROM dbo.BookingServiceRequest bsr " +
                      "JOIN dbo.HotelService hs ON bsr.service_id = hs.service_id " +
                      "LEFT JOIN dbo.Room r ON bsr.room_id = r.room_id " +
@@ -123,12 +156,22 @@ public class BookingServiceRequestDAO {
         return null;
     }
 
+    /**
+     * UC-35: View Service Requests
+     * Lễ tân lấy danh sách các yêu cầu dịch vụ của khách hàng kèm theo phân trang và lọc từ khóa.
+     *
+     * @param statusFilter trạng thái yêu cầu lọc
+     * @param keyword từ khóa tìm kiếm (theo tên dịch vụ, số phòng hoặc tên khách hàng)
+     * @param offset số dòng bỏ qua
+     * @param pageSize số lượng dòng lấy
+     * @return danh sách yêu cầu dịch vụ thỏa mãn bộ lọc
+     */
     public List<BookingServiceRequest> getReceptionistRequests(String statusFilter, String keyword, int offset, int pageSize) {
         List<BookingServiceRequest> list = new ArrayList<>();
         String sql = "SELECT bsr.service_request_id AS request_id, bsr.booking_id, bsr.room_id, bsr.service_id, " +
                      "       hs.service_name AS title, bsr.notes AS description, bsr.quantity, bsr.status, " +
                      "       bsr.processed_by_staff_id, bsr.created_at, bsr.updated_at, bsr.completed_at, bsr.cancel_reason, " +
-                     "       r.room_number, a.full_name AS staff_name, c.full_name AS customer_name " +
+                     "       r.room_number, a.full_name AS staff_name, c.full_name AS customer_name, hs.unit AS unit, hs.price AS unit_price " +
                      "FROM dbo.BookingServiceRequest bsr " +
                      "JOIN dbo.Booking b ON bsr.booking_id = b.booking_id " +
                      "JOIN dbo.HotelService hs ON bsr.service_id = hs.service_id " +
@@ -178,6 +221,14 @@ public class BookingServiceRequestDAO {
         return list;
     }
 
+    /**
+     * UC-35: View Service Requests
+     * Đếm tổng số lượng yêu cầu dịch vụ thỏa mãn bộ lọc để tính toán phân trang phía Lễ tân.
+     *
+     * @param statusFilter trạng thái lọc
+     * @param keyword từ khóa tìm kiếm
+     * @return tổng số dòng thỏa mãn
+     */
     public int countReceptionistRequests(String statusFilter, String keyword) {
         String sql = "SELECT COUNT(*) FROM dbo.BookingServiceRequest bsr " +
                      "JOIN dbo.Booking b ON bsr.booking_id = b.booking_id " +
@@ -288,6 +339,14 @@ public class BookingServiceRequestDAO {
         
         try {
             r.setAssignedStaffName(rs.getString("staff_name"));
+        } catch (Exception ignored) {}
+
+        try {
+            r.setUnit(rs.getString("unit"));
+        } catch (Exception ignored) {}
+
+        try {
+            r.setUnitPrice(rs.getDouble("unit_price"));
         } catch (Exception ignored) {}
 
         return r;

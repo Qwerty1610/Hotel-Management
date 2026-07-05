@@ -12,6 +12,7 @@
         <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/receptionist.css?v=5" />
     </head>
     <fmt:setLocale value="vi_VN" />
+    <c:set var="currentTab" value="servicerequests" />
 
     <body class="dashboard-body">
 
@@ -209,6 +210,10 @@
                                             <th>Phòng</th>
                                             <th>Khách hàng</th>
                                             <th>Loại dịch vụ</th>
+                                            <th>Số lượng</th>
+                                            <th>Đơn vị</th>
+                                            <th>Tạm tính</th>
+                                            <th>Ghi chú</th>
                                             <th>Thời gian gửi</th>
                                             <th>Trạng thái</th>
                                             <th>Thao tác</th>
@@ -269,6 +274,36 @@
                                                             <c:out value="${r.title}" />
                                                         </span>
                                                     </div>
+                                                </td>
+
+                                                <%-- Số lượng --%>
+                                                <td style="font-weight: 600; text-align: center;">
+                                                    ${r.quantity}
+                                                </td>
+
+                                                <%-- Đơn vị --%>
+                                                <td style="font-weight: 500; color: var(--text-muted); text-align: center;">
+                                                    <c:choose>
+                                                        <c:when test="${not empty r.unit}">/${r.unit}</c:when>
+                                                        <c:otherwise>—</c:otherwise>
+                                                    </c:choose>
+                                                </td>
+
+                                                <%-- Tạm tính --%>
+                                                <td style="font-weight: 700; color: var(--brand-blue);">
+                                                    <fmt:formatNumber value="${r.estimatedAmount}" type="currency" currencySymbol="" /> VND
+                                                </td>
+
+                                                <%-- Ghi chú --%>
+                                                <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${fn:escapeXml(r.description)}">
+                                                    <c:choose>
+                                                        <c:when test="${not empty r.description}">
+                                                            <c:out value="${r.description}" />
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <span style="color: var(--text-muted); font-style: italic;">—</span>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </td>
 
                                                 <%-- Thời gian gửi --%>

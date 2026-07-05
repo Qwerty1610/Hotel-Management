@@ -26,6 +26,7 @@ public class RoomRepository {
                 + "rt.type_name, rt.base_price, rt.bed_type, rt.area "
                 + "FROM Room r "
                 + "JOIN RoomType rt ON r.type_id = rt.type_id "
+                + "WHERE r.is_deleted = 0 "
                 + "ORDER BY r.room_number";
 
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -52,7 +53,27 @@ public class RoomRepository {
     }
 
     public boolean deleteRoom(int roomId) {
-        String sql = "DELETE FROM Room WHERE room_id = ?";
+        // Check if room is available (only Available status is allowed for deletion)
+        String checkSql = "SELECT status FROM Room WHERE room_id = ? AND is_deleted = 0";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement psCheck = conn.prepareStatement(checkSql)) {
+            useDatabase(conn);
+            psCheck.setInt(1, roomId);
+            try (ResultSet rs = psCheck.executeQuery()) {
+                if (rs.next()) {
+                    String status = rs.getString("status");
+                    if (!"Available".equalsIgnoreCase(status)) {
+                        return false;
+                    }
+                } else {
+                    return false; // Room not found or already deleted
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        String sql = "UPDATE Room SET is_deleted = 1 WHERE room_id = ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setInt(1, roomId);
@@ -76,21 +97,76 @@ public class RoomRepository {
         }
     }
 
-    public void insertRoom(RoomInfo room) {
-        String sql = "INSERT INTO Room (room_number, floor, type_id, status) VALUES (?, ?, ?, ?)";
+    public boolean isRoomNumberDuplicate(String roomNumber, int excludeRoomId) {
+        String sql = "SELECT COUNT(*) FROM Room WHERE room_number = ? AND room_id <> ? AND is_deleted = 0";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            useDatabase(conn);
+            ps.setString(1, roomNumber);
+            ps.setInt(2, excludeRoomId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public RoomInfo getSoftDeletedRoomByNumber(String roomNumber) {
+        String sql = "SELECT room_id, room_number, type_id, status, floor FROM Room WHERE room_number = ? AND is_deleted = 1";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            useDatabase(conn);
+            ps.setString(1, roomNumber);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    RoomInfo room = new RoomInfo();
+                    room.setRoomId(rs.getInt("room_id"));
+                    room.setRoomNumber(rs.getString("room_number"));
+                    room.setTypeId(rs.getInt("type_id"));
+                    room.setStatus(rs.getString("status"));
+                    room.setFloor(rs.getString("floor"));
+                    return room;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public boolean restoreRoom(int roomId, RoomInfo room) {
+        String sql = "UPDATE Room SET is_deleted = 0, floor = ?, type_id = ?, status = ? WHERE room_id = ?";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            useDatabase(conn);
+            ps.setString(1, room.getFloor());
+            ps.setInt(2, room.getTypeId());
+            ps.setString(3, room.getStatus());
+            ps.setInt(4, roomId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean insertRoom(RoomInfo room) {
+        String sql = "INSERT INTO Room (room_number, floor, type_id, status, is_deleted) VALUES (?, ?, ?, ?, 0)";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setString(1, room.getRoomNumber());
             ps.setString(2, room.getFloor());
             ps.setInt(3, room.getTypeId());
             ps.setString(4, room.getStatus());
-            ps.executeUpdate();
+            return ps.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
     }
 
-    public void updateRoom(RoomInfo room) {
+    public boolean updateRoom(RoomInfo room) {
         String sql = "UPDATE Room SET room_number = ?, floor = ?, type_id = ?, status = ? WHERE room_id = ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
@@ -99,9 +175,10 @@ public class RoomRepository {
             ps.setInt(3, room.getTypeId());
             ps.setString(4, room.getStatus());
             ps.setInt(5, room.getRoomId());
-            ps.executeUpdate();
+            return ps.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
     }
 
@@ -177,6 +254,7 @@ public class RoomRepository {
         FROM Room r
         JOIN RoomType rt
             ON r.type_id = rt.type_id
+        WHERE r.is_deleted = 0
 
         ORDER BY
             TRY_CAST(r.floor AS INT),

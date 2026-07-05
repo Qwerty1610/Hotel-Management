@@ -24,11 +24,38 @@ public class RoomService {
         roomRepository.updateRoomStatus(roomId, status);
     }
 
-    public void saveRoom(RoomInfo room) {
-        if (room.getRoomId() <= 0) {
-            roomRepository.insertRoom(room);
+    public String saveRoom(RoomInfo room) {
+        String num = room.getRoomNumber();
+        int id = room.getRoomId();
+
+        if (id <= 0) {
+            // Check active duplicates
+            if (roomRepository.isRoomNumberDuplicate(num, 0)) {
+                return "duplicateNumber";
+            }
+            // Check soft-deleted duplicates
+            RoomInfo softDeleted = roomRepository.getSoftDeletedRoomByNumber(num);
+            if (softDeleted != null) {
+                // Restore and update attributes
+                boolean ok = roomRepository.restoreRoom(softDeleted.getRoomId(), room);
+                return ok ? "success" : "error";
+            }
+            // Normal insert
+            boolean ok = roomRepository.insertRoom(room);
+            return ok ? "success" : "error";
         } else {
-            roomRepository.updateRoom(room);
+            // Check active duplicates excluding self
+            if (roomRepository.isRoomNumberDuplicate(num, id)) {
+                return "duplicateNumber";
+            }
+            // Check if there is another room with this number that is soft-deleted
+            RoomInfo softDeleted = roomRepository.getSoftDeletedRoomByNumber(num);
+            if (softDeleted != null && softDeleted.getRoomId() != id) {
+                return "duplicateNumber";
+            }
+            // Normal update
+            boolean ok = roomRepository.updateRoom(room);
+            return ok ? "success" : "error";
         }
     }
 

@@ -38,7 +38,7 @@ public class DashboardRepository {
 
     /** Tổng số phòng vật lý của khách sạn (mẫu số khi tính công suất). */
     public int getTotalRooms() {
-        String sql = "SELECT COUNT(*) FROM dbo.Room";
+        String sql = "SELECT COUNT(*) FROM dbo.Room WHERE is_deleted = 0";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);

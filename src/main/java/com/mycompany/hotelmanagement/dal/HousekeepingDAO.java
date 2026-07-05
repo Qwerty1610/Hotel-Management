@@ -25,6 +25,7 @@ public class HousekeepingDAO {
     FROM Room r
     JOIN RoomType rt ON r.type_id = rt.type_id
     LEFT JOIN RoomImage ri ON ri.type_id = rt.type_id
+    WHERE r.is_deleted = 0
 """;
 
         try (
@@ -111,7 +112,7 @@ public class HousekeepingDAO {
                    r.floor
             FROM Room r
             JOIN RoomType rt ON r.type_id = rt.type_id
-            WHERE r.status = ?
+            WHERE r.status = ? AND r.is_deleted = 0
         """;
 
         try (
@@ -184,7 +185,7 @@ public class HousekeepingDAO {
 
     private int count(String status) {
 
-        String sql = "SELECT COUNT(*) FROM Room WHERE status = ?";
+        String sql = "SELECT COUNT(*) FROM Room WHERE status = ? AND is_deleted = 0";
 
         try (
                 Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
@@ -215,7 +216,7 @@ SELECT r.room_id,
 FROM Room r
 JOIN RoomType rt ON r.type_id = rt.type_id
 LEFT JOIN RoomImage ri ON ri.type_id = rt.type_id
-WHERE r.room_id = ?
+WHERE r.room_id = ? AND r.is_deleted = 0
 """;
 
         try (
