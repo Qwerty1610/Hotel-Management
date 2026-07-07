@@ -229,6 +229,71 @@
                             </div>
                         </div>
 
+                        <!-- HOTEL & WEBSITE INFORMATION CONFIGURATION CARD -->
+                        <div class="settings-card" style="grid-column: span 2;">
+                            <h2 class="settings-card-title">
+                                <i class="fa-solid fa-hotel"></i> Cấu hình Thông tin Khách sạn & Trang chủ
+                            </h2>
+                            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 20px; line-height: 1.5;">
+                                Quản lý tên hiển thị của khách sạn, thông tin liên lạc ở chân trang và nội dung giới thiệu xuất hiện trên trang chủ.
+                            </p>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div>
+                                    <div class="form-group-settings">
+                                        <label for="hotelName">Tên khách sạn</label>
+                                        <input type="text" id="hotelName" name="hotelName" 
+                                               value="${configs['hotel.name']}" required />
+                                    </div>
+                                    <div class="form-group-settings">
+                                        <label for="hotelPhone">Số điện thoại liên hệ</label>
+                                        <input type="text" id="hotelPhone" name="hotelPhone" 
+                                               value="${configs['hotel.phone']}" required />
+                                    </div>
+                                    <div class="form-group-settings">
+                                        <label for="hotelEmail">Email liên hệ</label>
+                                        <input type="email" id="hotelEmail" name="hotelEmail" 
+                                               value="${configs['hotel.email']}" required />
+                                    </div>
+                                    <div class="form-group-settings">
+                                        <label for="hotelAddress">Địa chỉ khách sạn</label>
+                                        <input type="text" id="hotelAddress" name="hotelAddress" 
+                                               value="${configs['hotel.address']}" required />
+                                    </div>
+                                    <div class="form-group-settings">
+                                        <label for="hotelIntro">Giới thiệu ngắn (Chân trang/Footer)</label>
+                                        <textarea id="hotelIntro" name="hotelIntro" required style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.95rem; background-color: var(--bg-light); color: var(--text-navy); height: 90px; resize: vertical; font-family: inherit;">${configs['hotel.intro']}</textarea>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="form-group-settings">
+                                        <label for="hotelHeroTitle">Tiêu đề biểu ngữ (Hero Title)</label>
+                                        <input type="text" id="hotelHeroTitle" name="hotelHeroTitle" 
+                                               value="${configs['hotel.hero.title']}" required />
+                                    </div>
+                                    <div class="form-group-settings">
+                                        <label for="hotelHeroSubtitle">Phụ đề biểu ngữ (Hero Subtitle)</label>
+                                        <input type="text" id="hotelHeroSubtitle" name="hotelHeroSubtitle" 
+                                               value="${configs['hotel.hero.subtitle']}" required />
+                                    </div>
+                                    <div class="form-group-settings">
+                                        <label for="hotelAboutTag">Thẻ tiêu đề Giới thiệu (About Tagline)</label>
+                                        <input type="text" id="hotelAboutTag" name="hotelAboutTag" 
+                                               value="${configs['hotel.about.tag']}" required />
+                                    </div>
+                                    <div class="form-group-settings">
+                                        <label for="hotelAboutTitle">Tiêu đề phần Giới thiệu (About Title)</label>
+                                        <input type="text" id="hotelAboutTitle" name="hotelAboutTitle" 
+                                               value="${configs['hotel.about.title']}" required />
+                                    </div>
+                                    <div class="form-group-settings">
+                                        <label for="hotelAboutDesc">Nội dung phần Giới thiệu (About Description)</label>
+                                        <textarea id="hotelAboutDesc" name="hotelAboutDesc" required style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.95rem; background-color: var(--bg-light); color: var(--text-navy); height: 90px; resize: vertical; font-family: inherit;">${configs['hotel.about.desc']}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
                     <div class="settings-footer">
