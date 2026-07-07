@@ -160,7 +160,6 @@
                 <div class="content-header-row">
                     <div>
                         <h1>Cài đặt cấu hình hệ thống</h1>
-                        <p>Cấu hình các tham số hoạt động toàn trang web bao gồm tích hợp đăng nhập và máy chủ gửi email tự động.</p>
                     </div>
                 </div>
 
