@@ -28,10 +28,6 @@ public class GoogleLoginController extends HttpServlet {
 
     private final AuthService authService = new AuthService();
 
-    private static final String CLIENT_ID = ConfigUtil.get("google.client.id",
-            System.getProperty("google.client.id", "your-google-client-id"));
-    private static final String CLIENT_SECRET = ConfigUtil.get("google.client.secret",
-            System.getProperty("google.client.secret", "your-google-client-secret"));
     private static final String REDIRECT_URI = "http://localhost:8080/HotelManagement/login-google";
 
     /**
@@ -108,9 +104,12 @@ public class GoogleLoginController extends HttpServlet {
      */
     private String exchangeCodeForToken(String code) throws Exception {
         HttpClient client = HttpClient.newHttpClient();
+        String clientId = ConfigUtil.get("google.client.id", "your-google-client-id");
+        String clientSecret = ConfigUtil.get("google.client.secret", "your-google-client-secret");
+
         String requestBody = "code=" + java.net.URLEncoder.encode(code, java.nio.charset.StandardCharsets.UTF_8) +
-                             "&client_id=" + java.net.URLEncoder.encode(CLIENT_ID, java.nio.charset.StandardCharsets.UTF_8) +
-                             "&client_secret=" + java.net.URLEncoder.encode(CLIENT_SECRET, java.nio.charset.StandardCharsets.UTF_8) +
+                             "&client_id=" + java.net.URLEncoder.encode(clientId, java.nio.charset.StandardCharsets.UTF_8) +
+                             "&client_secret=" + java.net.URLEncoder.encode(clientSecret, java.nio.charset.StandardCharsets.UTF_8) +
                              "&redirect_uri=" + java.net.URLEncoder.encode(REDIRECT_URI, java.nio.charset.StandardCharsets.UTF_8) +
                              "&grant_type=authorization_code";
 
