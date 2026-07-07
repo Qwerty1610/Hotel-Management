@@ -233,9 +233,6 @@
                             <h2 class="settings-card-title">
                                 <i class="fa-solid fa-hotel"></i> Cấu hình Thông tin Khách sạn & Trang chủ
                             </h2>
-                            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 20px; line-height: 1.5;">
-                                Quản lý tên hiển thị của khách sạn, thông tin liên lạc ở chân trang và nội dung giới thiệu xuất hiện trên trang chủ.
-                            </p>
                             
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                                 <div>
