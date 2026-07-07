@@ -1,7 +1,7 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
-<c:set var="lang" value='<%= com.mycompany.hotelmanagement.config.ConfigUtil.get("web.language", "vi") %>' scope="request" />
-<fmt:setLocale value="${lang eq 'en' ? 'en' : 'vi'}" scope="request" />
+<c:set var="lang" value="vi" scope="request" />
+<fmt:setLocale value="vi" scope="request" />
 <fmt:setBundle basename="messages" scope="request" />
 <!DOCTYPE html>
 <html lang="${lang}">

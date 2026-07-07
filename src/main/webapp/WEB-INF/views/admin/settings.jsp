@@ -226,22 +226,6 @@
                                 <label for="smtpPort">SMTP Port</label>
                                 <input type="text" id="smtpPort" name="smtpPort" 
                                        value="${configs['smtp.port']}" required />
-                        </div>
-
-                        <!-- DEFAULT LANGUAGE CONFIGURATION CARD -->
-                        <div class="settings-card">
-                            <h2 class="settings-card-title">
-                                <i class="fa-solid fa-language"></i> Cấu hình Ngôn ngữ
-                            </h2>
-                            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 20px; line-height: 1.5;">
-                                Lựa chọn ngôn ngữ hiển thị mặc định của toàn bộ website và các trang báo lỗi hệ thống.
-                            </p>
-                            <div class="form-group-settings">
-                                <label for="webLanguage">Ngôn ngữ hiển thị</label>
-                                <select id="webLanguage" name="webLanguage" style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.95rem; background-color: var(--bg-light); color: var(--text-navy);">
-                                    <option value="vi" ${configs['web.language'] eq 'vi' ? 'selected' : ''}>Tiếng Việt (Vietnamese)</option>
-                                    <option value="en" ${configs['web.language'] eq 'en' ? 'selected' : ''}>Tiếng Anh (English)</option>
-                                </select>
                             </div>
                         </div>
 

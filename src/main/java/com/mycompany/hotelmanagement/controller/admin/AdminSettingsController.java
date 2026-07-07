@@ -55,7 +55,6 @@ public class AdminSettingsController extends HttpServlet {
         String smtpPassword = request.getParameter("smtpPassword");
         String smtpHost = request.getParameter("smtpHost");
         String smtpPort = request.getParameter("smtpPort");
-        String webLanguage = request.getParameter("webLanguage");
         
         String sql = "UPDATE dbo.SystemConfig SET config_value = ?, updated_at = SYSDATETIME() WHERE config_key = ?";
         
@@ -90,11 +89,6 @@ public class AdminSettingsController extends HttpServlet {
                 // 6. SMTP Port
                 ps.setString(1, smtpPort != null ? smtpPort.trim() : "");
                 ps.setString(2, "smtp.port");
-                ps.addBatch();
-                
-                // 7. Web Language
-                ps.setString(1, webLanguage != null ? webLanguage.trim() : "vi");
-                ps.setString(2, "web.language");
                 ps.addBatch();
                 
                 ps.executeBatch();
