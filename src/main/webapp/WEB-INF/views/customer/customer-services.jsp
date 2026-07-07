@@ -285,12 +285,31 @@
                                                             <label for="serviceName">Loại dịch vụ</label>
                                                             <select name="serviceName" id="serviceName" required>
                                                                 <c:forEach var="s" items="${allActiveServices}">
-                                                                    <option value="${s.serviceName}">
+                                                                    <option value="${s.serviceName}" data-price="${s.price}" data-unit="${s.unit}">
                                                                         ${s.serviceName}
                                                                     </option>
                                                                 </c:forEach>
                                                             </select>
                                                         </div>
+                                                    </div>
+                                                    <div class="form-grid"
+                                                        style="grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
+                                                        <div class="form-group">
+                                                            <label for="quantity">Số lượng</label>
+                                                            <input type="number" name="quantity" id="quantity" min="1" max="99" value="1" required />
+                                                        </div>
+                                                        <div class="form-group" style="display: flex; flex-direction: column; justify-content: center; gap: 4px;">
+                                                            <div id="servicePriceDisplay" style="font-size: 14.5px; font-weight: 600; color: #475569;">
+                                                                Đơn giá: <span id="unitPrice" style="color: var(--text-navy);">0</span> VND <span id="unitName"></span>
+                                                            </div>
+                                                            <div id="serviceEstimatedDisplay" style="font-size: 16px; font-weight: 700; color: var(--brand-blue);">
+                                                                Tạm tính: <span id="estimatedAmount">0</span> VND
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group" style="margin-top: 24px;">
+                                                        <label for="notes">Ghi chú yêu cầu</label>
+                                                        <textarea name="notes" id="notes" maxlength="500" placeholder="Ví dụ: Giặt 2kg quần áo, dùng gym 2 ngày..." style="min-height: 100px; resize: vertical;"></textarea>
                                                     </div>
                                                     <div
                                                         style="display: flex; justify-content: flex-end; margin-top: 24px;">
@@ -438,6 +457,37 @@
                                     setTimeout(() => {
                                         serverSuccess.style.display = 'none';
                                     }, 5000);
+                                }
+
+                                const serviceSelect = document.getElementById('serviceName');
+                                const quantityInput = document.getElementById('quantity');
+                                const unitPriceSpan = document.getElementById('unitPrice');
+                                const unitNameSpan = document.getElementById('unitName');
+                                const estimatedAmountSpan = document.getElementById('estimatedAmount');
+
+                                function formatCurrency(number) {
+                                    return new Intl.NumberFormat('vi-VN').format(number);
+                                }
+
+                                function updateEstimation() {
+                                    if (!serviceSelect || !quantityInput) return;
+                                    const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+                                    if (!selectedOption) return;
+                                    
+                                    const price = parseFloat(selectedOption.getAttribute('data-price') || 0);
+                                    const unit = selectedOption.getAttribute('data-unit') || '';
+                                    const quantity = parseInt(quantityInput.value || 1);
+                                    
+                                    unitPriceSpan.textContent = formatCurrency(price);
+                                    unitNameSpan.textContent = unit ? "/ " + unit : "";
+                                    estimatedAmountSpan.textContent = formatCurrency(price * quantity);
+                                }
+
+                                if (serviceSelect && quantityInput) {
+                                    serviceSelect.addEventListener('change', updateEstimation);
+                                    quantityInput.addEventListener('input', updateEstimation);
+                                    quantityInput.addEventListener('change', updateEstimation);
+                                    updateEstimation();
                                 }
                             });
                         </script>

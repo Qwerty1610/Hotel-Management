@@ -454,6 +454,7 @@ BEGIN
         type_id INT NOT NULL,
         status NVARCHAR(50) NOT NULL DEFAULT N'Available',
         floor NVARCHAR(50) NOT NULL DEFAULT N'Tầng 1',
+        is_deleted BIT NOT NULL DEFAULT 0,
         CONSTRAINT FK_Room_RoomType FOREIGN KEY (type_id) REFERENCES dbo.RoomType(type_id) ON DELETE CASCADE
     );
 END

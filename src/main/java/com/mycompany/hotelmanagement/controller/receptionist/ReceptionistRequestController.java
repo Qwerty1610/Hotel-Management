@@ -22,17 +22,14 @@ import java.util.logging.Logger;
  * ReceptionistRequestController
  * URL: /receptionist/servicerequest
  *
- * Xử lý duyệt hoặc hủy yêu cầu dịch vụ của khách hàng từ phía lễ tân.
- *
- * Khi approve (duyệt):
- *   1. Đọc CustomerRequest để lấy booking_id và title (tên dịch vụ).
- *   2. Tra giá trong HotelService theo tên dịch vụ.
- *   3. Tìm Invoice của booking đó.
- *   4. Tạo InvoiceItem loại 'Service' vào Invoice → hóa đơn được cập nhật tự động.
- *   5. Set CustomerRequest.status = Completed.
- *
- * Khi cancel (hủy):
- *   - Set CustomerRequest.status = Cancelled.
+ * Xử lý các hành động duyệt hoặc hủy yêu cầu dịch vụ của khách hàng từ phía lễ tân (UC-35: View Service Requests):
+ * - approve POST: Duyệt yêu cầu dịch vụ. Thực hiện các bước:
+ *   1. Đọc BookingServiceRequest để lấy bookingId và tên dịch vụ.
+ *   2. Tra cứu đơn giá dịch vụ trong HotelService.
+ *   3. Tìm Invoice tương ứng của booking.
+ *   4. Thêm InvoiceItem loại 'Service' với đơn giá tra cứu được để tự động cập nhật tổng hóa đơn.
+ *   5. Cập nhật trạng thái yêu cầu dịch vụ thành Completed.
+ * - cancel POST: Hủy yêu cầu dịch vụ, ghi nhận người thực hiện và lý do hủy, cập nhật trạng thái yêu cầu thành Cancelled.
  *
  * Date: 21/6/2026 — updated 25/6/2026
  * @author DINH KHANH
@@ -94,15 +91,17 @@ public class ReceptionistRequestController extends HttpServlet {
 
                     // ── Bước 2: Nếu là Service request (có booking_id), tạo InvoiceItem ──
                     if (req.getBookingId() != null) {
-                        double servicePrice = 0.0;
+                        double servicePrice = req.getUnitPrice();
 
-                        // Tra giá dịch vụ từ HotelService theo tên (title của request)
-                        HotelServiceRepository hsRepo = new HotelServiceRepository();
-                        List<HotelService> allServices = hsRepo.getAllServices();
-                        for (HotelService hs : allServices) {
-                            if (hs.getServiceName().equalsIgnoreCase(req.getTitle()) && hs.isIsActive()) {
-                                servicePrice = hs.getPrice();
-                                break;
+                        // Nếu unitPrice <= 0 thì fallback tìm trong HotelServiceRepository như code cũ
+                        if (servicePrice <= 0.0) {
+                            HotelServiceRepository hsRepo = new HotelServiceRepository();
+                            List<HotelService> allServices = hsRepo.getAllServices();
+                            for (HotelService hs : allServices) {
+                                if (hs.getServiceName().equalsIgnoreCase(req.getTitle()) && hs.isIsActive()) {
+                                    servicePrice = hs.getPrice();
+                                    break;
+                                }
                             }
                         }
 
@@ -115,8 +114,8 @@ public class ReceptionistRequestController extends HttpServlet {
                             boolean itemAdded = invoiceDAO.addServiceItem(
                                     invoice.getInvoiceId(),
                                     req.getTitle(),   // tên dịch vụ
-                                    1,                // số lượng mặc định 1
-                                    servicePrice      // đơn giá từ HotelService (0 nếu không tìm thấy)
+                                    req.getQuantity() > 0 ? req.getQuantity() : 1, // số lượng khách yêu cầu
+                                    servicePrice      // đơn giá (0 nếu không tìm thấy)
                             );
                             if (!itemAdded) {
                                 // Invoice đã Paid / Cancelled — vẫn approve request nhưng cảnh báo

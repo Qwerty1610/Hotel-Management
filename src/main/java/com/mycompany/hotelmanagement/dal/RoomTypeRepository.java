@@ -151,7 +151,7 @@ public class RoomTypeRepository {
     }
 
     public int getAvailableRoomCount(int typeId) {
-        String sql = "SELECT COUNT(*) FROM Room WHERE type_id = ? AND status = 'Available'";
+        String sql = "SELECT COUNT(*) FROM Room WHERE type_id = ? AND status = 'Available' AND is_deleted = 0";
         try (Connection conn = DBContext.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
