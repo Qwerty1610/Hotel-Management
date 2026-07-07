@@ -24,6 +24,27 @@ public class ConfigUtil {
         } catch (IOException e) {
             // Ignore missing config file; fallback values will be used.
         }
+
+        // Tải thêm cấu hình động từ database
+        loadConfigFromDatabase();
+    }
+
+    private static void loadConfigFromDatabase() {
+        String sql = "SELECT config_key, config_value FROM dbo.SystemConfig";
+        try (java.sql.Connection conn = DBContext.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql);
+             java.sql.ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String key = rs.getString("config_key");
+                String val = rs.getString("config_value");
+                if (key != null && val != null) {
+                    properties.setProperty(key, val);
+                }
+            }
+            System.out.println("ConfigUtil: Loaded system configurations from database successfully.");
+        } catch (Exception e) {
+            System.err.println("ConfigUtil Warning: Failed to load configuration from database. Falling back to properties file. Error: " + e.getMessage());
+        }
     }
 
     /**
@@ -75,5 +96,12 @@ public class ConfigUtil {
      */
     public static String get(String key) {
         return get(key, null);
+    }
+
+    /**
+     * Nạp lại các cấu hình hệ thống từ cơ sở dữ liệu.
+     */
+    public static void reload() {
+        loadConfigFromDatabase();
     }
 }

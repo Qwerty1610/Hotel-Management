@@ -20,15 +20,22 @@ import org.slf4j.LoggerFactory;
 public class EmailUtil {
     private static final Logger logger = LoggerFactory.getLogger(EmailUtil.class);
 
-    // Host configurations - customize as needed in config.properties or system properties
-    private static final String SMTP_HOST = ConfigUtil.get("smtp.host",
-            System.getProperty("smtp.host", "smtp.gmail.com"));
-    private static final String SMTP_PORT = ConfigUtil.get("smtp.port",
-            System.getProperty("smtp.port", "587"));
-    private static final String SMTP_USER = ConfigUtil.get("smtp.user",
-            System.getProperty("smtp.user", "your-email@gmail.com"));
-    private static final String SMTP_PASSWORD = ConfigUtil.get("smtp.password",
-            System.getProperty("smtp.password", "your-app-password"));
+    // Helper methods to retrieve configurations dynamically on each request
+    private static String getSmtpHost() {
+        return ConfigUtil.get("smtp.host", System.getProperty("smtp.host", "smtp.gmail.com"));
+    }
+
+    private static String getSmtpPort() {
+        return ConfigUtil.get("smtp.port", System.getProperty("smtp.port", "587"));
+    }
+
+    private static String getSmtpUser() {
+        return ConfigUtil.get("smtp.user", System.getProperty("smtp.user", "your-email@gmail.com"));
+    }
+
+    private static String getSmtpPassword() {
+        return ConfigUtil.get("smtp.password", System.getProperty("smtp.password", "your-app-password"));
+    }
 
     /**
      * Thực hiện gửi thư điện tử.
@@ -40,6 +47,11 @@ public class EmailUtil {
      * @return true nếu gửi hoặc ghi nhận thành công, false nếu phát sinh lỗi
      */
     public static boolean sendEmail(String toEmail, String subject, String body) {
+        String host = getSmtpHost();
+        String port = getSmtpPort();
+        String user = getSmtpUser();
+        String password = getSmtpPassword();
+
         // Log the email action and content first for debugging purposes
         logger.info("Attempting to send email to: {}", toEmail);
         logger.info("Subject: {}", subject);
@@ -52,7 +64,7 @@ public class EmailUtil {
         System.out.println("==================================================");
 
         // Check if configuration is default/mock
-        if ("your-email@gmail.com".equals(SMTP_USER) || "your-app-password".equals(SMTP_PASSWORD)) {
+        if ("your-email@gmail.com".equals(user) || "your-app-password".equals(password)) {
             logger.warn(
                     "SMTP credentials are not configured. The email was logged to the console but not sent via SMTP.");
             return true; // Return true because it was successfully logged and handled for local dev
@@ -61,22 +73,22 @@ public class EmailUtil {
         Properties properties = new Properties();
         properties.put("mail.smtp.auth", "true");
         properties.put("mail.smtp.starttls.enable", "true");
-        properties.put("mail.smtp.host", SMTP_HOST);
-        properties.put("mail.smtp.port", SMTP_PORT);
+        properties.put("mail.smtp.host", host);
+        properties.put("mail.smtp.port", port);
         properties.put("mail.smtp.ssl.protocols", "TLSv1.2");
 
         Session session = Session.getInstance(properties, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(SMTP_USER, SMTP_PASSWORD);
+                return new PasswordAuthentication(user, password);
             }
         });
 
         try {
-            Message message = new MimeMessage(session);
-            message.setFrom(new InternetAddress(SMTP_USER));
+            MimeMessage message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(user));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
-            message.setSubject(subject);
+            message.setSubject(subject, "UTF-8");
             message.setContent(body, "text/html; charset=UTF-8");
 
             Transport.send(message);

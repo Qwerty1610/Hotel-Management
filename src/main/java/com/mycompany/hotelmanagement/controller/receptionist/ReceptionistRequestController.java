@@ -1,9 +1,9 @@
 package com.mycompany.hotelmanagement.controller.receptionist;
 
-import com.mycompany.hotelmanagement.dal.CustomerRequestDAO;
+import com.mycompany.hotelmanagement.dal.BookingServiceRequestDAO;
 import com.mycompany.hotelmanagement.dal.HotelServiceRepository;
 import com.mycompany.hotelmanagement.dal.InvoiceDAO;
-import com.mycompany.hotelmanagement.entity.CustomerRequest;
+import com.mycompany.hotelmanagement.entity.BookingServiceRequest;
 import com.mycompany.hotelmanagement.entity.HotelService;
 import com.mycompany.hotelmanagement.entity.Invoice;
 import jakarta.servlet.ServletException;
@@ -78,14 +78,14 @@ public class ReceptionistRequestController extends HttpServlet {
                 return;
             }
 
-            CustomerRequestDAO dao = new CustomerRequestDAO();
+            BookingServiceRequestDAO dao = new BookingServiceRequestDAO();
             boolean success = false;
             String extraParam = "";
 
             switch (action.toLowerCase()) {
                 case "approve":
-                    // ── Bước 1: Đọc CustomerRequest ──────────────────────────────────
-                    CustomerRequest req = dao.getRequestById(requestId);
+                    // ── Bước 1: Đọc BookingServiceRequest ──────────────────────────────────
+                    BookingServiceRequest req = dao.getRequestById(requestId);
                     if (req == null) {
                         response.sendRedirect(request.getContextPath()
                                 + "/receptionist/dashboard?tab=servicerequests&error=notfound");
@@ -134,7 +134,7 @@ public class ReceptionistRequestController extends HttpServlet {
                         }
                     }
 
-                    // ── Bước 5: Set CustomerRequest.status = Completed ───────────
+                    // ── Bước 5: Set BookingServiceRequest.status = Completed ───────────
                     success = dao.updateStatusByReceptionist(requestId, "Completed", receptionistId);
                     break;
 

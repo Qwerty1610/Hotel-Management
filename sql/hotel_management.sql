@@ -81,6 +81,69 @@ IF NOT EXISTS (SELECT 1 FROM dbo.Role WHERE role_name = N'Customer')
     INSERT INTO dbo.Role (role_name, description) VALUES (N'Customer', N'Customer account');
 GO
 
+/* Create Permission and RolePermission tables for dynamic many-to-many authorization */
+IF OBJECT_ID(N'dbo.Permission', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Permission (
+        permission_id INT IDENTITY(1,1) PRIMARY KEY,
+        permission_name NVARCHAR(100) NOT NULL UNIQUE,
+        path_prefix NVARCHAR(100) NOT NULL UNIQUE,
+        description NVARCHAR(255) NULL
+    );
+END
+
+IF OBJECT_ID(N'dbo.RolePermission', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.RolePermission (
+        role_id INT NOT NULL,
+        permission_id INT NOT NULL,
+        CONSTRAINT PK_RolePermission PRIMARY KEY (role_id, permission_id),
+        CONSTRAINT FK_RolePermission_Role FOREIGN KEY (role_id) REFERENCES dbo.Role(role_id),
+        CONSTRAINT FK_RolePermission_Permission FOREIGN KEY (permission_id) REFERENCES dbo.Permission(permission_id)
+    );
+
+    INSERT INTO dbo.Permission (permission_name, path_prefix, description)
+    VALUES 
+    (N'ACCESS_ADMIN', '/admin', N'Quyền truy cập khu vực Quản trị viên'),
+    (N'ACCESS_MANAGER', '/manager', N'Quyền truy cập khu vực Quản lý khách sạn'),
+    (N'ACCESS_RECEPTIONIST', '/receptionist', N'Quyền truy cập khu vực Lễ tân'),
+    (N'ACCESS_HOUSEKEEPING', '/housekeeping', N'Quyền truy cập khu vực Dọn phòng');
+
+    INSERT INTO dbo.RolePermission (role_id, permission_id)
+    SELECT 1, permission_id FROM dbo.Permission WHERE permission_name = 'ACCESS_ADMIN';
+
+    INSERT INTO dbo.RolePermission (role_id, permission_id)
+    SELECT 2, permission_id FROM dbo.Permission WHERE permission_name = 'ACCESS_MANAGER';
+
+    INSERT INTO dbo.RolePermission (role_id, permission_id)
+    SELECT 3, permission_id FROM dbo.Permission WHERE permission_name = 'ACCESS_RECEPTIONIST';
+
+    INSERT INTO dbo.RolePermission (role_id, permission_id)
+    SELECT 4, permission_id FROM dbo.Permission WHERE permission_name = 'ACCESS_HOUSEKEEPING';
+END
+GO
+
+/* Create SystemConfig table for dynamic settings (Email, API Keys, etc.) */
+IF OBJECT_ID(N'dbo.SystemConfig', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.SystemConfig (
+        config_key NVARCHAR(100) PRIMARY KEY,
+        config_value NVARCHAR(500) NOT NULL,
+        description NVARCHAR(255) NULL,
+        updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+    );
+
+    INSERT INTO dbo.SystemConfig (config_key, config_value, description)
+    VALUES 
+    ('google.client.id', 'YOUR_GOOGLE_CLIENT_ID', 'Google OAuth Client ID'),
+    ('google.client.secret', 'YOUR_GOOGLE_CLIENT_SECRET', 'Google OAuth Client Secret'),
+    ('smtp.user', 'YOUR_SMTP_EMAIL', 'SMTP Email Account'),
+    ('smtp.password', 'YOUR_SMTP_PASSWORD', 'SMTP Email App Password'),
+    ('smtp.host', 'smtp.gmail.com', 'SMTP Host address'),
+    ('smtp.port', '587', 'SMTP Port');
+END
+GO
+
 /*
     Test login accounts:
     admin@hotel.com         / admin123
@@ -714,6 +777,31 @@ BEGIN
 END
 GO
 
+/* 5.3 Bảng yêu cầu dịch vụ của khách hàng (BookingServiceRequest) */
+IF OBJECT_ID(N'dbo.BookingServiceRequest', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.BookingServiceRequest (
+        service_request_id INT IDENTITY(1,1) PRIMARY KEY,
+        booking_id INT NOT NULL,
+        room_id INT NULL,
+        service_id INT NOT NULL,
+        notes NVARCHAR(500) NULL,
+        quantity INT NOT NULL DEFAULT 1,
+        status NVARCHAR(20) NOT NULL DEFAULT N'Pending',
+        processed_by_staff_id INT NULL,
+        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        updated_at DATETIME2 NULL,
+        completed_at DATETIME2 NULL,
+        cancel_reason NVARCHAR(500) NULL,
+        CONSTRAINT FK_BookingServiceRequest_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id) ON DELETE CASCADE,
+        CONSTRAINT FK_BookingServiceRequest_Room FOREIGN KEY (room_id) REFERENCES dbo.Room(room_id),
+        CONSTRAINT FK_BookingServiceRequest_Service FOREIGN KEY (service_id) REFERENCES dbo.HotelService(service_id),
+        CONSTRAINT FK_BookingServiceRequest_Staff FOREIGN KEY (processed_by_staff_id) REFERENCES dbo.Account(account_id),
+        CONSTRAINT CK_BookingServiceRequest_Status CHECK (status IN (N'Pending', N'Completed', N'Cancelled'))
+    );
+END
+GO
+
 /* 5.3 Seed thêm nhân viên Housekeeping (mật khẩu: housekeeping123) với trạng thái đa dạng */
 IF NOT EXISTS (SELECT 1 FROM dbo.Account WHERE email = N'hk1@hotel.com')
     INSERT INTO dbo.Account (email, password, full_name, role_id, is_active, work_status)
@@ -1323,9 +1411,9 @@ WHERE booking_id IS NOT NULL
   );
 GO
 
-/* Seed mau: Service requests tu Customer (co booking_id) de test Receptionist duyet -> Invoice.
-   Chi chen khi chua co service request nao co booking_id. */
-IF NOT EXISTS (SELECT 1 FROM dbo.CustomerRequest WHERE booking_id IS NOT NULL)
+/* Seed mau: Service requests tu Customer de test Receptionist duyet -> Invoice.
+   Chi chen khi chua co service request nao. */
+IF NOT EXISTS (SELECT 1 FROM dbo.BookingServiceRequest)
 BEGIN
     DECLARE @svcBookingId INT;
     SELECT TOP 1 @svcBookingId = b.booking_id
@@ -1340,25 +1428,29 @@ BEGIN
         FROM dbo.RoomAssignment ra
         WHERE ra.booking_id = @svcBookingId;
 
-        INSERT INTO dbo.CustomerRequest (room_id, booking_id, title, description, priority, status, created_at)
-        VALUES
-        (@svcRoomId, @svcBookingId, N'Bua sang Buffet',
-            N'Khach dat bua sang buffet tai nha hang.', N'Medium', N'Pending',
-            DATEADD(HOUR, -1, SYSDATETIME())),
-        (@svcRoomId, @svcBookingId, N'Dua don san bay',
-            N'Khach can xe dua ra san bay luc 14h00.', N'High', N'Pending',
-            DATEADD(MINUTE, -30, SYSDATETIME()));
+        DECLARE @breakfastSvcId INT;
+        DECLARE @shuttleSvcId INT;
+
+        SELECT @breakfastSvcId = service_id FROM dbo.HotelService WHERE service_name = N'Bữa sáng Buffet';
+        SELECT @shuttleSvcId = service_id FROM dbo.HotelService WHERE service_name = N'Đưa đón sân bay';
+
+        IF @breakfastSvcId IS NOT NULL AND @shuttleSvcId IS NOT NULL
+        BEGIN
+            INSERT INTO dbo.BookingServiceRequest (booking_id, room_id, service_id, notes, quantity, status, created_at)
+            VALUES
+            (@svcBookingId, @svcRoomId, @breakfastSvcId, N'Khách đặt bữa sáng buffet tại nhà hàng.', 1, N'Pending', DATEADD(HOUR, -1, SYSDATETIME())),
+            (@svcBookingId, @svcRoomId, @shuttleSvcId, N'Khách cần xe đưa ra sân bay lúc 14h00.', 1, N'Pending', DATEADD(MINUTE, -30, SYSDATETIME()));
+        END
     END
 END
 GO
 
-/* Test query: Kiem tra phan loai */
-SELECT
-    CASE WHEN cr.booking_id IS NULL THEN N'Maintenance' ELSE N'Service' END AS request_type,
-    cr.request_id, rm.room_number, cr.title, cr.priority, cr.status,
-    cr.booking_id, acc.full_name AS staff_name, cr.created_at
-FROM dbo.CustomerRequest cr
-LEFT JOIN dbo.Room rm ON cr.room_id = rm.room_id
-LEFT JOIN dbo.Account acc ON cr.assigned_staff_id = acc.account_id
-ORDER BY request_type, cr.created_at DESC;
+/* Test query: Kiem tra BookingServiceRequest */
+SELECT bsr.service_request_id, rm.room_number, hs.service_name AS title, bsr.status,
+       bsr.booking_id, acc.full_name AS staff_name, bsr.created_at
+FROM dbo.BookingServiceRequest bsr
+LEFT JOIN dbo.Room rm ON bsr.room_id = rm.room_id
+LEFT JOIN dbo.HotelService hs ON bsr.service_id = hs.service_id
+LEFT JOIN dbo.Account acc ON bsr.processed_by_staff_id = acc.account_id
+ORDER BY bsr.created_at DESC;
 GO
