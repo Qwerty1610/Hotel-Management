@@ -241,3 +241,254 @@
         transform: translateX(0) scale(1);
     }
 }
+
+/* =========================================================
+   SYSTEM DASHBOARD (UC 2.7.4)
+   Thẻ KPI bấm được + bộ lọc kỳ riêng, bộ lọc riêng từng
+   biểu đồ, danh sách chi tiết phân trang.
+========================================================= */
+
+/* --- Thẻ KPI dạng cột: phần chính bấm được + chân thẻ / bộ lọc --- */
+.stat-card-col {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 18px 20px 14px;
+}
+
+.stat-main {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    border-radius: 10px;
+}
+
+.stat-main .stat-open-icon {
+    margin-left: auto;
+    font-size: 13px;
+    color: #cbd5e1;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.stat-card-col:hover .stat-open-icon {
+    color: var(--brand-blue, #0056b3);
+    transform: translateX(2px);
+}
+
+.stat-period {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--brand-blue, #0056b3);
+}
+
+.stat-foot {
+    border-top: 1px dashed var(--border-color, #e2e8f0);
+    padding-top: 10px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-muted, #94a3b8);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* --- Bộ lọc kỳ bên trong thẻ KPI --- */
+.stat-filter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-top: 1px dashed var(--border-color, #e2e8f0);
+    padding-top: 10px;
+    flex-wrap: wrap;
+}
+
+.stat-filter-select,
+.stat-filter-date {
+    height: 30px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 6px;
+    background: #f8fafc;
+    color: var(--text-navy, #0b132b);
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    padding: 0 8px;
+    outline: none;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.stat-filter-select:focus,
+.stat-filter-date:focus,
+.chart-filter input[type="date"]:focus {
+    border-color: var(--brand-blue, #0056b3);
+    background: #ffffff;
+}
+
+.stat-filter-apply {
+    height: 30px;
+    width: 34px;
+    flex: 0 0 auto;
+    border: none;
+    border-radius: 6px;
+    background: var(--brand-blue, #0056b3);
+    color: #ffffff;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.stat-filter-apply:hover {
+    background: #004494;
+}
+
+/* --- Đầu thẻ biểu đồ: tiêu đề + nhãn gom nhóm + bộ lọc riêng --- */
+.chart-head-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.chart-head-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chart-head-title h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-navy, #0b132b);
+    margin: 0;
+}
+
+.gran-chip {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--brand-blue, #0056b3);
+    background: #e6f0fa;
+    border-radius: 999px;
+    padding: 3px 10px;
+    white-space: nowrap;
+}
+
+.chart-filter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chart-filter input[type="date"] {
+    height: 30px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 6px;
+    background: #f8fafc;
+    color: var(--text-navy, #0b132b);
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    padding: 0 8px;
+    outline: none;
+}
+
+.chart-filter-sep {
+    color: var(--text-muted, #94a3b8);
+    font-size: 12px;
+}
+
+/* --- Danh sách chi tiết khi bấm một thẻ KPI --- */
+.detail-panel {
+    margin-bottom: 24px;
+    scroll-margin-top: 16px;
+    border-left: 3px solid var(--brand-blue, #0056b3);
+}
+
+.detail-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.detail-head h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-navy, #0b132b);
+    margin: 0 0 4px;
+}
+
+.detail-sub {
+    font-size: 12.5px;
+    color: var(--text-muted, #94a3b8);
+    margin: 0;
+}
+
+.detail-close {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    color: var(--text-muted, #94a3b8);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.detail-close:hover {
+    color: #ef4444;
+    border-color: #ef4444;
+    background: #fef2f2;
+}
+
+.detail-table-wrap {
+    overflow-x: auto;
+}
+
+/* --- Thanh phân trang (20 dòng / trang) --- */
+.pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding-top: 14px;
+}
+
+.page-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    color: #475569;
+    font-size: 12px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.page-btn:hover {
+    border-color: var(--brand-blue, #0056b3);
+    color: var(--brand-blue, #0056b3);
+    background: #e6f0fa;
+}
+
+.page-info {
+    font-size: 13px;
+    color: var(--text-muted, #94a3b8);
+    padding: 0 6px;
+}
+
+.page-info strong {
+    color: var(--text-navy, #0b132b);
+}
