@@ -412,6 +412,56 @@ public class InvoiceDAO {
         return false;
     }
 
+    /**
+     * Lấy hóa đơn theo id nhưng ràng buộc quyền sở hữu: hóa đơn phải gắn với
+     * booking thuộc về tài khoản khách hàng đang đăng nhập.
+     * Dùng cho luồng thanh toán online của Customer.
+     *
+     * @return Invoice nếu đúng chủ sở hữu, null nếu không tồn tại / không thuộc về khách
+     */
+    public Invoice getInvoiceForCustomer(int invoiceId, int accountId) {
+        String sql = BASE_SELECT
+                + "JOIN dbo.Booking b ON b.booking_id = i.booking_id "
+                + "WHERE i.invoice_id = ? AND b.account_id = ?";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, invoiceId);
+                ps.setInt(2, accountId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return mapInvoice(rs);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Danh sách hóa đơn CHƯA thanh toán (status = Pending) của một khách hàng,
+     * mới nhất trước. Dùng cho trang Thanh toán của Customer.
+     */
+    public List<Invoice> getUnpaidInvoicesByAccount(int accountId) {
+        List<Invoice> list = new ArrayList<>();
+        String sql = BASE_SELECT
+                + "JOIN dbo.Booking b ON b.booking_id = i.booking_id "
+                + "WHERE b.account_id = ? AND i.status = N'Pending' "
+                + "ORDER BY i.created_at DESC, i.invoice_id DESC";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, accountId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) list.add(mapInvoice(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     private void touchInvoice(Connection conn, int invoiceId) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(
                 "UPDATE dbo.Invoice SET updated_at = SYSDATETIME() WHERE invoice_id = ?")) {
