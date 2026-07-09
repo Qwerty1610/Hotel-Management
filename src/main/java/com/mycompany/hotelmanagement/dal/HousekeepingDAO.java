@@ -37,7 +37,7 @@ public class HousekeepingDAO {
                 room.setRoomId(rs.getInt("room_id"));
                 room.setRoomNumber(rs.getString("room_number"));
                 room.setTypeName(rs.getString("type_name"));
-                room.setStatus(rs.getString("status").trim().toLowerCase());
+                room.setStatus(rs.getString("status").trim());
                 room.setFloor(rs.getString("floor"));
                 room.setImageUrl(rs.getString("image_url"));
 
@@ -179,8 +179,8 @@ public class HousekeepingDAO {
         return count("Available");
     }
 
-    public int countOccupiedRooms() {
-        return count("Occupied");
+    public int countOutOfServiceRooms() {
+        return count("OutOfService");
     }
 
     private int count(String status) {

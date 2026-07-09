@@ -76,7 +76,7 @@
                         <div class="hk-card"><h3>Dirty (Cleaning)</h3><span>${cleaningCount}</span></div>
                         <div class="hk-card"><h3>Maintenance</h3><span>${maintenanceCount}</span></div>
                         <div class="hk-card"><h3>Available</h3><span>${availableCount}</span></div>
-                        <div class="hk-card"><h3>Occupied</h3><span>${occupiedCount}</span></div>
+                        <div class="hk-card"><h3>Out of Service</h3><span>${outOfServiceCount}</span></div>
                     </div>
                 </c:if>
 
@@ -95,9 +95,9 @@
                             ALL
                         </button>
 
-                        <button class="btn-filter" data-status="Occupied"
-                                onclick="applyStatusFilter('Occupied', event)">
-                            OCCUPIED
+                        <button class="btn-filter" data-status="OutOfService"
+                                onclick="applyStatusFilter('OutOfService', event)">
+                            OUT OF SERVICE
                         </button>
 
                         <button class="btn-filter" data-status="Available"
@@ -137,7 +137,7 @@
                                     <c:forEach var="room" items="${roomList}">
                                         <c:if test="${room.floor eq currentFloor}">
                                             <c:choose>
-                                                <c:when test="${room.status == 'Occupied'}"><c:set var="colorClass" value="status-occupied" /></c:when>
+                                                <c:when test="${room.status == 'OutOfService'}"><c:set var="colorClass" value="status-outofservice" /></c:when>
                                                 <c:when test="${room.status == 'Available'}"><c:set var="colorClass" value="status-available" /></c:when>
                                                 <c:when test="${room.status == 'Cleaning'}"><c:set var="colorClass" value="status-cleaning" /></c:when>
                                                 <c:when test="${room.status == 'Maintenance'}"><c:set var="colorClass" value="status-maintenance" /></c:when>

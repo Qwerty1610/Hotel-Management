@@ -536,7 +536,7 @@ IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'201')
 IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'202')
     INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'202', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe'), N'Available', N'Tầng 2');
 IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'204')
-    INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'204', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe'), N'Occupied', N'Tầng 2');
+    INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'204', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe'), N'OutOfService', N'Tầng 2');
 IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'301')
     INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'301', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Family'), N'Available', N'Tầng 3');
 IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'305')
@@ -1391,4 +1391,124 @@ LEFT JOIN dbo.Room rm ON bsr.room_id = rm.room_id
 LEFT JOIN dbo.HotelService hs ON bsr.service_id = hs.service_id
 LEFT JOIN dbo.Account acc ON bsr.processed_by_staff_id = acc.account_id
 ORDER BY bsr.created_at DESC;
+GO
+/*Maintenance requests (giao Housekeeping)*/
+IF OBJECT_ID(N'dbo.IssueType', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.IssueType
+    (
+        issue_type_id INT IDENTITY(1,1) PRIMARY KEY,
+
+        issue_name NVARCHAR(100) NOT NULL UNIQUE,
+
+        description NVARCHAR(500) NULL,
+
+        is_active BIT NOT NULL DEFAULT 1,
+
+        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+    );
+END
+GO
+
+INSERT INTO IssueType(issue_name)
+VALUES
+(N'Điều hòa'),
+(N'Tivi'),
+(N'Hệ thống cấp nước'),
+(N'Hệ thống chiếu sáng'),
+(N'Khóa cửa'),
+(N'Cửa sổ'),
+(N'Phòng tắm'),
+(N'Mạng Internet'),
+(N'Nội thất'),
+(N'Khác');
+GO
+
+
+IF OBJECT_ID(N'dbo.MaintenanceRequest', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.MaintenanceRequest
+    (
+        request_id INT IDENTITY(1,1) PRIMARY KEY,
+
+        booking_id INT NOT NULL,
+
+        customer_id INT NOT NULL,
+
+        description NVARCHAR(500) NULL,
+
+        priority NVARCHAR(20) NOT NULL DEFAULT N'Low',
+
+        status NVARCHAR(20) NOT NULL DEFAULT N'Pending',
+
+        assigned_staff_id INT NULL,
+
+        resolution_note NVARCHAR(500) NULL,
+
+        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+
+        updated_at DATETIME2 NULL,
+
+        completed_at DATETIME2 NULL,
+
+        CONSTRAINT FK_MR_Booking
+            FOREIGN KEY(booking_id)
+            REFERENCES Booking(booking_id),
+
+        CONSTRAINT FK_MR_Customer
+            FOREIGN KEY(customer_id)
+            REFERENCES Account(account_id),
+
+        CONSTRAINT FK_MR_Staff
+            FOREIGN KEY(assigned_staff_id)
+            REFERENCES Account(account_id),
+
+        CONSTRAINT CK_MR_Status
+            CHECK(status IN
+            (
+                N'Pending',
+                N'InProgress',
+                N'Completed',
+                N'Cancelled'
+            )),
+
+        CONSTRAINT CK_MR_Priority
+            CHECK(priority IN
+            (
+                N'Low',
+                N'Medium',
+                N'High',
+                N'Urgent'
+            ))
+    );
+END
+GO
+
+
+IF OBJECT_ID(N'dbo.MaintenanceRequestDetail', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.MaintenanceRequestDetail
+    (
+        detail_id INT IDENTITY(1,1) PRIMARY KEY,
+
+        request_id INT NOT NULL,
+
+        room_id INT NOT NULL,
+
+        issue_type_id INT NOT NULL,
+
+        CONSTRAINT FK_MRD_Request
+            FOREIGN KEY(request_id)
+            REFERENCES MaintenanceRequest(request_id)
+            ON DELETE CASCADE,
+
+        CONSTRAINT FK_MRD_Room
+            FOREIGN KEY(room_id)
+            REFERENCES Room(room_id),
+
+        CONSTRAINT FK_MRD_IssueType
+            FOREIGN KEY(issue_type_id)
+            REFERENCES IssueType(issue_type_id)
+    );
+END
 GO
