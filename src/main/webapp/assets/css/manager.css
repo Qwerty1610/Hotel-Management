@@ -835,13 +835,17 @@ input:checked + .slider:before {
     background-color: #f0fdf4;
     color: #16a34a;
 }
-.status-occupied {
-    background-color: #eff6ff;
-    color: #2563eb;
+.status-outofservice {
+    background-color: #e5e7eb;
+    color: #374151;
 }
 .status-cleaning {
     background-color: #fffbeb;
     color: #d97706;
+}
+.status-refilling {
+    background-color: #fef9c3;
+    color: #ca8a04;
 }
 .status-maintenance {
     background-color: #fef2f2;

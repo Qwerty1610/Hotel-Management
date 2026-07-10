@@ -6,6 +6,10 @@ import com.mycompany.hotelmanagement.entity.Room;
 import java.sql.*;
 import java.util.*;
 
+/**
+ *
+ * @author MinhTDP
+ */
 public class HousekeepingDAO {
 
     // =========================
@@ -93,32 +97,42 @@ public class HousekeepingDAO {
     // CLEANING ROOMS
     // =========================
     public List<Room> getCleaningRooms() {
-        return getRoomsByStatus("Cleaning");
+        return getRoomsByStatus("Cleaning",
+                "Refilling");
     }
 
     public List<Room> getMaintenanceRooms() {
         return getRoomsByStatus("Maintenance");
     }
 
-    private List<Room> getRoomsByStatus(String status) {
+    private List<Room> getRoomsByStatus(String... status) {
 
         List<Room> list = new ArrayList<>();
 
+        String placeholders = String.join(
+                ",",
+                Collections.nCopies(status.length, "?")
+        );
         String sql = """
-            SELECT r.room_id,
-                   r.room_number,
-                   rt.type_name,
-                   r.status,
-                   r.floor
-            FROM Room r
-            JOIN RoomType rt ON r.type_id = rt.type_id
-            WHERE r.status = ? AND r.is_deleted = 0
-        """;
+        SELECT r.room_id,
+               r.room_number,
+               rt.type_name,
+               r.status,
+               r.floor
+        FROM Room r
+        JOIN RoomType rt 
+             ON r.type_id = rt.type_id
+        WHERE r.status IN (%s)
+          AND r.is_deleted = 0
+        """.formatted(placeholders);
 
         try (
                 Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setString(1, status);
+            for (int i = 0; i < status.length; i++) {
+                ps.setString(i + 1, status[i]);
+            }
+
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
@@ -168,29 +182,46 @@ public class HousekeepingDAO {
     // COUNTERS
     // =========================
     public int countCleaningRooms() {
-        return count("Cleaning");
+        return countByStatuses(
+                "Cleaning",
+                "Refilling"
+        );
     }
 
     public int countMaintenanceRooms() {
-        return count("Maintenance");
+        return countByStatuses("Maintenance");
     }
 
     public int countAvailableRooms() {
-        return count("Available");
+        return countByStatuses("Available");
     }
 
     public int countOutOfServiceRooms() {
-        return count("OutOfService");
+        return countByStatuses("OutOfService");
     }
 
-    private int count(String status) {
+    private int countByStatuses(String... statuses) {
 
-        String sql = "SELECT COUNT(*) FROM Room WHERE status = ? AND is_deleted = 0";
+        StringBuilder sql = new StringBuilder(
+                "SELECT COUNT(*) FROM Room WHERE status IN ("
+        );
+
+        for (int i = 0; i < statuses.length; i++) {
+            sql.append("?");
+            if (i < statuses.length - 1) {
+                sql.append(",");
+            }
+        }
+
+        sql.append(") AND is_deleted = 0");
 
         try (
-                Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+                Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql.toString())) {
 
-            ps.setString(1, status);
+            for (int i = 0; i < statuses.length; i++) {
+                ps.setString(i + 1, statuses[i]);
+            }
+
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
@@ -241,5 +272,119 @@ WHERE r.room_id = ? AND r.is_deleted = 0
         }
 
         return null;
+    }
+
+    public boolean updateRoomAvailable(int roomId) {
+
+        String sql = """
+        UPDATE Room
+        SET status = 'Available'
+        WHERE room_id = ?
+    """;
+
+        try (
+                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, roomId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+        }
+
+        return false;
+    }
+
+    public boolean refreshRoomStatusByPendingIssues(int roomId) {
+
+        String getIssueSql = """
+        SELECT TOP 1
+               issue_type,
+               severity
+        FROM RoomIssue
+        WHERE room_id = ?
+          AND status = 'Pending'
+        ORDER BY
+            CASE
+                WHEN issue_type = 'Damage'
+                     AND severity = 'High' THEN 1
+
+                WHEN issue_type = 'Other'
+                     AND severity IN ('High','Medium') THEN 2
+
+                WHEN issue_type = 'Refill'
+                     AND severity = 'Medium' THEN 3
+
+                WHEN issue_type = 'Cleaning'
+                     AND severity = 'Low' THEN 4
+
+                WHEN issue_type = 'Other'
+                     AND severity = 'Low' THEN 5
+
+                ELSE 99
+            END,
+            issue_id
+    """;
+
+        String updateSql = """
+        UPDATE Room
+        SET status = ?
+        WHERE room_id = ?
+    """;
+
+        try (
+                Connection conn = DBContext.getConnection(); PreparedStatement psIssue = conn.prepareStatement(getIssueSql); PreparedStatement psUpdate = conn.prepareStatement(updateSql)) {
+
+            psIssue.setInt(1, roomId);
+
+            ResultSet rs = psIssue.executeQuery();
+
+            String roomStatus = "Available";
+
+            // Không còn Pending -> Available
+            if (rs.next()) {
+
+                String issueType = rs.getString("issue_type");
+                String severity = rs.getString("severity");
+
+                if ("Damage".equals(issueType)) {
+
+                    roomStatus = "Maintenance";
+
+                } else if ("Other".equals(issueType)) {
+
+                    if ("High".equalsIgnoreCase(severity)
+                            || "Medium".equalsIgnoreCase(severity)) {
+
+                        roomStatus = "Maintenance";
+
+                    } else {
+
+                        roomStatus = "Available";
+                    }
+
+                } else if ("Refill".equals(issueType)) {
+
+                    roomStatus = "Refilling";
+
+                } else if ("Cleaning".equals(issueType)) {
+
+                    roomStatus = "Cleaning";
+                }
+            }
+
+            psUpdate.setString(1, roomStatus);
+            psUpdate.setInt(2, roomId);
+
+            return psUpdate.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
 }

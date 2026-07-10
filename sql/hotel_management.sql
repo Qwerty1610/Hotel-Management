@@ -1511,4 +1511,28 @@ BEGIN
             REFERENCES IssueType(issue_type_id)
     );
 END
+/*Room Issue (Housekeeping báo cáo)*/
 GO
+CREATE TABLE RoomIssue (
+    issue_id INT IDENTITY PRIMARY KEY,
+
+    room_id INT NOT NULL,
+
+    issue_type VARCHAR(100) NOT NULL,
+
+    severity VARCHAR(20) NOT NULL,
+
+    description NVARCHAR(1000) NOT NULL,
+
+    note NVARCHAR(1000),
+
+    status VARCHAR(30) DEFAULT 'Pending',
+
+    reported_by INT,
+
+    reported_at DATETIME DEFAULT GETDATE(),
+
+    FOREIGN KEY(room_id) REFERENCES Room(room_id),
+
+    FOREIGN KEY(reported_by) REFERENCES Account(account_id)
+);
