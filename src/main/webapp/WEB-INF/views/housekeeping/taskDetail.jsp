@@ -28,7 +28,13 @@
                 <li class="menu-item active">
                     <a href="${pageContext.request.contextPath}/housekeeping/dashboard?tab=task">
                         <i class="fa-solid fa-bed-pulse"></i>
-                        <span>Trạng thái phòng</span>
+                        <span>Sơ đồ phòng</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="${pageContext.request.contextPath}/housekeeping/reportIssue">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span>Báo cáo sự cố phòng</span>
                     </a>
                 </li>
             </ul>
@@ -57,11 +63,13 @@
                 <div class="breadcrumb">
                     <span>Quản trị</span>
                     <span class="separator">&gt;</span>
+                    <a href="${pageContext.request.contextPath}/housekeeping/dashboard?tab=task"
+                       class="breadcrumb-link">
+                        Sơ đồ trạng thái phòng
+                    </a>
+                    <span class="separator">&gt;</span>
                     <span class="current">
-                        <c:choose>
-                            <c:when test="${param.tab == 'task'}">Trạng thái phòng</c:when>
-                            <c:otherwise>Tổng quan</c:otherwise>
-                        </c:choose>
+                        Phòng ${room.roomNumber}
                     </span>
                 </div>
                 <a href="${pageContext.request.contextPath}/logout" class="btn-logout">
@@ -87,6 +95,7 @@
                                   ${status == 'OutOfService' ? 'status-outofservice' : ''}
                                   ${status == 'Available' ? 'status-available' : ''}
                                   ${status == 'Cleaning' ? 'status-cleaning' : ''}
+                                  ${status == 'Refilling' ? 'status-refilling' : ''}
                                   ${status == 'Maintenance' ? 'status-maintenance' : ''}
                                   ${status == 'Completed' ? 'status-completed' : ''}">
                                 ${status}
@@ -104,80 +113,140 @@
                         <!-- BODY -->
                         <div class="task-card-body">
 
-                            <div class="task-info-grid">
-                                <div>
-                                    <label>Room Name</label>
-                                    <span>${room.typeName}</span>
-                                </div>
+                            <c:choose>
 
-                                <div>
-                                    <label>Room Number</label>
-                                    <span>${room.roomNumber}</span>
-                                </div>
-                            </div>
+                                <c:when test="${status == 'OutOfService'}">
 
-                            <div class="task-action">
+                                    <div class="issue-section">
+                                        <h3 class="issue-title">
+                                            Trạng thái phòng
+                                        </h3>
 
-                                <form method="post"
-                                      action="${pageContext.request.contextPath}/housekeeping/task"
-                                      class="task-form">
+                                        <div class="empty-issue outofservice-message">
+                                            <i class="fa-solid fa-ban"></i>
+                                            Phòng đang ngừng hoạt động.
+                                        </div>
+                                    </div>
 
-                                    <input type="hidden" name="roomId" value="${room.roomId}">
+                                </c:when>
 
-                                    <div class="status-update-group">
-                                        <label>Status</label>
+                                <c:otherwise>
+
+                                    <div class="issue-section">
+                                        <h3 class="issue-title">
+                                            Danh sách sự cố phòng
+                                        </h3>
 
                                         <c:choose>
-
-                                            <c:when test="${status == 'OutOfService'}">
-                                                <div class="status-message">
-                                                    Phòng đang ngừng hoạt động
+                                            <c:when test="${empty issues}">
+                                                <div class="empty-issue">
+                                                    Không có sự cố nào cho phòng này.
                                                 </div>
                                             </c:when>
 
                                             <c:otherwise>
-                                                <select name="status" class="status-select">
 
-                                                    <option value="Available" ${status == 'Available' ? 'selected' : ''}>
-                                                        Available
-                                                    </option>
+                                                <div class="issue-table-wrapper">
+                                                    <table class="issue-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>ID</th>
+                                                                <th>Loại sự cố</th>
+                                                                <th>Mức độ</th>
+                                                                <th>Mô tả</th>
+                                                                <th>Ghi chú</th>
+                                                                <th>Trạng thái</th>
+                                                                <th>Thao tác</th>
+                                                            </tr>
+                                                        </thead>
 
-                                                    <option value="Cleaning" ${status == 'Cleaning' ? 'selected' : ''}>
-                                                        Cleaning
-                                                    </option>
+                                                        <tbody>
+                                                            <c:forEach var="issue" items="${issues}">
+                                                                <tr>
+                                                                    <td>${issue.issueId}</td>
+                                                                    <td>${issue.issueType}</td>
+                                                                    <td>${issue.severity}</td>
+                                                                    <td>${issue.description}</td>
+                                                                    <td>
+                                                                        ${empty issue.note ? '-' : issue.note}
+                                                                    </td>
 
-                                                    <option value="Maintenance" ${status == 'Maintenance' ? 'selected' : ''}>
-                                                        Maintenance
-                                                    </option>
+                                                                    <td>
+                                                                        <span class="issue-status ${issue.status == 'Pending' ? 'pending' : 'success'}">
+                                                                            ${issue.status}
+                                                                        </span>
+                                                                    </td>
 
-                                                </select>
+                                                                    <td>
+                                                                        <c:choose>
+
+                                                                            <c:when test="${issue.status == 'Pending'}">
+
+                                                                                <form method="post"
+                                                                                      action="${pageContext.request.contextPath}/housekeeping/taskDetail">
+
+                                                                                    <input type="hidden"
+                                                                                           name="issueId"
+                                                                                           value="${issue.issueId}">
+
+                                                                                    <input type="hidden"
+                                                                                           name="roomId"
+                                                                                           value="${room.roomId}">
+
+                                                                                    <input type="hidden"
+                                                                                           name="issueType"
+                                                                                           value="${issue.issueType}">
+
+                                                                                    <input type="hidden"
+                                                                                           name="severity"
+                                                                                           value="${issue.severity}">
+
+                                                                                    <button type="submit"
+                                                                                            class="btn-complete">
+                                                                                        Hoàn thành
+                                                                                    </button>
+
+                                                                                </form>
+
+                                                                            </c:when>
+
+                                                                            <c:otherwise>
+
+                                                                                <span class="completed-text">
+                                                                                    Đã hoàn thành
+                                                                                </span>
+
+                                                                            </c:otherwise>
+
+                                                                        </c:choose>
+                                                                    </td>
+                                                                </tr>
+                                                            </c:forEach>
+                                                        </tbody>
+
+                                                    </table>
+                                                </div>
+
                                             </c:otherwise>
 
                                         </c:choose>
-                                    </div>
-                                    <div class="task-buttons">
-                                        <button type="button"
-                                                class="btn-task secondary"
-                                                onclick="history.back()">
-                                            Back
-                                        </button>
 
-                                        <c:if test="${status != 'OutOfService'}">
-                                            <button type="submit" class="btn-task success">
-                                                Save
-                                            </button>
-                                        </c:if>
                                     </div>
 
-                                </form>
+                                </c:otherwise>
 
+                            </c:choose>
+
+                            <div class="task-buttons-bottom">
+                                <a href="${pageContext.request.contextPath}/housekeeping/dashboard?tab=task"
+                                   class="btn-task secondary">
+                                    Quay lại
+                                </a>
                             </div>
 
                         </div>
                     </div>
-
                 </div>
-
             </main>
             <footer class="dashboard-footer">
                 <span>© 2026 HotelOps Luxury Management.</span>
