@@ -1,12 +1,4 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%--
-    Bảng điều khiển hệ thống của Admin (UC 2.7.4 - View System Dashboard).
-    - 4 thẻ KPI bấm được để mở danh sách chi tiết (render backend, 20 dòng/trang).
-    - Thẻ "Lượt đặt phòng" & "Tổng doanh thu" có bộ lọc kỳ riêng (tháng/quý/năm/tùy chỉnh).
-    - 4 biểu đồ, mỗi biểu đồ một khoảng lọc riêng; chuỗi thời gian tự gom nhóm
-      ngày → tháng → quý khi khoảng lọc rộng để không bị chi chít.
-    @author QuyPQ
---%>
 <%@ include file="../../includes/taglibs.jsp" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ include file="../../includes/header.jsp" %>
@@ -15,6 +7,14 @@
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin.css?v=6" />
 <fmt:setLocale value="vi_VN" />
 
+<%--
+    Bảng điều khiển hệ thống của Admin (UC 2.7.4 - View System Dashboard).
+    - 4 thẻ KPI bấm được để mở danh sách chi tiết (render backend, 20 dòng/trang).
+    - Thẻ "Lượt đặt phòng" & "Tổng doanh thu" có bộ lọc kỳ riêng (tháng/quý/năm/tùy chỉnh).
+    - 4 biểu đồ, mỗi biểu đồ một khoảng lọc riêng; chuỗi thời gian tự gom nhóm
+      ngày → tháng → quý khi khoảng lọc rộng để không bị chi chít.
+    @author QuyPQ
+--%>
 <body class="dashboard-body">
 
     <div class="dashboard-layout">

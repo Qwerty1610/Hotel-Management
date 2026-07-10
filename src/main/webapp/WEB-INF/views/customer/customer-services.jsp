@@ -112,6 +112,7 @@
                         <ul class="nav-links">
                             <li><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
                             <li><a href="${pageContext.request.contextPath}/customer/services" class="active">Dịch vụ</a></li>
+                            <li><a href="${pageContext.request.contextPath}/customer/maintenance">Sự cố</a></li>
                         </ul>
 
                         <div class="nav-actions">
@@ -138,6 +139,10 @@
                                                     <a href="${pageContext.request.contextPath}/customer/services"
                                                         class="dropdown-item">
                                                         <i class="fa-solid fa-bell-concierge"></i> Yêu cầu dịch vụ
+                                                    </a>
+                                                    <a href="${pageContext.request.contextPath}/customer/maintenance"
+                                                        class="dropdown-item">
+                                                        <i class="fa-solid fa-screwdriver-wrench"></i> Yêu cầu sửa chữa
                                                     </a>
                                                     <a href="${pageContext.request.contextPath}/customer/services/history"
                                                         class="dropdown-item">

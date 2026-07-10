@@ -895,6 +895,25 @@
                 if (btn) {
                     // Only block Confirm button if deposit not paid
                     btn.disabled = !allValid || !isDepositPaid;
+
+                if (pChecked !== pReq) {
+                    allValid = false;
+                }
+
+                childIds.forEach(cid => {
+                    const required = getRequiredQty(cid);
+                    const checked = document.querySelectorAll(
+                            "#roomGrid_" + cid + " .room-checkbox:checked"
+                            ).length;
+
+                    if (checked !== required) {
+                        allValid = false;
+                    }
+                });
+                
+                const btn = document.getElementById("btnConfirmBooking");
+                if (btn) {
+                    btn.disabled = !allValid;
                 }
                 // Update button is ALWAYS enabled regardless of deposit status
             }
@@ -1089,6 +1108,18 @@
                     input.value = cb.value;
                     container.appendChild(input);
                 });
+
+                for (let cid of childIds) {
+                    const typeSel = document.getElementById('editRoomTypeId_' + cid);
+
+                    if (typeSel) {
+                        const hiddenType = document.createElement('input');
+                        hiddenType.type = 'hidden';
+                        hiddenType.name = 'childRoomTypeId_' + cid;
+                        hiddenType.value = typeSel.value;
+                        container.appendChild(hiddenType);
+                    }
+
 
                 for (let cid of childIds) {
                     const typeSel = document.getElementById('editRoomTypeId_' + cid);

@@ -18,7 +18,7 @@ function initRooms() {
         const status = normalize(r.dataset.roomStatus);
 
         r.classList.remove(
-                "status-occupied",
+                "status-outofservice",
                 "status-available",
                 "status-cleaning",
                 "status-maintenance"
@@ -49,8 +49,8 @@ function goTaskDetail(roomId) {
 
 function getStatusClass(status) {
     switch (normalize(status)) {
-        case "occupied":
-            return "status-occupied";
+        case "outofservice":
+            return "status-outofservice";
         case "available":
             return "status-available";
         case "cleaning":

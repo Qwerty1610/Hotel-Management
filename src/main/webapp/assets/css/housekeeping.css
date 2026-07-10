@@ -68,7 +68,7 @@
     transition: all 0.2s ease;
 }
 /* ===================================================
-   SỬA LỖI MẤT CHẤM TRÒN (BEFORE) CHO NÚT ALL & OCCUPIED
+   SỬA LỖI MẤT CHẤM TRÒN (BEFORE) CHO NÚT ALL & OutOfService
 =================================================== */
 
 /* Màu mặc định cho chấm tròn nếu không khớp trạng thái nào */
@@ -83,7 +83,7 @@
 
 /* Đổ màu chuẩn xác dựa trên data-status (Thay thế hoàn toàn cấu hình cũ) */
 .btn-filter[data-status="ALL"]::before { background: #111827; }          /* Đen đậm */
-.btn-filter[data-status="Occupied"]::before { background: #64748b; }     /* Xám Đậm */
+.btn-filter[data-status="OutOfService"]::before { background: #64748b; }     /* Xám Đậm */
 .btn-filter[data-status="Available"]::before { background: #2563eb; }    /* Xanh Dương */
 .btn-filter[data-status="Cleaning"]::before { background: #f59e0b; }     /* Vàng Cam */
 .btn-filter[data-status="Maintenance"]::before { background: #ef4444; }  /* Đỏ */
@@ -98,7 +98,7 @@
     background-color: #f8fafc;
 }
 
-.btn-filter[data-status="Occupied"]:hover {
+.btn-filter[data-status="OutOfService"]:hover {
     border-color: #64748b;
     color: #64748b;
     background-color: #f8fafc;
@@ -126,7 +126,7 @@
     color: #ffffff !important;
 }
 .btn-filter.active[data-status="ALL"]:hover { background: #111827; }
-.btn-filter.active[data-status="Occupied"]:hover { background: #64748b; }
+.btn-filter.active[data-status="OutOfService"]:hover { background: #64748b; }
 .btn-filter.active[data-status="Available"]:hover { background: #2563eb; }
 .btn-filter.active[data-status="Cleaning"]:hover { background: #f97316; }
 .btn-filter.active[data-status="Maintenance"]:hover { background: #ef4444; }
@@ -137,7 +137,7 @@
     border-color: #111827;
 }
 
-.btn-filter.active[data-status="Occupied"] {
+.btn-filter.active[data-status="OutOfService"] {
     background: #64748b;
     color: #ffffff;
     border-color: #64748b;
@@ -303,10 +303,10 @@
    NEW COLOR STATUS MAPPING
 ========================= */
 
-/* OCCUPIED (Xám Đậm) */
-.status-occupied { border-color: #cbd5e1; }
-.status-occupied::after { background: #64748b; }
-.status-occupied .room-num { color: #334155; }
+/* OutOfService (Xám Đậm) */
+.status-outofservice { border-color: #cbd5e1; }
+.status-outofservice::after { background: #64748b; }
+.status-outofservice .room-num { color: #334155; }
 
 /* VACANT CLEAN / AVAILABLE (Xanh Dương) */
 .status-available { border-color: #bfdbfe; }
@@ -349,7 +349,7 @@
 
 .task-card {
     width: 100%;
-    max-width: 900px;
+    max-width: 1200px;
     background: #fff;
     border: 1px solid #e2e8f0;
     border-radius: 16px;
@@ -379,8 +379,8 @@
 
 .task-card-image img {
     width: 100%;
-    height: 260px;
-    object-fit: cover;
+    max-height: 500px;
+    object-fit: contain;
 }
 
 .task-card-body {
@@ -510,4 +510,29 @@
 .floor-card.is-hiding {
     opacity: 0;
     transform: translateY(10px);
+}
+.task-buttons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-task.secondary {
+    background: #ffffff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.btn-task.secondary:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+}
+.status-message {
+    min-width: 200px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    color: #64748b;
+    font-weight: 600;
 }

@@ -77,6 +77,9 @@
                     <a href="${ctx}/customer/services" class="dropdown-item">
                         <i class="fa-solid fa-bell-concierge"></i> Yêu cầu dịch vụ
                     </a>
+                    <a href="${pageContext.request.contextPath}/customer/maintenance" class="dropdown-item">
+                        <i class="fa-solid fa-screwdriver-wrench"></i> Yêu cầu sửa chữa
+                    </a>
                     <a href="${ctx}/customer/services/history" class="dropdown-item">
                         <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử yêu cầu
                     </a>

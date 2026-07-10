@@ -39,8 +39,8 @@ public class HousekeepingDashboardController extends HttpServlet {
         request.setAttribute("availableCount",
                 dao.countAvailableRooms());
 
-        request.setAttribute("occupiedCount",
-                dao.countOccupiedRooms());
+        request.setAttribute("outOfServiceCount",
+                dao.countOutOfServiceRooms());
 
         request.setAttribute("roomList",
                 dao.getAllRooms());
