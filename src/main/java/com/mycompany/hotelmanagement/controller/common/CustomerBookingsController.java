@@ -357,8 +357,8 @@ public class CustomerBookingsController extends HttpServlet {
                 bookingService.createBooking(booking);
             }
 
-            // Redirect to history on success
-            response.sendRedirect(request.getContextPath() + "/customer/bookings?success=created");
+            // Redirect to payment on success
+            response.sendRedirect(request.getContextPath() + "/customer/payments/pay?bookingId=" + booking.getBookingId());
 
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Validation failed during booking creation: " + e.getMessage(), e);

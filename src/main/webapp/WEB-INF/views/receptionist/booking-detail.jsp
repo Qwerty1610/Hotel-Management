@@ -36,6 +36,13 @@
                                     <i class="fa-solid fa-key"></i> <span>Nhận phòng (Check-in)</span>
                                 </a>
                             </li>
+
+                            <li class="menu-item ${currentTab eq 'checkout' ? 'active' : ''}">
+                                <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkout">
+                                    <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh toán</span>
+                                </a>
+                            </li>
+
                             <li class="menu-item ${currentTab eq 'roommap' ? 'active' : ''}">
                                 <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=roommap">
                                     <i class="fa-solid fa-map"></i> <span>Sơ đồ phòng</span>
@@ -46,13 +53,7 @@
                                 <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=walkin-bookings">
                                     <i class="fa-solid fa-user-plus"></i> <span>Đặt phòng tại quầy</span>
                                 </a>
-                            </li>
-
-                            <li class="menu-item ${currentTab eq 'checkout' ? 'active' : ''}">
-                                <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkout">
-                                    <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh toán</span>
-                                </a>
-                            </li>
+                            </li>    
 
                             <li class="menu-item ${currentTab eq 'servicerequests' ? 'active' : ''}">
                                 <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=servicerequests">

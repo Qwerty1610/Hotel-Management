@@ -15,6 +15,7 @@
             <li><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
             <li><a href="${pageContext.request.contextPath}/rooms">Phòng</a></li>
             <li><a href="${pageContext.request.contextPath}/customer/bookings" class="active">Đặt phòng của tôi</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/payments">Thanh toán</a></li>
         </ul>
 
         <div class="nav-actions">
@@ -43,6 +44,9 @@
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/services/history" class="dropdown-item">
                                         <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử yêu cầu
+                                    </a>
+                                    <a href="${pageContext.request.contextPath}/customer/payments" class="dropdown-item">
+                                        <i class="fa-solid fa-credit-card"></i> Thanh toán & Lịch sử
                                     </a>
                                 </c:when>
                                 <c:otherwise>

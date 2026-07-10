@@ -109,6 +109,9 @@
                                                         class="dropdown-item">
                                                         <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử yêu cầu
                                                     </a>
+                                                    <a href="${pageContext.request.contextPath}/customer/payments" class="dropdown-item">
+                                                        <i class="fa-solid fa-credit-card"></i> Thanh toán & Lịch sử
+                                                    </a>
                                                 </c:when>
                                                 <c:otherwise>
                                                     <c:choose>

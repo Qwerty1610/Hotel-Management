@@ -72,6 +72,13 @@
             <version>1.4.14</version>
         </dependency>
 
+        <!-- Gson - parse JSON webhook cua SePay -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version>
+        </dependency>
+
         <!-- Jakarta Mail API -->
         <dependency>
             <groupId>jakarta.mail</groupId>

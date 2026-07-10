@@ -58,6 +58,7 @@
             <li><a href="${ctx}/">Trang chủ</a></li>
             <li><a href="${ctx}/rooms">Phòng</a></li>
             <li><a href="${ctx}/customer/bookings">Đặt phòng của tôi</a></li>
+            <li><a href="${ctx}/customer/payments">Thanh toán</a></li>
         </ul>
         <div class="nav-actions">
             <div class="user-dropdown">
@@ -81,6 +82,9 @@
                     </a>
                     <a href="${ctx}/customer/services/history" class="dropdown-item">
                         <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử yêu cầu
+                    </a>
+                    <a href="${ctx}/customer/payments" class="dropdown-item">
+                        <i class="fa-solid fa-credit-card"></i> Thanh toán & Lịch sử
                     </a>
                     <div class="dropdown-divider"></div>
                     <a href="${ctx}/logout" class="dropdown-item logout-item">
