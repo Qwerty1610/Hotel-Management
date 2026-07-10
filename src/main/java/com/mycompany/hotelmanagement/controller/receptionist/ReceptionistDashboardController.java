@@ -5,6 +5,7 @@ import com.mycompany.hotelmanagement.dal.BookingServiceRequestDAO;
 import com.mycompany.hotelmanagement.dal.RoomRepository;
 import com.mycompany.hotelmanagement.dal.RoomTypeRepository;
 import com.mycompany.hotelmanagement.dal.WalkInBookingDAO;
+import com.mycompany.hotelmanagement.dal.CheckOutDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.BookingServiceRequest;
 import com.mycompany.hotelmanagement.entity.Room;
@@ -86,6 +87,8 @@ public class ReceptionistDashboardController extends HttpServlet {
                 loadRoomMapTab(request);
             } else if ("walkin-bookings".equals(tab)) {
                 loadWalkInBookingTab(request);
+            } else if ("checkout".equals(tab)) {
+                loadCheckOutTab(request);
             }
 
             // 4. Forward to view
@@ -384,5 +387,13 @@ public class ReceptionistDashboardController extends HttpServlet {
     private void loadWalkInBookingTab(HttpServletRequest request) {
         RoomTypeRepository roomTypeRepo = new RoomTypeRepository();
         request.setAttribute("roomTypesList", roomTypeRepo.getAllRoomTypes());
+    }
+
+    private void loadCheckOutTab(HttpServletRequest request) {
+        BookingDAO dao = new BookingDAO();
+        String search = request.getParameter("search");
+        List<Booking> list = dao.getBookings("CheckedIn", search);
+        request.setAttribute("checkOutList", list);
+        request.setAttribute("search", search != null ? search : "");
     }
 }

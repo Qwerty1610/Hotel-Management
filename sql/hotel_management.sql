@@ -961,6 +961,46 @@ FROM dbo.Invoice i
 ORDER BY i.created_at DESC;
 GO
 
+/* 6.5 Giao dịch thanh toán online qua SePay.
+   Mỗi dòng = 1 giao dịch tiền vào do SePay webhook báo về, đã khớp với
+   một hóa đơn (nội dung CK "HD{invoice_id}") HOẶC một khoản tiền cọc
+   đặt phòng (nội dung CK "COC{booking_id}").
+   sepay_tx_id UNIQUE để chống ghi trùng khi SePay gửi lại webhook. */
+IF OBJECT_ID(N'dbo.Payment', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Payment (
+        payment_id INT IDENTITY(1,1) PRIMARY KEY,
+        invoice_id INT NULL,
+        booking_id INT NULL,
+        sepay_tx_id BIGINT NOT NULL,
+        amount DECIMAL(18,2) NOT NULL,
+        gateway NVARCHAR(100) NULL,
+        reference_code NVARCHAR(100) NULL,
+        content NVARCHAR(500) NULL,
+        transaction_date DATETIME2 NULL,
+        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        CONSTRAINT FK_Payment_Invoice FOREIGN KEY (invoice_id) REFERENCES dbo.Invoice(invoice_id),
+        CONSTRAINT FK_Payment_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id),
+        CONSTRAINT UQ_Payment_SepayTx UNIQUE (sepay_tx_id),
+        CONSTRAINT CK_Payment_Amount CHECK (amount > 0),
+        CONSTRAINT CK_Payment_Target CHECK (invoice_id IS NOT NULL OR booking_id IS NOT NULL)
+    );
+END
+GO
+
+/* Nâng cấp bảng Payment cũ (tạo trước khi có thanh toán cọc).
+   Dùng EXEC() vì cột booking_id chưa tồn tại lúc SQL Server biên dịch batch. */
+IF OBJECT_ID(N'dbo.Payment', N'U') IS NOT NULL AND COL_LENGTH(N'dbo.Payment', N'booking_id') IS NULL
+BEGIN
+    EXEC(N'ALTER TABLE dbo.Payment ALTER COLUMN invoice_id INT NULL');
+    EXEC(N'ALTER TABLE dbo.Payment ADD booking_id INT NULL');
+    EXEC(N'ALTER TABLE dbo.Payment ADD CONSTRAINT FK_Payment_Booking
+        FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id)');
+    EXEC(N'ALTER TABLE dbo.Payment ADD CONSTRAINT CK_Payment_Target
+        CHECK (invoice_id IS NOT NULL OR booking_id IS NOT NULL)');
+END
+GO
+
 /* ============================================================
    7. SEED 30 KHÁCH HÀNG + BOOKING + HÓA ĐƠN TƯƠNG ỨNG
    Mỗi khách: 1 tài khoản (role Customer) + 1 hồ sơ Customer +
@@ -1391,6 +1431,33 @@ LEFT JOIN dbo.Room rm ON bsr.room_id = rm.room_id
 LEFT JOIN dbo.HotelService hs ON bsr.service_id = hs.service_id
 LEFT JOIN dbo.Account acc ON bsr.processed_by_staff_id = acc.account_id
 ORDER BY bsr.created_at DESC;
+GO
+
+/* ============================================================
+   14. TABLE CHECKOUT (Luu lich su tra phong cua Lễ tân)
+   ============================================================ */
+IF OBJECT_ID(N'dbo.CheckOut', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.CheckOut (
+        check_out_id     INT IDENTITY(1,1) PRIMARY KEY,
+        booking_id       INT NOT NULL,
+        receptionist_id  INT NOT NULL,
+        
+        room_charge      DECIMAL(18,2) NOT NULL DEFAULT 0,
+        service_charge   DECIMAL(18,2) NOT NULL DEFAULT 0,
+        extra_charge     DECIMAL(18,2) NOT NULL DEFAULT 0,
+        total_amount     DECIMAL(18,2) NOT NULL DEFAULT 0,
+        amount_paid      DECIMAL(18,2) NOT NULL DEFAULT 0,
+        remaining_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+        payment_method   NVARCHAR(50) NULL,
+        
+        checked_out_at   DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        notes            NVARCHAR(500) NULL,
+        
+        CONSTRAINT FK_CheckOut_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id),
+        CONSTRAINT FK_CheckOut_Receptionist FOREIGN KEY (receptionist_id) REFERENCES dbo.Account(account_id)
+    );
+END
 GO
 /*Maintenance requests (giao Housekeeping)*/
 IF OBJECT_ID(N'dbo.IssueType', N'U') IS NULL
