@@ -1295,7 +1295,7 @@
                                                                                     <p>Quản lý các phòng đang được sử
                                                                                         dụng (Đã check-in) và thực hiện
                                                                                         thủ tục trả phòng, tính hóa
-                                                                                        đơn (Iteration 3).</p>
+                                                                                        đơn</p>
                                                                                 </div>
                                                                             </div>
 

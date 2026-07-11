@@ -1455,3 +1455,30 @@ input:checked + .slider:before {
 .btn-confirm-one:hover { background: #ecfdf5; }
 
 
+/* ALERTS */
+.alert-banner {
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.alert-success {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #16a34a;
+}
+
+.alert-danger {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+}
+
+.alert-banner i {
+    font-size: 18px;
+}

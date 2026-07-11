@@ -122,6 +122,58 @@ END
 GO
 
 -- ================================================================
+-- BUOC 3: FORCE THANH TOAN HOA DON cho mot booking
+-- >>> SUA SO DUOI: doi 99 thanh booking_id ban muon test <<<
+-- ================================================================
+/*
+DECLARE @BID_PAY INT = 99;   -- << DOI SO NAY
+DECLARE @INV_ID INT;
+DECLARE @TOTAL_INV DECIMAL(18,2);
+DECLARE @PAID_DEP DECIMAL(18,2);
+DECLARE @REMAINING DECIMAL(18,2);
+DECLARE @TXID_PAY BIGINT;
+
+SELECT @INV_ID = invoice_id FROM dbo.Invoice WHERE booking_id = @BID_PAY AND status = N'Pending';
+
+IF @INV_ID IS NULL
+BEGIN
+    PRINT N'[!] Booking #' + CAST(@BID_PAY AS NVARCHAR) + N' chua co hoa don Pending hoac khong ton tai. Hay tao hoa don truoc (BUOC 1.5).';
+END
+ELSE
+BEGIN
+    -- Tinh toan so tien con lai can thanh toan
+    SELECT @TOTAL_INV = ISNULL(SUM(amount), 0) FROM dbo.InvoiceItem WHERE invoice_id = @INV_ID;
+    SELECT @PAID_DEP = ISNULL(SUM(amount), 0) FROM dbo.Payment WHERE booking_id = @BID_PAY AND invoice_id IS NULL;
+    SET @REMAINING = @TOTAL_INV - @PAID_DEP;
+
+    IF @REMAINING <= 0
+    BEGIN
+        PRINT N'[!] Hoa don nay da duoc thanh toan du hoac khong con no.';
+    END
+    ELSE
+    BEGIN
+        -- Sinh fake SePay TX ID (am de khong trung voi tx that)
+        SET @TXID_PAY = -1 * ABS(CAST(CAST(NEWID() AS VARBINARY(8)) AS BIGINT));
+
+        INSERT INTO dbo.Payment (booking_id, invoice_id, sepay_tx_id, amount,
+                                  gateway, reference_code, content, created_at)
+        VALUES (@BID_PAY, @INV_ID, @TXID_PAY, @REMAINING,
+                N'Manual/Test',
+                N'TEST-PAY-' + CAST(@INV_ID AS NVARCHAR),
+                N'PAY' + CAST(@INV_ID AS NVARCHAR) + N' - Force invoice payment test',
+                SYSDATETIME());
+                
+        -- Cap nhat trang thai hoa don (neu can thiet)
+        UPDATE dbo.Invoice SET status = N'Paid' WHERE invoice_id = @INV_ID;
+
+        PRINT N'[OK] Da thanh toan ' + CAST(@REMAINING AS NVARCHAR) + N' VND cho Hoa don #' + CAST(@INV_ID AS NVARCHAR) + N' cua Booking #' + CAST(@BID_PAY AS NVARCHAR);
+        PRINT N'     -> Reload trang "Thanh toan" hoac "Hoa don cho thanh toan" de kiem tra.';
+    END
+END
+*/
+GO
+
+-- ================================================================
 -- CLEANUP: Xoa du lieu test khi xong
 -- >>> SUA SO DUOI: doi 99 thanh booking_id da dung de test <<<
 -- ================================================================

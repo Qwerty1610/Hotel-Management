@@ -366,7 +366,8 @@ BEGIN
     CREATE TABLE dbo.Amenity (
         amenity_id INT IDENTITY(1,1) PRIMARY KEY,
         name NVARCHAR(100) NOT NULL UNIQUE,
-        icon_url NVARCHAR(100) NULL
+        icon_url NVARCHAR(100) NULL,
+        is_active BIT NOT NULL DEFAULT 1
     );
 END
 GO
@@ -1578,6 +1579,7 @@ BEGIN
             REFERENCES IssueType(issue_type_id)
     );
 END
+GO
 /*Room Issue (Housekeeping báo cáo)*/
 GO
 CREATE TABLE RoomIssue (

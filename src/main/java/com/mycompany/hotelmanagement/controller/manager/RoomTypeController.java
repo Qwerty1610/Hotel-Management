@@ -76,7 +76,6 @@ public class RoomTypeController extends HttpServlet {
             String area = request.getParameter("area");
             String imageUrl = request.getParameter("imageUrl");
             String description = request.getParameter("description");
-            String[] amenities = request.getParameterValues("amenity");
 
             System.out.println("[RoomTypeController] Form values: name=" + name +
                     ", price=" + priceParam +
@@ -160,7 +159,7 @@ public class RoomTypeController extends HttpServlet {
                 }
             }
 
-            roomTypeService.saveRoomType(rt, imageUrl, amenities);
+            roomTypeService.saveRoomType(rt, imageUrl);
         }
 
         response.sendRedirect(request.getContextPath() + "/manager/roomtypes?success=saved");
