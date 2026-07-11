@@ -3,7 +3,7 @@
 <%--
     Sidebar chung cho Manager Dashboard.
     Sử dụng biến 'activePage' (request scope) để highlight menu item hiện tại.
-    Các giá trị hợp lệ: 'overview', 'rooms', 'room-types', 'services', 'requests', 'invoices', 'customers'
+    Các giá trị hợp lệ: 'overview', 'rooms', 'room-types', 'services', 'requests', 'invoices', 'customers', 'promotions'
 --%>
 <aside class="dashboard-sidebar">
     <div class="sidebar-brand">
@@ -39,6 +39,11 @@
         <li class="menu-item ${activePage eq 'invoices' ? 'active' : ''}">
             <a href="${pageContext.request.contextPath}/manager/invoices">
                 <i class="fa-solid fa-file-invoice-dollar"></i> <span>Hóa đơn</span>
+            </a>
+        </li>
+        <li class="menu-item ${activePage eq 'promotions' ? 'active' : ''}">
+            <a href="${pageContext.request.contextPath}/manager/promotions">
+                <i class="fa-solid fa-tag"></i> <span>Khuyến mãi</span>
             </a>
         </li>
         <li class="menu-item ${activePage eq 'customers' ? 'active' : ''}">
