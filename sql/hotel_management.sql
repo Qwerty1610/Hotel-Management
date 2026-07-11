@@ -1580,3 +1580,78 @@ BEGIN
     );
 END
 GO
+/*Room Issue (Housekeeping báo cáo)*/
+GO
+CREATE TABLE RoomIssue (
+    issue_id INT IDENTITY PRIMARY KEY,
+
+    room_id INT NOT NULL,
+
+    issue_type VARCHAR(100) NOT NULL,
+
+    severity VARCHAR(20) NOT NULL,
+
+    description NVARCHAR(1000) NOT NULL,
+
+    note NVARCHAR(1000),
+
+    status VARCHAR(30) DEFAULT 'Pending',
+
+    reported_by INT,
+
+    reported_at DATETIME DEFAULT GETDATE(),
+
+    FOREIGN KEY(room_id) REFERENCES Room(room_id),
+
+    FOREIGN KEY(reported_by) REFERENCES Account(account_id)
+);
+
+/* ============================================================
+   15.Promotion Management
+   Bảng lưu trữ các chương trình khuyến mãi / mã giảm giá.
+   ============================================================ */
+
+IF OBJECT_ID(N'dbo.Promotion', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Promotion (
+        PromotionID       INT IDENTITY(1,1)   PRIMARY KEY,
+        PromotionCode     VARCHAR(50)         NOT NULL UNIQUE,
+        PromotionName     NVARCHAR(150)       NOT NULL,
+        Description       NVARCHAR(500)       NULL,
+        DiscountType      VARCHAR(20)         NOT NULL CHECK (DiscountType IN ('PERCENT', 'FIXED')),
+        DiscountValue     DECIMAL(18,2)       NOT NULL CHECK (DiscountValue > 0),
+        StartDate         DATE                NOT NULL,
+        EndDate           DATE                NOT NULL,
+        EventName         NVARCHAR(150)       NULL,
+        MinBookingAmount  DECIMAL(18,2)       NULL CHECK (MinBookingAmount >= 0),
+        MaxDiscountAmount DECIMAL(18,2)       NULL CHECK (MaxDiscountAmount >= 0),
+        UsageLimit        INT                 NULL CHECK (UsageLimit > 0),
+        UsedCount         INT                 NOT NULL DEFAULT 0,
+        Status            VARCHAR(20)         NOT NULL DEFAULT 'Active' CHECK (Status IN ('Active', 'Inactive')),
+        CreatedAt         DATETIME            NOT NULL DEFAULT GETDATE(),
+        UpdatedAt         DATETIME            NULL,
+        CONSTRAINT CK_Promotion_DateRange CHECK (StartDate <= EndDate)
+    );
+END
+GO
+
+/* ── Sample data for testing ── */
+IF NOT EXISTS (SELECT 1 FROM dbo.Promotion WHERE PromotionCode = 'SUMMER2025')
+BEGIN
+    INSERT INTO dbo.Promotion
+        (PromotionCode, PromotionName, Description, DiscountType, DiscountValue,
+         StartDate, EndDate, EventName, MinBookingAmount, MaxDiscountAmount, UsageLimit, UsedCount, Status)
+    VALUES
+        ('SUMMER2025', N'Khuyến mãi Hè 2025',
+         N'Giảm giá đặc biệt cho mùa hè, áp dụng cho tất cả loại phòng.',
+         'PERCENT', 15.00, '2025-06-01', '2025-08-31', N'Mùa hè 2025', 1000000.00, 500000.00, 200, 0, 'Active'),
+
+        ('TET2026', N'Khuyến mãi Tết Nguyên Đán 2026',
+         N'Ưu đãi đón Tết, giảm thêm 500.000 VNĐ cho mỗi đặt phòng.',
+         'FIXED', 500000.00, '2026-01-15', '2026-02-15', N'Tết Nguyên Đán 2026', 2000000.00, NULL, 100, 0, 'Active'),
+
+        ('WELCOME10', N'Ưu đãi Khách mới',
+         N'Giảm 10% cho lần đặt phòng đầu tiên.',
+         'PERCENT', 10.00, '2025-01-01', '2025-12-31', NULL, 500000.00, 300000.00, NULL, 5, 'Active');
+END
+GO
