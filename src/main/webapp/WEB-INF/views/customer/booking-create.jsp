@@ -14,6 +14,7 @@
             <li><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
             <li><a href="${pageContext.request.contextPath}/rooms">Phòng</a></li>
             <li><a href="${pageContext.request.contextPath}/customer/bookings" class="active">Đặt phòng của tôi</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/payments">Thanh toán</a></li>
         </ul>
 
         <div class="nav-actions">
@@ -37,8 +38,14 @@
                                     <a href="${pageContext.request.contextPath}/customer/services" class="dropdown-item">
                                         <i class="fa-solid fa-bell-concierge"></i> Yêu cầu dịch vụ
                                     </a>
+                                    <a href="${pageContext.request.contextPath}/customer/maintenance" class="dropdown-item">
+                                        <i class="fa-solid fa-screwdriver-wrench"></i> Yêu cầu sửa chữa
+                                    </a>
                                     <a href="${pageContext.request.contextPath}/customer/services/history" class="dropdown-item">
                                         <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử yêu cầu
+                                    </a>
+                                    <a href="${pageContext.request.contextPath}/customer/payments" class="dropdown-item">
+                                        <i class="fa-solid fa-credit-card"></i> Thanh toán & Lịch sử
                                     </a>
                                 </c:when>
                                 <c:otherwise>
@@ -253,6 +260,17 @@
                         <div class="receipt-row deposit" style="margin-top: 15px;">
                             <span class="deposit-label">Tiền đặt cọc (30%):</span>
                             <span id="summaryDeposit" class="deposit-amount">0 VND</span>
+                        </div>
+
+                        <div class="promo-code-section" style="margin-top: 20px; border-top: 1px dashed var(--border-color); padding-top: 15px; margin-bottom: 20px;">
+                            <label for="promoCode" style="font-size: 14px; font-weight: 600; color: var(--primary-dark); display: block; margin-bottom: 8px;">
+                                <i class="fa-solid fa-ticket" style="color: var(--accent-gold); margin-right: 5px;"></i>Mã giảm giá
+                            </label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="promoCode" name="promotionCode" placeholder="Nhập mã (nếu có)" style="flex: 1; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 14px; text-transform: uppercase; outline: none;">
+                                <button type="button" class="btn-secondary" style="padding: 10px 15px; font-size: 14px; margin: 0; white-space: nowrap; border-radius: var(--radius-sm); background-color: var(--brand-blue); color: white; border: none; box-shadow: none;" onclick="alert('Tính năng áp dụng mã giảm giá đang được phát triển!')">Áp dụng</button>
+                            </div>
+                            <div id="promoMessage" style="font-size: 13px; margin-top: 8px; display: none;"></div>
                         </div>
 
                         <button type="submit" class="btn-primary" id="submitBtn">

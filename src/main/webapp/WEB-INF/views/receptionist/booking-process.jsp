@@ -34,9 +34,16 @@
                             <i class="fa-solid fa-key"></i> <span>Nhận phòng (Check-in)</span>
                         </a>
                     </li>
+                    
+                    <li class="menu-item ${currentTab eq 'checkout' ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkout">
+                            <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh toán</span>
+                        </a>
+                    </li>
+                    
                     <li class="menu-item ${currentTab eq 'roommap' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=roommap">
-                            <i class="fa-solid fa-map"></i> <span>sơ đồ phòng</span>
+                            <i class="fa-solid fa-map"></i> <span>Sơ đồ phòng</span>
                         </a>
                     </li>
 
@@ -44,13 +51,7 @@
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=walkin-bookings">
                             <i class="fa-solid fa-user-plus"></i> <span>Đặt phòng tại quầy</span>
                         </a>
-                    </li>
-
-                    <li class="menu-item ${currentTab eq 'checkout' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkout">
-                            <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh toán</span>
-                        </a>
-                    </li>
+                    </li>    
 
                     <li class="menu-item ${currentTab eq 'servicerequests' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=servicerequests">
@@ -60,13 +61,13 @@
                 </ul>
 
                 <div class="sidebar-footer">
-                    <div class="user-profile-card">
+                    <a href="${pageContext.request.contextPath}/profile" class="user-profile-card" title="Xem hồ sơ cá nhân" style="text-decoration:none;cursor:pointer;">
                         <div class="profile-avatar">RC</div>
                         <div class="profile-info">
                             <span class="profile-name">${not empty sessionScope.user ? sessionScope.user : 'Receptionist'}</span>
                             <span class="profile-role">Lễ tân</span>
                         </div>
-                    </div>
+                    </a>
                 </div>
             </aside>
 
@@ -146,8 +147,7 @@
                                         <!-- Khách hàng -->
                                         <div class="detail-card">
                                             <div class="card-header">
-                                                <h3><i class="fa-solid fa-user"></i> Thông tin
-                                                    khách hàng</h3>
+                                                <h3><i class="fa-solid fa-user"></i> Thông tin khách hàng</h3>
                                             </div>
                                             <div class="card-body">
                                                 <div class="modal-form-group"
@@ -186,16 +186,20 @@
                                             <div class="card-body">
                                                 <div class="info-row">
                                                     <label>Mã Đặt Phòng:</label>
-                                                    <span
-                                                        class="booking-id-badge">#${booking.bookingId}</span>
+                                                    <span class="booking-id-badge">#${booking.bookingId}</span>
+                                                    <c:choose>
+                                                        <c:when test="${!isDepositPaid}">
+                                                            <span class="badge-status badge-occupied" style="margin-left: 8px; font-size: 11px;"><i class="fa-solid fa-circle-exclamation"></i> Chưa cọc</span>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <span class="badge-status badge-avail" style="margin-left: 8px; font-size: 11px;"><i class="fa-solid fa-circle-check"></i> Đã cọc</span>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </div>
                                                 <div class="info-row">
                                                     <label>Trạng thái đặt phòng:</label>
                                                     <span>
-                                                        <span
-                                                            class="status-pill pill-pending"><i
-                                                                class="fa-solid fa-circle"></i>
-                                                            Chờ xử lý</span>
+                                                        <span class="status-pill pill-pending"><i class="fa-solid fa-circle"></i> Chờ xử lý</span>
                                                     </span>
                                                 </div>
                                                 <div style="border-bottom:1px solid #e2e8f0; margin-bottom:16px; padding-bottom:12px;">
@@ -404,15 +408,13 @@
                                         <!-- Phê duyệt -->
                                         <div class="detail-card" style="margin-top:24px">
                                             <div class="card-header">
-                                                <h3><i class="fa-solid fa-circle-check"></i> Phê
-                                                    duyệt trạng thái đặt phòng</h3>
+                                                <h3><i class="fa-solid fa-circle-check"></i> Phê duyệt trạng thái đặt phòng</h3>
                                             </div>
                                             <div class="card-body">
                                                 <div class="form-section confirm-section"
                                                      id="sectionConfirm">
                                                     <div class="modal-form-group">
-                                                        <label>Ghi chú duyệt đặt phòng (Tùy
-                                                            chọn)</label>
+                                                        <label>Ghi chú duyệt đặt phòng (Tùy chọn)</label>
                                                         <input type="text" name="approvalNote"
                                                                class="modal-input"
                                                                placeholder="Ví dụ: Đã xác nhận phòng sẵn sàng..."
@@ -423,21 +425,23 @@
                                                             style="width:100%; height:44px; font-size:14px; margin-bottom:12px"
                                                             id="btnConfirmBooking"
                                                             onclick="submitAction('confirm')" disabled>
-                                                        <i class="fa-solid fa-check"></i> Xác nhận
-                                                        duyệt đặt phòng
+                                                        <i class="fa-solid fa-check"></i> Xác nhận duyệt đặt phòng
                                                     </button>
 
                                                     <button type="button" class="btn-modal-save"
                                                             style="width:100%; height:44px; background:var(--brand-blue); color:#fff; font-size:14px"
                                                             id="btnUpdateBooking"
                                                             onclick="submitAction('update')">
-                                                        <i class="fa-solid fa-floppy-disk"></i> Lưu
-                                                        cập nhật thông tin
+                                                        <i class="fa-solid fa-floppy-disk"></i> Lưu cập nhật thông tin
                                                     </button>
+                                                    <c:if test="${!isDepositPaid}">
+                                                        <div style="margin-top: 12px; padding: 10px; background: #fff0f0; border-radius: 6px; border: 1px solid #fecdd3; color: #e11d48; font-size: 13px;">
+                                                            <i class="fa-solid fa-triangle-exclamation"></i> Khách hàng chưa thanh toán cọc!
+                                                        </div>
+                                                    </c:if>
                                                 </div>
 
-                                                <div class="or-separator">Hoặc từ chối / hủy đặt
-                                                    phòng</div>
+                                                <div class="or-separator">Hoặc từ chối / hủy đặt phòng</div>
 
                                                 <div class="action-buttons-row">
                                                     <button type="button" class="btn-modal-reject"
@@ -885,11 +889,33 @@
                         allValid = false;
                     }
                 });
+                const btn = document.getElementById("btnConfirmBooking");
+                const isDepositPaid = ${isDepositPaid};
+
+                if (btn) {
+                    // Only block Confirm button if deposit not paid
+                    btn.disabled = !allValid || !isDepositPaid;
+
+                if (pChecked !== pReq) {
+                    allValid = false;
+                }
+
+                childIds.forEach(cid => {
+                    const required = getRequiredQty(cid);
+                    const checked = document.querySelectorAll(
+                            "#roomGrid_" + cid + " .room-checkbox:checked"
+                            ).length;
+
+                    if (checked !== required) {
+                        allValid = false;
+                    }
+                });
                 
                 const btn = document.getElementById("btnConfirmBooking");
                 if (btn) {
                     btn.disabled = !allValid;
                 }
+                // Update button is ALWAYS enabled regardless of deposit status
             }
 
             /* Tính toán lại tổng tiền trên form khi sửa ngày/loại phòng/số lượng */
@@ -1082,6 +1108,18 @@
                     input.value = cb.value;
                     container.appendChild(input);
                 });
+
+                for (let cid of childIds) {
+                    const typeSel = document.getElementById('editRoomTypeId_' + cid);
+
+                    if (typeSel) {
+                        const hiddenType = document.createElement('input');
+                        hiddenType.type = 'hidden';
+                        hiddenType.name = 'childRoomTypeId_' + cid;
+                        hiddenType.value = typeSel.value;
+                        container.appendChild(hiddenType);
+                    }
+
 
                 for (let cid of childIds) {
                     const typeSel = document.getElementById('editRoomTypeId_' + cid);

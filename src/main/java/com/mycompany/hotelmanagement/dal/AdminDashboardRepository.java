@@ -1,7 +1,8 @@
 package com.mycompany.hotelmanagement.dal;
 
 import com.mycompany.hotelmanagement.config.DBContext;
-import com.mycompany.hotelmanagement.entity.SystemDashboardStats.RecentActivity;
+import com.mycompany.hotelmanagement.entity.SystemDashboardStats.AccountRow;
+import com.mycompany.hotelmanagement.entity.SystemDashboardStats.BookingRow;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -17,19 +18,26 @@ import java.util.Map;
 /**
  * AdminDashboardRepository
  * Truy vấn số liệu giám sát toàn hệ thống cho Bảng điều khiển của Admin (UC 2.7.4):
- * thống kê tài khoản theo vai trò / trạng thái, đặt phòng theo trạng thái,
- * doanh thu theo ngày và các hoạt động gần đây.
+ * thống kê tài khoản, đặt phòng theo trạng thái, chuỗi doanh thu / lượt đặt phòng
+ * theo thời gian (gom nhóm ngày / tháng / quý) và các danh sách chi tiết phân trang.
  *
  * Doanh thu chỉ tính các đơn đã ghi nhận (Confirmed / CheckedIn / CheckedOut),
  * lọc theo ngày tạo đơn (created_at) để phản ánh hoạt động trong khoảng.
  *
  * @author QuyPQ
+ * Date: 08/07/2006
+ * Version: 1.1 
  */
 public class AdminDashboardRepository {
 
     /** Các trạng thái được tính vào doanh thu. */
     private static final String REVENUE_STATUS_IN =
             "b.status IN (N'Confirmed', N'CheckedIn', N'CheckedOut')";
+
+    /** Mức gom nhóm chuỗi thời gian (xem AdminDashboardService.granularityFor). */
+    public static final String GRAN_DAY = "day";
+    public static final String GRAN_MONTH = "month";
+    public static final String GRAN_QUARTER = "quarter";
 
     private void useDatabase(Connection conn) {
         try (Statement stmt = conn.createStatement()) {
@@ -38,6 +46,10 @@ public class AdminDashboardRepository {
             // Ignore
         }
     }
+
+    /* =====================================================================
+       KPI TÀI KHOẢN
+       ===================================================================== */
 
     /** Tổng số tài khoản trong hệ thống. */
     public int getTotalAccounts() {
@@ -67,32 +79,22 @@ public class AdminDashboardRepository {
         return 0;
     }
 
-    /** Số lượng tài khoản theo từng vai trò. Key = tên vai trò. */
-    public Map<String, Integer> getAccountCountsByRole() {
-        Map<String, Integer> map = new LinkedHashMap<>();
-        String sql = "SELECT r.role_name AS name, COUNT(a.account_id) AS cnt " +
-                "FROM dbo.Role r " +
-                "LEFT JOIN dbo.Account a ON a.role_id = r.role_id " +
-                "GROUP BY r.role_name " +
-                "ORDER BY cnt DESC";
-        try (Connection conn = DBContext.getConnection()) {
-            useDatabase(conn);
-            try (PreparedStatement ps = conn.prepareStatement(sql);
-                 ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    map.put(rs.getString("name"), rs.getInt("cnt"));
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return map;
-    }
+    /* =====================================================================
+       KPI ĐẶT PHÒNG / DOANH THU (theo khoảng lọc riêng của từng thẻ)
+       ===================================================================== */
 
     /** Tổng số lượt đặt phòng được tạo trong khoảng [from, to]. */
     public int getBookingCount(java.sql.Date from, java.sql.Date to) {
         String sql = "SELECT COUNT(*) FROM dbo.Booking b " +
                 "WHERE CAST(b.created_at AS DATE) BETWEEN ? AND ?";
+        return countByDateRange(sql, from, to);
+    }
+
+    /** Số đơn được tính doanh thu (Confirmed/CheckedIn/CheckedOut) tạo trong khoảng. */
+    public int getRevenueBookingCount(java.sql.Date from, java.sql.Date to) {
+        String sql = "SELECT COUNT(*) FROM dbo.Booking b " +
+                "WHERE " + REVENUE_STATUS_IN +
+                "  AND CAST(b.created_at AS DATE) BETWEEN ? AND ?";
         return countByDateRange(sql, from, to);
     }
 
@@ -132,6 +134,77 @@ public class AdminDashboardRepository {
         return 0;
     }
 
+    /* =====================================================================
+       CHUỖI THỜI GIAN (gom nhóm ngày / tháng / quý ngay trong SQL)
+
+       Khóa trả về theo dạng chuẩn để service điền 0 cho các nhóm trống:
+       - day:     yyyy-MM-dd
+       - month:   yyyy-MM
+       - quarter: yyyy-Qn
+       ===================================================================== */
+
+    /** Doanh thu ghi nhận cộng dồn theo nhóm thời gian (theo ngày tạo đơn). */
+    public Map<String, Double> getRevenueSeries(java.sql.Date from, java.sql.Date to, String granularity) {
+        return querySeries(from, to, granularity, REVENUE_STATUS_IN, "SUM(b.total_amount)");
+    }
+
+    /** Số lượt đặt phòng (mọi trạng thái) theo nhóm thời gian (theo ngày tạo đơn). */
+    public Map<String, Double> getBookingSeries(java.sql.Date from, java.sql.Date to, String granularity) {
+        return querySeries(from, to, granularity, null, "COUNT(*)");
+    }
+
+    private Map<String, Double> querySeries(java.sql.Date from, java.sql.Date to,
+                                            String granularity, String statusFilter, String aggregate) {
+        Map<String, Double> map = new LinkedHashMap<>();
+        String where = "CAST(b.created_at AS DATE) BETWEEN ? AND ?" +
+                (statusFilter != null ? " AND " + statusFilter : "");
+        String sql;
+        switch (granularity) {
+            case GRAN_MONTH:
+                sql = "SELECT YEAR(b.created_at) AS y, MONTH(b.created_at) AS p, " + aggregate + " AS total " +
+                        "FROM dbo.Booking b WHERE " + where + " " +
+                        "GROUP BY YEAR(b.created_at), MONTH(b.created_at) ORDER BY y, p";
+                break;
+            case GRAN_QUARTER:
+                sql = "SELECT YEAR(b.created_at) AS y, DATEPART(QUARTER, b.created_at) AS p, " + aggregate + " AS total " +
+                        "FROM dbo.Booking b WHERE " + where + " " +
+                        "GROUP BY YEAR(b.created_at), DATEPART(QUARTER, b.created_at) ORDER BY y, p";
+                break;
+            default: // GRAN_DAY
+                sql = "SELECT CAST(b.created_at AS DATE) AS d, " + aggregate + " AS total " +
+                        "FROM dbo.Booking b WHERE " + where + " " +
+                        "GROUP BY CAST(b.created_at AS DATE) ORDER BY d";
+                break;
+        }
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setDate(1, from);
+                ps.setDate(2, to);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        String key;
+                        if (GRAN_DAY.equals(granularity)) {
+                            key = rs.getDate("d").toString();
+                        } else if (GRAN_MONTH.equals(granularity)) {
+                            key = String.format("%04d-%02d", rs.getInt("y"), rs.getInt("p"));
+                        } else {
+                            key = rs.getInt("y") + "-Q" + rs.getInt("p");
+                        }
+                        map.put(key, rs.getDouble("total"));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return map;
+    }
+
+    /* =====================================================================
+       PHÂN BỔ (không theo chuỗi thời gian)
+       ===================================================================== */
+
     /** Số lượng đặt phòng theo từng trạng thái (mọi trạng thái) trong khoảng. */
     public Map<String, Integer> getBookingStatusCounts(java.sql.Date from, java.sql.Date to) {
         Map<String, Integer> map = new LinkedHashMap<>();
@@ -156,15 +229,16 @@ public class AdminDashboardRepository {
         return map;
     }
 
-    /** Doanh thu ghi nhận cộng dồn theo ngày tạo đơn. Key = ngày (yyyy-MM-dd). */
-    public Map<String, Double> getRevenueByDay(java.sql.Date from, java.sql.Date to) {
+    /** Doanh thu ghi nhận theo loại phòng trong khoảng (đơn không rõ loại gộp vào "Khác"). */
+    public Map<String, Double> getRevenueByRoomType(java.sql.Date from, java.sql.Date to) {
         Map<String, Double> map = new LinkedHashMap<>();
-        String sql = "SELECT CAST(b.check_in_date AS DATE) AS d, SUM(b.total_amount) AS total " +
+        String sql = "SELECT ISNULL(rt.type_name, N'Khác') AS name, SUM(b.total_amount) AS total " +
                 "FROM dbo.Booking b " +
+                "LEFT JOIN dbo.RoomType rt ON rt.type_id = b.room_type_id " +
                 "WHERE " + REVENUE_STATUS_IN +
-                "  AND CAST(b.check_in_date AS DATE) BETWEEN ? AND ? " +
-                "GROUP BY CAST(b.check_in_date AS DATE) " +
-                "ORDER BY d";
+                "  AND CAST(b.created_at AS DATE) BETWEEN ? AND ? " +
+                "GROUP BY rt.type_name " +
+                "ORDER BY total DESC";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -172,7 +246,9 @@ public class AdminDashboardRepository {
                 ps.setDate(2, to);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
-                        map.put(rs.getDate("d").toString(), rs.getDouble("total"));
+                        // Hai nhóm cùng hiển thị "Khác" (NULL và loại tên trùng) không xảy ra
+                        // vì type_name là UNIQUE; NULL gộp thành một nhóm duy nhất.
+                        map.merge(rs.getString("name"), rs.getDouble("total"), Double::sum);
                     }
                 }
             }
@@ -182,26 +258,85 @@ public class AdminDashboardRepository {
         return map;
     }
 
-    /** Lấy {@code limit} lượt đặt phòng mới nhất (mọi trạng thái) làm hoạt động gần đây. */
-    public List<RecentActivity> getRecentBookings(int limit) {
-        List<RecentActivity> list = new ArrayList<>();
-        String sql = "SELECT TOP (?) b.booking_id, b.customer_name, b.status, b.total_amount, b.created_at " +
-                "FROM dbo.Booking b " +
-                "ORDER BY b.created_at DESC";
+    /** Năm có đơn đặt phòng sớm nhất (dùng dựng danh sách năm cho bộ lọc). */
+    public int getEarliestBookingYear() {
+        String sql = "SELECT MIN(YEAR(b.created_at)) FROM dbo.Booking b";
+        int year = scalarCount(sql);
+        return year;
+    }
+
+    /* =====================================================================
+       DANH SÁCH CHI TIẾT (phân trang, render ở backend)
+       ===================================================================== */
+
+    /** Một trang danh sách tài khoản, mới tạo trước. */
+    public List<AccountRow> getAccountsPage(boolean activeOnly, int offset, int limit) {
+        List<AccountRow> list = new ArrayList<>();
+        String sql = "SELECT a.account_id, a.full_name, a.email, r.role_name, a.is_active, a.created_at " +
+                "FROM dbo.Account a " +
+                "JOIN dbo.Role r ON r.role_id = a.role_id " +
+                (activeOnly ? "WHERE a.is_active = 1 " : "") +
+                "ORDER BY a.created_at DESC, a.account_id DESC " +
+                "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setInt(1, limit);
+                ps.setInt(1, offset);
+                ps.setInt(2, limit);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
-                        RecentActivity a = new RecentActivity();
-                        a.setBookingId(rs.getInt("booking_id"));
-                        a.setCustomerName(rs.getString("customer_name"));
-                        a.setStatus(rs.getString("status"));
-                        a.setTotalAmount(rs.getDouble("total_amount"));
+                        AccountRow row = new AccountRow();
+                        row.setAccountId(rs.getInt("account_id"));
+                        row.setFullName(rs.getString("full_name"));
+                        row.setEmail(rs.getString("email"));
+                        row.setRoleName(rs.getString("role_name"));
+                        row.setActive(rs.getBoolean("is_active"));
                         Timestamp ts = rs.getTimestamp("created_at");
-                        a.setCreatedAt(ts != null ? new java.util.Date(ts.getTime()) : null);
-                        list.add(a);
+                        row.setCreatedAt(ts != null ? new java.util.Date(ts.getTime()) : null);
+                        list.add(row);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    /**
+     * Một trang danh sách đặt phòng tạo trong khoảng [from, to], mới tạo trước.
+     *
+     * @param revenueOnly true = chỉ các đơn được tính doanh thu
+     */
+    public List<BookingRow> getBookingsPage(java.sql.Date from, java.sql.Date to,
+                                            boolean revenueOnly, int offset, int limit) {
+        List<BookingRow> list = new ArrayList<>();
+        String sql = "SELECT b.booking_id, b.customer_name, b.check_in_date, b.check_out_date, " +
+                "       b.total_amount, b.status, b.created_at " +
+                "FROM dbo.Booking b " +
+                "WHERE CAST(b.created_at AS DATE) BETWEEN ? AND ? " +
+                (revenueOnly ? "  AND " + REVENUE_STATUS_IN + " " : "") +
+                "ORDER BY b.created_at DESC, b.booking_id DESC " +
+                "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setDate(1, from);
+                ps.setDate(2, to);
+                ps.setInt(3, offset);
+                ps.setInt(4, limit);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        BookingRow row = new BookingRow();
+                        row.setBookingId(rs.getInt("booking_id"));
+                        row.setCustomerName(rs.getString("customer_name"));
+                        row.setCheckInDate(rs.getDate("check_in_date"));
+                        row.setCheckOutDate(rs.getDate("check_out_date"));
+                        row.setTotalAmount(rs.getDouble("total_amount"));
+                        row.setStatus(rs.getString("status"));
+                        Timestamp ts = rs.getTimestamp("created_at");
+                        row.setCreatedAt(ts != null ? new java.util.Date(ts.getTime()) : null);
+                        list.add(row);
                     }
                 }
             }
