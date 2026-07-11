@@ -213,6 +213,25 @@ public class BookingDAO {
         return false;
     }
 
+    public boolean updateBookingTotalAmountAndNote(int bookingId, double newAmount, String noteAppend) {
+        if (bookingId <= 0) return false;
+        String sql = "UPDATE dbo.Booking "
+                + "SET total_amount = ?, note = ISNULL(note, '') + CHAR(13) + CHAR(10) + ?, updated_at = SYSDATETIME() "
+                + "WHERE booking_id = ?";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setDouble(1, newAmount);
+                ps.setString(2, noteAppend);
+                ps.setInt(3, bookingId);
+                return ps.executeUpdate() > 0;
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in updateBookingTotalAmountAndNote for id: " + bookingId, e);
+        }
+        return false;
+    }
+
     public boolean cancelBooking(int bookingId, String reason) {
         if (bookingId <= 0) {
             return false;

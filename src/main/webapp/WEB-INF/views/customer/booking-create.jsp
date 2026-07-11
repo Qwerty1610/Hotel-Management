@@ -251,6 +251,10 @@
                             <span>Tổng tiền phòng:</span>
                             <span id="summarySubtotal">0 VND</span>
                         </div>
+                        <div class="receipt-row" id="discountRow" style="display: none; color: #e74c3c;">
+                            <span>Giảm giá:</span>
+                            <span id="summaryDiscount">-0 VND</span>
+                        </div>
                         
                         <div class="receipt-row total">
                             <span>TỔNG CỘNG:</span>
@@ -268,7 +272,7 @@
                             </label>
                             <div style="display: flex; gap: 8px;">
                                 <input type="text" id="promoCode" name="promotionCode" placeholder="Nhập mã (nếu có)" style="flex: 1; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 14px; text-transform: uppercase; outline: none;">
-                                <button type="button" class="btn-secondary" style="padding: 10px 15px; font-size: 14px; margin: 0; white-space: nowrap; border-radius: var(--radius-sm); background-color: var(--brand-blue); color: white; border: none; box-shadow: none;" onclick="alert('Tính năng áp dụng mã giảm giá đang được phát triển!')">Áp dụng</button>
+                                <button type="button" class="btn-secondary" style="padding: 10px 15px; font-size: 14px; margin: 0; white-space: nowrap; border-radius: var(--radius-sm); background-color: var(--brand-blue); color: white; border: none; box-shadow: none;" onclick="applyPromotionCode()">Áp dụng</button>
                             </div>
                             <div id="promoMessage" style="font-size: 13px; margin-top: 8px; display: none;"></div>
                         </div>
@@ -528,6 +532,15 @@
                 });
             }
 
+            let unDiscountedTotal = totalPrice;
+            if (window.currentDiscountAmount) {
+                // Đảm bảo không giảm quá tổng tiền
+                if (window.currentDiscountAmount > totalPrice) {
+                    window.currentDiscountAmount = totalPrice;
+                }
+                totalPrice -= window.currentDiscountAmount;
+            }
+
             const deposit = totalPrice * 0.3;
 
             // Formatter
@@ -536,9 +549,80 @@
                 currency: 'VND'
             });
 
-            subtotalSpan.innerText = formatter.format(totalPrice);
+            subtotalSpan.innerText = formatter.format(unDiscountedTotal);
             totalSpan.innerText = formatter.format(totalPrice);
             depositSpan.innerText = formatter.format(deposit);
+            
+            if (window.currentDiscountAmount) {
+                document.getElementById('discountRow').style.display = 'flex';
+                document.getElementById('summaryDiscount').innerText = '-' + formatter.format(window.currentDiscountAmount);
+            } else {
+                document.getElementById('discountRow').style.display = 'none';
+            }
+        }
+
+        window.currentDiscountAmount = 0;
+        window.appliedPromoCode = "";
+
+        async function applyPromotionCode() {
+            const promoInput = document.getElementById('promoCode').value.trim();
+            const msgDiv = document.getElementById('promoMessage');
+            
+            if (!promoInput) {
+                msgDiv.style.display = 'block';
+                msgDiv.style.color = '#e74c3c';
+                msgDiv.innerText = 'Vui lòng nhập mã giảm giá.';
+                return;
+            }
+
+            // Tính tổng tiền hiện tại trước khi giảm
+            calculatePricing(); // update subtotal
+            const subtotalText = document.getElementById('summarySubtotal').innerText;
+            // Parse VND string back to number
+            const subtotal = parseFloat(subtotalText.replace(/[^\d]/g, ''));
+            if (subtotal <= 0) {
+                msgDiv.style.display = 'block';
+                msgDiv.style.color = '#e74c3c';
+                msgDiv.innerText = 'Vui lòng chọn ngày và phòng trước khi áp dụng mã.';
+                return;
+            }
+
+            msgDiv.style.display = 'block';
+            msgDiv.style.color = 'var(--brand-blue)';
+            msgDiv.innerText = 'Đang kiểm tra mã...';
+
+            try {
+                const formData = new URLSearchParams();
+                formData.append('promoCode', promoInput);
+                formData.append('totalAmount', subtotal);
+
+                const response = await fetch('${pageContext.request.contextPath}/customer/booking/check-promotion', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString()
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    msgDiv.style.color = '#27ae60';
+                    msgDiv.innerText = result.message;
+                    window.currentDiscountAmount = result.discountAmount;
+                    window.appliedPromoCode = promoInput;
+                    calculatePricing();
+                } else {
+                    msgDiv.style.color = '#e74c3c';
+                    msgDiv.innerText = result.message;
+                    window.currentDiscountAmount = 0;
+                    window.appliedPromoCode = "";
+                    calculatePricing();
+                }
+            } catch (error) {
+                msgDiv.style.color = '#e74c3c';
+                msgDiv.innerText = 'Có lỗi xảy ra khi kiểm tra mã.';
+                window.currentDiscountAmount = 0;
+                window.appliedPromoCode = "";
+                calculatePricing();
+            }
         }
 
         let validationTimeoutId = null;
