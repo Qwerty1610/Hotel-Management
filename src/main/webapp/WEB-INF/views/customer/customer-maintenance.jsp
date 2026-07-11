@@ -315,21 +315,25 @@
                                        class="dropdown-item">
                                         <i class="fa-solid fa-id-card"></i> Hồ sơ
                                     </a>
-                                    <a href="${pageContext.request.contextPath}/customer/bookings"
-                                       class="dropdown-item">
-                                        <i class="fa-solid fa-calendar-check"></i> Đặt phòng của tôi
-                                    </a>
-                                    <a href="${pageContext.request.contextPath}/customer/services"
-                                       class="dropdown-item">
+                                     <a href="${pageContext.request.contextPath}/customer/bookings"
+                                        class="dropdown-item">
+                                         <i class="fa-solid fa-calendar-check"></i> Đặt phòng của tôi
+                                     </a>
+                                     <a href="${pageContext.request.contextPath}/customer/feedbacks"
+                                        class="dropdown-item">
+                                         <i class="fa-solid fa-star"></i> Đánh giá lưu trú
+                                     </a>
+                                     <a href="${pageContext.request.contextPath}/customer/services"
+                                        class="dropdown-item">
                                         <i class="fa-solid fa-bell-concierge"></i> Yêu cầu dịch vụ
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/maintenance"
                                        class="dropdown-item">
                                         <i class="fa-solid fa-screwdriver-wrench"></i> Yêu cầu sửa chữa
                                     </a>
-                                    <a href="${pageContext.request.contextPath}/customer/services/history"
+                                    <a href="${pageContext.request.contextPath}/customer/payments"
                                        class="dropdown-item">
-                                        <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử yêu cầu
+                                        <i class="fa-solid fa-credit-card"></i> Thanh toán &amp; Lịch sử
                                     </a>
                                 </c:when>
                                 <c:otherwise>
@@ -417,7 +421,7 @@
                     <li>
                         <a href="${pageContext.request.contextPath}/customer/maintenance/history">
                             <i class="fa-solid fa-clock-rotate-left"
-                               style="width: 20px; text-align: center;"></i> Lịch sử sự cố
+                               style="width: 20px; text-align: center;"></i> Lịch sử sửa chữa
                         </a>
                     </li>
                 </ul>
