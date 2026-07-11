@@ -137,7 +137,7 @@ public class RoomTypeService {
         return roomDetail;
     }
 
-    public void saveRoomType(RoomTypeInfo rt, String imageUrl, String[] amenities) {
+    public void saveRoomType(RoomTypeInfo rt, String imageUrl) {
         try (Connection conn = DBContext.getConnection()) {
             conn.setAutoCommit(false);
             try {
@@ -153,39 +153,6 @@ public class RoomTypeService {
                     roomTypeRepository.deleteRoomImages(typeId, conn);
                     if (imageUrl != null && !imageUrl.isEmpty()) {
                         roomTypeRepository.insertRoomImage(typeId, imageUrl, conn);
-                    }
-
-                    // Save amenities
-                    roomTypeRepository.deleteRoomAmenities(typeId, conn);
-                    if (amenities != null && amenities.length > 0) {
-                        for (String amName : amenities) {
-                            int amenityId = roomTypeRepository.getAmenityIdByName(amName, conn);
-
-                            // If amenity doesn't exist, insert it
-                            if (amenityId == -1) {
-                                String iconUrl = "fa-wifi"; // Default icon mapping
-                                if (amName.contains("Điều hòa"))
-                                    iconUrl = "fa-snowflake";
-                                else if (amName.contains("Tivi"))
-                                    iconUrl = "fa-tv";
-                                else if (amName.contains("View"))
-                                    iconUrl = "fa-city";
-                                else if (amName.contains("bar"))
-                                    iconUrl = "fa-glass";
-                                else if (amName.contains("tắm"))
-                                    iconUrl = "fa-bath";
-                                else if (amName.contains("công"))
-                                    iconUrl = "fa-door-open";
-                                else if (amName.contains("cà phê"))
-                                    iconUrl = "fa-mug-hot";
-
-                                amenityId = roomTypeRepository.insertAmenity(amName, iconUrl, conn);
-                            }
-
-                            if (amenityId != -1) {
-                                roomTypeRepository.insertRoomTypeAmenityMapping(typeId, amenityId, conn);
-                            }
-                        }
                     }
                 }
                 conn.commit();
