@@ -24,7 +24,13 @@
                 <li class="menu-item ${param.tab == 'task' ? 'active' : ''}">
                     <a href="${pageContext.request.contextPath}/housekeeping/dashboard?tab=task">
                         <i class="fa-solid fa-bed-pulse"></i>
-                        <span>Trạng thái phòng</span>
+                        <span>Sơ đồ phòng</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="${pageContext.request.contextPath}/housekeeping/reportIssue">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span>Báo cáo sự cố phòng</span>
                     </a>
                 </li>
             </ul>
@@ -54,7 +60,7 @@
                     <span class="separator">&gt;</span>
                     <span class="current">
                         <c:choose>
-                            <c:when test="${param.tab == 'task'}">Trạng thái phòng</c:when>
+                            <c:when test="${param.tab == 'task'}">Sơ đồ trạng thái phòng</c:when>
                             <c:otherwise>Tổng quan</c:otherwise>
                         </c:choose>
                     </span>
@@ -73,20 +79,14 @@
                         </div>
                     </div>
                     <div class="hk-stat-grid">
-                        <div class="hk-card"><h3>Dirty (Cleaning)</h3><span>${cleaningCount}</span></div>
+                        <div class="hk-card"><h3>Cleaning / Refilling</h3><span>${cleaningCount}</span></div>
                         <div class="hk-card"><h3>Maintenance</h3><span>${maintenanceCount}</span></div>
                         <div class="hk-card"><h3>Available</h3><span>${availableCount}</span></div>
-                        <div class="hk-card"><h3>Occupied</h3><span>${occupiedCount}</span></div>
+                        <div class="hk-card"><h3>Out of Service</h3><span>${outOfServiceCount}</span></div>
                     </div>
                 </c:if>
 
                 <c:if test="${param.tab == 'task'}">
-                    <div class="content-header-row">
-                        <div>
-                            <h1>Sơ đồ trạng thái phòng</h1>
-                            <p>Danh sách sơ đồ hiển thị trực quan theo thời gian thực.</p>
-                        </div>
-                    </div>
 
                     <div class="quick-filter-wrapper">
                         <span class="filter-title">BỘ LỌC NHANH:</span>
@@ -95,9 +95,9 @@
                             ALL
                         </button>
 
-                        <button class="btn-filter" data-status="Occupied"
-                                onclick="applyStatusFilter('Occupied', event)">
-                            OCCUPIED
+                        <button class="btn-filter" data-status="OutOfService"
+                                onclick="applyStatusFilter('OutOfService', event)">
+                            OUT OF SERVICE
                         </button>
 
                         <button class="btn-filter" data-status="Available"
@@ -107,7 +107,7 @@
 
                         <button class="btn-filter" data-status="Cleaning"
                                 onclick="applyStatusFilter('Cleaning', event)">
-                            CLEANING
+                            CLEANING / REFILLING
                         </button>
 
                         <button class="btn-filter" data-status="Maintenance"
@@ -137,9 +137,10 @@
                                     <c:forEach var="room" items="${roomList}">
                                         <c:if test="${room.floor eq currentFloor}">
                                             <c:choose>
-                                                <c:when test="${room.status == 'Occupied'}"><c:set var="colorClass" value="status-occupied" /></c:when>
+                                                <c:when test="${room.status == 'OutOfService'}"><c:set var="colorClass" value="status-outofservice" /></c:when>
                                                 <c:when test="${room.status == 'Available'}"><c:set var="colorClass" value="status-available" /></c:when>
                                                 <c:when test="${room.status == 'Cleaning'}"><c:set var="colorClass" value="status-cleaning" /></c:when>
+                                                <c:when test="${room.status == 'Refilling'}"><c:set var="colorClass" value="status-refilling" /></c:when>
                                                 <c:when test="${room.status == 'Maintenance'}"><c:set var="colorClass" value="status-maintenance" /></c:when>
                                                 <c:otherwise><c:set var="colorClass" value="status-available" /></c:otherwise>
                                             </c:choose>

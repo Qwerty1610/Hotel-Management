@@ -1,6 +1,7 @@
 package com.mycompany.hotelmanagement.controller.receptionist;
 
 import com.mycompany.hotelmanagement.service.BookingService;
+import com.mycompany.hotelmanagement.service.PaymentService;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.Room;
 import com.mycompany.hotelmanagement.entity.CustomerDetails;
@@ -100,6 +101,17 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                         booking.getCheckOutDate());
                 childAssignedRoomsMap.put(child.getBookingId(), childRooms);
             }
+
+            // Deposit Validation
+            boolean isDepositPaid = true;
+            if (booking.getAccountId() != null) {
+                PaymentService paymentService = new PaymentService();
+                double remainingAmount = paymentService.getDepositRemaining(booking);
+                if (remainingAmount > 0.01) {
+                    isDepositPaid = false;
+                }
+            }
+            request.setAttribute("isDepositPaid", isDepositPaid);
 
             request.setAttribute("booking", booking);
             request.setAttribute("customer", customer);

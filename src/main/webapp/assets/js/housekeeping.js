@@ -18,9 +18,10 @@ function initRooms() {
         const status = normalize(r.dataset.roomStatus);
 
         r.classList.remove(
-                "status-occupied",
+                "status-outofservice",
                 "status-available",
                 "status-cleaning",
+                "status-refilling",
                 "status-maintenance"
                 );
 
@@ -49,12 +50,14 @@ function goTaskDetail(roomId) {
 
 function getStatusClass(status) {
     switch (normalize(status)) {
-        case "occupied":
-            return "status-occupied";
+        case "outofservice":
+            return "status-outofservice";
         case "available":
             return "status-available";
         case "cleaning":
             return "status-cleaning";
+        case "refilling":
+            return "status-refilling";
         case "maintenance":
             return "status-maintenance";
         default:
@@ -65,7 +68,7 @@ function getStatusClass(status) {
 function applyStatusFilter(status, event) {
 
     document.querySelectorAll(".btn-filter")
-        .forEach(b => b.classList.remove("active"));
+            .forEach(b => b.classList.remove("active"));
 
     event?.currentTarget?.classList.add("active");
     localStorage.setItem("hk_filter_status", status);
@@ -82,11 +85,27 @@ function applyStatusFilter(status, event) {
     // delay để tạo cảm giác mượt
     setTimeout(() => {
 
-        let filtered = ALL_ROOMS.filter(r =>
-            status === "ALL"
-                ? true
-                : normalize(r.status) === normalize(status)
-        );
+        let filtered = ALL_ROOMS.filter(r => {
+
+            const roomStatus = normalize(r.status);
+            const filterStatus = normalize(status);
+
+
+            if (filterStatus === "all") {
+                return true;
+            }
+
+
+            // Cleaning + Refilling chung một nhóm
+            if (filterStatus === "cleaning") {
+                return roomStatus === "cleaning"
+                        || roomStatus === "refilling";
+            }
+
+
+            return roomStatus === filterStatus;
+
+        });
 
         filtered.sort(sortRooms);
 
@@ -97,7 +116,7 @@ function applyStatusFilter(status, event) {
         });
 
         const sortedFloors = Object.keys(grouped)
-            .sort((a, b) => extractNumber(a) - extractNumber(b));
+                .sort((a, b) => extractNumber(a) - extractNumber(b));
 
         container.innerHTML = "";
 
@@ -139,27 +158,47 @@ function applyStatusFilter(status, event) {
 
 document.addEventListener("DOMContentLoaded", () => {
     const container = document.querySelector(".floor-container");
-    
+
     // 1. Đọc và áp dụng trạng thái active cho nút bộ lọc ngay lập tức
     const savedStatus = localStorage.getItem("hk_filter_status") || "ALL";
     document.querySelectorAll(".btn-filter").forEach(b => b.classList.remove("active"));
     const activeBtn = document.querySelector(`.btn-filter[data-status="${savedStatus}"]`);
-    if (activeBtn) activeBtn.classList.add("active");
+    if (activeBtn)
+        activeBtn.classList.add("active");
 
     // 2. Cấu trúc lại mảng dữ liệu trong bộ nhớ
     initRooms();
 
     // 3. Nếu bộ lọc là ALL, không cần render lại, hiển thị container gốc ngay
     if (savedStatus === "ALL") {
-        if (container) container.classList.add("is-ready");
+        if (container)
+            container.classList.add("is-ready");
         return;
     }
 
     // 4. Nếu bộ lọc khác ALL, kết xuất HTML chuẩn ngay trong bộ nhớ (Không qua setTimeout)
     if (container) {
-        const filtered = ALL_ROOMS.filter(r => 
-            normalize(r.status) === normalize(savedStatus)
-        ).sort(sortRooms);
+        const filtered = ALL_ROOMS.filter(r => {
+
+            const roomStatus = normalize(r.status);
+            const filterStatus = normalize(savedStatus);
+
+
+            if (filterStatus === "all") {
+                return true;
+            }
+
+
+            if (filterStatus === "cleaning") {
+
+                return roomStatus === "cleaning"
+                        || roomStatus === "refilling";
+            }
+
+
+            return roomStatus === filterStatus;
+
+        }).sort(sortRooms);
 
         const grouped = {};
         filtered.forEach(r => {
@@ -168,7 +207,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const sortedFloors = Object.keys(grouped).sort((a, b) => extractNumber(a) - extractNumber(b));
-        
+
         container.innerHTML = "";
 
         sortedFloors.forEach(floor => {
