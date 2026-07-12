@@ -1,6 +1,10 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<c:set var="lang" value="vi" scope="request" />
+<fmt:setLocale value="vi" scope="request" />
+<fmt:setBundle basename="messages" scope="request" />
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="${lang}">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />

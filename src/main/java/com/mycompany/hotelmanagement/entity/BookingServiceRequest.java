@@ -166,7 +166,6 @@ public class BookingServiceRequest implements Serializable {
     public void setPriority(String priority) {
         this.priority = priority;
     }
-
     public String getUnit() {
         return unit;
     }

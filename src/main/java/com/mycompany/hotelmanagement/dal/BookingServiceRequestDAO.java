@@ -348,7 +348,6 @@ public class BookingServiceRequestDAO {
         try {
             r.setUnitPrice(rs.getDouble("unit_price"));
         } catch (Exception ignored) {}
-
         return r;
     }
 }
