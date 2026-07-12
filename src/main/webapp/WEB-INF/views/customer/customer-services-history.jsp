@@ -97,6 +97,9 @@
                                                         class="dropdown-item">
                                                         <i class="fa-solid fa-calendar-check"></i> Đặt phòng của tôi
                                                     </a>
+                                                    <a href="${pageContext.request.contextPath}/customer/booking/change" class="dropdown-item">
+                                                        <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
+                                                    </a>
                                                     <a href="${pageContext.request.contextPath}/customer/services"
                                                         class="dropdown-item">
                                                         <i class="fa-solid fa-bell-concierge"></i> Yêu cầu dịch vụ

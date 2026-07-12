@@ -3,7 +3,7 @@
 <%@ include file="../../includes/header.jsp" %>
 
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/customer_booking.css?v=21" />
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/booking-requests.css?v=1" />
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/booking-requests.css?v=3" />
 <fmt:setLocale value="vi_VN" />
 
 <body>
@@ -35,6 +35,9 @@
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/bookings" class="dropdown-item">
                                         <i class="fa-solid fa-calendar-check"></i> Đặt phòng của tôi
+                                    </a>
+                                    <a href="${pageContext.request.contextPath}/customer/booking/change" class="dropdown-item">
+                                        <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/services" class="dropdown-item">
                                         <i class="fa-solid fa-bell-concierge"></i> Yêu cầu dịch vụ
@@ -93,12 +96,6 @@
                     <p>Xem lịch sử giao dịch và trạng thái các đơn đặt phòng của bạn</p>
                 </div>
                 <div class="br-actions">
-                    <button type="button" class="br-btn br-btn-change" onclick="openChangeModal()">
-                        <i class="fa-solid fa-pen-to-square"></i> Yêu cầu thay đổi
-                    </button>
-                    <button type="button" class="br-btn br-btn-ext" onclick="openExtensionModal()">
-                        <i class="fa-solid fa-calendar-plus"></i> Gia hạn lưu trú
-                    </button>
                     <a href="${pageContext.request.contextPath}/customer/booking/create" class="btn-primary" style="margin-top: 0; width: auto; padding: 10px 20px;">
                         <i class="fa-solid fa-calendar-plus"></i> Đặt phòng mới
                     </a>
@@ -320,166 +317,6 @@
         <input type="hidden" name="id" id="cancelBookingId" value="" />
     </form>
 
-    <%-- ============================================================
-         MODAL: REQUEST BOOKING CHANGE (UC 2.3.9)
-         ============================================================ --%>
-    <div class="req-modal-overlay" id="changeModal">
-        <div class="req-modal">
-            <div class="req-modal-header">
-                <h3><i class="fa-solid fa-pen-to-square"></i> Yêu cầu thay đổi đặt phòng</h3>
-                <button type="button" class="req-modal-close" onclick="closeReqModal('changeModal')">&times;</button>
-            </div>
-            <div class="req-modal-body">
-                <p class="req-hint">
-                    <i class="fa-solid fa-circle-info"></i>
-                    Chỉ áp dụng cho đơn <strong>Chờ duyệt</strong> hoặc <strong>Đã xác nhận</strong> và còn trước ngày nhận phòng.
-                    Yêu cầu sẽ được gửi tới lễ tân/quản lý để duyệt.
-                </p>
-                <form action="${pageContext.request.contextPath}/customer/booking/change-request" method="POST"
-                      id="changeForm" onsubmit="return validateChange();">
-                    <div class="req-field">
-                        <label>Chọn đơn đặt phòng <span class="req-star">*</span></label>
-                        <select name="bookingId" id="changeBookingSelect" onchange="onChangeBookingSelect()" required>
-                            <option value="">— Chọn đơn cần thay đổi —</option>
-                            <c:forEach var="b" items="${bookings}">
-                                <c:if test="${b.status eq 'Pending' || b.status eq 'Confirmed'}">
-                                    <option value="${b.bookingId}"
-                                            data-checkin="<fmt:formatDate value='${b.checkInDate}' pattern='yyyy-MM-dd' />"
-                                            data-checkout="<fmt:formatDate value='${b.checkOutDate}' pattern='yyyy-MM-dd' />"
-                                            data-roomtypeid="${b.roomTypeId}"
-                                            data-qty="${b.roomQuantity}"
-                                            data-roomtype="<c:out value='${b.groupRoomTypeNames}' />">
-                                        #${b.bookingId} • <c:out value="${b.groupRoomTypeNames}" />
-                                        (<fmt:formatDate value="${b.checkInDate}" pattern="dd/MM/yyyy" /> - <fmt:formatDate value="${b.checkOutDate}" pattern="dd/MM/yyyy" />)
-                                    </option>
-                                </c:if>
-                            </c:forEach>
-                        </select>
-                    </div>
-
-                    <div class="req-current" id="changeCurrent">
-                        <h4>Thông tin hiện tại</h4>
-                        <div class="req-current-grid">
-                            <span>Loại phòng: <b id="curChangeType">—</b></span>
-                            <span>Số phòng: <b id="curChangeQty">—</b></span>
-                            <span>Nhận phòng: <b id="curChangeIn">—</b></span>
-                            <span>Trả phòng: <b id="curChangeOut">—</b></span>
-                        </div>
-                    </div>
-
-                    <div class="req-grid-2">
-                        <div class="req-field">
-                            <label>Ngày nhận phòng mới <span class="req-star">*</span></label>
-                            <input type="date" name="newCheckInDate" id="changeNewIn" required />
-                        </div>
-                        <div class="req-field">
-                            <label>Ngày trả phòng mới <span class="req-star">*</span></label>
-                            <input type="date" name="newCheckOutDate" id="changeNewOut" required />
-                        </div>
-                    </div>
-                    <div class="req-grid-2">
-                        <div class="req-field">
-                            <label>Loại phòng mong muốn <span class="req-star">*</span></label>
-                            <select name="roomTypeId" id="changeRoomType" required>
-                                <option value="">— Chọn loại phòng —</option>
-                                <c:forEach var="rt" items="${roomTypes}">
-                                    <option value="${rt.typeId}" data-price="${rt.basePrice}">
-                                        <c:out value="${rt.typeName}" /> — <fmt:formatNumber value="${rt.basePrice}" type="number" />đ/đêm
-                                    </option>
-                                </c:forEach>
-                            </select>
-                        </div>
-                        <div class="req-field">
-                            <label>Số phòng <span class="req-star">*</span></label>
-                            <input type="number" name="roomQuantity" id="changeQty" min="1" max="100" required />
-                        </div>
-                    </div>
-                    <div class="req-field">
-                        <label>Lý do thay đổi</label>
-                        <textarea name="reason" maxlength="500" placeholder="VD: Thay đổi lịch trình công tác..."></textarea>
-                    </div>
-
-                    <div class="req-modal-footer">
-                        <button type="button" class="br-btn br-btn-cancel" onclick="closeReqModal('changeModal')">Huỷ</button>
-                        <button type="submit" class="br-btn br-btn-submit">
-                            <i class="fa-solid fa-paper-plane"></i> Gửi yêu cầu
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <%-- ============================================================
-         MODAL: REQUEST STAY EXTENSION (UC 2.3.14)
-         ============================================================ --%>
-    <div class="req-modal-overlay" id="extModal">
-        <div class="req-modal">
-            <div class="req-modal-header">
-                <h3><i class="fa-solid fa-calendar-plus"></i> Yêu cầu gia hạn lưu trú</h3>
-                <button type="button" class="req-modal-close" onclick="closeReqModal('extModal')">&times;</button>
-            </div>
-            <div class="req-modal-body">
-                <p class="req-hint">
-                    <i class="fa-solid fa-circle-info"></i>
-                    Chỉ áp dụng cho phòng bạn <strong>đang lưu trú (Đã nhận phòng)</strong>. Chọn ngày trả phòng mới muộn hơn để ở thêm.
-                </p>
-                <form action="${pageContext.request.contextPath}/customer/booking/extension-request" method="POST"
-                      id="extForm" onsubmit="return validateExtension();">
-                    <div class="req-field">
-                        <label>Chọn phòng đang lưu trú <span class="req-star">*</span></label>
-                        <select name="bookingId" id="extBookingSelect" onchange="onExtBookingSelect()" required>
-                            <option value="">— Chọn đơn đang lưu trú —</option>
-                            <c:forEach var="b" items="${bookings}">
-                                <c:if test="${b.status eq 'CheckedIn'}">
-                                    <option value="${b.bookingId}"
-                                            data-checkout="<fmt:formatDate value='${b.checkOutDate}' pattern='yyyy-MM-dd' />"
-                                            data-roomtypeid="${b.roomTypeId}"
-                                            data-qty="${b.roomQuantity}"
-                                            data-roomtype="<c:out value='${b.groupRoomTypeNames}' />">
-                                        #${b.bookingId} • <c:out value="${b.groupRoomTypeNames}" />
-                                        (Trả: <fmt:formatDate value="${b.checkOutDate}" pattern="dd/MM/yyyy" />)
-                                    </option>
-                                </c:if>
-                            </c:forEach>
-                        </select>
-                    </div>
-
-                    <div class="req-current" id="extCurrent">
-                        <h4>Thông tin hiện tại</h4>
-                        <div class="req-current-grid">
-                            <span>Loại phòng: <b id="curExtType">—</b></span>
-                            <span>Số phòng: <b id="curExtQty">—</b></span>
-                            <span>Ngày trả phòng hiện tại: <b id="curExtOut">—</b></span>
-                        </div>
-                    </div>
-
-                    <div class="req-field">
-                        <label>Ngày trả phòng mới <span class="req-star">*</span></label>
-                        <input type="date" name="newCheckOutDate" id="extNewOut" onchange="updateExtEstimate()" required />
-                    </div>
-
-                    <div class="req-estimate" id="extEstimate">
-                        Phụ phí dự kiến cho <span id="extNights">0</span> đêm:
-                        <strong id="extCharge">0 VND</strong>
-                    </div>
-
-                    <div class="req-field">
-                        <label>Lý do gia hạn</label>
-                        <textarea name="reason" maxlength="500" placeholder="VD: Cần ở thêm vì công việc kéo dài..."></textarea>
-                    </div>
-
-                    <div class="req-modal-footer">
-                        <button type="button" class="br-btn br-btn-cancel" onclick="closeReqModal('extModal')">Huỷ</button>
-                        <button type="submit" class="br-btn br-btn-submit">
-                            <i class="fa-solid fa-paper-plane"></i> Gửi yêu cầu
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <%-- Footer --%>
     <footer class="footer-white" id="lien-he">
         <div class="footer-white-grid">
@@ -541,135 +378,6 @@
             }
         }
 
-        // ===== Booking Change & Stay Extension request modals =====
-        const roomTypePrices = {
-            <c:forEach var="rt" items="${roomTypes}">'${rt.typeId}': ${rt.basePrice},</c:forEach>
-        };
-
-        function todayISO() {
-            const d = new Date();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return d.getFullYear() + '-' + m + '-' + day;
-        }
-        function nightsBetween(a, b) {
-            const d1 = new Date(a), d2 = new Date(b);
-            return Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
-        }
-        function fmtVND(n) {
-            return new Intl.NumberFormat('vi-VN').format(Math.round(n)) + ' VND';
-        }
-
-        function openReqModal(id) { document.getElementById(id).classList.add('open'); }
-        function closeReqModal(id) { document.getElementById(id).classList.remove('open'); }
-
-        function openChangeModal() {
-            const sel = document.getElementById('changeBookingSelect');
-            if (sel.options.length <= 1) {
-                alert('Bạn không có đơn đặt phòng nào đủ điều kiện để yêu cầu thay đổi (cần ở trạng thái Chờ duyệt hoặc Đã xác nhận).');
-                return;
-            }
-            const minIn = todayISO();
-            document.getElementById('changeNewIn').min = minIn;
-            document.getElementById('changeNewOut').min = minIn;
-            openReqModal('changeModal');
-        }
-
-        function onChangeBookingSelect() {
-            const opt = document.getElementById('changeBookingSelect').selectedOptions[0];
-            const panel = document.getElementById('changeCurrent');
-            if (!opt || !opt.value) { panel.classList.remove('show'); return; }
-            document.getElementById('curChangeType').textContent = opt.dataset.roomtype || '—';
-            document.getElementById('curChangeQty').textContent = opt.dataset.qty || '—';
-            document.getElementById('curChangeIn').textContent = opt.dataset.checkin || '—';
-            document.getElementById('curChangeOut').textContent = opt.dataset.checkout || '—';
-            panel.classList.add('show');
-            // Pre-fill the editable fields with the current values
-            document.getElementById('changeNewIn').value = opt.dataset.checkin || '';
-            document.getElementById('changeNewOut').value = opt.dataset.checkout || '';
-            if (opt.dataset.roomtypeid) document.getElementById('changeRoomType').value = opt.dataset.roomtypeid;
-            document.getElementById('changeQty').value = opt.dataset.qty || '1';
-        }
-
-        function validateChange() {
-            const bid = document.getElementById('changeBookingSelect').value;
-            const ci = document.getElementById('changeNewIn').value;
-            const co = document.getElementById('changeNewOut').value;
-            const rt = document.getElementById('changeRoomType').value;
-            const qty = document.getElementById('changeQty').value;
-            if (!bid || !ci || !co || !rt || !qty) {
-                alert('Vui lòng điền đầy đủ các trường bắt buộc.');
-                return false;
-            }
-            if (nightsBetween(ci, co) < 1) {
-                alert('Ngày trả phòng phải sau ngày nhận phòng.');
-                return false;
-            }
-            if (ci < todayISO()) {
-                alert('Ngày nhận phòng mới không được ở trong quá khứ.');
-                return false;
-            }
-            return true;
-        }
-
-        function openExtensionModal() {
-            const sel = document.getElementById('extBookingSelect');
-            if (sel.options.length <= 1) {
-                alert('Bạn không có phòng nào đang lưu trú (Đã nhận phòng) để gia hạn.');
-                return;
-            }
-            openReqModal('extModal');
-        }
-
-        function onExtBookingSelect() {
-            const opt = document.getElementById('extBookingSelect').selectedOptions[0];
-            const panel = document.getElementById('extCurrent');
-            if (!opt || !opt.value) { panel.classList.remove('show'); return; }
-            document.getElementById('curExtType').textContent = opt.dataset.roomtype || '—';
-            document.getElementById('curExtQty').textContent = opt.dataset.qty || '—';
-            document.getElementById('curExtOut').textContent = opt.dataset.checkout || '—';
-            panel.classList.add('show');
-            // New check-out must be after the current one
-            const out = document.getElementById('extNewOut');
-            out.min = opt.dataset.checkout || todayISO();
-            out.value = '';
-            updateExtEstimate();
-        }
-
-        function updateExtEstimate() {
-            const opt = document.getElementById('extBookingSelect').selectedOptions[0];
-            const box = document.getElementById('extEstimate');
-            const newOut = document.getElementById('extNewOut').value;
-            if (!opt || !opt.value || !newOut) { box.classList.remove('show'); return; }
-            const nights = nightsBetween(opt.dataset.checkout, newOut);
-            if (nights < 1) { box.classList.remove('show'); return; }
-            const price = roomTypePrices[opt.dataset.roomtypeid] || 0;
-            const qty = parseInt(opt.dataset.qty || '1', 10);
-            document.getElementById('extNights').textContent = nights;
-            document.getElementById('extCharge').textContent = fmtVND(price * qty * nights);
-            box.classList.add('show');
-        }
-
-        function validateExtension() {
-            const opt = document.getElementById('extBookingSelect').selectedOptions[0];
-            const newOut = document.getElementById('extNewOut').value;
-            if (!opt || !opt.value || !newOut) {
-                alert('Vui lòng chọn phòng và ngày trả phòng mới.');
-                return false;
-            }
-            if (nightsBetween(opt.dataset.checkout, newOut) < 1) {
-                alert('Ngày trả phòng mới phải muộn hơn ngày trả phòng hiện tại.');
-                return false;
-            }
-            return true;
-        }
-
-        // Close a modal when clicking on the dimmed backdrop
-        document.querySelectorAll('.req-modal-overlay').forEach(function (ov) {
-            ov.addEventListener('click', function (e) {
-                if (e.target === ov) ov.classList.remove('open');
-            });
-        });
     </script>
 </body>
 </html>
