@@ -93,9 +93,14 @@
         color:#2563eb;
     }
 
-    .status-completed{
+    .status-resolved{
         background:#dcfce7;
         color:#15803d;
+    }
+
+    .status-unresolvable{
+        background:#fee2e2;
+        color:#dc2626;
     }
     /* =========================
        MOBILE RESPONSIVE
@@ -332,6 +337,7 @@
                                             <th>Phòng</th>
                                             <th>Sự cố</th>
                                             <th>Mô tả</th>
+                                            <th>Ghi chú nhân viên</th>
                                             <th>Ngày tạo</th>
                                             <th>Trạng thái</th>
                                         </tr>
@@ -354,19 +360,31 @@
                                                 <td>
                                                     <c:choose>
                                                         <c:when test="${empty item.description}">
-                                                            <span style="color:#94a3b8;">Không có</span>
+                                                            <span style="color:#94a3b8;">
+                                                                Không có
+                                                            </span>
                                                         </c:when>
                                                         <c:otherwise>
                                                             ${item.description}
                                                         </c:otherwise>
                                                     </c:choose>
                                                 </td>
-
+                                                <td>
+                                                    <c:choose>
+                                                        <c:when test="${empty item.resolutionNote}">
+                                                            <span style="color:#94a3b8;">
+                                                                Chưa có
+                                                            </span>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            ${item.resolutionNote}
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </td>
                                                 <td>
                                                     ${item.createdAt.dayOfMonth}/${item.createdAt.monthValue}/${item.createdAt.year}
                                                     ${item.createdAt.hour}:${item.createdAt.minute}
                                                 </td>
-
                                                 <td>
                                                     <c:choose>
                                                         <c:when test="${item.status eq 'Pending'}">
@@ -381,9 +399,15 @@
                                                             </span>
                                                         </c:when>
 
-                                                        <c:when test="${item.status eq 'Completed'}">
-                                                            <span class="status-badge status-completed">
-                                                                Hoàn thành
+                                                        <c:when test="${item.status eq 'Resolved'}">
+                                                            <span class="status-badge status-resolved">
+                                                                Đã xử lý
+                                                            </span>
+                                                        </c:when>
+
+                                                        <c:when test="${item.status eq 'Unresolvable'}">
+                                                            <span class="status-badge status-unresolvable">
+                                                                Không thể xử lý
                                                             </span>
                                                         </c:when>
 

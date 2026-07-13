@@ -1599,7 +1599,8 @@ BEGIN
             (
                 N'Pending',
                 N'InProgress',
-                N'Completed',
+                N'Resolved',
+                N'Unresolvable',
                 N'Cancelled'
             )),
 
