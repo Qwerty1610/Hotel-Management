@@ -36,6 +36,8 @@
                                     <a href="${pageContext.request.contextPath}/customer/bookings" class="dropdown-item">
                                         <i class="fa-solid fa-calendar-check"></i> Đặt phòng của tôi
                                     </a>
+                                    <a href="${pageContext.request.contextPath}/customer/booking/change" class="dropdown-item">
+                                        <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
                                     <a href="${pageContext.request.contextPath}/customer/feedbacks" class="dropdown-item">
                                         <i class="fa-solid fa-star"></i> Đánh giá lưu trú
                                     </a>
@@ -44,6 +46,9 @@
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/maintenance" class="dropdown-item">
                                         <i class="fa-solid fa-screwdriver-wrench"></i> Yêu cầu sửa chữa
+                                    </a>
+                                    <a href="${pageContext.request.contextPath}/customer/payments" class="dropdown-item">
+                                        <i class="fa-solid fa-credit-card"></i> Thanh toán & Lịch sử
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/payments" class="dropdown-item">
                                         <i class="fa-solid fa-credit-card"></i> Thanh toán & Lịch sử

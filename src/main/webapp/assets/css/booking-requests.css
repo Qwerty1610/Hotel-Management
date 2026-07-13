@@ -117,6 +117,84 @@
 }
 .req-hint i { color: var(--br-blue); margin-top: 2px; }
 
+/* ---------- Booking Change chooser (UC 2.3.9) ---------- */
+.req-choice-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.req-choice-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 16px;
+    background: #fff;
+    border: 1px solid var(--br-border);
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.req-choice-card:hover {
+    border-color: var(--br-blue);
+    box-shadow: 0 6px 18px rgba(0, 86, 179, 0.12);
+    transform: translateY(-1px);
+}
+.req-choice-icon {
+    flex: 0 0 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+.req-choice-icon.change { background: #e0edff; color: var(--br-blue); }
+.req-choice-icon.extension { background: #fef3c7; color: var(--br-gold); }
+.req-choice-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.req-choice-text strong {
+    font-size: 15px;
+    color: var(--br-ink);
+}
+.req-choice-text small {
+    font-size: 13px;
+    color: var(--br-muted);
+    line-height: 1.4;
+}
+.req-choice-arrow { color: #cbd5e1; font-size: 13px; }
+.req-choice-card:hover .req-choice-arrow { color: var(--br-blue); }
+
+/* Page layout (booking-change page): cards side by side + active state */
+.req-choice-row { flex-direction: row; }
+.req-choice-row .req-choice-card { flex: 1; }
+.req-choice-card.active {
+    border-color: var(--br-blue);
+    box-shadow: 0 6px 18px rgba(0, 86, 179, 0.12);
+    background: #f5f9ff;
+}
+.req-choice-card.active .req-choice-arrow { color: var(--br-blue); }
+
+.req-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--br-ink);
+    margin: 0 0 10px;
+}
+
+@media (max-width: 700px) {
+    .req-choice-row { flex-direction: column; }
+}
+
 /* ---------- Form ---------- */
 .req-field { margin-bottom: 16px; }
 .req-field label {

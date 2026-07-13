@@ -71,6 +71,8 @@ public class CustomerBookingsController extends HttpServlet {
         try {
             if ("/create".equals(pathInfo)) {
                 showCreateForm(request, response);
+            } else if ("/change".equals(pathInfo)) {
+                showBookingChangePage(request, response, accountId);
             } else if ("/detail".equals(pathInfo) || "detail".equalsIgnoreCase(action)) {
                 showBookingDetail(request, response, accountId);
             } else {
@@ -145,9 +147,6 @@ public class CustomerBookingsController extends HttpServlet {
         request.setAttribute("statusFilter", statusFilter);
         request.setAttribute("keyword", keyword);
 
-        // Room types feed the "Request Change" form's room-type dropdown
-        request.setAttribute("roomTypes", roomTypeService.getAllRoomTypes());
-
         // Customer's change/extension requests, for status tracking (POST-3)
         request.setAttribute("myRequests", bookingRequestService.getRequestsByAccount(accountId));
 
@@ -163,6 +162,26 @@ public class CustomerBookingsController extends HttpServlet {
         }
 
         request.getRequestDispatcher("/WEB-INF/views/customer/booking-history.jsp").forward(request, response);
+    }
+
+    /**
+     * Trang Thay đổi đặt phòng (UC 2.3.9 Booking Change): khách chọn giữa
+     * yêu cầu thay đổi đặt phòng hoặc yêu cầu gia hạn lưu trú.
+     */
+    private void showBookingChangePage(HttpServletRequest request, HttpServletResponse response, int accountId)
+            throws ServletException, IOException {
+        List<Booking> bookings = bookingService.getBookingsByAccount(accountId, "All", null);
+        request.setAttribute("bookings", bookings);
+        request.setAttribute("roomTypes", roomTypeService.getAllRoomTypes());
+        request.setAttribute("myRequests", bookingRequestService.getRequestsByAccount(accountId));
+
+        String error = request.getParameter("error");
+        if (error != null) {
+            request.setAttribute("errorCode", error);
+            request.setAttribute("errorMessage", ERROR_MESSAGES.getOrDefault(error, ERROR_MESSAGES.get("MSG55")));
+        }
+
+        request.getRequestDispatcher("/WEB-INF/views/customer/booking-change.jsp").forward(request, response);
     }
 
     /** Maps a success code (and optional charge) to a friendly Vietnamese message. */
@@ -450,10 +469,10 @@ public class CustomerBookingsController extends HttpServlet {
             if (res.isSuccess()) {
                 response.sendRedirect(ctx + "/customer/bookings?success=change_requested");
             } else {
-                response.sendRedirect(ctx + "/customer/bookings?error=" + res.code);
+                response.sendRedirect(ctx + "/customer/booking/change?error=" + res.code);
             }
         } catch (NumberFormatException e) {
-            response.sendRedirect(ctx + "/customer/bookings?error=MSG02");
+            response.sendRedirect(ctx + "/customer/booking/change?error=MSG02");
         }
     }
 
@@ -471,10 +490,10 @@ public class CustomerBookingsController extends HttpServlet {
                 response.sendRedirect(ctx + "/customer/bookings?success=ext_requested&charge="
                         + (long) res.additionalCharge);
             } else {
-                response.sendRedirect(ctx + "/customer/bookings?error=" + res.code);
+                response.sendRedirect(ctx + "/customer/booking/change?error=" + res.code);
             }
         } catch (NumberFormatException e) {
-            response.sendRedirect(ctx + "/customer/bookings?error=MSG02");
+            response.sendRedirect(ctx + "/customer/booking/change?error=MSG02");
         }
     }
 
