@@ -40,14 +40,20 @@
                                                     </a>
                                                     <a href="${pageContext.request.contextPath}/customer/booking/change" class="dropdown-item">
                                                         <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
+                                                    <a href="${pageContext.request.contextPath}/customer/feedbacks"
+                                                        class="dropdown-item">
+                                                        <i class="fa-solid fa-star"></i> Đánh giá lưu trú
                                                     </a>
                                                     <a href="${pageContext.request.contextPath}/customer/services"
                                                         class="dropdown-item">
                                                         <i class="fa-solid fa-bell-concierge"></i> Yêu cầu dịch vụ
                                                     </a>
-                                                    <a href="${pageContext.request.contextPath}/customer/services/history"
+                                                    <a href="${pageContext.request.contextPath}/customer/maintenance"
                                                         class="dropdown-item">
-                                                        <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử yêu cầu
+                                                        <i class="fa-solid fa-screwdriver-wrench"></i> Yêu cầu sửa chữa
+                                                    </a>
+                                                    <a href="${pageContext.request.contextPath}/customer/payments" class="dropdown-item">
+                                                        <i class="fa-solid fa-credit-card"></i> Thanh toán & Lịch sử
                                                     </a>
                                                     <a href="${pageContext.request.contextPath}/customer/payments" class="dropdown-item">
                                                         <i class="fa-solid fa-credit-card"></i> Thanh toán & Lịch sử

@@ -61,7 +61,7 @@ public class RoomTypeRepository {
 
     public Map<Integer, List<String>> getAllRoomAmenities() {
         Map<Integer, List<String>> typeAmenities = new HashMap<>();
-        String sql = "SELECT ra.type_id, a.name FROM Amenity a JOIN RoomType_Amenity ra ON a.amenity_id = ra.amenity_id";
+        String sql = "SELECT ra.type_id, a.name FROM Amenity a JOIN RoomType_Amenity ra ON a.amenity_id = ra.amenity_id WHERE a.is_active = 1";
         try (Connection conn = DBContext.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {
@@ -79,7 +79,7 @@ public class RoomTypeRepository {
 
     public List<AmenityInfo> getAmenityDetailsByTypeId(int typeId) {
         List<AmenityInfo> amenityDetails = new ArrayList<>();
-        String sql = "SELECT a.name, a.icon_url FROM Amenity a JOIN RoomType_Amenity ra ON a.amenity_id = ra.amenity_id WHERE ra.type_id = ?";
+        String sql = "SELECT a.name, a.icon_url FROM Amenity a JOIN RoomType_Amenity ra ON a.amenity_id = ra.amenity_id WHERE ra.type_id = ? AND a.is_active = 1";
         try (Connection conn = DBContext.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);

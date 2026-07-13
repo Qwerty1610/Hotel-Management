@@ -48,9 +48,17 @@
                                         <i class="fa-solid fa-key"></i> <span>Nhận phòng (Check-in)</span>
                                     </a>
                                 </li>
+
+                                <li class="menu-item ${currentTab eq 'checkout' ? 'active' : ''}">
+                                    <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkout">
+                                        <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh
+                                            toán</span>
+                                    </a>
+                                </li>
+
                                 <li class="menu-item ${currentTab eq 'roommap' ? 'active' : ''}">
                                     <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=roommap">
-                                        <i class="fa-solid fa-map"></i> <span>sơ đồ phòng</span>
+                                        <i class="fa-solid fa-map"></i> <span>Sơ đồ phòng</span>
                                     </a>
                                 </li>
 
@@ -61,12 +69,6 @@
                                     </a>
                                 </li>
 
-                                <li class="menu-item ${currentTab eq 'checkout' ? 'active' : ''}">
-                                    <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkout">
-                                        <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh
-                                            toán</span>
-                                    </a>
-                                </li>
 
                                 <li class="menu-item ${currentTab eq 'servicerequests' ? 'active' : ''}">
                                     <a
@@ -77,7 +79,8 @@
                             </ul>
 
                             <div class="sidebar-footer">
-                                <a href="${pageContext.request.contextPath}/profile" class="user-profile-card" title="Xem hồ sơ cá nhân" style="text-decoration:none;cursor:pointer;">
+                                <a href="${pageContext.request.contextPath}/profile" class="user-profile-card"
+                                    title="Xem hồ sơ cá nhân" style="text-decoration:none;cursor:pointer;">
                                     <div class="profile-avatar">RC</div>
                                     <div class="profile-info">
                                         <span class="profile-name">${not empty sessionScope.user ? sessionScope.user :
@@ -252,21 +255,31 @@
                                                                             <div
                                                                                 style="margin-left:auto;display:flex;align-items:center;gap:8px;">
 
-                                                                                <c:if test="${currentPage > 1}">
-                                                                                    <a class="btn-action-icon"
-                                                                                        href="${pageContext.request.contextPath}/receptionist/dashboard?tab=bookings&page=${currentPage-1}&status=${currentStatus}&keyword=${keyword}">
-                                                                                        <i
-                                                                                            class="fa-solid fa-chevron-left"></i>
-                                                                                    </a>
-                                                                                </c:if>
-                                                                                <c:if
-                                                                                    test="${currentPage < totalPages}">
-                                                                                    <a class="btn-action-icon"
-                                                                                        href="${pageContext.request.contextPath}/receptionist/dashboard?tab=bookings&page=${currentPage+1}&status=${currentStatus}&keyword=${keyword}">
-                                                                                        <i
-                                                                                            class="fa-solid fa-chevron-right"></i>
-                                                                                    </a>
-                                                                                </c:if>
+                                                                                <%-- Gmail-style counter --%>
+                                                                                    <span
+                                                                                        style="font-size:13px; color:var(--text-muted); white-space:nowrap;">
+                                                                                        ${(currentPage - 1) * 8 +
+                                                                                        1}–${(currentPage - 1) * 8 +
+                                                                                        fn:length(bookingList)}
+                                                                                        trong số
+                                                                                        <strong>${totalItems}</strong>
+                                                                                    </span>
+
+                                                                                    <c:if test="${currentPage > 1}">
+                                                                                        <a class="btn-action-icon"
+                                                                                            href="${pageContext.request.contextPath}/receptionist/dashboard?tab=bookings&page=${currentPage-1}&status=${currentStatus}&keyword=${keyword}">
+                                                                                            <i
+                                                                                                class="fa-solid fa-chevron-left"></i>
+                                                                                        </a>
+                                                                                    </c:if>
+                                                                                    <c:if
+                                                                                        test="${currentPage < totalPages}">
+                                                                                        <a class="btn-action-icon"
+                                                                                            href="${pageContext.request.contextPath}/receptionist/dashboard?tab=bookings&page=${currentPage+1}&status=${currentStatus}&keyword=${keyword}">
+                                                                                            <i
+                                                                                                class="fa-solid fa-chevron-right"></i>
+                                                                                        </a>
+                                                                                    </c:if>
 
                                                                             </div>
 
@@ -623,14 +636,14 @@
 
                                                                             <div class="floor-block">
 
-                                            <div class="floor-title">
-                                                <div class="floor-name">
-                                                    Tầng ${entry.key}
-                                                </div>
-                                                <div class="floor-room-count">
-                                                    ${fn:length(entry.value)} phòng
-                                                </div>
-                                            </div>
+                                                                                <div class="floor-title">
+                                                                                    <div class="floor-name">
+                                                                                        Tầng ${entry.key}
+                                                                                    </div>
+                                                                                    <div class="floor-room-count">
+                                                                                        ${fn:length(entry.value)} phòng
+                                                                                    </div>
+                                                                                </div>
 
                                                                                 <div class="room-grid">
 
@@ -669,16 +682,17 @@
                                                         </c:if>
                                                         <%--=====CHECK-IN TAB (ITERATION 2/3)=====--%>
                                                             <c:if test="${currentTab eq 'checkin'}">
-                        <c:if test="${param.checkinSuccess == '1'}">
-                            <div id="toastCheckin" class="checkin-toast">
-                                <span>
-                                    Đã check in thành công cho khách
-                                    <b>${param.customerName}</b>
-                                </span>
+                                                                <c:if test="${param.checkinSuccess == '1'}">
+                                                                    <div id="toastCheckin" class="checkin-toast">
+                                                                        <span>
+                                                                            Đã check in thành công cho khách
+                                                                            <b>${param.customerName}</b>
+                                                                        </span>
 
-                                <button class="toast-close" onclick="closeCheckinToast()">×</button>
-                            </div>
-                        </c:if>
+                                                                        <button class="toast-close"
+                                                                            onclick="closeCheckinToast()">×</button>
+                                                                    </div>
+                                                                </c:if>
                                                                 <div class="content-header-row">
                                                                     <div>
                                                                         <h2>
@@ -831,372 +845,426 @@
                                                                                             <c:when
                                                                                                 test="${b.status eq 'CheckedOut'}">
 
-                                                        <span style="color:#64748b;font-weight:600">
-                                                            Đã check out
-                                                        </span>
-                                                    </c:when>
-                                                </c:choose>
-                                            </td>
-                                        </tr>
-                                    </c:forEach>
-                                </tbody>
-                            </table>
-                        </div>
-                    </c:if>
-                    <%-- ===== WALK-IN BOOKING TAB===== --%> 
-                    <c:if test="${currentTab eq 'walkin-bookings'}">
-                        <form method="post" 
-                              action="${pageContext.request.contextPath}/receptionist/walkin-booking" 
-                              onsubmit="return validateWalkInSubmit()"> 
-                            <input type="hidden" 
-                                   id="bookingMode" 
-                                   name="bookingMode" 
-                                   value="BOOKING"> 
-                            <%-- ================= HEADER ================= --%> 
-                            <div class="content-header-row">
-                                <div> 
-                                    <h2> 
-                                        <i class="fa-solid fa-user-plus" 
-                                           style="color:var(--brand-blue);margin-right:8px"></i> 
-                                        Đặt phòng tại quầy 
-                                    </h2> 
-                                    <p>
-                                        Tạo booking trực tiếp cho khách hàng tại quầy lễ tân.
-                                    </p> 
-                                </div>
-                                <div class="walkin-mode-card">
-                                    <label class="mode-option"> 
-                                        <input type="radio" name="walkinMode" value="booking" checked> 
-                                        <span>📅 Đặt phòng</span> </label> 
-                                    <label class="mode-option"> 
-                                        <input type="radio" name="walkinMode" value="checkin"> 
-                                        <span>🏨 Check In</span> 
-                                    </label> 
-                                </div> 
-                            </div>
-                            <div id="searchAccountMessage"
-                                 class="search-account-message hidden"></div>
-                            <div class="walkin-search-account">
-                                <input
-                                    id="searchAccountKeyword"
-                                    class="walkin-input"
-                                    placeholder="Nhập Email hoặc SĐT">
-                                <button
-                                    type="button"
-                                    class="btn-search-account"
-                                    onclick="searchAccount()">
-                                    <i class="fa-solid fa-magnifying-glass"></i>
-                                    Tìm tài khoản
-                                </button>
-                            </div>
-                            <!-- ========================================================= 
+                                                                                                <span
+                                                                                                    style="color:#64748b;font-weight:600">
+                                                                                                    Đã check out
+                                                                                                </span>
+                                                                                            </c:when>
+                                                                                        </c:choose>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            </c:forEach>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            </c:if>
+                                                            <%--=====WALK-IN BOOKING TAB=====--%>
+                                                                <c:if test="${currentTab eq 'walkin-bookings'}">
+                                                                    <form method="post"
+                                                                        action="${pageContext.request.contextPath}/receptionist/walkin-booking"
+                                                                        onsubmit="return validateWalkInSubmit()">
+                                                                        <input type="hidden" id="bookingMode"
+                                                                            name="bookingMode" value="BOOKING">
+                                                                        <%--=================HEADER=================--%>
+                                                                            <div class="content-header-row">
+                                                                                <div>
+                                                                                    <h2>
+                                                                                        <i class="fa-solid fa-user-plus"
+                                                                                            style="color:var(--brand-blue);margin-right:8px"></i>
+                                                                                        Đặt phòng tại quầy
+                                                                                    </h2>
+                                                                                    <p>
+                                                                                        Tạo booking trực tiếp cho khách
+                                                                                        hàng tại quầy lễ tân.
+                                                                                    </p>
+                                                                                </div>
+                                                                                <div class="walkin-mode-card">
+                                                                                    <label class="mode-option">
+                                                                                        <input type="radio"
+                                                                                            name="walkinMode"
+                                                                                            value="booking" checked>
+                                                                                        <span>📅 Đặt phòng</span>
+                                                                                    </label>
+                                                                                    <label class="mode-option">
+                                                                                        <input type="radio"
+                                                                                            name="walkinMode"
+                                                                                            value="checkin">
+                                                                                        <span>🏨 Check In</span>
+                                                                                    </label>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div id="searchAccountMessage"
+                                                                                class="search-account-message hidden">
+                                                                            </div>
+                                                                            <div class="walkin-search-account">
+                                                                                <input id="searchAccountKeyword"
+                                                                                    class="walkin-input"
+                                                                                    placeholder="Nhập Email hoặc SĐT">
+                                                                                <button type="button"
+                                                                                    class="btn-search-account"
+                                                                                    onclick="searchAccount()">
+                                                                                    <i
+                                                                                        class="fa-solid fa-magnifying-glass"></i>
+                                                                                    Tìm tài khoản
+                                                                                </button>
+                                                                            </div>
+                                                                            <!-- ========================================================= 
                                     CARD 1 - THÔNG TIN KHÁCH HÀNG 
-                            ========================================================= --> 
-                            <div class="walkin-card"> 
-                                <div class="walkin-section-header">
-                                    <div> 
-                                        <i class="fa-solid fa-user"></i>
-                                        Thông tin khách hàng
-                                        <span id="customerInfoMessage" class="customer-info-message hidden"></span>
-                                    </div>
-                                </div>
-                                <div class="walkin-grid"> 
-                                    <!-- HÀNG 1 --> 
-                                    <div class="walkin-row-3"> 
-                                        <div class="form-group form-group-large"> 
-                                            <label>Họ và tên *</label> 
-                                            <input type="text" 
-                                                   id="customerName" 
-                                                   name="customerName" 
-                                                   class="walkin-input"> 
-                                        </div> 
-                                        <div class="form-group"> 
-                                            <label>Số điện thoại *</label> 
-                                            <input type="text" 
-                                                   id="phone" 
-                                                   name="phone" 
-                                                   class="walkin-input"
-                                                   maxlength="10"
-                                                   inputmode="numeric"> 
-                                        </div> 
-                                        <div class="form-group"> 
-                                            <label>Email</label> 
-                                            <input type="email" 
-                                                   id="email" 
-                                                   name="email" 
-                                                   class="walkin-input"> 
-                                        </div> 
-                                    </div> 
-                                    <!-- HÀNG 2 --> 
-                                    <div class="walkin-row-2"> 
-                                        <div class="form-group"> 
-                                            <label>Ngày nhận phòng *</label> 
-                                            <input type="date" 
-                                                   id="checkInDate" 
-                                                   name="checkInDate" 
-                                                   class="walkin-input"> </div> 
-                                        <div class="form-group"> 
-                                            <label>Ngày trả phòng *</label> 
-                                            <input type="date" 
-                                                   id="checkOutDate" 
-                                                   name="checkOutDate" 
-                                                   class="walkin-input"> 
-                                        </div> 
-                                    </div> 
-                                </div> 
-                            </div> 
-                            <%-- ========================================================= 
-                                        CARD 2 - CHỌN LOẠI PHÒNG 
-                            ========================================================= --%> 
-                            <div class="walkin-card"> 
-                                <div class="walkin-section-header"> 
-                                    <div> 
-                                        <i class="fa-solid fa-bed"></i> 
-                                        Chọn loại phòng
-                                        <span id="roomTypeMessage"
-                                              class="room-type-message hidden">
-                                        </span>
-                                    </div>
-                                    <button type="button" 
-                                            class="btn-add-room-type" 
-                                            onclick="addRoomRow()"> 
-                                        <i class="fa-solid fa-plus"></i> Thêm loại phòng 
-                                    </button> 
-                                </div> 
-                                <div class="room-header-row"> 
-                                    <span>Loại phòng</span> 
-                                    <span>Số phòng</span> 
-                                    <span>Số người</span> 
-                                    <span></span> 
-                                </div> 
-                                <div id="roomRowsContainer">
-                                    <div class="room-row first-room-row">
-                                        <span class="room-row-error hidden"></span>
-                                        <select name="roomTypeIds[]" 
-                                                class="walkin-input room-type-select" 
-                                                onchange="roomTypeChanged(this)"> 
-                                            <option value=""> 
-                                                -- Chọn loại phòng -- 
-                                            </option> 
-                                            <c:forEach var="rt" items="${roomTypesList}">
-                                                <option
-                                                    value="${rt.typeId}"
-                                                    data-price="${rt.basePrice}"
-                                                    data-capacity="${rt.capacity}">
-                                                    ${rt.typeName}
-                                                </option>
-                                            </c:forEach>
-                                        </select> 
-                                        <input type="number" 
-                                               name="roomQuantities[]" 
-                                               class="walkin-input room-qty-input" 
-                                               min="1" 
-                                               value="1" 
-                                               onchange="roomQtyChanged(this)" 
-                                               required> 
-                                        <input
-                                            type="number"
-                                            name="guestCounts[]"
-                                            class="walkin-input guest-input"
-                                            min="1"
-                                            value="1"
-                                            oninput="updateSummary()"
-                                            required>
-                                        <button type="button" 
-                                                class="btn-delete-row" 
-                                                style="display:none"> 
-                                            <i class="fa-solid fa-trash"></i> 
-                                        </button> 
-                                    </div> 
-                                </div> 
-                            </div> 
-                            <%-- ========================================================= 
-                                        CARD 3 - SƠ ĐỒ PHÒNG 
-                            ========================================================= --%> 
-                            <div class="walkin-card"> 
-                                <div class="walkin-section-header"> 
-                                    <div> 
-                                        <i class="fa-solid fa-map"></i> 
-                                        Sơ đồ phòng 
-                                    </div> 
-                                </div> 
-                                <div id="availableRoomsContainer"> 
-                                    <div class="empty-room-message"> 
-                                        Chọn ngày nhận phòng, trả phòng và loại phòng 
-                                    </div> 
-                                </div> 
-                                <%-- ========================================================= 
-                                    CARD 3.1 - BẠN ĐỒNG HÀNH 
-                                ========================================================= --%> 
-                            </div> 
-                            <div class="walkin-card" 
-                                 id="companionCard" 
-                                 style="display:none;"> 
-                                <div class="walkin-section-header"> 
-                                    <div> 
-                                        <i class="fa-solid fa-users"></i> 
-                                        Bạn đồng hành 
-                                    </div> 
-                                    <button type="button"
-                                            class="btn-add-companion"
-                                            onclick="addCompanionRow()"> 
-                                        + Thêm bạn đồng hành 
-                                    </button> 
-                                </div> 
-                                <div id="companionContainer"> 
-                                </div> 
-                            </div> 
-                            <%-- ========================================================= 
-                                    CARD 4 - YÊU CẦU KHÁCH HÀNG 
-                            ========================================================= --%> 
-                            <div class="walkin-card"> 
-                                <div class="walkin-section-header"> 
-                                    <div> 
-                                        <i class="fa-solid fa-comment-dots"></i> 
-                                        Yêu cầu khách hàng 
-                                    </div> 
-                                </div> 
-                                <textarea name="note"
-                                          id="note"
-                                          class="walkin-note" 
-                                          rows="5" 
-                                          placeholder="Ví dụ: phòng tầng cao, gần thang máy, giường phụ, yên tĩnh...">                         
-                                </textarea> 
-                            </div> 
-                            <%-- ========================================================= 
-                            CARD 5 - TÓM TẮT ĐẶT PHÒNG 
-                            ========================================================= --%> 
-                            <div class="walkin-card"> 
-                                <div class="walkin-section-header"> 
-                                    <div> 
-                                        <i class="fa-solid fa-receipt"></i> 
-                                        Tóm tắt đặt phòng 
-                                    </div> 
-                                </div> 
-                                <div id="bookingSummary">
-                                    <!-- Bảng loại phòng -->
-                                    <table class="summary-room-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Loại phòng</th>
-                                                <th>Số phòng</th>
-                                                <th>Giá</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="summaryRoomTableBody">
-                                        </tbody>
-                                    </table>
-                                    <div class="summary-row">
-                                        <span class="summary-label">
-                                            Số đêm lưu trú
-                                        </span>
-                                        <span class="summary-value"
-                                              id="summaryNight">
-                                            0
-                                        </span>
-                                    </div>
+                            ========================================================= -->
+                                                                            <div class="walkin-card">
+                                                                                <div class="walkin-section-header">
+                                                                                    <div>
+                                                                                        <i class="fa-solid fa-user"></i>
+                                                                                        Thông tin khách hàng
+                                                                                        <span id="customerInfoMessage"
+                                                                                            class="customer-info-message hidden"></span>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="walkin-grid">
+                                                                                    <!-- HÀNG 1 -->
+                                                                                    <div class="walkin-row-3">
+                                                                                        <div
+                                                                                            class="form-group form-group-large">
+                                                                                            <label>Họ và tên *</label>
+                                                                                            <input type="text"
+                                                                                                id="customerName"
+                                                                                                name="customerName"
+                                                                                                class="walkin-input">
+                                                                                        </div>
+                                                                                        <div class="form-group">
+                                                                                            <label>Số điện thoại
+                                                                                                *</label>
+                                                                                            <input type="text"
+                                                                                                id="phone" name="phone"
+                                                                                                class="walkin-input"
+                                                                                                maxlength="10"
+                                                                                                inputmode="numeric">
+                                                                                        </div>
+                                                                                        <div class="form-group">
+                                                                                            <label>Email</label>
+                                                                                            <input type="email"
+                                                                                                id="email" name="email"
+                                                                                                class="walkin-input">
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <!-- HÀNG 2 -->
+                                                                                    <div class="walkin-row-2">
+                                                                                        <div class="form-group">
+                                                                                            <label>Ngày nhận phòng
+                                                                                                *</label>
+                                                                                            <input type="date"
+                                                                                                id="checkInDate"
+                                                                                                name="checkInDate"
+                                                                                                class="walkin-input">
+                                                                                        </div>
+                                                                                        <div class="form-group">
+                                                                                            <label>Ngày trả phòng
+                                                                                                *</label>
+                                                                                            <input type="date"
+                                                                                                id="checkOutDate"
+                                                                                                name="checkOutDate"
+                                                                                                class="walkin-input">
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <%--=========================================================CARD
+                                                                                2 - CHỌN LOẠI
+                                                                                PHÒNG=========================================================--%>
+                                                                                <div class="walkin-card">
+                                                                                    <div class="walkin-section-header">
+                                                                                        <div>
+                                                                                            <i
+                                                                                                class="fa-solid fa-bed"></i>
+                                                                                            Chọn loại phòng
+                                                                                            <span id="roomTypeMessage"
+                                                                                                class="room-type-message hidden">
+                                                                                            </span>
+                                                                                        </div>
+                                                                                        <button type="button"
+                                                                                            class="btn-add-room-type"
+                                                                                            onclick="addRoomRow()">
+                                                                                            <i
+                                                                                                class="fa-solid fa-plus"></i>
+                                                                                            Thêm loại phòng
+                                                                                        </button>
+                                                                                    </div>
+                                                                                    <div class="room-header-row">
+                                                                                        <span>Loại phòng</span>
+                                                                                        <span>Số phòng</span>
+                                                                                        <span>Số người</span>
+                                                                                        <span></span>
+                                                                                    </div>
+                                                                                    <div id="roomRowsContainer">
+                                                                                        <div
+                                                                                            class="room-row first-room-row">
+                                                                                            <span
+                                                                                                class="room-row-error hidden"></span>
+                                                                                            <select name="roomTypeIds[]"
+                                                                                                class="walkin-input room-type-select"
+                                                                                                onchange="roomTypeChanged(this)">
+                                                                                                <option value="">
+                                                                                                    -- Chọn loại phòng
+                                                                                                    --
+                                                                                                </option>
+                                                                                                <c:forEach var="rt"
+                                                                                                    items="${roomTypesList}">
+                                                                                                    <option
+                                                                                                        value="${rt.typeId}"
+                                                                                                        data-price="${rt.basePrice}"
+                                                                                                        data-capacity="${rt.capacity}">
+                                                                                                        ${rt.typeName}
+                                                                                                    </option>
+                                                                                                </c:forEach>
+                                                                                            </select>
+                                                                                            <input type="number"
+                                                                                                name="roomQuantities[]"
+                                                                                                class="walkin-input room-qty-input"
+                                                                                                min="1" value="1"
+                                                                                                onchange="roomQtyChanged(this)"
+                                                                                                required>
+                                                                                            <input type="number"
+                                                                                                name="guestCounts[]"
+                                                                                                class="walkin-input guest-input"
+                                                                                                min="1" value="1"
+                                                                                                oninput="updateSummary()"
+                                                                                                required>
+                                                                                            <button type="button"
+                                                                                                class="btn-delete-row"
+                                                                                                style="display:none">
+                                                                                                <i
+                                                                                                    class="fa-solid fa-trash"></i>
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <%--=========================================================CARD
+                                                                                    3 - SƠ ĐỒ
+                                                                                    PHÒNG=========================================================--%>
+                                                                                    <div class="walkin-card">
+                                                                                        <div
+                                                                                            class="walkin-section-header">
+                                                                                            <div>
+                                                                                                <i
+                                                                                                    class="fa-solid fa-map"></i>
+                                                                                                Sơ đồ phòng
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <div
+                                                                                            id="availableRoomsContainer">
+                                                                                            <div
+                                                                                                class="empty-room-message">
+                                                                                                Chọn ngày nhận phòng,
+                                                                                                trả phòng và loại phòng
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <%--=========================================================CARD
+                                                                                            3.1 - BẠN ĐỒNG
+                                                                                            HÀNH=========================================================--%>
+                                                                                    </div>
+                                                                                    <div class="walkin-card"
+                                                                                        id="companionCard"
+                                                                                        style="display:none;">
+                                                                                        <div
+                                                                                            class="walkin-section-header">
+                                                                                            <div>
+                                                                                                <i
+                                                                                                    class="fa-solid fa-users"></i>
+                                                                                                Bạn đồng hành
+                                                                                            </div>
+                                                                                            <button type="button"
+                                                                                                class="btn-add-companion"
+                                                                                                onclick="addCompanionRow()">
+                                                                                                + Thêm bạn đồng hành
+                                                                                            </button>
+                                                                                        </div>
+                                                                                        <div id="companionContainer">
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <%--=========================================================CARD
+                                                                                        4 - YÊU CẦU KHÁCH
+                                                                                        HÀNG=========================================================--%>
+                                                                                        <div class="walkin-card">
+                                                                                            <div
+                                                                                                class="walkin-section-header">
+                                                                                                <div>
+                                                                                                    <i
+                                                                                                        class="fa-solid fa-comment-dots"></i>
+                                                                                                    Yêu cầu khách hàng
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <textarea name="note"
+                                                                                                id="note"
+                                                                                                class="walkin-note"
+                                                                                                rows="5"
+                                                                                                placeholder="Ví dụ: phòng tầng cao, gần thang máy, giường phụ, yên tĩnh...">
+                                </textarea>
+                                                                                        </div>
+                                                                                        <%--=========================================================CARD
+                                                                                            5 - TÓM TẮT ĐẶT
+                                                                                            PHÒNG=========================================================--%>
+                                                                                            <div class="walkin-card">
+                                                                                                <div
+                                                                                                    class="walkin-section-header">
+                                                                                                    <div>
+                                                                                                        <i
+                                                                                                            class="fa-solid fa-receipt"></i>
+                                                                                                        Tóm tắt đặt
+                                                                                                        phòng
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div
+                                                                                                    id="bookingSummary">
+                                                                                                    <!-- Bảng loại phòng -->
+                                                                                                    <table
+                                                                                                        class="summary-room-table">
+                                                                                                        <thead>
+                                                                                                            <tr>
+                                                                                                                <th>Loại
+                                                                                                                    phòng
+                                                                                                                </th>
+                                                                                                                <th>Số
+                                                                                                                    phòng
+                                                                                                                </th>
+                                                                                                                <th>Giá
+                                                                                                                </th>
+                                                                                                            </tr>
+                                                                                                        </thead>
+                                                                                                        <tbody
+                                                                                                            id="summaryRoomTableBody">
+                                                                                                        </tbody>
+                                                                                                    </table>
+                                                                                                    <div
+                                                                                                        class="summary-row">
+                                                                                                        <span
+                                                                                                            class="summary-label">
+                                                                                                            Số đêm lưu
+                                                                                                            trú
+                                                                                                        </span>
+                                                                                                        <span
+                                                                                                            class="summary-value"
+                                                                                                            id="summaryNight">
+                                                                                                            0
+                                                                                                        </span>
+                                                                                                    </div>
 
-                                    <div class="summary-row total">
-                                        <span class="summary-label">
-                                            Tổng số tiền
-                                        </span>
-                                        <span class="summary-value total-price"
-                                              id="summaryTotal">
-                                            0 VNĐ
-                                        </span>
-                                    </div>
-                                </div> 
-                            </div> 
-                            <%-- ========================================================= 
-                                    CARD 6- GHI CHÚ 
-                            ========================================================= --%> 
-                            <div class="walkin-card"> 
-                                <div class="walkin-section-header"> 
-                                    <div> 
-                                        <i class="fa-solid fa-clipboard"></i> 
-                                        Ghi chú lễ tân 
-                                    </div> 
-                                </div> 
-                                <textarea name="receptionistNote" 
-                                          class="walkin-note" 
-                                          rows="4" 
-                                          placeholder="Ghi chú nội bộ..."> 
-                                </textarea> 
-                            </div> 
-                            <%-- ========================================================= 
-                                        FOOTER 
-                            ========================================================= --%> 
-                            <div class="walkin-footer"> 
-                                <div class="privacy-note"> 
-                                    <i class="fa-solid fa-shield-halved"></i> 
-                                    <span> Cam kết chính sách bảo mật của HotelOps </span> 
-                                </div> 
-                                <button type="submit" 
-                                        id="bookingBtn"
-                                        class="btn-booking-submit" 
-                                        onclick="return beforeWalkInSubmit('BOOKING')"> 
-                                    <i class="fa-solid fa-calendar-check"></i> Đặt phòng 
-                                </button> 
-                                <button type="submit" 
-                                        id="checkinBtn"
-                                        class="btn-booking-submit" 
-                                        onclick="return beforeWalkInSubmit('CHECKIN')"> 
-                                    <i class="fa-solid fa-door-open"></i> 
-                                    Check In 
-                                </button> 
-                            </div> 
-                        </form>
-                        <div id="modePopup" class="mode-popup hidden">
-                            <div class="mode-popup-icon">
-                                <i class="fa-solid fa-circle-info"></i>
-                            </div>
-                            <div class="mode-popup-content">
-                                <div class="mode-popup-title">
-                                    Chế độ
-                                </div>
-                                <div id="modePopupMessage">
-                                </div>
-                            </div>
-                            <button
-                                type="button"
-                                class="mode-popup-close"
-                                onclick="hideModePopup()">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
-                        </div>
-                        <div id="walkinToast" class="walkin-toast">
-                            <c:if test="${not empty success}">
-                                <script>
-                                    window.walkInSuccessMessage = "${fn:escapeXml(success)}";
-                                </script>
-                                <c:remove var="success" scope="session"/>
-                            </c:if>
+                                                                                                    <div
+                                                                                                        class="summary-row total">
+                                                                                                        <span
+                                                                                                            class="summary-label">
+                                                                                                            Tổng số tiền
+                                                                                                        </span>
+                                                                                                        <span
+                                                                                                            class="summary-value total-price"
+                                                                                                            id="summaryTotal">
+                                                                                                            0 VNĐ
+                                                                                                        </span>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <%--=========================================================CARD
+                                                                                                6- GHI
+                                                                                                CHÚ=========================================================--%>
+                                                                                                <div
+                                                                                                    class="walkin-card">
+                                                                                                    <div
+                                                                                                        class="walkin-section-header">
+                                                                                                        <div>
+                                                                                                            <i
+                                                                                                                class="fa-solid fa-clipboard"></i>
+                                                                                                            Ghi chú lễ
+                                                                                                            tân
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                    <textarea
+                                                                                                        name="receptionistNote"
+                                                                                                        class="walkin-note"
+                                                                                                        rows="4"
+                                                                                                        placeholder="Ghi chú nội bộ...">
+                                </textarea>
+                                                                                                </div>
+                                                                                                <%--=========================================================FOOTER=========================================================--%>
+                                                                                                    <div
+                                                                                                        class="walkin-footer">
+                                                                                                        <div
+                                                                                                            class="privacy-note">
+                                                                                                            <i
+                                                                                                                class="fa-solid fa-shield-halved"></i>
+                                                                                                            <span> Cam
+                                                                                                                kết
+                                                                                                                chính
+                                                                                                                sách bảo
+                                                                                                                mật của
+                                                                                                                HotelOps
+                                                                                                            </span>
+                                                                                                        </div>
+                                                                                                        <button
+                                                                                                            type="submit"
+                                                                                                            id="bookingBtn"
+                                                                                                            class="btn-booking-submit"
+                                                                                                            onclick="return beforeWalkInSubmit('BOOKING')">
+                                                                                                            <i
+                                                                                                                class="fa-solid fa-calendar-check"></i>
+                                                                                                            Đặt phòng
+                                                                                                        </button>
+                                                                                                        <button
+                                                                                                            type="submit"
+                                                                                                            id="checkinBtn"
+                                                                                                            class="btn-booking-submit"
+                                                                                                            onclick="return beforeWalkInSubmit('CHECKIN')">
+                                                                                                            <i
+                                                                                                                class="fa-solid fa-door-open"></i>
+                                                                                                            Check In
+                                                                                                        </button>
+                                                                                                    </div>
+                                                                    </form>
+                                                                    <div id="modePopup" class="mode-popup hidden">
+                                                                        <div class="mode-popup-icon">
+                                                                            <i class="fa-solid fa-circle-info"></i>
+                                                                        </div>
+                                                                        <div class="mode-popup-content">
+                                                                            <div class="mode-popup-title">
+                                                                                Chế độ
+                                                                            </div>
+                                                                            <div id="modePopupMessage">
+                                                                            </div>
+                                                                        </div>
+                                                                        <button type="button" class="mode-popup-close"
+                                                                            onclick="hideModePopup()">
+                                                                            <i class="fa-solid fa-xmark"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                    <div id="walkinToast" class="walkin-toast">
+                                                                        <c:if test="${not empty success}">
+                                                                            <script>
+                                                                                window.walkInSuccessMessage = "${fn:escapeXml(success)}";
+                                                                            </script>
+                                                                            <c:remove var="success" scope="session" />
+                                                                        </c:if>
 
-                            <c:if test="${not empty error}">
-                                <script>
-                                    window.walkInErrorMessage = "${fn:escapeXml(error)}";
-                                </script>
-                                <c:remove var="error" scope="session"/>
-                            </c:if>
-                            <span id="walkinToastMessage"></span>
+                                                                        <c:if test="${not empty error}">
+                                                                            <script>
+                                                                                window.walkInErrorMessage = "${fn:escapeXml(error)}";
+                                                                            </script>
+                                                                            <c:remove var="error" scope="session" />
+                                                                        </c:if>
+                                                                        <span id="walkinToastMessage"></span>
 
-                            <button
-                                type="button"
-                                class="walkin-toast-close"
-                                onclick="hideWalkInToast()">
-                                ×
-                            </button>
-                        </div>
-                        <c:if test="${not empty success}">
-                            <script>
-                                window.addEventListener("DOMContentLoaded", function () {
-                                    clearWalkInAllState();
-                                    resetWalkInFormKeepMode();
-                                });
-                            </script>
-                        </c:if>
-                        <script>
-                            window.roomTypeOptionsHtml = `
+                                                                        <button type="button" class="walkin-toast-close"
+                                                                            onclick="hideWalkInToast()">
+                                                                            ×
+                                                                        </button>
+                                                                    </div>
+                                                                    <c:if test="${not empty success}">
+                                                                        <script>
+                                                                            window.addEventListener("DOMContentLoaded", function () {
+                                                                                clearWalkInAllState();
+                                                                                resetWalkInFormKeepMode();
+                                                                            });
+                                                                        </script>
+                                                                    </c:if>
+                                                                    <script>
+                                                                        window.roomTypeOptionsHtml = `
                             <c:forEach items="${roomTypesList}" var="rt">
                             <option value="${rt.typeId}"
                                     data-price="${rt.basePrice}"
@@ -1209,21 +1277,148 @@
                                                                 </c:if>
                                                                 <%--=====CHECK-OUT TAB (ITERATION 3)=====--%>
                                                                     <c:if test="${currentTab eq 'checkout'}">
-                                                                        <div class="content-header-row">
-                                                                            <div>
-                                                                                <h2><i class="fa-solid fa-file-invoice-dollar"
-                                                                                        style="color:var(--brand-blue);margin-right:8px"></i>Trả
-                                                                                    phòng & Thanh toán</h2>
-                                                                                <p>Xử lý thanh toán, phụ phí và xuất hoá
-                                                                                    đơn (Iteration 3).</p>
+                                                                        <%-- Toast notification --%>
+                                                                            <c:if test="${not empty param.msg}">
+                                                                                <div class="toast-notify toast-success">
+                                                                                    <i
+                                                                                        class="fa-solid fa-circle-check"></i>
+                                                                                    Đã làm thủ tục trả phòng thành công!
+                                                                                </div>
+                                                                            </c:if>
+                                                                            <c:if test="${not empty param.error}">
+                                                                                <div class="toast-notify toast-error">
+                                                                                    <i
+                                                                                        class="fa-solid fa-circle-xmark"></i>
+                                                                                    Thao tác thất bại. Vui lòng kiểm tra
+                                                                                    lại.
+                                                                                </div>
+                                                                            </c:if>
+
+                                                                            <div class="content-header-row">
+                                                                                <div>
+                                                                                    <h2><i class="fa-solid fa-file-invoice-dollar"
+                                                                                            style="color:var(--brand-blue);margin-right:8px"></i>
+                                                                                        Trả phòng & Thanh toán</h2>
+                                                                                    <p>Quản lý các phòng đang được sử
+                                                                                        dụng (Đã check-in) và thực hiện
+                                                                                        thủ tục trả phòng, tính hóa
+                                                                                        đơn</p>
+                                                                                </div>
                                                                             </div>
-                                                                        </div>
-                                                                        <div class="table-card"
-                                                                            style="padding: 80px 20px; text-align: center; color: var(--text-muted);">
-                                                                            <i class="fa-solid fa-person-digging"
-                                                                                style="font-size: 64px; margin-bottom: 20px; opacity: 0.2;"></i>
-                                                                            <h3>Tính năng đang phát triển</h3>
-                                                                        </div>
+
+                                                                            <form method="get"
+                                                                                action="${pageContext.request.contextPath}/receptionist/dashboard">
+                                                                                <input type="hidden" name="tab"
+                                                                                    value="checkout" />
+                                                                                <div class="table-filter-bar"
+                                                                                    style="display:flex; gap: 8px;">
+                                                                                    <div class="search-wrapper"
+                                                                                        style="flex: 1;">
+                                                                                        <i
+                                                                                            class="fa-solid fa-magnifying-glass"></i>
+                                                                                        <input type="text" name="search"
+                                                                                            class="search-input"
+                                                                                            placeholder="Tìm tên khách hoặc số phòng..."
+                                                                                            value="${search}" />
+                                                                                    </div>
+                                                                                    <button type="submit"
+                                                                                        style="height:40px;padding:0 16px;background:var(--brand-blue);color:#fff;border:none;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;">
+                                                                                        Tìm kiếm
+                                                                                    </button>
+                                                                                </div>
+                                                                            </form>
+
+                                                                            <div class="table-card">
+                                                                                <c:choose>
+                                                                                    <c:when
+                                                                                        test="${empty checkOutList}">
+                                                                                        <div class="empty-state">
+                                                                                            <i
+                                                                                                class="fa-solid fa-inbox"></i>
+                                                                                            <p>Không có phòng nào đang ở
+                                                                                                (CheckedIn).</p>
+                                                                                        </div>
+                                                                                    </c:when>
+                                                                                    <c:otherwise>
+                                                                                        <table class="booking-table">
+                                                                                            <thead>
+                                                                                                <tr>
+                                                                                                    <th>Mã Đặt Phòng
+                                                                                                    </th>
+                                                                                                    <th>Khách Hàng</th>
+                                                                                                    <th>Loại Phòng</th>
+                                                                                                    <th>Ngày Đến</th>
+                                                                                                    <th>Ngày Đi</th>
+                                                                                                    <th>Trạng Thái</th>
+                                                                                                    <th>Thao Tác</th>
+                                                                                                </tr>
+                                                                                            </thead>
+                                                                                            <tbody>
+                                                                                                <c:forEach var="b"
+                                                                                                    items="${checkOutList}">
+                                                                                                    <tr>
+                                                                                                        <td><span
+                                                                                                                class="booking-id-badge">#${b.bookingId}</span>
+                                                                                                        </td>
+                                                                                                        <td>
+                                                                                                            <div
+                                                                                                                class="customer-cell">
+                                                                                                                <div
+                                                                                                                    class="name">
+                                                                                                                    ${b.customerName}
+                                                                                                                </div>
+                                                                                                                <div
+                                                                                                                    class="meta">
+                                                                                                                    Đặt:
+                                                                                                                    ${b.createdAt}
+                                                                                                                </div>
+                                                                                                            </div>
+                                                                                                        </td>
+                                                                                                        <td>
+                                                                                                            <c:choose>
+                                                                                                                <c:when
+                                                                                                                    test="${not empty b.groupRoomTypeNames}">
+                                                                                                                    <span
+                                                                                                                        class="roomtype-badge">${b.groupRoomTypeNames}</span><br />
+                                                                                                                    <small
+                                                                                                                        style="color:var(--text-muted)">${b.totalRoomQuantity}
+                                                                                                                        phòng</small>
+                                                                                                                </c:when>
+                                                                                                                <c:otherwise>
+                                                                                                                    <span
+                                                                                                                        style="color:var(--text-muted)">—</span>
+                                                                                                                </c:otherwise>
+                                                                                                            </c:choose>
+                                                                                                        </td>
+                                                                                                        <td>${b.checkInDate}
+                                                                                                        </td>
+                                                                                                        <td>${b.checkOutDate}
+                                                                                                        </td>
+                                                                                                        <td>
+                                                                                                            <span
+                                                                                                                class="status-pill pill-checkedin">
+                                                                                                                <i
+                                                                                                                    class="fa-solid fa-circle"></i>
+                                                                                                                Đã
+                                                                                                                check-in
+                                                                                                            </span>
+                                                                                                        </td>
+                                                                                                        <td>
+                                                                                                            <a class="btn-action-icon btn-edit"
+                                                                                                                href="${pageContext.request.contextPath}/receptionist/checkout?bookingId=${b.bookingId}">
+                                                                                                                <i
+                                                                                                                    class="fa-solid fa-right-from-bracket"></i>
+                                                                                                                Check
+                                                                                                                Out
+                                                                                                            </a>
+                                                                                                        </td>
+                                                                                                    </tr>
+                                                                                                </c:forEach>
+                                                                                            </tbody>
+                                                                                        </table>
+                                                                                    </c:otherwise>
+                                                                                </c:choose>
+                                                                            </div>
                                                                     </c:if>
 
 
@@ -1525,128 +1720,128 @@
                                             <script>
                                                 const contextPath = '${pageContext.request.contextPath}';
                                             </script>
-        <script>
-            function closeCheckinToast() {
-                const toast = document.getElementById("toastCheckin");
-                if (toast) {
-                    toast.remove();
-                }
+                                            <script>
+                                                function closeCheckinToast() {
+                                                    const toast = document.getElementById("toastCheckin");
+                                                    if (toast) {
+                                                        toast.remove();
+                                                    }
 
-                const url = new URL(window.location);
-                url.searchParams.delete("checkinSuccess");
-                url.searchParams.delete("customerName");
-                window.history.replaceState({}, document.title, url.pathname + url.search);
-            }
+                                                    const url = new URL(window.location);
+                                                    url.searchParams.delete("checkinSuccess");
+                                                    url.searchParams.delete("customerName");
+                                                    window.history.replaceState({}, document.title, url.pathname + url.search);
+                                                }
 
-            window.addEventListener("DOMContentLoaded", function () {
-                const toast = document.getElementById("toastCheckin");
+                                                window.addEventListener("DOMContentLoaded", function () {
+                                                    const toast = document.getElementById("toastCheckin");
 
-                if (!toast)
-                    return;
+                                                    if (!toast)
+                                                        return;
 
-                setTimeout(() => {
-                    toast.style.opacity = "0";
+                                                    setTimeout(() => {
+                                                        toast.style.opacity = "0";
 
-                    setTimeout(() => {
-                        toast.remove();
+                                                        setTimeout(() => {
+                                                            toast.remove();
 
-                        const url = new URL(window.location);
-                        url.searchParams.delete("checkinSuccess");
-                        url.searchParams.delete("customerName");
-                        window.history.replaceState({}, document.title, url.pathname + url.search);
+                                                            const url = new URL(window.location);
+                                                            url.searchParams.delete("checkinSuccess");
+                                                            url.searchParams.delete("customerName");
+                                                            window.history.replaceState({}, document.title, url.pathname + url.search);
 
-                    }, 400);
+                                                        }, 400);
 
-                }, 3000);
-            });
-            async function searchAccount() {
+                                                    }, 3000);
+                                                });
+                                                async function searchAccount() {
 
-                hideSearchAccountMessage();
+                                                    hideSearchAccountMessage();
 
-                const keyword = document
-                        .getElementById("searchAccountKeyword")
-                        .value
-                        .trim();
+                                                    const keyword = document
+                                                        .getElementById("searchAccountKeyword")
+                                                        .value
+                                                        .trim();
 
-                if (!keyword) {
-                    showSearchAccountMessage("Vui lòng nhập Email hoặc SĐT");
-                    return;
-                }
+                                                    if (!keyword) {
+                                                        showSearchAccountMessage("Vui lòng nhập Email hoặc SĐT");
+                                                        return;
+                                                    }
 
-                try {
+                                                    try {
 
-                    const response = await fetch(
-                            contextPath
-                            + "/receptionist/walkin-booking"
-                            + "?action=searchAccount"
-                            + "&keyword="
-                            + encodeURIComponent(keyword)
-                            );
+                                                        const response = await fetch(
+                                                            contextPath
+                                                            + "/receptionist/walkin-booking"
+                                                            + "?action=searchAccount"
+                                                            + "&keyword="
+                                                            + encodeURIComponent(keyword)
+                                                        );
 
-                    const account = await response.json();
+                                                        const account = await response.json();
 
-                    if (!account.fullName) {
-                        showSearchAccountMessage("Không tìm thấy tài khoản");
-                        return;
-                    }
+                                                        if (!account.fullName) {
+                                                            showSearchAccountMessage("Không tìm thấy tài khoản");
+                                                            return;
+                                                        }
 
-                    document.getElementById("customerName").value = account.fullName || "";
-                    document.getElementById("phone").value = account.phone || "";
-                    document.getElementById("email").value = account.email || "";
+                                                        document.getElementById("customerName").value = account.fullName || "";
+                                                        document.getElementById("phone").value = account.phone || "";
+                                                        document.getElementById("email").value = account.email || "";
 
-                    saveWalkInState();
+                                                        saveWalkInState();
 
-                    showSearchAccountMessage("Đã tìm thấy tài khoản", "success");
+                                                        showSearchAccountMessage("Đã tìm thấy tài khoản", "success");
 
-                } catch (e) {
+                                                    } catch (e) {
 
-                    console.error(e);
-                    showSearchAccountMessage("Có lỗi xảy ra khi tìm kiếm");
+                                                        console.error(e);
+                                                        showSearchAccountMessage("Có lỗi xảy ra khi tìm kiếm");
 
-                }
-            }
-            function showSearchAccountError(message) {
-                const box = document.getElementById("searchAccountError");
+                                                    }
+                                                }
+                                                function showSearchAccountError(message) {
+                                                    const box = document.getElementById("searchAccountError");
 
-                box.textContent = message;
-                box.classList.remove("hidden");
-            }
+                                                    box.textContent = message;
+                                                    box.classList.remove("hidden");
+                                                }
 
-            function hideSearchAccountError() {
-                const box = document.getElementById("searchAccountError");
+                                                function hideSearchAccountError() {
+                                                    const box = document.getElementById("searchAccountError");
 
-                box.textContent = "";
-                box.classList.add("hidden");
-            }
-            let searchAccountTimer = null;
+                                                    box.textContent = "";
+                                                    box.classList.add("hidden");
+                                                }
+                                                let searchAccountTimer = null;
 
-            function showSearchAccountMessage(message, type = "error") {
+                                                function showSearchAccountMessage(message, type = "error") {
 
-                const box = document.getElementById("searchAccountMessage");
-                if (!box)
-                    return;
+                                                    const box = document.getElementById("searchAccountMessage");
+                                                    if (!box)
+                                                        return;
 
-                clearTimeout(searchAccountTimer);
+                                                    clearTimeout(searchAccountTimer);
 
-                box.className = "search-account-message " + type;
-                box.textContent = message;
-                box.classList.remove("hidden");
+                                                    box.className = "search-account-message " + type;
+                                                    box.textContent = message;
+                                                    box.classList.remove("hidden");
 
-                searchAccountTimer = setTimeout(() => {
-                    hideSearchAccountMessage();
-                }, 3000);
-            }
+                                                    searchAccountTimer = setTimeout(() => {
+                                                        hideSearchAccountMessage();
+                                                    }, 3000);
+                                                }
 
-            function hideSearchAccountMessage() {
+                                                function hideSearchAccountMessage() {
 
-                const box = document.getElementById("searchAccountMessage");
-                if (!box)
-                    return;
+                                                    const box = document.getElementById("searchAccountMessage");
+                                                    if (!box)
+                                                        return;
 
-                box.classList.add("hidden");
-                box.textContent = "";
-            }
-        </script>
+                                                    box.classList.add("hidden");
+                                                    box.textContent = "";
+                                                }
+                                            </script>
                                             <script
                                                 src="${pageContext.request.contextPath}/assets/js/receptionist.js?v=5"
                                                 charset="UTF-8"></script>

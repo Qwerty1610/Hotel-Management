@@ -28,9 +28,9 @@
         </li>
     </ul>
 
-    <div class="sidebar-footer">
-        <div class="menu-item">
-            <a href="#" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: #475569; text-decoration: none; font-weight: 600; font-size: 14px;">
+    <div class="sidebar-footer" style="padding-bottom: 5px;">
+        <div class="menu-item ${activePage eq 'settings' ? 'active' : ''}">
+            <a href="${pageContext.request.contextPath}/admin/settings" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: #475569; text-decoration: none; font-weight: 600; font-size: 14px;">
                 <i class="fa-solid fa-gear"></i> <span>Cài đặt</span>
             </a>
         </div>

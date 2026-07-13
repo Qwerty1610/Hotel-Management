@@ -38,6 +38,7 @@ public class CustomerBookingsController extends HttpServlet {
     private final BookingService bookingService = new BookingService();
     private final RoomTypeService roomTypeService = new RoomTypeService();
     private final BookingRequestService bookingRequestService = new BookingRequestService();
+    private final com.mycompany.hotelmanagement.service.PromotionService promotionService = new com.mycompany.hotelmanagement.service.PromotionService();
 
     private static final Map<String, String> ERROR_MESSAGES = new HashMap<>();
     static {
@@ -109,6 +110,8 @@ public class CustomerBookingsController extends HttpServlet {
                 handleBookingChangeRequest(request, response, accountId);
             } else if ("/extension-request".equals(pathInfo)) {
                 handleStayExtensionRequest(request, response, accountId);
+            } else if ("/check-promotion".equals(pathInfo)) {
+                handleCheckPromotion(request, response);
             } else {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);
             }
@@ -376,8 +379,25 @@ public class CustomerBookingsController extends HttpServlet {
                 bookingService.createBooking(booking);
             }
 
-            // Redirect to history on success
-            response.sendRedirect(request.getContextPath() + "/customer/bookings?success=created");
+            // ===== BINHHD START - Apply Promotion =====
+            String promotionCode = request.getParameter("promotionCode");
+            if (promotionCode != null && !promotionCode.trim().isEmpty()) {
+                double totalGroupAmount = bookingService.calculateGroupTotalAmount(booking.getBookingId());
+                if (totalGroupAmount == 0) {
+                    totalGroupAmount = bookingService.calculateBookingAmount(booking);
+                }
+                
+                com.mycompany.hotelmanagement.service.PromotionService.PromotionResult promoRes = 
+                    promotionService.validateAndCalculateDiscount(promotionCode, totalGroupAmount);
+                if (promoRes.success && promoRes.discountAmount > 0) {
+                    bookingService.applyDiscountToGroup(booking.getBookingId(), promoRes.discountAmount, promoRes.promotion.getPromotionCode());
+                    promotionService.incrementUsedCount(promoRes.promotion.getPromotionId());
+                }
+            }
+            // ===== BINHHD END - Apply Promotion =====
+
+            // Redirect to payment on success
+            response.sendRedirect(request.getContextPath() + "/customer/payments/pay?bookingId=" + booking.getBookingId());
 
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Validation failed during booking creation: " + e.getMessage(), e);
@@ -474,6 +494,25 @@ public class CustomerBookingsController extends HttpServlet {
             }
         } catch (NumberFormatException e) {
             response.sendRedirect(ctx + "/customer/booking/change?error=MSG02");
+        }
+    }
+
+    private void handleCheckPromotion(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String code = request.getParameter("promoCode");
+        String totalAmountStr = request.getParameter("totalAmount");
+        
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        
+        try {
+            double totalAmount = Double.parseDouble(totalAmountStr);
+            com.mycompany.hotelmanagement.service.PromotionService.PromotionResult res = promotionService.validateAndCalculateDiscount(code, totalAmount);
+            
+            String json = String.format("{\"success\": %b, \"message\": \"%s\", \"discountAmount\": %.0f}", 
+                res.success, res.message.replace("\"", "\\\""), res.discountAmount);
+            response.getWriter().write(json);
+        } catch (Exception e) {
+            response.getWriter().write("{\"success\": false, \"message\": \"Dữ liệu không hợp lệ.\", \"discountAmount\": 0}");
         }
     }
 }

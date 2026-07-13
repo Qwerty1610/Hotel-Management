@@ -81,6 +81,69 @@ IF NOT EXISTS (SELECT 1 FROM dbo.Role WHERE role_name = N'Customer')
     INSERT INTO dbo.Role (role_name, description) VALUES (N'Customer', N'Customer account');
 GO
 
+/* Create Permission and RolePermission tables for dynamic many-to-many authorization */
+IF OBJECT_ID(N'dbo.Permission', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Permission (
+        permission_id INT IDENTITY(1,1) PRIMARY KEY,
+        permission_name NVARCHAR(100) NOT NULL UNIQUE,
+        path_prefix NVARCHAR(100) NOT NULL UNIQUE,
+        description NVARCHAR(255) NULL
+    );
+END
+
+IF OBJECT_ID(N'dbo.RolePermission', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.RolePermission (
+        role_id INT NOT NULL,
+        permission_id INT NOT NULL,
+        CONSTRAINT PK_RolePermission PRIMARY KEY (role_id, permission_id),
+        CONSTRAINT FK_RolePermission_Role FOREIGN KEY (role_id) REFERENCES dbo.Role(role_id),
+        CONSTRAINT FK_RolePermission_Permission FOREIGN KEY (permission_id) REFERENCES dbo.Permission(permission_id)
+    );
+
+    INSERT INTO dbo.Permission (permission_name, path_prefix, description)
+    VALUES 
+    (N'ACCESS_ADMIN', '/admin', N'Quyền truy cập khu vực Quản trị viên'),
+    (N'ACCESS_MANAGER', '/manager', N'Quyền truy cập khu vực Quản lý khách sạn'),
+    (N'ACCESS_RECEPTIONIST', '/receptionist', N'Quyền truy cập khu vực Lễ tân'),
+    (N'ACCESS_HOUSEKEEPING', '/housekeeping', N'Quyền truy cập khu vực Dọn phòng');
+
+    INSERT INTO dbo.RolePermission (role_id, permission_id)
+    SELECT 1, permission_id FROM dbo.Permission WHERE permission_name = 'ACCESS_ADMIN';
+
+    INSERT INTO dbo.RolePermission (role_id, permission_id)
+    SELECT 2, permission_id FROM dbo.Permission WHERE permission_name = 'ACCESS_MANAGER';
+
+    INSERT INTO dbo.RolePermission (role_id, permission_id)
+    SELECT 3, permission_id FROM dbo.Permission WHERE permission_name = 'ACCESS_RECEPTIONIST';
+
+    INSERT INTO dbo.RolePermission (role_id, permission_id)
+    SELECT 4, permission_id FROM dbo.Permission WHERE permission_name = 'ACCESS_HOUSEKEEPING';
+END
+GO
+
+/* Create SystemConfig table for dynamic settings (Email, API Keys, etc.) */
+IF OBJECT_ID(N'dbo.SystemConfig', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.SystemConfig (
+        config_key NVARCHAR(100) PRIMARY KEY,
+        config_value NVARCHAR(500) NOT NULL,
+        description NVARCHAR(255) NULL,
+        updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+    );
+
+    INSERT INTO dbo.SystemConfig (config_key, config_value, description)
+    VALUES 
+    ('google.client.id', 'YOUR_GOOGLE_CLIENT_ID', 'Google OAuth Client ID'),
+    ('google.client.secret', 'YOUR_GOOGLE_CLIENT_SECRET', 'Google OAuth Client Secret'),
+    ('smtp.user', 'YOUR_SMTP_EMAIL', 'SMTP Email Account'),
+    ('smtp.password', 'YOUR_SMTP_PASSWORD', 'SMTP Email App Password'),
+    ('smtp.host', 'smtp.gmail.com', 'SMTP Host address'),
+    ('smtp.port', '587', 'SMTP Port');
+END
+GO
+
 /*
     Test login accounts:
     admin@hotel.com         / admin123
@@ -366,7 +429,8 @@ BEGIN
     CREATE TABLE dbo.Amenity (
         amenity_id INT IDENTITY(1,1) PRIMARY KEY,
         name NVARCHAR(100) NOT NULL UNIQUE,
-        icon_url NVARCHAR(100) NULL
+        icon_url NVARCHAR(100) NULL,
+        is_active BIT NOT NULL DEFAULT 1
     );
 END
 GO
@@ -536,7 +600,7 @@ IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'201')
 IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'202')
     INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'202', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe'), N'Available', N'Tầng 2');
 IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'204')
-    INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'204', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe'), N'Occupied', N'Tầng 2');
+    INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'204', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe'), N'OutOfService', N'Tầng 2');
 IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'301')
     INSERT INTO dbo.Room (room_number, type_id, status, floor) VALUES (N'301', (SELECT type_id FROM dbo.RoomType WHERE type_name = N'Phòng Family'), N'Available', N'Tầng 3');
 IF NOT EXISTS (SELECT 1 FROM dbo.Room WHERE room_number = N'305')
@@ -1432,3 +1496,263 @@ LEFT JOIN dbo.HotelService hs ON bsr.service_id = hs.service_id
 LEFT JOIN dbo.Account acc ON bsr.processed_by_staff_id = acc.account_id
 ORDER BY bsr.created_at DESC;
 GO
+
+/* ============================================================
+   14. TABLE CHECKOUT (Luu lich su tra phong cua Lễ tân)
+   ============================================================ */
+IF OBJECT_ID(N'dbo.CheckOut', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.CheckOut (
+        check_out_id     INT IDENTITY(1,1) PRIMARY KEY,
+        booking_id       INT NOT NULL,
+        receptionist_id  INT NOT NULL,
+        
+        room_charge      DECIMAL(18,2) NOT NULL DEFAULT 0,
+        service_charge   DECIMAL(18,2) NOT NULL DEFAULT 0,
+        extra_charge     DECIMAL(18,2) NOT NULL DEFAULT 0,
+        total_amount     DECIMAL(18,2) NOT NULL DEFAULT 0,
+        amount_paid      DECIMAL(18,2) NOT NULL DEFAULT 0,
+        remaining_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+        payment_method   NVARCHAR(50) NULL,
+        
+        checked_out_at   DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        notes            NVARCHAR(500) NULL,
+        
+        CONSTRAINT FK_CheckOut_Booking FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id),
+        CONSTRAINT FK_CheckOut_Receptionist FOREIGN KEY (receptionist_id) REFERENCES dbo.Account(account_id)
+    );
+END
+GO
+/*Maintenance requests (giao Housekeeping)*/
+IF OBJECT_ID(N'dbo.IssueType', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.IssueType
+    (
+        issue_type_id INT IDENTITY(1,1) PRIMARY KEY,
+
+        issue_name NVARCHAR(100) NOT NULL UNIQUE,
+
+        description NVARCHAR(500) NULL,
+
+        is_active BIT NOT NULL DEFAULT 1,
+
+        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+    );
+END
+GO
+
+INSERT INTO IssueType(issue_name)
+VALUES
+(N'Điều hòa'),
+(N'Tivi'),
+(N'Hệ thống cấp nước'),
+(N'Hệ thống chiếu sáng'),
+(N'Khóa cửa'),
+(N'Cửa sổ'),
+(N'Phòng tắm'),
+(N'Mạng Internet'),
+(N'Nội thất'),
+(N'Khác');
+GO
+
+
+IF OBJECT_ID(N'dbo.MaintenanceRequest', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.MaintenanceRequest
+    (
+        request_id INT IDENTITY(1,1) PRIMARY KEY,
+
+        booking_id INT NOT NULL,
+
+        customer_id INT NOT NULL,
+
+        description NVARCHAR(500) NULL,
+
+        priority NVARCHAR(20) NOT NULL DEFAULT N'Low',
+
+        status NVARCHAR(20) NOT NULL DEFAULT N'Pending',
+
+        assigned_staff_id INT NULL,
+
+        resolution_note NVARCHAR(500) NULL,
+
+        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+
+        updated_at DATETIME2 NULL,
+
+        completed_at DATETIME2 NULL,
+
+        CONSTRAINT FK_MR_Booking
+            FOREIGN KEY(booking_id)
+            REFERENCES Booking(booking_id),
+
+        CONSTRAINT FK_MR_Customer
+            FOREIGN KEY(customer_id)
+            REFERENCES Account(account_id),
+
+        CONSTRAINT FK_MR_Staff
+            FOREIGN KEY(assigned_staff_id)
+            REFERENCES Account(account_id),
+
+        CONSTRAINT CK_MR_Status
+            CHECK(status IN
+            (
+                N'Pending',
+                N'InProgress',
+                N'Completed',
+                N'Cancelled'
+            )),
+
+        CONSTRAINT CK_MR_Priority
+            CHECK(priority IN
+            (
+                N'Low',
+                N'Medium',
+                N'High',
+                N'Urgent'
+            ))
+    );
+END
+GO
+
+
+IF OBJECT_ID(N'dbo.MaintenanceRequestDetail', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.MaintenanceRequestDetail
+    (
+        detail_id INT IDENTITY(1,1) PRIMARY KEY,
+
+        request_id INT NOT NULL,
+
+        room_id INT NOT NULL,
+
+        issue_type_id INT NOT NULL,
+
+        CONSTRAINT FK_MRD_Request
+            FOREIGN KEY(request_id)
+            REFERENCES MaintenanceRequest(request_id)
+            ON DELETE CASCADE,
+
+        CONSTRAINT FK_MRD_Room
+            FOREIGN KEY(room_id)
+            REFERENCES Room(room_id),
+
+        CONSTRAINT FK_MRD_IssueType
+            FOREIGN KEY(issue_type_id)
+            REFERENCES IssueType(issue_type_id)
+    );
+END
+GO
+/*Room Issue (Housekeeping báo cáo)*/
+GO
+CREATE TABLE RoomIssue (
+    issue_id INT IDENTITY PRIMARY KEY,
+
+    room_id INT NOT NULL,
+
+    issue_type VARCHAR(100) NOT NULL,
+
+    severity VARCHAR(20) NOT NULL,
+
+    description NVARCHAR(1000) NOT NULL,
+
+    note NVARCHAR(1000),
+
+    status VARCHAR(30) DEFAULT 'Pending',
+
+    reported_by INT,
+
+    reported_at DATETIME DEFAULT GETDATE(),
+
+    FOREIGN KEY(room_id) REFERENCES Room(room_id),
+
+    FOREIGN KEY(reported_by) REFERENCES Account(account_id)
+);
+
+/* ============================================================
+   15.Promotion Management
+   Bảng lưu trữ các chương trình khuyến mãi / mã giảm giá.
+   ============================================================ */
+
+IF OBJECT_ID(N'dbo.Promotion', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Promotion (
+        PromotionID       INT IDENTITY(1,1)   PRIMARY KEY,
+        PromotionCode     VARCHAR(50)         NOT NULL UNIQUE,
+        PromotionName     NVARCHAR(150)       NOT NULL,
+        Description       NVARCHAR(500)       NULL,
+        DiscountType      VARCHAR(20)         NOT NULL CHECK (DiscountType IN ('PERCENT', 'FIXED')),
+        DiscountValue     DECIMAL(18,2)       NOT NULL CHECK (DiscountValue > 0),
+        StartDate         DATE                NOT NULL,
+        EndDate           DATE                NOT NULL,
+        EventName         NVARCHAR(150)       NULL,
+        MinBookingAmount  DECIMAL(18,2)       NULL CHECK (MinBookingAmount >= 0),
+        MaxDiscountAmount DECIMAL(18,2)       NULL CHECK (MaxDiscountAmount >= 0),
+        UsageLimit        INT                 NULL CHECK (UsageLimit > 0),
+        UsedCount         INT                 NOT NULL DEFAULT 0,
+        Status            VARCHAR(20)         NOT NULL DEFAULT 'Active' CHECK (Status IN ('Active', 'Inactive')),
+        CreatedAt         DATETIME            NOT NULL DEFAULT GETDATE(),
+        UpdatedAt         DATETIME            NULL,
+        CONSTRAINT CK_Promotion_DateRange CHECK (StartDate <= EndDate)
+    );
+END
+GO
+
+/* ── Sample data for testing ── */
+IF NOT EXISTS (SELECT 1 FROM dbo.Promotion WHERE PromotionCode = 'SUMMER2025')
+BEGIN
+    INSERT INTO dbo.Promotion
+        (PromotionCode, PromotionName, Description, DiscountType, DiscountValue,
+         StartDate, EndDate, EventName, MinBookingAmount, MaxDiscountAmount, UsageLimit, UsedCount, Status)
+    VALUES
+        ('SUMMER2025', N'Khuyến mãi Hè 2025',
+         N'Giảm giá đặc biệt cho mùa hè, áp dụng cho tất cả loại phòng.',
+         'PERCENT', 15.00, '2025-06-01', '2025-08-31', N'Mùa hè 2025', 1000000.00, 500000.00, 200, 0, 'Active'),
+
+        ('TET2026', N'Khuyến mãi Tết Nguyên Đán 2026',
+         N'Ưu đãi đón Tết, giảm thêm 500.000 VNĐ cho mỗi đặt phòng.',
+         'FIXED', 500000.00, '2026-01-15', '2026-02-15', N'Tết Nguyên Đán 2026', 2000000.00, NULL, 100, 0, 'Active'),
+
+        ('WELCOME10', N'Ưu đãi Khách mới',
+         N'Giảm 10% cho lần đặt phòng đầu tiên.',
+         'PERCENT', 10.00, '2025-01-01', '2025-12-31', NULL, 500000.00, 300000.00, NULL, 5, 'Active');
+END
+GO
+
+/* ============================================================
+   16. Feedback Management
+   Bảng lưu trữ thông tin đánh giá dịch vụ lưu trú của khách hàng.
+   ============================================================ */
+IF OBJECT_ID(N'dbo.Feedback', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Feedback (
+        feedback_id INT IDENTITY(1,1) PRIMARY KEY,
+        booking_id INT NOT NULL,
+        room_id INT NOT NULL,
+        account_id INT NOT NULL,
+        rating TINYINT NOT NULL,
+        comment NVARCHAR(1000) NULL,
+        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+        updated_at DATETIME2 NULL,
+
+        CONSTRAINT FK_Feedback_Booking
+            FOREIGN KEY (booking_id)
+            REFERENCES dbo.Booking(booking_id),
+
+        CONSTRAINT FK_Feedback_Room
+            FOREIGN KEY (room_id)
+            REFERENCES dbo.Room(room_id),
+
+        CONSTRAINT FK_Feedback_Account
+            FOREIGN KEY (account_id)
+            REFERENCES dbo.Account(account_id),
+
+        CONSTRAINT CK_Feedback_Rating
+            CHECK (rating BETWEEN 1 AND 5),
+
+        CONSTRAINT UQ_Feedback_Booking_Room
+            UNIQUE (booking_id, room_id)
+    );
+END
+GO
+

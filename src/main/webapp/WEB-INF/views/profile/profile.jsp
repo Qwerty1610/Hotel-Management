@@ -76,12 +76,17 @@
                     </a>
                     <a href="${ctx}/customer/booking/change" class="dropdown-item">
                         <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
+                    <a href="${ctx}/customer/feedbacks" class="dropdown-item">
+                        <i class="fa-solid fa-star"></i> Đánh giá lưu trú
                     </a>
                     <a href="${ctx}/customer/services" class="dropdown-item">
                         <i class="fa-solid fa-bell-concierge"></i> Yêu cầu dịch vụ
                     </a>
-                    <a href="${ctx}/customer/services/history" class="dropdown-item">
-                        <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử yêu cầu
+                    <a href="${pageContext.request.contextPath}/customer/maintenance" class="dropdown-item">
+                        <i class="fa-solid fa-screwdriver-wrench"></i> Yêu cầu sửa chữa
+                    </a>
+                    <a href="${ctx}/customer/payments" class="dropdown-item">
+                        <i class="fa-solid fa-credit-card"></i> Thanh toán & Lịch sử
                     </a>
                     <a href="${ctx}/customer/payments" class="dropdown-item">
                         <i class="fa-solid fa-credit-card"></i> Thanh toán & Lịch sử

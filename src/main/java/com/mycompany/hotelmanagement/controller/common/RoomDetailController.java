@@ -8,6 +8,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import com.mycompany.hotelmanagement.service.RoomTypeService;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
+import com.mycompany.hotelmanagement.service.FeedbackService;
+import com.mycompany.hotelmanagement.entity.Feedback;
+import java.util.List;
 
 /**
  * RoomDetailController
@@ -51,8 +54,19 @@ public class RoomDetailController extends HttpServlet {
             return;
         }
 
-        // Set attribute and forward
+        // Fetch feedback using FeedbackService
+        FeedbackService feedbackService = new FeedbackService();
+        List<Feedback> feedbackList = feedbackService.getFeedbacksByRoomTypeId(typeId);
+        double[] stats = feedbackService.getFeedbackStatsByRoomTypeId(typeId);
+        int totalReviews = (int) stats[0];
+        double averageRating = stats[1];
+
+        // Set attributes and forward
         request.setAttribute("room", roomDetail);
+        request.setAttribute("feedbackList", feedbackList);
+        request.setAttribute("totalReviews", totalReviews);
+        request.setAttribute("averageRating", averageRating);
+        
         request.getRequestDispatcher("/WEB-INF/views/home/room_detail.jsp").forward(request, response);
     }
 }
