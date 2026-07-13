@@ -28,6 +28,9 @@ public class MaintenanceRequest {
     private LocalDateTime updatedAt;
     private LocalDateTime completedAt;
 
+    private Account customer;
+    private Account assignedStaff;
+
     public MaintenanceRequest() {
     }
 
@@ -134,4 +137,21 @@ public class MaintenanceRequest {
     public void setIssueNames(String issueNames) {
         this.issueNames = issueNames;
     }
+
+    public Account getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Account customer) {
+        this.customer = customer;
+    }
+
+    public Account getAssignedStaff() {
+        return assignedStaff;
+    }
+
+    public void setAssignedStaff(Account assignedStaff) {
+        this.assignedStaff = assignedStaff;
+    }
+    
 }
