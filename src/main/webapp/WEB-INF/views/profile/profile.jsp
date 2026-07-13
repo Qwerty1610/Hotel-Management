@@ -88,9 +88,6 @@
                     <a href="${ctx}/customer/payments" class="dropdown-item">
                         <i class="fa-solid fa-credit-card"></i> Thanh toán & Lịch sử
                     </a>
-                    <a href="${ctx}/customer/payments" class="dropdown-item">
-                        <i class="fa-solid fa-credit-card"></i> Thanh toán & Lịch sử
-                    </a>
                     <div class="dropdown-divider"></div>
                     <a href="${ctx}/logout" class="dropdown-item logout-item">
                         <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
