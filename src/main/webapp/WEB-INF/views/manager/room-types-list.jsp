@@ -196,35 +196,7 @@
                         <textarea id="modalRtDescription" name="description" class="modal-textarea" placeholder="Nhập mô tả chi tiết..."></textarea>
                     </div>
 
-                    <div class="modal-form-group">
-                        <label>Tiện nghi loại phòng</label>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 6px;">
-                            <label style="display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer;">
-                                <input type="checkbox" name="amenity" value="Wifi miễn phí" style="width: 16px; height: 16px;" /> Wifi miễn phí
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer;">
-                                <input type="checkbox" name="amenity" value="Điều hòa" style="width: 16px; height: 16px;" /> Điều hòa
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer;">
-                                <input type="checkbox" name="amenity" value="Tivi" style="width: 16px; height: 16px;" /> Tivi
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer;">
-                                <input type="checkbox" name="amenity" value="View thành phố" style="width: 16px; height: 16px;" /> View thành phố
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer;">
-                                <input type="checkbox" name="amenity" value="Mini bar" style="width: 16px; height: 16px;" /> Mini bar
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer;">
-                                <input type="checkbox" name="amenity" value="Bồn tắm" style="width: 16px; height: 16px;" /> Bồn tắm
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer;">
-                                <input type="checkbox" name="amenity" value="Ban công" style="width: 16px; height: 16px;" /> Ban công
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer;">
-                                <input type="checkbox" name="amenity" value="Máy pha cà phê" style="width: 16px; height: 16px;" /> Máy pha cà phê
-                            </label>
-                        </div>
-                    </div>
+
 
                     <div class="modal-footer-row">
                         <button type="button" class="btn-modal-cancel" onclick="closeRoomTypeModal()">Hủy bỏ</button>
@@ -361,7 +333,6 @@
             document.getElementById("roomTypeModalTitle").innerText = "Thêm loại phòng mới";
             document.getElementById("modalRtId").value = "";
             document.getElementById("roomTypeForm").reset();
-            document.querySelectorAll('#roomTypeForm input[name="amenity"]').forEach(cb => cb.checked = false);
             document.getElementById("roomTypeModal").style.display = "flex";
         }
 
@@ -380,9 +351,6 @@
                 document.getElementById("modalRtArea").value = rt.area;
                 document.getElementById("modalRtImageUrl").value = rt.imageUrl;
                 document.getElementById("modalRtDescription").value = rt.description;
-                document.querySelectorAll('#roomTypeForm input[name="amenity"]').forEach(cb => {
-                    cb.checked = rt.amenities.some(am => am.toLowerCase().trim() === cb.value.toLowerCase().trim());
-                });
                 document.getElementById("roomTypeModal").style.display = "flex";
             }
         }
