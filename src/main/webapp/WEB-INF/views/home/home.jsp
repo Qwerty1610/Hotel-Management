@@ -3,6 +3,12 @@
 <%-- Nhúng Header cấu trúc --%>
 <%@ include file="../../includes/header.jsp" %>
 
+<c:set var="heroTitle" value='<%= com.mycompany.hotelmanagement.config.ConfigUtil.get("hotel.hero.title", "Trải nghiệm kỳ nghỉ tuyệt vời tại HotelOps") %>' />
+<c:set var="heroSubtitle" value='<%= com.mycompany.hotelmanagement.config.ConfigUtil.get("hotel.hero.subtitle", "Nơi sang trọng gặp gỡ sự tinh tế, mang đến cho bạn trải nghiệm nghỉ dưỡng đích thực tại trung tâm thành phố.") %>' />
+<c:set var="aboutTag" value='<%= com.mycompany.hotelmanagement.config.ConfigUtil.get("hotel.about.tag", "VỀ HOTELOPS") %>' />
+<c:set var="aboutTitle" value='<%= com.mycompany.hotelmanagement.config.ConfigUtil.get("hotel.about.title", "Định nghĩa lại lòng hiếu khách") %>' />
+<c:set var="aboutDesc" value='<%= com.mycompany.hotelmanagement.config.ConfigUtil.get("hotel.about.desc", "HotelOps cung cấp không gian lưu trú sạch sẽ, tiện nghi và thoải mái dành cho cá nhân, gia đình và khách du lịch. Chúng tôi luôn cố gắng mang đến trải nghiệm nghỉ ngơi thuận tiện với mức giá phù hợp cho mọi khách hàng.") %>' />
+
 <body>
     <div class="loader-container" id="page-loader">
         <div class="neon-circle"></div>
@@ -95,8 +101,8 @@
         </nav>
 
         <div class="hero-content">
-            <h1><fmt:message key="hero.title" /></h1>
-            <p><fmt:message key="hero.subtitle" /></p>
+            <h1>${heroTitle}</h1>
+            <p>${heroSubtitle}</p>
         </div>
 
     </header>
@@ -106,10 +112,10 @@
             <img src="https://images.unsplash.com/photo-1439066615861-d1af74d74000?q=80&w=1200" alt="Resort HotelOps">
         </div>
         <div class="about-text">
-            <span class="sub-title"><fmt:message key="about.tag" /></span>
-            <h2><fmt:message key="about.title" /></h2>
+            <span class="sub-title">${aboutTag}</span>
+            <h2>${aboutTitle}</h2>
             <p>
-                <fmt:message key="about.desc" />
+                ${aboutDesc}
             </p>
             <div class="about-features">
                 <div class="feat-item">
