@@ -143,14 +143,10 @@ public class RoomTypeController extends HttpServlet {
                 boolean isDuplicate = false;
                 for (RoomTypeInfo existing : existingTypes) {
                     boolean sameName = existing.getTypeName().trim().equalsIgnoreCase(name.trim());
-                    if (sameName) {
-                        if (rt.getTypeId() <= 0) {
-                            isDuplicate = true;
-                            break;
-                        } else if (existing.getTypeId() != rt.getTypeId()) {
-                            isDuplicate = true;
-                            break;
-                        }
+                    boolean differentRecord = rt.getTypeId() <= 0 || existing.getTypeId() != rt.getTypeId();
+                    if(sameName && differentRecord) {
+                        isDuplicate = true;
+                        break;
                     }
                 }
                 if (isDuplicate) {
