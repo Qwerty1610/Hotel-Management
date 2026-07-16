@@ -12,14 +12,25 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Service xử lý các nghiệp vụ logic liên quan đến Đặt phòng (Booking). Thực
- * hiện kiểm tra ngày hợp lệ, sức chứa tối đa, tính tổng tiền, đặt cọc 30% và
- * gọi DAO lưu thông tin.
+ * Project: Hotel Management System
+ * Class: BookingService
  *
- * @author BinhHD
- * @date 20/06/2026
- * @version 1.2
+ * Description:
+ * Lớp dịch vụ (Service) xử lý logic nghiệp vụ đặt phòng. Xác thực ngày nhận/
+ * trả phòng, sức chứa khách, tình trạng phòng trống và các yêu cầu đặc biệt.
+ * Tính tổng tiền, áp dụng đặt cọc 30% và ủy quyền lưu trữ cho BookingDAO. Ném
+ * ra mã ngoại lệ (MSGxx) khi xác thực thất bại.
+ *
+ * Related Use Cases:
+ * - UC-11 Create Booking (Customer Online)
+ * - UC-13 Create Walk-in Booking
+ * 
+ * Date: 17-06-2026
+ * 
+ * @author BinhHD, QuyPQ, MinhTDP
+ * @version 1.3
  */
+
 public class BookingService {
 
     private static final Logger LOGGER = Logger.getLogger(BookingService.class.getName());

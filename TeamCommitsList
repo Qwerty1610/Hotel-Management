@@ -75,8 +75,16 @@ TungNQ commits "fix: resolve conflict in receptionist sidebar"
 TungNQ commits "validate edit"
 BinhHD commits "Resolve issues regarding Customer and Receptionist linking together"
 BinhHD commits "Hotfix receptionist issue"
-26/06/2006
+26/06/2026
 QuyPQ commits Add Admin_SystemDashboard
 QuyPQ commits Add Admin_SystemDashboard
 TungNQ commits "validate create staff"
 TungNQ commits "fix conflict"
+09/07/2026
+BinhHD commits "Implement checkout feature for Customer and Receptionist"
+11/07/2026
+BinhHD commits "Fix issue regarding Rooms JS not showing"
+12/07/2026
+BinhHD commits "Finish Promotion Code use for Customer Booking"
+16/07/2026
+BinhHD commits "Finalize comments for better understanding"

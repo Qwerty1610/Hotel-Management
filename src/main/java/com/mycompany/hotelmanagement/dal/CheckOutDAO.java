@@ -9,29 +9,48 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Project: Hotel Management System
+ * Class: CheckOutDAO
+ *
+ * Description:
+ * Đối tượng truy cập dữ liệu (DAO) cho quy trình trả phòng. Truy vấn các đơn
+ * đã nhận phòng, xây dựng bản tóm tắt trả phòng đầy đủ (chi tiết phí phòng/
+ * dịch vụ/phụ phí, lịch sử thanh toán) và lưu hồ sơ trả phòng cuối cùng đồng
+ * thời cập nhật trạng thái đặt phòng thành CheckedOut.
+ *
+ * Related Use Cases:
+ * - UC-16 Check-Out Customer
+ * 
+ * Date: 09-07-2026
+ * 
+ * @author BinhHD
+ * @version 1.0
+ */
+
 public class CheckOutDAO {
 
     // 1. Get all bookings with CheckedIn status for the Check-out list
     public List<Booking> getCheckedInBookings(String search) {
         List<Booking> list = new ArrayList<>();
         String sql = "SELECT b.*, "
-                   + "(SELECT STRING_AGG(r.room_number, ', ') "
-                   + " FROM dbo.RoomAssignment ra "
-                   + " JOIN dbo.Room r ON ra.room_id = r.room_id "
-                   + " WHERE ra.booking_id = b.booking_id) AS assigned_rooms "
-                   + "FROM dbo.Booking b "
-                   + "WHERE b.status = N'CheckedIn'";
-        
+                + "(SELECT STRING_AGG(r.room_number, ', ') "
+                + " FROM dbo.RoomAssignment ra "
+                + " JOIN dbo.Room r ON ra.room_id = r.room_id "
+                + " WHERE ra.booking_id = b.booking_id) AS assigned_rooms "
+                + "FROM dbo.Booking b "
+                + "WHERE b.status = N'CheckedIn'";
+
         if (search != null && !search.trim().isEmpty()) {
             sql += " AND (b.customer_name LIKE ? OR "
-                 + " b.booking_id IN (SELECT ra.booking_id FROM dbo.RoomAssignment ra "
-                 + " JOIN dbo.Room r ON ra.room_id = r.room_id WHERE r.room_number LIKE ?))";
+                    + " b.booking_id IN (SELECT ra.booking_id FROM dbo.RoomAssignment ra "
+                    + " JOIN dbo.Room r ON ra.room_id = r.room_id WHERE r.room_number LIKE ?))";
         }
         sql += " ORDER BY b.check_out_date ASC";
 
         try (Connection con = DBContext.getConnection();
-             PreparedStatement st = con.prepareStatement(sql)) {
-            
+                PreparedStatement st = con.prepareStatement(sql)) {
+
             if (search != null && !search.trim().isEmpty()) {
                 String keyword = "%" + search.trim() + "%";
                 st.setString(1, keyword);
@@ -62,24 +81,24 @@ public class CheckOutDAO {
         summary.setBookingId(bookingId);
 
         String sql = "SELECT "
-            + "  b.customer_name, "
-            + "  b.check_in_date, "
-            + "  b.check_out_date, "
-            + "  rt.type_name, "
-            + "  (SELECT STRING_AGG(r.room_number, ', ') FROM dbo.RoomAssignment ra JOIN dbo.Room r ON ra.room_id = r.room_id WHERE ra.booking_id = b.booking_id) AS room_number, "
-            + "  b.total_amount AS booking_room_charge, "
-            + "  i.invoice_id, "
-            + "  ISNULL((SELECT SUM(amount) FROM dbo.InvoiceItem WHERE invoice_id = i.invoice_id AND item_type = N'Service'), 0) AS service_charge, "
-            + "  ISNULL((SELECT SUM(amount) FROM dbo.InvoiceItem WHERE invoice_id = i.invoice_id AND item_type = N'Surcharge'), 0) AS extra_charge, "
-            + "  (ISNULL((SELECT SUM(amount) FROM dbo.Payment WHERE invoice_id = i.invoice_id), 0) + ISNULL((SELECT SUM(amount) FROM dbo.Payment WHERE booking_id = b.booking_id), 0)) AS amount_paid "
-            + "FROM dbo.Booking b "
-            + "LEFT JOIN dbo.RoomType rt ON b.room_type_id = rt.type_id "
-            + "LEFT JOIN dbo.Invoice i ON b.booking_id = i.booking_id "
-            + "WHERE b.booking_id = ?";
+                + "  b.customer_name, "
+                + "  b.check_in_date, "
+                + "  b.check_out_date, "
+                + "  rt.type_name, "
+                + "  (SELECT STRING_AGG(r.room_number, ', ') FROM dbo.RoomAssignment ra JOIN dbo.Room r ON ra.room_id = r.room_id WHERE ra.booking_id = b.booking_id) AS room_number, "
+                + "  b.total_amount AS booking_room_charge, "
+                + "  i.invoice_id, "
+                + "  ISNULL((SELECT SUM(amount) FROM dbo.InvoiceItem WHERE invoice_id = i.invoice_id AND item_type = N'Service'), 0) AS service_charge, "
+                + "  ISNULL((SELECT SUM(amount) FROM dbo.InvoiceItem WHERE invoice_id = i.invoice_id AND item_type = N'Surcharge'), 0) AS extra_charge, "
+                + "  (ISNULL((SELECT SUM(amount) FROM dbo.Payment WHERE invoice_id = i.invoice_id), 0) + ISNULL((SELECT SUM(amount) FROM dbo.Payment WHERE booking_id = b.booking_id), 0)) AS amount_paid "
+                + "FROM dbo.Booking b "
+                + "LEFT JOIN dbo.RoomType rt ON b.room_type_id = rt.type_id "
+                + "LEFT JOIN dbo.Invoice i ON b.booking_id = i.booking_id "
+                + "WHERE b.booking_id = ?";
 
         try (Connection con = DBContext.getConnection();
-             PreparedStatement st = con.prepareStatement(sql)) {
-            
+                PreparedStatement st = con.prepareStatement(sql)) {
+
             st.setInt(1, bookingId);
             try (ResultSet rs = st.executeQuery()) {
                 if (rs.next()) {
@@ -105,7 +124,7 @@ public class CheckOutDAO {
                     List<InvoiceItem> services = new ArrayList<>();
                     List<InvoiceItem> surcharges = new ArrayList<>();
                     List<Payment> payments = new ArrayList<>();
-                    
+
                     int invoiceId = rs.getInt("invoice_id");
                     if (!rs.wasNull()) {
                         String itemSql = "SELECT * FROM dbo.InvoiceItem WHERE invoice_id = ? AND item_type IN (N'Service', N'Surcharge')";
@@ -233,7 +252,7 @@ public class CheckOutDAO {
                         }
                     }
                 }
-                
+
                 // Insert InvoiceItem for Room
                 String insertRoomItem = "INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount) VALUES (?, N'Room', N'Tiền phòng', 1, ?, ?)";
                 try (PreparedStatement stItem = con.prepareStatement(insertRoomItem)) {
@@ -252,7 +271,8 @@ public class CheckOutDAO {
 
             // 5. Insert Payment if customer pays the remaining amount now
             if (co.getRemainingAmount() > 0) {
-                // sepay_tx_id is required. Since this is a manual checkout payment, we generate a random negative ID
+                // sepay_tx_id is required. Since this is a manual checkout payment, we generate
+                // a random negative ID
                 long fakeTxId = -1L * Math.abs(java.util.UUID.randomUUID().getMostSignificantBits());
                 String insertPayment = "INSERT INTO dbo.Payment (invoice_id, booking_id, sepay_tx_id, amount, gateway, content, transaction_date, created_at) VALUES (?, ?, ?, ?, ?, ?, SYSDATETIME(), SYSDATETIME())";
                 try (PreparedStatement stPay = con.prepareStatement(insertPayment)) {

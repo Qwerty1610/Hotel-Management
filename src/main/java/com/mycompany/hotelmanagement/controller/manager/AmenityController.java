@@ -17,19 +17,20 @@ import java.util.Map;
 import java.util.ArrayList;
 
 /**
- * AmenityController
- * URL: controller/manager
+ * Project: Hotel Management System
+ * Class: AmenityController
  *
- * Xử lý các hành động (action param):
- * - view : Hiển thị danh sách tiện nghi
- * - save : Thêm mới hoặc cập nhật thông tin tiện nghi
- * - delete : Xóa tiện nghi
- * - toggle : Bật tắt trạng thái
- * - assign : Áp dụng cho loại phòng
+ * Description:
+ * Controller handling amenity management actions for the Manager role,
+ * including viewing, adding, updating, and deleting amenities, as well
+ * as assigning them to specific room types.
+ *
+ * Related Use Cases:
+ * - UC-20 Configure Amenity
+ *
+ * Date: 10-07-2026
  * 
- * Date: 10/7/2026
- * 
- * @author DUC BINH
+ * @author BinhHD
  * @version 1.1
  */
 
