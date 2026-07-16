@@ -78,7 +78,7 @@ public class GoogleLoginController extends HttpServlet {
                     redirectUrl = (String) session.getAttribute("redirectAfterLogin");
                     session.removeAttribute("redirectAfterLogin");
                     if (redirectUrl == null || redirectUrl.isEmpty()) {
-                        redirectUrl = request.getContextPath() + "/home/login";
+                        redirectUrl = request.getContextPath() + "/home";
                     }
                 } else {
                     session.removeAttribute("redirectAfterLogin");
@@ -87,7 +87,11 @@ public class GoogleLoginController extends HttpServlet {
 
                 response.sendRedirect(redirectUrl);
             } else {
-                response.sendRedirect(request.getContextPath() + "/home/login?error=invalid_credentials");
+                String err = "invalid_credentials";
+                if ("account_locked".equals(result.getErrorCode())) {
+                    err = "account_locked";
+                }
+                response.sendRedirect(request.getContextPath() + "/home/login?error=" + err);
             }
 
         } catch (Exception e) {

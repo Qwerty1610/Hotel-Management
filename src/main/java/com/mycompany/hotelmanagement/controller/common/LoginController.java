@@ -79,6 +79,11 @@ public class LoginController extends HttpServlet {
             pass = pass.trim();
         }
 
+        if (username == null || username.isEmpty() || pass == null || pass.isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/home/login?error=invalid_input");
+            return;
+        }
+
         // Call Service layer to process login
         com.mycompany.hotelmanagement.service.LoginResult result = authService.login(username, pass);
 
@@ -141,7 +146,7 @@ public class LoginController extends HttpServlet {
                 String redirectUrl = (String) session.getAttribute("redirectAfterLogin");
                 session.removeAttribute("redirectAfterLogin");
                 if (redirectUrl == null || redirectUrl.isEmpty()) {
-                    redirectUrl = request.getContextPath() + "/home/login";
+                    redirectUrl = request.getContextPath() + "/home";
                 }
                 response.sendRedirect(redirectUrl);
             } else {
@@ -149,7 +154,11 @@ public class LoginController extends HttpServlet {
             }
         } else {
             // Authentication failed, redirect back to login page with error parameter
-            response.sendRedirect(request.getContextPath() + "/home/login?error=invalid_credentials");
+            String err = "invalid_credentials";
+            if ("account_locked".equals(result.getErrorCode())) {
+                err = "account_locked";
+            }
+            response.sendRedirect(request.getContextPath() + "/home/login?error=" + err);
         }
     }
 

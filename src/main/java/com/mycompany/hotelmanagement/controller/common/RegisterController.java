@@ -77,6 +77,13 @@ public class RegisterController extends HttpServlet {
                     + "&phone=" + encode(phone));
                 break;
                 
+            case "password_too_short":
+                response.sendRedirect(contextPath + "/home/register?error=password_too_short"
+                    + "&fullName=" + encode(fullName)
+                    + "&email=" + encode(email)
+                    + "&phone=" + encode(phone));
+                break;
+                
             case "passwords_dont_match":
                 response.sendRedirect(contextPath + "/home/register?error=passwords_dont_match"
                     + "&fullName=" + encode(fullName)
