@@ -62,23 +62,18 @@
                         <i class="fa-solid fa-circle-exclamation"></i>
                         <span>
                             <c:choose>
-                                <c:when test="${param.error eq 'email_exists'}">Lỗi: Email này đã được
-                                    sử dụng trong hệ thống!</c:when>
-                                <c:when test="${param.error eq 'phone_exists'}">Lỗi: Số điện thoại này
-                                    đã được sử dụng trong hệ thống!</c:when>
-                                <c:when test="${param.error eq 'invalid_email'}">Lỗi: Định dạng email
-                                    không hợp lệ!</c:when>
-                                <c:when test="${param.error eq 'invalid_phone'}">Lỗi: Số điện thoại phải
-                                    bắt đầu bằng 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ
-                                    số!</c:when>
+                                <c:when test="${param.error eq 'invalid_input'}">Lỗi (MSG02): Vui lòng điền đầy đủ các trường bắt buộc.</c:when>
+                                <c:when test="${param.error eq 'email_exists'}">Lỗi (MSG09): Email này đã được sử dụng trong hệ thống!</c:when>
+                                <c:when test="${param.error eq 'phone_exists'}">Lỗi (MSG09): Số điện thoại này đã được sử dụng trong hệ thống!</c:when>
+                                <c:when test="${param.error eq 'invalid_email'}">Lỗi: Định dạng email không hợp lệ!</c:when>
+                                <c:when test="${param.error eq 'invalid_phone'}">Lỗi: Số điện thoại phải bắt đầu bằng 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số!</c:when>
                                 <c:when test="${param.error eq 'weak_password'}">Lỗi: Mật khẩu mới phải bao gồm cả chữ, số và ký tự đặc biệt!</c:when>
-                                <c:when test="${param.error eq 'create_failed'}">Lỗi: Không thể thêm tài
-                                    khoản mới vào cơ sở dữ liệu.</c:when>
-                                <c:when test="${param.error eq 'update_failed'}">Lỗi: Cập nhật thông tin
-                                    tài khoản thất bại.</c:when>
-                                <c:when test="${param.error eq 'status_change_failed'}">Lỗi: Không thể
-                                    cập nhật trạng thái tài khoản.</c:when>
-                                <c:otherwise>Có lỗi hệ thống xảy ra. Vui lòng thử lại sau.</c:otherwise>
+                                <c:when test="${param.error eq 'cannot_demote_admin'}">Lỗi (BR-65): Không thể thay đổi vai trò của tài khoản Admin duy nhất!</c:when>
+                                <c:when test="${param.error eq 'cannot_lock_admin'}">Lỗi (BR-65): Không thể vô hiệu hóa tài khoản Admin duy nhất!</c:when>
+                                <c:when test="${param.error eq 'create_failed'}">Lỗi: Không thể thêm tài khoản mới vào cơ sở dữ liệu.</c:when>
+                                <c:when test="${param.error eq 'update_failed'}">Lỗi: Cập nhật thông tin tài khoản thất bại.</c:when>
+                                <c:when test="${param.error eq 'status_change_failed'}">Lỗi: Không thể cập nhật trạng thái tài khoản.</c:when>
+                                <c:otherwise>Lỗi (MSG55): Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.</c:otherwise>
                             </c:choose>
                         </span>
                         <button class="toast-close-btn"

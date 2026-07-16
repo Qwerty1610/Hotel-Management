@@ -127,7 +127,7 @@ public class ChangePasswordController extends HttpServlet {
             switch (result) {
                 case "invalid_input":
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    response.getWriter().write("{\"success\":false,\"message\":\"Vui lòng điền đầy đủ tất cả các trường!\"}");
+                    response.getWriter().write("{\"success\":false,\"message\":\"Vui lòng điền đầy đủ các trường bắt buộc.\"}");
                     break;
                 case "account_not_found":
                     response.setStatus(HttpServletResponse.SC_NOT_FOUND);

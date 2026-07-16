@@ -18,9 +18,9 @@ import jakarta.servlet.http.HttpServletResponse;
  * Quản lý tài khoản nhân viên và khách hàng.
  * 
  * @author TungNQ
- * @version 1.0.4
+ * @version 1.0.5
  * Created: 30/05/2026
- * Modified: 26/06/2026
+ * Modified: 16/07/2026
  */
 @WebServlet(name = "AdminDashboardController", urlPatterns = {"/admin/dashboard"})
 public class AdminDashboardController extends HttpServlet {
@@ -153,13 +153,13 @@ public class AdminDashboardController extends HttpServlet {
                 int accountId = Integer.parseInt(request.getParameter("accountId"));
                 boolean active = Boolean.parseBoolean(request.getParameter("active"));
                 
-                boolean success = adminService.toggleAccountStatus(accountId, active);
+                String result = adminService.toggleAccountStatus(accountId, active);
                 String returnTab = "toggle-staff".equals(action) ? "staff" : "customers";
                 
-                if (success) {
+                if ("success".equals(result)) {
                     response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=" + returnTab + "&success=status_changed");
                 } else {
-                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=" + returnTab + "&error=status_change_failed");
+                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=" + returnTab + "&error=" + result);
                 }
             } else {
                 doGet(request, response);

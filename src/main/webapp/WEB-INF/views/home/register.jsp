@@ -44,11 +44,14 @@
                             <c:when test="${param.error eq 'invalid_password'}">
                                 Mật khẩu mới phải bao gồm cả chữ, số và ký tự đặc biệt!
                             </c:when>
+                            <c:when test="${param.error eq 'password_too_short'}">
+                                Mật khẩu phải tối thiểu từ 8 ký tự trở lên!
+                            </c:when>
                             <c:when test="${param.error eq 'invalid_input'}">
                                 Vui lòng điền đầy đủ và đúng định dạng các trường!
                             </c:when>
                             <c:otherwise>
-                                Lỗi hệ thống khi đăng ký. Vui lòng thử lại.
+                                Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.
                             </c:otherwise>
                         </c:choose>
                     </span>

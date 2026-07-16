@@ -21,9 +21,9 @@ import java.util.List;
 public class AccountRepository {
 
     public Account getAccountByEmail(String email) {
-        String sql = "SELECT a.account_id, a.email, a.password, a.full_name, r.role_name " +
+        String sql = "SELECT a.account_id, a.email, a.password, a.full_name, r.role_name, a.is_active " +
                      "FROM Account a JOIN Role r ON a.role_id = r.role_id " +
-                     "WHERE a.email = ? AND a.is_active = 1";
+                     "WHERE a.email = ?";
         
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -37,6 +37,7 @@ public class AccountRepository {
                     account.setPassword(rs.getString("password"));
                     account.setFullName(rs.getString("full_name"));
                     account.setRoleName(rs.getString("role_name"));
+                    account.setActive(rs.getBoolean("is_active"));
                     return account;
                 }
             }
@@ -497,6 +498,49 @@ public class AccountRepository {
                 e.printStackTrace();
             }
         }
+    }
+
+    public Account getAccountById(int accountId) {
+        String sql = "SELECT a.account_id, a.email, a.password, a.full_name, a.phone, a.role_id, r.role_name, a.is_active " +
+                     "FROM Account a JOIN Role r ON a.role_id = r.role_id " +
+                     "WHERE a.account_id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Account account = new Account();
+                    account.setAccountId(rs.getInt("account_id"));
+                    account.setEmail(rs.getString("email"));
+                    account.setPassword(rs.getString("password"));
+                    account.setFullName(rs.getString("full_name"));
+                    account.setPhone(rs.getString("phone"));
+                    account.setRoleId(rs.getInt("role_id"));
+                    account.setRoleName(rs.getString("role_name"));
+                    account.setActive(rs.getInt("is_active") == 1);
+                    return account;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public String getRoleNameById(int roleId) {
+        String sql = "SELECT role_name FROM Role WHERE role_id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, roleId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("role_name");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
 
