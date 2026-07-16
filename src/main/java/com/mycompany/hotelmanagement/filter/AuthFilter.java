@@ -18,6 +18,9 @@ import java.util.List;
 /**
  *
  * @author TungNQ
+ * @version 1.0.4
+ * Created: 01/06/2026
+ * Modified: 07/07/2026
  */
 @WebFilter(filterName = "AuthFilter", urlPatterns = {
     "/admin/*", 

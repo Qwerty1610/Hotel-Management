@@ -17,6 +17,9 @@ import jakarta.servlet.http.Cookie;
  * Chỉ cho phép các vai trò ADMIN, HOTEL_MANAGER, RECEPTIONIST, HOUSEKEEPING.
  * 
  * @author TungNQ
+ * @version 1.0.2
+ * Created: 25/06/2026
+ * Modified: 25/06/2026
  */
 @WebServlet(name = "StaffLoginController", urlPatterns = { "/staff/login" })
 public class StaffLoginController extends HttpServlet {

@@ -11,7 +11,8 @@ import com.zaxxer.hikari.HikariDataSource;
 
 /**
  * Lớp thiết lập kết nối cơ sở dữ liệu (Database Connection).
- * Sử dụng thư viện HikariCP Connection Pool để quản lý các kết nối SQL Server tối ưu hiệu năng.
+ * Sử dụng thư viện HikariCP Connection Pool để quản lý các kết nối SQL Server
+ * tối ưu hiệu năng.
  * 
  * @author TùngNQ
  */
@@ -20,7 +21,8 @@ public class DBContext {
     private static final HikariDataSource dataSource;
 
     static {
-        // Khởi tạo cấu hình Connection Pool với các tham số Driver, URL, tài khoản và timeout
+        // Khởi tạo cấu hình Connection Pool với các tham số Driver, URL, tài khoản và
+        // timeout
         try {
             HikariConfig config = new HikariConfig();
             config.setDriverClassName("com.microsoft.sqlserver.jdbc.SQLServerDriver");

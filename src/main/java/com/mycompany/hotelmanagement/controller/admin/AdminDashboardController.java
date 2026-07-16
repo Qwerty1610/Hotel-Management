@@ -18,6 +18,9 @@ import jakarta.servlet.http.HttpServletResponse;
  * Quản lý tài khoản nhân viên và khách hàng.
  * 
  * @author TungNQ
+ * @version 1.0.4
+ * Created: 30/05/2026
+ * Modified: 26/06/2026
  */
 @WebServlet(name = "AdminDashboardController", urlPatterns = {"/admin/dashboard"})
 public class AdminDashboardController extends HttpServlet {

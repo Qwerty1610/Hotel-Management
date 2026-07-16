@@ -11,6 +11,9 @@ import java.util.List;
  * Repository to manage path-based authorizations and role permissions dynamically.
  * 
  * @author TungNQ
+ * @version 1.0.0
+ * Created: 07/07/2026
+ * Modified: 07/07/2026
  */
 public class PermissionRepository {
 

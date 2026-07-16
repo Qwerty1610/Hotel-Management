@@ -12,6 +12,9 @@ import java.util.List;
  * Service xử lý các nghiệp vụ quản trị hệ thống của Admin.
  * 
  * @author TungNQ
+ * @version 1.0.4
+ * Created: 24/06/2026
+ * Modified: 29/06/2026
  */
 public class AdminService {
     private final AccountRepository accountRepository = new AccountRepository();
