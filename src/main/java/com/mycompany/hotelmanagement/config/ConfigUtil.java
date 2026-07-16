@@ -10,6 +10,9 @@ import java.util.Properties;
  * biến môi trường (Environment Variables) hoặc thuộc tính hệ thống (System Properties).
  * 
  * @author TùngNQ
+ * @version 1.0.1
+ * Created: 24/06/2026
+ * Modified: 16/07/2026
  */
 public class ConfigUtil {
 
