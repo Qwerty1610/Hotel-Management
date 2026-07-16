@@ -14,9 +14,9 @@ import java.io.IOException;
  * Ánh xạ tới các URL tương ứng với vai trò của người dùng.
  * 
  * @author TungNQ
- * @version 1.0.3
+ * @version 1.0.4
  * Created: 24/06/2026
- * Modified: 29/06/2026
+ * Modified: 16/07/2026
  */
 @WebServlet(name = "ChangePasswordController", urlPatterns = {
     "/admin/change-password",

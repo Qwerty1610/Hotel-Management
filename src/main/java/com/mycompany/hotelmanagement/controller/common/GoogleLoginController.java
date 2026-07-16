@@ -22,6 +22,9 @@ import jakarta.servlet.http.HttpSession;
  * sau đó ủy thác việc đăng nhập/đăng ký tự động cho AuthService.
  * 
  * @author TùngNQ
+ * @version 1.0.1
+ * Created: 24/06/2026
+ * Modified: 16/07/2026
  */
 @WebServlet(name = "GoogleLoginController", urlPatterns = {"/login-google"})
 public class GoogleLoginController extends HttpServlet {

@@ -15,6 +15,9 @@ import com.zaxxer.hikari.HikariDataSource;
  * tối ưu hiệu năng.
  * 
  * @author TùngNQ
+ * @version 1.0.1
+ * Created: 24/06/2026
+ * Modified: 16/07/2026
  */
 public class DBContext {
     private static final Logger logger = LoggerFactory.getLogger(DBContext.class);

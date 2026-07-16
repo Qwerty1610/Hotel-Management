@@ -19,6 +19,9 @@ import jakarta.servlet.http.Cookie;
  * phân vai trò người dùng để điều hướng phù hợp, đồng thời quản lý Cookie Remember Me.
  * 
  * @author TùngNQ
+ * @version 1.0.1
+ * Created: 24/06/2026
+ * Modified: 16/07/2026
  */
 @WebServlet(name = "LoginController", urlPatterns = { "/home/login" })
 public class LoginController extends HttpServlet {

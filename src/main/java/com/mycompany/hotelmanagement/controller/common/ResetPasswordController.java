@@ -15,6 +15,9 @@ import jakarta.servlet.http.HttpServletResponse;
  * sau đó chuyển hướng người dùng dựa trên kết quả trả về.
  * 
  * @author TùngNQ
+ * @version 1.0.1
+ * Created: 24/06/2026
+ * Modified: 16/07/2026
  */
 @WebServlet(name = "ResetPasswordController", urlPatterns = {"/home/reset-password"})
 public class ResetPasswordController extends HttpServlet {

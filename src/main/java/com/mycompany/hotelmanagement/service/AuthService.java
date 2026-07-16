@@ -11,9 +11,9 @@ import java.security.SecureRandom;
 /**
  *
  * @author TungNQ
- * @version 1.0.7
+ * @version 1.0.8
  * Created: 01/06/2026
- * Modified: 07/07/2026
+ * Modified: 16/07/2026
  */
 public class AuthService {
     private final AccountRepository accountRepository = new AccountRepository();

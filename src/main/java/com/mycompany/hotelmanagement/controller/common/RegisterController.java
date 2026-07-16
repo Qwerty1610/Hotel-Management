@@ -15,6 +15,9 @@ import jakarta.servlet.http.HttpServletResponse;
  * và thực hiện chuyển hướng kèm tham số phù hợp với kết quả nhận được.
  * 
  * @author TùngNQ
+ * @version 1.0.1
+ * Created: 24/06/2026
+ * Modified: 16/07/2026
  */
 @WebServlet(name = "RegisterController", urlPatterns = {"/home/register"})
 public class RegisterController extends HttpServlet {

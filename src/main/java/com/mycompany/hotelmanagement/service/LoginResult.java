@@ -3,9 +3,9 @@ package com.mycompany.hotelmanagement.service;
 /**
  *
  * @author TungNQ
- * @version 1.0.2
+ * @version 1.0.3
  * Created: 24/06/2026
- * Modified: 25/06/2026
+ * Modified: 16/07/2026
  */
 public class LoginResult {
     private final boolean success;
