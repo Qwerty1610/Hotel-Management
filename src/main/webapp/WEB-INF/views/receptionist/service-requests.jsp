@@ -32,7 +32,8 @@
                     </li>
 
                     <li class="menu-item ${currentTab eq 'changerequests' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=changerequests">
+                        <a
+                            href="${pageContext.request.contextPath}/receptionist/dashboard?tab=changerequests">
                             <i class="fa-solid fa-pen-to-square"></i> <span>Thay đổi đặt phòng</span>
                         </a>
                     </li>
@@ -42,13 +43,14 @@
                             <i class="fa-solid fa-key"></i> <span>Nhận phòng (Check-in)</span>
                         </a>
                     </li>
-                    
+
                     <li class="menu-item ${currentTab eq 'checkout' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkout">
-                            <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh toán</span>
+                            <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh
+                                toán</span>
                         </a>
                     </li>
-                    
+
                     <li class="menu-item ${currentTab eq 'roommap' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=roommap">
                             <i class="fa-solid fa-map"></i> <span>Sơ đồ phòng</span>
@@ -56,23 +58,34 @@
                     </li>
 
                     <li class="menu-item ${currentTab eq 'walkin-bookings' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=walkin-bookings">
+                        <a
+                            href="${pageContext.request.contextPath}/receptionist/dashboard?tab=walkin-bookings">
                             <i class="fa-solid fa-user-plus"></i> <span>Đặt phòng tại quầy</span>
                         </a>
-                    </li>    
+                    </li>
+
 
                     <li class="menu-item ${currentTab eq 'servicerequests' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=servicerequests">
+                        <a
+                            href="${pageContext.request.contextPath}/receptionist/dashboard?tab=servicerequests">
                             <i class="fa-solid fa-bell-concierge"></i> <span>Quản lý yêu cầu dịch vụ</span>
+                        </a>
+                    </li>
+                    <li class="menu-item ${currentTab eq 'add-booking-service' ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/receptionist/add-booking-service">
+                            <i class="fa-solid fa-circle-plus"></i>
+                            <span>Đặt dịch vụ cho khách</span>
                         </a>
                     </li>
                 </ul>
 
                 <div class="sidebar-footer">
-                    <a href="${pageContext.request.contextPath}/profile" class="user-profile-card" title="Xem hồ sơ cá nhân" style="text-decoration:none;cursor:pointer;">
+                    <a href="${pageContext.request.contextPath}/profile" class="user-profile-card"
+                       title="Xem hồ sơ cá nhân" style="text-decoration:none;cursor:pointer;">
                         <div class="profile-avatar">RC</div>
                         <div class="profile-info">
-                            <span class="profile-name">${not empty sessionScope.user ? sessionScope.user : 'Receptionist'}</span>
+                            <span class="profile-name">${not empty sessionScope.user ? sessionScope.user :
+                                                         'Receptionist'}</span>
                             <span class="profile-role">Lễ tân</span>
                         </div>
                     </a>
@@ -426,7 +439,7 @@
                     <form id="approveRequestForm" action="${pageContext.request.contextPath}/receptionist/servicerequest" method="post">
                         <input type="hidden" name="requestId" id="approveRequestId" value="" />
                         <input type="hidden" name="action" value="approve" />
-                        
+
                         <div style="margin-bottom: 20px; text-align: center; color: var(--text-navy);">
                             <i class="fa-solid fa-circle-question" style="font-size: 48px; color: var(--brand-blue); margin-bottom: 16px;"></i>
                             <p style="font-size: 15px; font-weight: 600; line-height: 1.5; margin: 0 0 8px 0;">
@@ -480,18 +493,18 @@
 
         <script src="${pageContext.request.contextPath}/assets/js/receptionist.js?v=5" charset="UTF-8"></script>
         <script>
-            function openApproveServiceModal(requestId, customerName, serviceTitle) {
-                document.getElementById('approveRequestId').value = requestId;
-                document.getElementById('approveRequestDetail').innerText = "Yêu cầu dịch vụ #" + requestId + " (" + serviceTitle + " - Khách hàng: " + customerName + ")";
-                openModal('approveRequestModal');
-            }
+                                function openApproveServiceModal(requestId, customerName, serviceTitle) {
+                                    document.getElementById('approveRequestId').value = requestId;
+                                    document.getElementById('approveRequestDetail').innerText = "Yêu cầu dịch vụ #" + requestId + " (" + serviceTitle + " - Khách hàng: " + customerName + ")";
+                                    openModal('approveRequestModal');
+                                }
 
-            function openRejectServiceModal(requestId, customerName, serviceTitle) {
-                document.getElementById('rejectRequestId').value = requestId;
-                document.getElementById('rejectRequestDetailText').innerText = "#" + requestId + " - " + serviceTitle + " (Khách: " + customerName + ")";
-                document.getElementById('rejectCancelReason').value = '';
-                openModal('rejectRequestModal');
-            }
+                                function openRejectServiceModal(requestId, customerName, serviceTitle) {
+                                    document.getElementById('rejectRequestId').value = requestId;
+                                    document.getElementById('rejectRequestDetailText').innerText = "#" + requestId + " - " + serviceTitle + " (Khách: " + customerName + ")";
+                                    document.getElementById('rejectCancelReason').value = '';
+                                    openModal('rejectRequestModal');
+                                }
         </script>
     </body>
 </html>

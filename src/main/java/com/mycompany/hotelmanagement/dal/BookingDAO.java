@@ -15,7 +15,7 @@ import java.util.logging.Logger;
  * BookingDAO Package harmonized to dal for HMS Hotel-Management structure.
  * Standardized database selection utilizing useDatabase helper. Date: 01/6/2026
  *
- * @author DUC BINH
+ * @author DUC BINH, MinhTDP
  */
 public class BookingDAO {
 
@@ -252,7 +252,9 @@ public class BookingDAO {
     }
 
     public boolean updateBookingTotalAmountAndNote(int bookingId, double newAmount, String noteAppend) {
-        if (bookingId <= 0) return false;
+        if (bookingId <= 0) {
+            return false;
+        }
         String sql = "UPDATE dbo.Booking "
                 + "SET total_amount = ?, note = ISNULL(note, '') + CHAR(13) + CHAR(10) + ?, updated_at = SYSDATETIME() "
                 + "WHERE booking_id = ?";

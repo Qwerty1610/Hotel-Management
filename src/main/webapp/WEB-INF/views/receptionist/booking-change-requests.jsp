@@ -20,11 +20,26 @@
                 font-weight: 600;
                 white-space: nowrap;
             }
-            .bcr-type-pill.change { background: #e0edff; color: #0056b3; }
-            .bcr-type-pill.extension { background: #fef3c7; color: #92400e; }
-            .bcr-detail { font-size: 13px; line-height: 1.5; }
-            .bcr-detail .old { color: var(--text-muted); text-decoration: line-through; }
-            .bcr-detail .new { font-weight: 600; color: var(--text-navy); }
+            .bcr-type-pill.change {
+                background: #e0edff;
+                color: #0056b3;
+            }
+            .bcr-type-pill.extension {
+                background: #fef3c7;
+                color: #92400e;
+            }
+            .bcr-detail {
+                font-size: 13px;
+                line-height: 1.5;
+            }
+            .bcr-detail .old {
+                color: var(--text-muted);
+                text-decoration: line-through;
+            }
+            .bcr-detail .new {
+                font-weight: 600;
+                color: var(--text-navy);
+            }
         </style>
     </head>
     <fmt:setLocale value="vi_VN" />
@@ -48,7 +63,8 @@
                     </li>
 
                     <li class="menu-item ${currentTab eq 'changerequests' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=changerequests">
+                        <a
+                            href="${pageContext.request.contextPath}/receptionist/dashboard?tab=changerequests">
                             <i class="fa-solid fa-pen-to-square"></i> <span>Thay đổi đặt phòng</span>
                         </a>
                     </li>
@@ -58,36 +74,49 @@
                             <i class="fa-solid fa-key"></i> <span>Nhận phòng (Check-in)</span>
                         </a>
                     </li>
+
+                    <li class="menu-item ${currentTab eq 'checkout' ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkout">
+                            <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh
+                                toán</span>
+                        </a>
+                    </li>
+
                     <li class="menu-item ${currentTab eq 'roommap' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=roommap">
-                            <i class="fa-solid fa-map"></i> <span>sơ đồ phòng</span>
+                            <i class="fa-solid fa-map"></i> <span>Sơ đồ phòng</span>
                         </a>
                     </li>
 
                     <li class="menu-item ${currentTab eq 'walkin-bookings' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=walkin-bookings">
+                        <a
+                            href="${pageContext.request.contextPath}/receptionist/dashboard?tab=walkin-bookings">
                             <i class="fa-solid fa-user-plus"></i> <span>Đặt phòng tại quầy</span>
                         </a>
                     </li>
 
-                    <li class="menu-item ${currentTab eq 'checkout' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkout">
-                            <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh toán</span>
-                        </a>
-                    </li>
 
                     <li class="menu-item ${currentTab eq 'servicerequests' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=servicerequests">
+                        <a
+                            href="${pageContext.request.contextPath}/receptionist/dashboard?tab=servicerequests">
                             <i class="fa-solid fa-bell-concierge"></i> <span>Quản lý yêu cầu dịch vụ</span>
+                        </a>
+                    </li>
+                    <li class="menu-item ${currentTab eq 'add-booking-service' ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/receptionist/add-booking-service">
+                            <i class="fa-solid fa-circle-plus"></i>
+                            <span>Đặt dịch vụ cho khách</span>
                         </a>
                     </li>
                 </ul>
 
                 <div class="sidebar-footer">
-                    <a href="${pageContext.request.contextPath}/profile" class="user-profile-card" title="Xem hồ sơ cá nhân" style="text-decoration:none;cursor:pointer;">
+                    <a href="${pageContext.request.contextPath}/profile" class="user-profile-card"
+                       title="Xem hồ sơ cá nhân" style="text-decoration:none;cursor:pointer;">
                         <div class="profile-avatar">RC</div>
                         <div class="profile-info">
-                            <span class="profile-name">${not empty sessionScope.user ? sessionScope.user : 'Receptionist'}</span>
+                            <span class="profile-name">${not empty sessionScope.user ? sessionScope.user :
+                                                         'Receptionist'}</span>
                             <span class="profile-role">Lễ tân</span>
                         </div>
                     </a>
@@ -463,22 +492,22 @@
 
         <script src="${pageContext.request.contextPath}/assets/js/receptionist.js?v=5" charset="UTF-8"></script>
         <script>
-            function describeChangeRequest(requestId, bookingId, customerName, isExtension) {
-                var type = isExtension ? "Gia hạn lưu trú" : "Thay đổi đặt phòng";
-                return "Yêu cầu #" + requestId + " (" + type + " - Đơn #" + bookingId + " - Khách: " + customerName + ")";
-            }
+                                function describeChangeRequest(requestId, bookingId, customerName, isExtension) {
+                                    var type = isExtension ? "Gia hạn lưu trú" : "Thay đổi đặt phòng";
+                                    return "Yêu cầu #" + requestId + " (" + type + " - Đơn #" + bookingId + " - Khách: " + customerName + ")";
+                                }
 
-            function openApproveChangeModal(requestId, bookingId, customerName, isExtension) {
-                document.getElementById('approveChangeRequestId').value = requestId;
-                document.getElementById('approveChangeDetail').innerText = describeChangeRequest(requestId, bookingId, customerName, isExtension);
-                openModal('approveChangeModal');
-            }
+                                function openApproveChangeModal(requestId, bookingId, customerName, isExtension) {
+                                    document.getElementById('approveChangeRequestId').value = requestId;
+                                    document.getElementById('approveChangeDetail').innerText = describeChangeRequest(requestId, bookingId, customerName, isExtension);
+                                    openModal('approveChangeModal');
+                                }
 
-            function openRejectChangeModal(requestId, bookingId, customerName, isExtension) {
-                document.getElementById('rejectChangeRequestId').value = requestId;
-                document.getElementById('rejectChangeDetail').innerText = describeChangeRequest(requestId, bookingId, customerName, isExtension);
-                openModal('rejectChangeModal');
-            }
+                                function openRejectChangeModal(requestId, bookingId, customerName, isExtension) {
+                                    document.getElementById('rejectChangeRequestId').value = requestId;
+                                    document.getElementById('rejectChangeDetail').innerText = describeChangeRequest(requestId, bookingId, customerName, isExtension);
+                                    openModal('rejectChangeModal');
+                                }
         </script>
     </body>
 </html>
