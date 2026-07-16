@@ -3,6 +3,9 @@ package com.mycompany.hotelmanagement.service;
 /**
  *
  * @author TungNQ
+ * @version 1.0.3
+ * Created: 24/06/2026
+ * Modified: 16/07/2026
  */
 public class LoginResult {
     private final boolean success;
@@ -11,18 +14,24 @@ public class LoginResult {
     private final String redirectUrl;
     private final String email;
     private final int accountId;
+    private final String errorCode;
 
     public LoginResult(boolean success, String role, String displayName, String redirectUrl) {
-        this(success, role, displayName, redirectUrl, null, -1);
+        this(success, role, displayName, redirectUrl, null, -1, null);
     }
 
     public LoginResult(boolean success, String role, String displayName, String redirectUrl, String email, int accountId) {
+        this(success, role, displayName, redirectUrl, email, accountId, null);
+    }
+
+    public LoginResult(boolean success, String role, String displayName, String redirectUrl, String email, int accountId, String errorCode) {
         this.success = success;
         this.role = role;
         this.displayName = displayName;
         this.redirectUrl = redirectUrl;
         this.email = email;
         this.accountId = accountId;
+        this.errorCode = errorCode;
     }
 
     public boolean isSuccess() {
@@ -47,5 +56,9 @@ public class LoginResult {
 
     public int getAccountId() {
         return accountId;
+    }
+
+    public String getErrorCode() {
+        return errorCode;
     }
 }

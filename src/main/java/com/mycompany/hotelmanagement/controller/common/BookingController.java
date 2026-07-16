@@ -8,6 +8,25 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+/**
+ * Project: Hotel Management System
+ * Class: BookingController
+ *
+ * Description:
+ * Servlet điểm khởi đầu chặn các người dùng chưa xác thực hoặc không phải khách
+ * hàng cố gắng bắt đầu quy trình đặt phòng. Lưu URL yêu cầu gốc vào session
+ * và chuyển hướng đến trang đăng nhập; khách hàng đã xác thực được chuyển tiếp
+ * trực tiếp đến trang tạo đặt phòng.
+ *
+ * Related Use Cases:
+ * - UC-11 Create Booking (Customer Online)
+ * 
+ * Date: 31-05-2026
+ * 
+ * @author BinhHD, TungNQ
+ * @version 1.1
+ */
+
 @WebServlet(name = "BookingController", urlPatterns = { "/booking/start" })
 public class BookingController extends HttpServlet {
 

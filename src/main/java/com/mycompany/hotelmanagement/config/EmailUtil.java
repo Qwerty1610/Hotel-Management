@@ -16,6 +16,9 @@ import org.slf4j.LoggerFactory;
  * Hỗ trợ gửi mã OTP khôi phục mật khẩu. Tự động ghi log ra console nếu chưa cấu hình SMTP (cho local development).
  * 
  * @author TùngNQ
+ * @version 1.0.1
+ * Created: 24/06/2026
+ * Modified: 16/07/2026
  */
 public class EmailUtil {
     private static final Logger logger = LoggerFactory.getLogger(EmailUtil.class);

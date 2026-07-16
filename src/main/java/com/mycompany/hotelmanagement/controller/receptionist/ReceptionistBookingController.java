@@ -15,20 +15,24 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * ReceptionistBookingController
- * URL: /receptionist/booking
+ * Project: Hotel Management System
+ * Class: ReceptionistBookingController
  *
- * Xử lý 4 hành động (action param):
- * - confirm : Xác nhận booking (Pending → Confirmed)
- * - reject : Từ chối booking (Pending → Rejected)
- * - update : Cập nhật thông tin booking (chỉ khi Pending)
- * - cancel : Huỷ booking
+ * Description:
+ * Controller xử lý các hành động của lễ tân trên các đặt phòng hiện có thông
+ * qua tham số action: confirm (Pending→Confirmed), reject (Pending→Rejected),
+ * cập nhật ngày/số lượng, và hủy. Kiểm tra quyền truy cập theo vai trò và
+ * ủy quyền lưu trữ cho BookingDAO.
+ *
+ * Related Use Cases:
+ * - UC-12 Process Booking Request
  * 
- * Standardized imports utilizing dal instead of dao.
- * Date: 01/6/2026
+ * Date: 01-06-2026
  * 
  * @author BinhHD, MinhTDP
+ * @version 1.3
  */
+
 @WebServlet(name = "ReceptionistBookingController", urlPatterns = { "/receptionist/booking" })
 public class ReceptionistBookingController extends HttpServlet {
 

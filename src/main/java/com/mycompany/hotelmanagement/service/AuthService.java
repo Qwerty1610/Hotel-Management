@@ -11,6 +11,9 @@ import java.security.SecureRandom;
 /**
  *
  * @author TungNQ
+ * @version 1.0.8
+ * Created: 01/06/2026
+ * Modified: 16/07/2026
  */
 public class AuthService {
     private final AccountRepository accountRepository = new AccountRepository();
@@ -49,6 +52,9 @@ public class AuthService {
         // 1. Authenticate using database via AccountRepository
         Account account = authenticate(username, password);
         if (account != null) {
+            if (!account.isActive()) {
+                return new LoginResult(false, null, null, null, null, -1, "account_locked");
+            }
             String dbRoleName = account.getRoleName();
             String fullName = account.getFullName();
             emailVal = account.getEmail();
@@ -136,6 +142,9 @@ public class AuthService {
         int accountIdVal = -1;
 
         if (account != null) {
+            if (!account.isActive()) {
+                return new LoginResult(false, null, null, null, null, -1, "account_locked");
+            }
             String dbFullName = account.getFullName();
             String dbRoleName = account.getRoleName();
             userDisplayName = (dbFullName != null && !dbFullName.trim().isEmpty()) ? dbFullName : name;
@@ -218,10 +227,13 @@ public class AuthService {
         }
 
         // 4. Password complexity validation: min length 8, contains letters, digits, and special characters
+        if (password.length() < 8) {
+            return "password_too_short";
+        }
         boolean hasLetter = password.matches(".*[a-zA-Z].*");
         boolean hasDigit = password.matches(".*[0-9].*");
         boolean hasSpecial = password.matches(".*[^a-zA-Z0-9].*");
-        if (password.length() < 8 || !hasLetter || !hasDigit || !hasSpecial) {
+        if (!hasLetter || !hasDigit || !hasSpecial) {
             return "invalid_password";
         }
 

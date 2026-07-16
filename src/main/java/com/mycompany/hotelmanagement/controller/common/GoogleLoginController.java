@@ -22,6 +22,9 @@ import jakarta.servlet.http.HttpSession;
  * sau đó ủy thác việc đăng nhập/đăng ký tự động cho AuthService.
  * 
  * @author TùngNQ
+ * @version 1.0.1
+ * Created: 24/06/2026
+ * Modified: 16/07/2026
  */
 @WebServlet(name = "GoogleLoginController", urlPatterns = {"/login-google"})
 public class GoogleLoginController extends HttpServlet {
@@ -78,7 +81,7 @@ public class GoogleLoginController extends HttpServlet {
                     redirectUrl = (String) session.getAttribute("redirectAfterLogin");
                     session.removeAttribute("redirectAfterLogin");
                     if (redirectUrl == null || redirectUrl.isEmpty()) {
-                        redirectUrl = request.getContextPath() + "/home/login";
+                        redirectUrl = request.getContextPath() + "/home";
                     }
                 } else {
                     session.removeAttribute("redirectAfterLogin");
@@ -87,7 +90,11 @@ public class GoogleLoginController extends HttpServlet {
 
                 response.sendRedirect(redirectUrl);
             } else {
-                response.sendRedirect(request.getContextPath() + "/home/login?error=invalid_credentials");
+                String err = "invalid_credentials";
+                if ("account_locked".equals(result.getErrorCode())) {
+                    err = "account_locked";
+                }
+                response.sendRedirect(request.getContextPath() + "/home/login?error=" + err);
             }
 
         } catch (Exception e) {

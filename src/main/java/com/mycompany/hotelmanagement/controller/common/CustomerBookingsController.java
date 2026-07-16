@@ -23,15 +23,26 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Controller xử lý luồng tạo đặt phòng và quản lý lịch sử đặt phòng của khách
- * hàng (Customer).
- * Hỗ trợ các chức năng hiển thị danh sách, chi tiết hóa đơn đặt phòng, tạo đặt
- * phòng đơn/nhiều phòng.
+ * Project: Hotel Management System
+ * Class: CustomerBookingsController
  *
- * @author BinhHD
- * @date 20/06/2026
- * @version 1.0
+ * Description:
+ * Controller xử lý vòng đời đặt phòng của khách hàng: tạo đơn đặt phòng đơn
+ * và nhiều loại phòng, xem lịch sử đặt phòng với bộ lọc trạng thái và áp dụng
+ * mã khuyến mãi lúc thanh toán. Ủy quyền xác thực nghiệp vụ cho BookingService
+ * và tra cứu khuyến mãi cho PromotionService.
+ *
+ * Related Use Cases:
+ * - UC-11 Create Booking (Customer Online)
+ * - UC-38 View Booking History
+ * - UC-48 Apply Promotion Code
+ * 
+ * Date: 21-06-2026
+ * 
+ * @author BinhHD, QuyPQ
+ * @version 1.2
  */
+
 @WebServlet(name = "CustomerBookingsController", urlPatterns = { "/customer/bookings", "/customer/booking/*" })
 public class CustomerBookingsController extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(CustomerBookingsController.class.getName());
@@ -44,7 +55,8 @@ public class CustomerBookingsController extends HttpServlet {
     static {
         ERROR_MESSAGES.put("MSG02", "Vui lòng điền đầy đủ các trường bắt buộc.");
         ERROR_MESSAGES.put("MSG03", "Yêu cầu đặc biệt / lý do không được vượt quá 500 ký tự.");
-        ERROR_MESSAGES.put("MSG16", "Không còn phòng trống phù hợp cho lựa chọn / khoảng ngày mới. Vui lòng thử phương án khác.");
+        ERROR_MESSAGES.put("MSG16",
+                "Không còn phòng trống phù hợp cho lựa chọn / khoảng ngày mới. Vui lòng thử phương án khác.");
         ERROR_MESSAGES.put("MSG17", "Ngày trả phòng phải sau ngày nhận phòng.");
         ERROR_MESSAGES.put("MSG19", "Xin lỗi, loại phòng bạn chọn không còn đủ phòng trống trong thời gian này.");
         ERROR_MESSAGES.put("MSG20", "Số lượng khách vượt quá sức chứa tối đa của phòng.");
@@ -165,26 +177,8 @@ public class CustomerBookingsController extends HttpServlet {
     }
 
     /**
-     * Trang Thay đổi đặt phòng (UC 2.3.9 Booking Change): khách chọn giữa
-     * yêu cầu thay đổi đặt phòng hoặc yêu cầu gia hạn lưu trú.
+     * Maps a success code (and optional charge) to a friendly Vietnamese message.
      */
-    private void showBookingChangePage(HttpServletRequest request, HttpServletResponse response, int accountId)
-            throws ServletException, IOException {
-        List<Booking> bookings = bookingService.getBookingsByAccount(accountId, "All", null);
-        request.setAttribute("bookings", bookings);
-        request.setAttribute("roomTypes", roomTypeService.getAllRoomTypes());
-        request.setAttribute("myRequests", bookingRequestService.getRequestsByAccount(accountId));
-
-        String error = request.getParameter("error");
-        if (error != null) {
-            request.setAttribute("errorCode", error);
-            request.setAttribute("errorMessage", ERROR_MESSAGES.getOrDefault(error, ERROR_MESSAGES.get("MSG55")));
-        }
-
-        request.getRequestDispatcher("/WEB-INF/views/customer/booking-change.jsp").forward(request, response);
-    }
-
-    /** Maps a success code (and optional charge) to a friendly Vietnamese message. */
     private String buildSuccessMessage(String success, String charge) {
         switch (success) {
             case "change_requested":
@@ -194,7 +188,8 @@ public class CustomerBookingsController extends HttpServlet {
                 if (charge != null && !charge.isBlank()) {
                     try {
                         double c = Double.parseDouble(charge);
-                        java.text.NumberFormat nf = java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN"));
+                        java.text.NumberFormat nf = java.text.NumberFormat
+                                .getInstance(new java.util.Locale("vi", "VN"));
                         base += " Phụ phí dự kiến: " + nf.format(c) + " VND.";
                     } catch (NumberFormatException ignored) {
                     }
@@ -238,7 +233,7 @@ public class CustomerBookingsController extends HttpServlet {
 
             List<Booking> children = bookingService.getChildBookings(booking.getBookingId());
             List<Map<String, Object>> roomsList = new ArrayList<>();
-            
+
             // Add parent room details
             Map<String, Object> parentMap = new HashMap<>();
             parentMap.put("roomTypeName", booking.getRoomTypeName());
@@ -257,7 +252,7 @@ public class CustomerBookingsController extends HttpServlet {
                 childMap.put("price", child.getTotalAmount() / child.getRoomQuantity() / child.getNights());
                 childMap.put("guestName", child.getCustomerName() + " (Theo đơn đặt)");
                 roomsList.add(childMap);
-                
+
                 overallTotal += child.getTotalAmount();
             }
 
@@ -292,7 +287,6 @@ public class CustomerBookingsController extends HttpServlet {
         String[] rtQs = request.getParameterValues("roomQuantity[]");
         System.out.println("  roomQuantity[]: " + (rtQs == null ? "null" : java.util.Arrays.toString(rtQs)));
 
-
         Booking booking = new Booking();
 
         try {
@@ -312,8 +306,9 @@ public class CustomerBookingsController extends HttpServlet {
             if ("multi".equalsIgnoreCase(bookingType)) {
                 String[] roomTypeIds = request.getParameterValues("roomTypeId[]");
                 String[] roomQuantities = request.getParameterValues("roomQuantity[]");
-                
-                if (roomTypeIds == null || roomQuantities == null || roomTypeIds.length == 0 || roomTypeIds.length != roomQuantities.length) {
+
+                if (roomTypeIds == null || roomQuantities == null || roomTypeIds.length == 0
+                        || roomTypeIds.length != roomQuantities.length) {
                     throw new Exception("MSG55");
                 }
 
@@ -321,7 +316,8 @@ public class CustomerBookingsController extends HttpServlet {
                 for (int i = 0; i < roomTypeIds.length; i++) {
                     int rtId = Integer.parseInt(roomTypeIds[i].trim());
                     int qty = Integer.parseInt(roomQuantities[i].trim());
-                    int available = bookingService.checkRoomAvailability(rtId, booking.getCheckInDate(), booking.getCheckOutDate());
+                    int available = bookingService.checkRoomAvailability(rtId, booking.getCheckInDate(),
+                            booking.getCheckOutDate());
                     if (qty > available) {
                         throw new Exception("MSG19"); // Rooms not available
                     }
@@ -342,19 +338,19 @@ public class CustomerBookingsController extends HttpServlet {
                     Booking childBooking = new Booking();
                     childBooking.setAccountId(accountId);
                     childBooking.setCustomerName(customerName);
-                    
+
                     childBooking.setPhone(phone);
                     childBooking.setEmail(email);
                     childBooking.setCheckInDate(booking.getCheckInDate());
                     childBooking.setCheckOutDate(booking.getCheckOutDate());
                     childBooking.setNote(note);
                     childBooking.setGroupBookingId(parentBookingId);
-                    
+
                     int childRoomTypeId = Integer.parseInt(roomTypeIds[i].trim());
                     int childQty = Integer.parseInt(roomQuantities[i].trim());
                     childBooking.setRoomTypeId(childRoomTypeId);
                     childBooking.setRoomQuantity(childQty);
-                    
+
                     bookingService.createBooking(childBooking);
                 }
             } else {
@@ -386,18 +382,20 @@ public class CustomerBookingsController extends HttpServlet {
                 if (totalGroupAmount == 0) {
                     totalGroupAmount = bookingService.calculateBookingAmount(booking);
                 }
-                
-                com.mycompany.hotelmanagement.service.PromotionService.PromotionResult promoRes = 
-                    promotionService.validateAndCalculateDiscount(promotionCode, totalGroupAmount);
+
+                com.mycompany.hotelmanagement.service.PromotionService.PromotionResult promoRes = promotionService
+                        .validateAndCalculateDiscount(promotionCode, totalGroupAmount);
                 if (promoRes.success && promoRes.discountAmount > 0) {
-                    bookingService.applyDiscountToGroup(booking.getBookingId(), promoRes.discountAmount, promoRes.promotion.getPromotionCode());
+                    bookingService.applyDiscountToGroup(booking.getBookingId(), promoRes.discountAmount,
+                            promoRes.promotion.getPromotionCode());
                     promotionService.incrementUsedCount(promoRes.promotion.getPromotionId());
                 }
             }
             // ===== BINHHD END - Apply Promotion =====
 
             // Redirect to payment on success
-            response.sendRedirect(request.getContextPath() + "/customer/payments/pay?bookingId=" + booking.getBookingId());
+            response.sendRedirect(
+                    request.getContextPath() + "/customer/payments/pay?bookingId=" + booking.getBookingId());
 
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Validation failed during booking creation: " + e.getMessage(), e);
@@ -500,19 +498,21 @@ public class CustomerBookingsController extends HttpServlet {
     private void handleCheckPromotion(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String code = request.getParameter("promoCode");
         String totalAmountStr = request.getParameter("totalAmount");
-        
+
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        
+
         try {
             double totalAmount = Double.parseDouble(totalAmountStr);
-            com.mycompany.hotelmanagement.service.PromotionService.PromotionResult res = promotionService.validateAndCalculateDiscount(code, totalAmount);
-            
-            String json = String.format("{\"success\": %b, \"message\": \"%s\", \"discountAmount\": %.0f}", 
-                res.success, res.message.replace("\"", "\\\""), res.discountAmount);
+            com.mycompany.hotelmanagement.service.PromotionService.PromotionResult res = promotionService
+                    .validateAndCalculateDiscount(code, totalAmount);
+
+            String json = String.format("{\"success\": %b, \"message\": \"%s\", \"discountAmount\": %.0f}",
+                    res.success, res.message.replace("\"", "\\\""), res.discountAmount);
             response.getWriter().write(json);
         } catch (Exception e) {
-            response.getWriter().write("{\"success\": false, \"message\": \"Dữ liệu không hợp lệ.\", \"discountAmount\": 0}");
+            response.getWriter()
+                    .write("{\"success\": false, \"message\": \"Dữ liệu không hợp lệ.\", \"discountAmount\": 0}");
         }
     }
 }
