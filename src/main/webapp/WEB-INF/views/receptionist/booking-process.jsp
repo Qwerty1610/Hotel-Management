@@ -29,18 +29,26 @@
                         </a>
                     </li>
 
+                    <li class="menu-item ${currentTab eq 'changerequests' ? 'active' : ''}">
+                        <a
+                            href="${pageContext.request.contextPath}/receptionist/dashboard?tab=changerequests">
+                            <i class="fa-solid fa-pen-to-square"></i> <span>Thay đổi đặt phòng</span>
+                        </a>
+                    </li>
+
                     <li class="menu-item ${currentTab eq 'checkin' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin">
                             <i class="fa-solid fa-key"></i> <span>Nhận phòng (Check-in)</span>
                         </a>
                     </li>
-                    
+
                     <li class="menu-item ${currentTab eq 'checkout' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkout">
-                            <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh toán</span>
+                            <i class="fa-solid fa-right-from-bracket"></i> <span>Trả phòng & Thanh
+                                toán</span>
                         </a>
                     </li>
-                    
+
                     <li class="menu-item ${currentTab eq 'roommap' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=roommap">
                             <i class="fa-solid fa-map"></i> <span>Sơ đồ phòng</span>
@@ -48,23 +56,34 @@
                     </li>
 
                     <li class="menu-item ${currentTab eq 'walkin-bookings' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=walkin-bookings">
+                        <a
+                            href="${pageContext.request.contextPath}/receptionist/dashboard?tab=walkin-bookings">
                             <i class="fa-solid fa-user-plus"></i> <span>Đặt phòng tại quầy</span>
                         </a>
-                    </li>    
+                    </li>
+
 
                     <li class="menu-item ${currentTab eq 'servicerequests' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=servicerequests">
+                        <a
+                            href="${pageContext.request.contextPath}/receptionist/dashboard?tab=servicerequests">
                             <i class="fa-solid fa-bell-concierge"></i> <span>Quản lý yêu cầu dịch vụ</span>
+                        </a>
+                    </li>
+                    <li class="menu-item ${currentTab eq 'add-booking-service' ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/receptionist/add-booking-service">
+                            <i class="fa-solid fa-circle-plus"></i>
+                            <span>Đặt dịch vụ cho khách</span>
                         </a>
                     </li>
                 </ul>
 
                 <div class="sidebar-footer">
-                    <a href="${pageContext.request.contextPath}/profile" class="user-profile-card" title="Xem hồ sơ cá nhân" style="text-decoration:none;cursor:pointer;">
+                    <a href="${pageContext.request.contextPath}/profile" class="user-profile-card"
+                       title="Xem hồ sơ cá nhân" style="text-decoration:none;cursor:pointer;">
                         <div class="profile-avatar">RC</div>
                         <div class="profile-info">
-                            <span class="profile-name">${not empty sessionScope.user ? sessionScope.user : 'Receptionist'}</span>
+                            <span class="profile-name">${not empty sessionScope.user ? sessionScope.user :
+                                                         'Receptionist'}</span>
                             <span class="profile-role">Lễ tân</span>
                         </div>
                     </a>
@@ -813,42 +832,44 @@
             }
 
             function filterRooms(suffix) {
-            let typeName = "";
+                let typeName = "";
 
-            const sel = document.getElementById(
-                suffix === 'parent'
-                    ? 'editRoomTypeId_parent'
-                    : 'editRoomTypeId_' + suffix
-            );
+                const sel = document.getElementById(
+                        suffix === 'parent'
+                        ? 'editRoomTypeId_parent'
+                        : 'editRoomTypeId_' + suffix
+                        );
 
-            if (!sel) return;
+                if (!sel)
+                    return;
 
-            typeName = sel.selectedOptions?.[0]?.dataset?.typeName;
+                typeName = sel.selectedOptions?.[0]?.dataset?.typeName;
 
-            const grid = document.getElementById('roomGrid_' + suffix);
-            if (!grid) return;
+                const grid = document.getElementById('roomGrid_' + suffix);
+                if (!grid)
+                    return;
 
-            grid.querySelectorAll('.room-card').forEach(card => {
+                grid.querySelectorAll('.room-card').forEach(card => {
 
-                const cardTypeName = card.dataset.roomTypeName;
+                    const cardTypeName = card.dataset.roomTypeName;
 
-                const match = typeName && cardTypeName === typeName;
+                    const match = typeName && cardTypeName === typeName;
 
-                if (match) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
+                    if (match) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
 
-                    const cb = card.querySelector('.room-checkbox');
-                    if (cb && cb.checked) {
-                        cb.checked = false;
-                        card.classList.remove('selected');
+                        const cb = card.querySelector('.room-checkbox');
+                        if (cb && cb.checked) {
+                            cb.checked = false;
+                            card.classList.remove('selected');
+                        }
                     }
-                }
-            });
+                });
 
-            updateSelection(suffix);
-        }
+                updateSelection(suffix);
+            }
 
             function updateSelection(suffix) {
                 const grid = document.getElementById("roomGrid_" + suffix);
@@ -889,7 +910,7 @@
                         allValid = false;
                     }
                 });
-                
+
                 const btn = document.getElementById("btnConfirmBooking");
                 const isDepositPaid = ${isDepositPaid};
 
@@ -961,8 +982,8 @@
             }
             function onParentRoomTypeChange() {
                 filterRooms("parent");
-                document.querySelectorAll("#roomGrid_parent .room-checkbox").forEach(cb=>{
-                    cb.checked=false;
+                document.querySelectorAll("#roomGrid_parent .room-checkbox").forEach(cb => {
+                    cb.checked = false;
                     cb.closest(".room-card").classList.remove("selected");
                 });
                 updateSelection("parent");
@@ -1066,12 +1087,14 @@
                 const pReq = getRequiredQty('parent');
                 const pChecked = document.querySelectorAll('#roomGrid_parent .room-checkbox:checked').length;
 
-                if (pChecked !== pReq) allValid = false;
+                if (pChecked !== pReq)
+                    allValid = false;
 
                 for (let cid of childIds) {
                     const cReq = getRequiredQty(cid);
                     const cChecked = document.querySelectorAll('#roomGrid_' + cid + ' .room-checkbox:checked').length;
-                    if (cChecked !== cReq) allValid = false;
+                    if (cChecked !== cReq)
+                        allValid = false;
                 }
 
                 if (action === 'confirm' && !allValid) {
@@ -1093,7 +1116,6 @@
 
                 for (let cid of childIds) {
                     const typeSel = document.getElementById('editRoomTypeId_' + cid);
-
                     if (typeSel) {
                         const hiddenType = document.createElement('input');
                         hiddenType.type = 'hidden';
@@ -1103,13 +1125,13 @@
                     }
 
                     document.querySelectorAll('#roomGrid_' + cid + ' .room-checkbox:checked')
-                        .forEach(cb => {
-                            const input = document.createElement('input');
-                            input.type = 'hidden';
-                            input.name = 'childRoomIds_' + cid;
-                            input.value = cb.value;
-                            container.appendChild(input);
-                        });
+                            .forEach(cb => {
+                                const input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = 'childRoomIds_' + cid;
+                                input.value = cb.value;
+                                container.appendChild(input);
+                            });
                 }
 
                 if (action === 'confirm') {
@@ -1168,8 +1190,8 @@
             }
             function onChildRoomTypeChange(childId) {
                 filterRooms(childId);
-                document.querySelectorAll("#roomGrid_"+childId+" .room-checkbox").forEach(cb=>{
-                    cb.checked=false;
+                document.querySelectorAll("#roomGrid_" + childId + " .room-checkbox").forEach(cb => {
+                    cb.checked = false;
                     cb.closest(".room-card").classList.remove("selected");
                 });
                 updateSelection(childId);
@@ -1196,22 +1218,23 @@
                 const checkIn = document.getElementById("editCheckIn").value;
                 const checkOut = document.getElementById("editCheckOut").value;
 
-                if (!checkIn || !checkOut) return Promise.resolve();
+                if (!checkIn || !checkOut)
+                    return Promise.resolve();
 
                 const url = `${window.contextPath || ''}/receptionist/room/available`
-                    + `?checkIn=${checkIn}&checkOut=${checkOut}`;
+                        + `?checkIn=${checkIn}&checkOut=${checkOut}`;
 
                 fetch(url)
-                    .then(res => res.json())
-                    .then(data => {
-                        updateRoomGrid(data);
-                    })
-                    .catch(err => console.error("Room fetch error:", err));
+                        .then(res => res.json())
+                        .then(data => {
+                            updateRoomGrid(data);
+                        })
+                        .catch(err => console.error("Room fetch error:", err));
             }
             function updateRoomGrid(availableRooms) {
                 const availableSet = new Set(
-                    availableRooms.map(r => String(r.roomId))
-                );
+                        availableRooms.map(r => String(r.roomId))
+                        );
 
                 document.querySelectorAll(".room-card").forEach(card => {
                     const roomId = String(card.dataset.roomId);
@@ -1226,7 +1249,8 @@
                     if (isAvailable) {
                         card.classList.add("card-avail");
 
-                        if (checkbox) checkbox.disabled = false;
+                        if (checkbox)
+                            checkbox.disabled = false;
 
                     } else {
                         card.classList.add("card-disabled");
@@ -1252,35 +1276,36 @@
                 const selects = [];
                 const parent = document.getElementById("editRoomTypeId_parent");
 
-                if(parent){
+                if (parent) {
                     selects.push(parent);
                 }
 
-                childIds.forEach(id=>{
-                    const s=document.getElementById("editRoomTypeId_"+id);
-                    if(s){
+                childIds.forEach(id => {
+                    const s = document.getElementById("editRoomTypeId_" + id);
+                    if (s) {
                         selects.push(s);
                     }
                 });
 
-                selects.forEach(select=>{
-                    [...select.options].forEach(option=>{
-                        option.disabled=false;
+                selects.forEach(select => {
+                    [...select.options].forEach(option => {
+                        option.disabled = false;
                     });
                 });
 
-                selects.forEach(current=>{
-                    const used=new Set();
-                    selects.forEach(other=>{
-                        if(other===current) return;
+                selects.forEach(current => {
+                    const used = new Set();
+                    selects.forEach(other => {
+                        if (other === current)
+                            return;
                         used.add(other.value);
                     });
-                    [...current.options].forEach(option=>{
-                        if(option.value===current.value){
+                    [...current.options].forEach(option => {
+                        if (option.value === current.value) {
                             return;
                         }
-                        if(used.has(option.value)){
-                            option.disabled=true;
+                        if (used.has(option.value)) {
+                            option.disabled = true;
                         }
                     });
                 });

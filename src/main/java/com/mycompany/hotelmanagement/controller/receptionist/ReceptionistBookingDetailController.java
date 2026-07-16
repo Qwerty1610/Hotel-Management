@@ -97,6 +97,7 @@ public class ReceptionistBookingDetailController extends HttpServlet {
             request.setAttribute("childBookings", childBookings);
             request.setAttribute("childAssignedRoomsMap", childAssignedRoomsMap);
 
+            request.setAttribute("currentTab", "bookings");
             request.getRequestDispatcher("/WEB-INF/views/receptionist/booking-detail.jsp")
                     .forward(request, response);
 

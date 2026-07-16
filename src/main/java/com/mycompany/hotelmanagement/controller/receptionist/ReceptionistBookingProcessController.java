@@ -132,6 +132,7 @@ public class ReceptionistBookingProcessController extends HttpServlet {
             request.setAttribute("childBookings", childBookings);
             request.setAttribute("childAssignedRoomsMap", childAssignedRoomsMap);
 
+            request.setAttribute("currentTab", "bookings");
             request.getRequestDispatcher("/WEB-INF/views/receptionist/booking-process.jsp")
                     .forward(request, response);
 
