@@ -28,6 +28,12 @@
                     </a>
                 </li>
                 <li class="menu-item">
+                    <a href="${pageContext.request.contextPath}/housekeeping/handlemaintenance">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                        <span>Yêu cầu bảo trì</span>
+                    </a>
+                </li>
+                <li class="menu-item">
                     <a href="${pageContext.request.contextPath}/housekeeping/reportIssue">
                         <i class="fa-solid fa-triangle-exclamation"></i>
                         <span>Báo cáo sự cố phòng</span>

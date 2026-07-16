@@ -14,6 +14,9 @@ import java.io.IOException;
  * Ánh xạ tới các URL tương ứng với vai trò của người dùng.
  * 
  * @author TungNQ
+ * @version 1.0.4
+ * Created: 24/06/2026
+ * Modified: 16/07/2026
  */
 @WebServlet(name = "ChangePasswordController", urlPatterns = {
     "/admin/change-password",
@@ -124,7 +127,7 @@ public class ChangePasswordController extends HttpServlet {
             switch (result) {
                 case "invalid_input":
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    response.getWriter().write("{\"success\":false,\"message\":\"Vui lòng điền đầy đủ tất cả các trường!\"}");
+                    response.getWriter().write("{\"success\":false,\"message\":\"Vui lòng điền đầy đủ các trường bắt buộc.\"}");
                     break;
                 case "account_not_found":
                     response.setStatus(HttpServletResponse.SC_NOT_FOUND);

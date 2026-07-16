@@ -37,7 +37,7 @@
                                 Vui lòng điền đúng địa chỉ email!
                             </c:when>
                             <c:otherwise>
-                                Lỗi hệ thống. Vui lòng thử lại sau.
+                                Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.
                             </c:otherwise>
                         </c:choose>
                     </span>

@@ -31,6 +31,12 @@
                         </a>
                     </li>
 
+                    <li class="menu-item ${currentTab eq 'changerequests' ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=changerequests">
+                            <i class="fa-solid fa-pen-to-square"></i> <span>Thay đổi đặt phòng</span>
+                        </a>
+                    </li>
+
                     <li class="menu-item ${currentTab eq 'checkin' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin">
                             <i class="fa-solid fa-key"></i> <span>Nhận phòng (Check-in)</span>

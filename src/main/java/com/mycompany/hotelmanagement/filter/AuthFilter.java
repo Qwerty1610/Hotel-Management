@@ -12,10 +12,15 @@ import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import com.mycompany.hotelmanagement.dal.PermissionRepository;
+import java.util.List;
 
 /**
  *
  * @author TungNQ
+ * @version 1.0.5
+ * Created: 01/06/2026
+ * Modified: 16/07/2026
  */
 @WebFilter(filterName = "AuthFilter", urlPatterns = {
     "/admin/*", 
@@ -56,36 +61,55 @@ public class AuthFilter implements Filter {
         
         boolean authorized = false;
         
-        if (path.startsWith("/admin")) {
-            if ("ADMIN".equals(role)) {
-                authorized = true;
-            }
-        } else if (path.startsWith("/manager")) {
-            if ("HOTEL_MANAGER".equals(role)) {
-                authorized = true;
-            }
-        } else if (path.startsWith("/receptionist")) {
-            if ("RECEPTIONIST".equals(role)) {
-                authorized = true;
-            }
-        } else if (path.startsWith("/housekeeping")) {
-            if ("HOUSEKEEPING".equals(role)) {
-                authorized = true;
-            }
-        } else {
-            // General pages
+        PermissionRepository permissionRepository = new PermissionRepository();
+        List<String> allowedRoles = permissionRepository.getAllowedRolesForPath(path);
+        
+        if (allowedRoles.isEmpty()) {
+            // General pages (no restriction in database RolePath)
             authorized = true;
+        } else {
+            for (String allowedRole : allowedRoles) {
+                if (matchesRole(role, allowedRole)) {
+                    authorized = true;
+                    break;
+                }
+            }
         }
         
         if (authorized) {
             chain.doFilter(request, response);
         } else {
-            // Unauthorized, redirect back to staff login page
-            res.sendRedirect(contextPath + "/staff/login?error=unauthorized");
+            if (role != null) {
+                // Logged in but not authorized for this specific path -> Send HTTP 403 Forbidden
+                res.sendError(HttpServletResponse.SC_FORBIDDEN);
+            } else {
+                // Not logged in -> Redirect to login page
+                res.sendRedirect(contextPath + "/staff/login?error=unauthorized");
+            }
         }
     }
 
     @Override
     public void destroy() {
+    }
+
+    private boolean matchesRole(String sessionRole, String dbRoleName) {
+        if (sessionRole == null || dbRoleName == null) {
+            return false;
+        }
+        switch (sessionRole.toUpperCase()) {
+            case "ADMIN":
+                return "Admin".equalsIgnoreCase(dbRoleName);
+            case "HOTEL_MANAGER":
+                return "Manager".equalsIgnoreCase(dbRoleName);
+            case "RECEPTIONIST":
+                return "Receptionist".equalsIgnoreCase(dbRoleName);
+            case "HOUSEKEEPING":
+                return "Housekeeping".equalsIgnoreCase(dbRoleName) || "Housekeeper".equalsIgnoreCase(dbRoleName);
+            case "CUSTOMER":
+                return "Customer".equalsIgnoreCase(dbRoleName);
+            default:
+                return sessionRole.equalsIgnoreCase(dbRoleName);
+        }
     }
 }

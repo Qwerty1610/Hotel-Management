@@ -83,6 +83,8 @@ public class CustomerBookingsController extends HttpServlet {
         try {
             if ("/create".equals(pathInfo)) {
                 showCreateForm(request, response);
+            } else if ("/change".equals(pathInfo)) {
+                showBookingChangePage(request, response, accountId);
             } else if ("/detail".equals(pathInfo) || "detail".equalsIgnoreCase(action)) {
                 showBookingDetail(request, response, accountId);
             } else {
@@ -156,9 +158,6 @@ public class CustomerBookingsController extends HttpServlet {
         request.setAttribute("bookings", bookings);
         request.setAttribute("statusFilter", statusFilter);
         request.setAttribute("keyword", keyword);
-
-        // Room types feed the "Request Change" form's room-type dropdown
-        request.setAttribute("roomTypes", roomTypeService.getAllRoomTypes());
 
         // Customer's change/extension requests, for status tracking (POST-3)
         request.setAttribute("myRequests", bookingRequestService.getRequestsByAccount(accountId));
@@ -468,10 +467,10 @@ public class CustomerBookingsController extends HttpServlet {
             if (res.isSuccess()) {
                 response.sendRedirect(ctx + "/customer/bookings?success=change_requested");
             } else {
-                response.sendRedirect(ctx + "/customer/bookings?error=" + res.code);
+                response.sendRedirect(ctx + "/customer/booking/change?error=" + res.code);
             }
         } catch (NumberFormatException e) {
-            response.sendRedirect(ctx + "/customer/bookings?error=MSG02");
+            response.sendRedirect(ctx + "/customer/booking/change?error=MSG02");
         }
     }
 
@@ -489,10 +488,10 @@ public class CustomerBookingsController extends HttpServlet {
                 response.sendRedirect(ctx + "/customer/bookings?success=ext_requested&charge="
                         + (long) res.additionalCharge);
             } else {
-                response.sendRedirect(ctx + "/customer/bookings?error=" + res.code);
+                response.sendRedirect(ctx + "/customer/booking/change?error=" + res.code);
             }
         } catch (NumberFormatException e) {
-            response.sendRedirect(ctx + "/customer/bookings?error=MSG02");
+            response.sendRedirect(ctx + "/customer/booking/change?error=MSG02");
         }
     }
 

@@ -37,11 +37,16 @@
                                     <a href="${pageContext.request.contextPath}/customer/bookings" class="dropdown-item">
                                         <i class="fa-solid fa-calendar-check"></i> Đặt phòng của tôi
                                     </a>
+                                    <a href="${pageContext.request.contextPath}/customer/booking/change" class="dropdown-item">
+                                        <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
+                                    <a href="${pageContext.request.contextPath}/customer/feedbacks" class="dropdown-item">
+                                        <i class="fa-solid fa-star"></i> Đánh giá lưu trú
+                                    </a>
                                     <a href="${pageContext.request.contextPath}/customer/services" class="dropdown-item">
                                         <i class="fa-solid fa-bell-concierge"></i> Yêu cầu dịch vụ
                                     </a>
-                                    <a href="${pageContext.request.contextPath}/customer/services/history" class="dropdown-item">
-                                        <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử yêu cầu
+                                    <a href="${pageContext.request.contextPath}/customer/maintenance" class="dropdown-item">
+                                        <i class="fa-solid fa-screwdriver-wrench"></i> Yêu cầu sửa chữa
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/payments" class="dropdown-item">
                                         <i class="fa-solid fa-credit-card"></i> Thanh toán & Lịch sử
@@ -164,6 +169,89 @@
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Đánh giá của khách hàng -->
+                <div class="info-card" style="margin-top: 30px;">
+                    <h2>Đánh giá của khách hàng</h2>
+                    
+                    <c:choose>
+                        <c:when test="${not empty feedbackList}">
+                            <!-- Header Đánh giá -->
+                            <div class="rating-header-summary" style="display: flex; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; flex-wrap: wrap;">
+                                <div class="average-score-box" style="text-align: center; background: var(--brand-blue-light); padding: 15px 25px; border-radius: 12px; min-width: 100px;">
+                                    <div style="font-size: 32px; font-weight: 800; color: var(--brand-blue); line-height: 1;">
+                                        <fmt:formatNumber value="${averageRating}" pattern="0.0" />
+                                    </div>
+                                    <div style="font-size: 13px; font-weight: 600; color: #475569; margin-top: 4px;">trên 5</div>
+                                </div>
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 4px; font-size: 18px; color: #fbbf24; margin-bottom: 4px;">
+                                        <!-- Hiển thị sao trung bình làm tròn -->
+                                        <fmt:formatNumber var="roundedRating" value="${averageRating}" pattern="#" />
+                                        <c:forEach begin="1" end="5" var="i">
+                                            <c:choose>
+                                                <c:when test="${i <= roundedRating}">
+                                                    <i class="fa-solid fa-star"></i>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <i class="fa-regular fa-star"></i>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </c:forEach>
+                                    </div>
+                                    <div style="font-size: 15px; font-weight: 600; color: var(--text-navy);">
+                                        ${totalReviews} lượt đánh giá
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Danh sách nhận xét -->
+                            <div class="feedback-items-list" style="display: flex; flex-direction: column; gap: 20px;">
+                                <c:forEach var="fb" items="${feedbackList}">
+                                    <div class="feedback-item-card" style="padding-bottom: 20px; border-bottom: 1px dashed var(--border-color);">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+                                            <div>
+                                                <div style="font-weight: 700; color: var(--text-navy); font-size: 15px; display: flex; align-items: center; gap: 8px;">
+                                                    <i class="fa-solid fa-circle-user" style="color: #94a3b8; font-size: 18px;"></i>
+                                                    <c:out value="${fb.customerName}" />
+                                                </div>
+                                                <div style="display: flex; align-items: center; gap: 4px; font-size: 13px; color: #fbbf24; margin-top: 4px;">
+                                                    <c:forEach begin="1" end="${fb.rating}">
+                                                        <i class="fa-solid fa-star"></i>
+                                                    </c:forEach>
+                                                    <c:forEach begin="${fb.rating + 1}" end="5">
+                                                        <i class="fa-regular fa-star"></i>
+                                                    </c:forEach>
+                                                    <span style="color: #64748b; font-size: 12px; margin-left: 6px; font-weight: 500;">
+                                                        Phòng ${fb.roomNumber}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div style="font-size: 12px; color: var(--text-muted); font-weight: 500;">
+                                                <fmt:formatDate value="${fb.createdAt}" pattern="dd/MM/yyyy HH:mm" />
+                                            </div>
+                                        </div>
+                                        
+                                        <c:if test="${not empty fb.comment}">
+                                            <div style="margin-top: 10px; font-size: 14.5px; color: #334155; line-height: 1.5; background: #f8fafc; padding: 12px 16px; border-radius: 8px; border-left: 3px solid #cbd5e1;">
+                                                "<c:out value="${fb.comment}" />"
+                                            </div>
+                                        </c:if>
+                                    </div>
+                                </c:forEach>
+                            </div>
+                        </c:when>
+                        
+                        <c:otherwise>
+                            <!-- Empty State -->
+                            <div class="empty-rating-state" style="text-align: center; padding: 30px 10px; color: #64748b;">
+                                <i class="fa-regular fa-comments" style="font-size: 40px; color: #cbd5e1; margin-bottom: 12px; display: block;"></i>
+                                <span style="font-size: 16px; font-weight: 700; color: var(--text-navy); display: block; margin-bottom: 4px;">Hiện tại chưa được đánh giá.</span>
+                                <span style="font-size: 13.5px; color: var(--text-muted);">Hãy là người đầu tiên chia sẻ trải nghiệm về loại phòng này.</span>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
 
             </div>

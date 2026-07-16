@@ -62,7 +62,7 @@
                                 Vui lòng nhập đầy đủ thông tin yêu cầu!
                             </c:when>
                             <c:otherwise>
-                                Lỗi hệ thống. Vui lòng thử lại sau.
+                                Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.
                             </c:otherwise>
                         </c:choose>
                     </span>

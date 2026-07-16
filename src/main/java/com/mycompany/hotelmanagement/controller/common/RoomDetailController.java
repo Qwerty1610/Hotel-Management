@@ -8,6 +8,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import com.mycompany.hotelmanagement.service.RoomTypeService;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
+import com.mycompany.hotelmanagement.service.FeedbackService;
+import com.mycompany.hotelmanagement.entity.Feedback;
+import java.util.List;
 
 /**
  * RoomDetailController
@@ -23,14 +26,14 @@ import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 public class RoomDetailController extends HttpServlet {
 
     private final RoomTypeService roomTypeService = new RoomTypeService();
-
+    private final String ROOM_URL = "/rooms";
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
         String idParam = request.getParameter("id");
         if (idParam == null || idParam.trim().isEmpty()) {
-            response.sendRedirect(request.getContextPath() + "/rooms");
+            response.sendRedirect(request.getContextPath() + ROOM_URL);
             return;
         }
 
@@ -38,7 +41,7 @@ public class RoomDetailController extends HttpServlet {
         try {
             typeId = Integer.parseInt(idParam);
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/rooms");
+            response.sendRedirect(request.getContextPath() + ROOM_URL);
             return;
         }
 
@@ -47,12 +50,23 @@ public class RoomDetailController extends HttpServlet {
 
         if (roomDetail == null) {
             // Room type ID does not exist in database or database query failed
-            response.sendRedirect(request.getContextPath() + "/rooms");
+            response.sendRedirect(request.getContextPath() + ROOM_URL);
             return;
         }
 
-        // Set attribute and forward
+        // Fetch feedback using FeedbackService
+        FeedbackService feedbackService = new FeedbackService();
+        List<Feedback> feedbackList = feedbackService.getFeedbacksByRoomTypeId(typeId);
+        double[] stats = feedbackService.getFeedbackStatsByRoomTypeId(typeId);
+        int totalReviews = (int) stats[0];
+        double averageRating = stats[1];
+
+        // Set attributes and forward
         request.setAttribute("room", roomDetail);
+        request.setAttribute("feedbackList", feedbackList);
+        request.setAttribute("totalReviews", totalReviews);
+        request.setAttribute("averageRating", averageRating);
+        
         request.getRequestDispatcher("/WEB-INF/views/home/room_detail.jsp").forward(request, response);
     }
 }

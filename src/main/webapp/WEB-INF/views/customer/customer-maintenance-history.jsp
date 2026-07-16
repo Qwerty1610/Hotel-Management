@@ -93,9 +93,14 @@
         color:#2563eb;
     }
 
-    .status-completed{
+    .status-resolved{
         background:#dcfce7;
         color:#15803d;
+    }
+
+    .status-unresolvable{
+        background:#fee2e2;
+        color:#dc2626;
     }
     /* =========================
        MOBILE RESPONSIVE
@@ -189,6 +194,10 @@
                                        class="dropdown-item">
                                         <i class="fa-solid fa-calendar-check"></i> Đặt phòng của tôi
                                     </a>
+                                    <a href="${pageContext.request.contextPath}/customer/feedbacks"
+                                       class="dropdown-item">
+                                        <i class="fa-solid fa-star"></i> Đánh giá lưu trú
+                                    </a>
                                     <a href="${pageContext.request.contextPath}/customer/services"
                                        class="dropdown-item">
                                         <i class="fa-solid fa-bell-concierge"></i> Yêu cầu dịch vụ
@@ -197,9 +206,9 @@
                                        class="dropdown-item">
                                         <i class="fa-solid fa-screwdriver-wrench"></i> Yêu cầu sửa chữa
                                     </a>
-                                    <a href="${pageContext.request.contextPath}/customer/services/history"
+                                    <a href="${pageContext.request.contextPath}/customer/payments"
                                        class="dropdown-item">
-                                        <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử yêu cầu
+                                        <i class="fa-solid fa-credit-card"></i> Thanh toán &amp; Lịch sử
                                     </a>
                                 </c:when>
                                 <c:otherwise>
@@ -287,7 +296,7 @@
                         <a href="${pageContext.request.contextPath}/customer/maintenance/history"
                            class="active-sidebar-item">
                             <i class="fa-solid fa-clock-rotate-left"
-                               style="width: 20px; text-align: center;"></i> Lịch sử sự cố
+                               style="width: 20px; text-align: center;"></i> Lịch sử sửa chữa
                         </a>
                     </li>
                 </ul>
@@ -328,6 +337,7 @@
                                             <th>Phòng</th>
                                             <th>Sự cố</th>
                                             <th>Mô tả</th>
+                                            <th>Ghi chú nhân viên</th>
                                             <th>Ngày tạo</th>
                                             <th>Trạng thái</th>
                                         </tr>
@@ -350,19 +360,31 @@
                                                 <td>
                                                     <c:choose>
                                                         <c:when test="${empty item.description}">
-                                                            <span style="color:#94a3b8;">Không có</span>
+                                                            <span style="color:#94a3b8;">
+                                                                Không có
+                                                            </span>
                                                         </c:when>
                                                         <c:otherwise>
                                                             ${item.description}
                                                         </c:otherwise>
                                                     </c:choose>
                                                 </td>
-
+                                                <td>
+                                                    <c:choose>
+                                                        <c:when test="${empty item.resolutionNote}">
+                                                            <span style="color:#94a3b8;">
+                                                                Chưa có
+                                                            </span>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            ${item.resolutionNote}
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </td>
                                                 <td>
                                                     ${item.createdAt.dayOfMonth}/${item.createdAt.monthValue}/${item.createdAt.year}
                                                     ${item.createdAt.hour}:${item.createdAt.minute}
                                                 </td>
-
                                                 <td>
                                                     <c:choose>
                                                         <c:when test="${item.status eq 'Pending'}">
@@ -377,9 +399,15 @@
                                                             </span>
                                                         </c:when>
 
-                                                        <c:when test="${item.status eq 'Completed'}">
-                                                            <span class="status-badge status-completed">
-                                                                Hoàn thành
+                                                        <c:when test="${item.status eq 'Resolved'}">
+                                                            <span class="status-badge status-resolved">
+                                                                Đã xử lý
+                                                            </span>
+                                                        </c:when>
+
+                                                        <c:when test="${item.status eq 'Unresolvable'}">
+                                                            <span class="status-badge status-unresolvable">
+                                                                Không thể xử lý
                                                             </span>
                                                         </c:when>
 

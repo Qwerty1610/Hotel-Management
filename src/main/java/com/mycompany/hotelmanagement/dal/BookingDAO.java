@@ -228,6 +228,44 @@ public class BookingDAO {
         return false;
     }
 
+    /**
+     * UC 2.4.5 Process Booking Change: áp thay đổi đã duyệt vào đơn đặt phòng
+     * (ngày, loại phòng, số phòng, tổng tiền). Khác updateBookingDetails,
+     * method này không giới hạn status = Pending vì đơn Confirmed (thay đổi)
+     * hoặc CheckedIn (gia hạn) cũng được cập nhật — điều kiện hợp lệ đã được
+     * BookingRequestService kiểm tra trước khi gọi.
+     */
+    public boolean applyBookingChange(Booking b) {
+        if (b == null || b.getBookingId() <= 0 || b.getCheckInDate() == null
+                || b.getCheckOutDate() == null || !b.getCheckInDate().before(b.getCheckOutDate())) {
+            LOGGER.log(Level.WARNING, "Invalid booking data for applyBookingChange: " + b);
+            return false;
+        }
+        String sql = "UPDATE dbo.Booking "
+                + "SET room_type_id = ?, room_quantity = ?, check_in_date = ?, check_out_date = ?, "
+                + "    total_amount = ?, updated_at = SYSDATETIME() "
+                + "WHERE booking_id = ?";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                if (b.getRoomTypeId() != null) {
+                    ps.setInt(1, b.getRoomTypeId());
+                } else {
+                    ps.setNull(1, Types.INTEGER);
+                }
+                ps.setInt(2, b.getRoomQuantity());
+                ps.setDate(3, b.getCheckInDate());
+                ps.setDate(4, b.getCheckOutDate());
+                ps.setDouble(5, b.getTotalAmount());
+                ps.setInt(6, b.getBookingId());
+                return ps.executeUpdate() > 0;
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in applyBookingChange for id: " + b.getBookingId(), e);
+        }
+        return false;
+    }
+
     public boolean updateBookingTotalAmountAndNote(int bookingId, double newAmount, String noteAppend) {
         if (bookingId <= 0)
             return false;

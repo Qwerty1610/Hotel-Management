@@ -90,6 +90,8 @@ public class ReceptionistDashboardController extends HttpServlet {
                 loadBookingTab(request);
             } else if ("servicerequests".equals(tab)) {
                 loadServiceRequestsTab(request);
+            } else if ("changerequests".equals(tab)) {
+                loadChangeRequestsTab(request);
             } else if ("checkin".equals(tab)) {
                 loadCheckInTab(request);
             } else if ("roommap".equals(tab)) {
@@ -103,6 +105,9 @@ public class ReceptionistDashboardController extends HttpServlet {
             // 4. Forward to view
             if ("servicerequests".equals(tab)) {
                 request.getRequestDispatcher("/WEB-INF/views/receptionist/service-requests.jsp")
+                        .forward(request, response);
+            } else if ("changerequests".equals(tab)) {
+                request.getRequestDispatcher("/WEB-INF/views/receptionist/booking-change-requests.jsp")
                         .forward(request, response);
             } else {
                 request.getRequestDispatcher("/WEB-INF/views/dashboard/receptionist.jsp")
@@ -266,6 +271,68 @@ public class ReceptionistDashboardController extends HttpServlet {
 
         } catch (Exception e) {
             throw new RuntimeException("Error in loadServiceRequestsTab of ReceptionistDashboardController", e);
+        }
+    }
+
+    /**
+     * UC 2.4.5 Process Booking Change
+     * Tải danh sách yêu cầu thay đổi đặt phòng / gia hạn lưu trú của khách hàng
+     * để lễ tân duyệt hoặc từ chối; hỗ trợ tìm kiếm, lọc trạng thái, phân trang.
+     */
+    private void loadChangeRequestsTab(HttpServletRequest request) {
+        try {
+            com.mycompany.hotelmanagement.service.BookingRequestService service
+                    = new com.mycompany.hotelmanagement.service.BookingRequestService();
+
+            String statusFilter = request.getParameter("status");
+            String keyword = request.getParameter("keyword");
+            if (statusFilter == null || statusFilter.trim().isEmpty()
+                    || !Set.of("All", "Pending", "Approved", "Rejected").contains(statusFilter.trim())) {
+                statusFilter = "All";
+            } else {
+                statusFilter = statusFilter.trim();
+            }
+
+            int page = 1;
+            String pageStr = request.getParameter("page");
+            if (pageStr != null && !pageStr.isEmpty()) {
+                try {
+                    page = Integer.parseInt(pageStr);
+                } catch (NumberFormatException e) {
+                    page = 1;
+                }
+            }
+            if (page < 1) {
+                page = 1;
+            }
+
+            int pageSize = 10;
+            int totalItems = service.countRequestsForStaff(statusFilter, keyword);
+            int totalPages = (int) Math.ceil((double) totalItems / pageSize);
+            if (totalPages < 1) {
+                totalPages = 1;
+            }
+            if (page > totalPages) {
+                page = totalPages;
+            }
+            int offset = (page - 1) * pageSize;
+
+            request.setAttribute("requestList", service.getRequestsForStaff(statusFilter, keyword, offset, pageSize));
+            request.setAttribute("currentStatus", statusFilter);
+            request.setAttribute("keyword", keyword != null ? keyword : "");
+            request.setAttribute("currentPage", page);
+            request.setAttribute("totalPages", totalPages);
+            request.setAttribute("totalItems", totalItems);
+            request.setAttribute("pageSize", pageSize);
+
+            // KPI counts for the cards
+            request.setAttribute("kpiTotal", service.countRequestsForStaff("All", null));
+            request.setAttribute("kpiPending", service.countRequestsForStaff("Pending", null));
+            request.setAttribute("kpiApproved", service.countRequestsForStaff("Approved", null));
+            request.setAttribute("kpiRejected", service.countRequestsForStaff("Rejected", null));
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error in loadChangeRequestsTab of ReceptionistDashboardController", e);
         }
     }
 

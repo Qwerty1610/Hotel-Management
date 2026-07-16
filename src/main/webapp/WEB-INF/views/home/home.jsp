@@ -3,6 +3,12 @@
 <%-- Nhúng Header cấu trúc --%>
 <%@ include file="../../includes/header.jsp" %>
 
+<c:set var="heroTitle" value='<%= com.mycompany.hotelmanagement.config.ConfigUtil.get("hotel.hero.title", "Trải nghiệm kỳ nghỉ tuyệt vời tại HotelOps") %>' />
+<c:set var="heroSubtitle" value='<%= com.mycompany.hotelmanagement.config.ConfigUtil.get("hotel.hero.subtitle", "Nơi sang trọng gặp gỡ sự tinh tế, mang đến cho bạn trải nghiệm nghỉ dưỡng đích thực tại trung tâm thành phố.") %>' />
+<c:set var="aboutTag" value='<%= com.mycompany.hotelmanagement.config.ConfigUtil.get("hotel.about.tag", "VỀ HOTELOPS") %>' />
+<c:set var="aboutTitle" value='<%= com.mycompany.hotelmanagement.config.ConfigUtil.get("hotel.about.title", "Định nghĩa lại lòng hiếu khách") %>' />
+<c:set var="aboutDesc" value='<%= com.mycompany.hotelmanagement.config.ConfigUtil.get("hotel.about.desc", "HotelOps cung cấp không gian lưu trú sạch sẽ, tiện nghi và thoải mái dành cho cá nhân, gia đình và khách du lịch. Chúng tôi luôn cố gắng mang đến trải nghiệm nghỉ ngơi thuận tiện với mức giá phù hợp cho mọi khách hàng.") %>' />
+
 <body>
     <div class="loader-container" id="page-loader">
         <div class="neon-circle"></div>
@@ -11,11 +17,11 @@
         <nav class="navbar">
             <a href="#trang-chu" class="logo">HotelOps</a>
             <ul class="nav-links">
-                <li><a href="#trang-chu" class="active">Trang chủ</a></li>
-                <li><a href="#gioi-thieu">Giới thiệu</a></li>
-                <li><a href="#phong-gia">Phòng</a></li>
-                <li><a href="#dich-vu">Dịch vụ</a></li>
-                <li><a href="#lien-he">Liên hệ</a></li>
+                <li><a href="#trang-chu" class="active"><fmt:message key="nav.home" /></a></li>
+                <li><a href="#gioi-thieu"><fmt:message key="nav.about" /></a></li>
+                <li><a href="#phong-gia"><fmt:message key="nav.rooms" /></a></li>
+                <li><a href="#dich-vu"><fmt:message key="nav.services" /></a></li>
+                <li><a href="#lien-he"><fmt:message key="nav.contact" /></a></li>
             </ul>
 
             <div class="nav-actions">
@@ -31,19 +37,24 @@
                                 <c:choose>
                                     <c:when test="${sessionScope.role eq 'CUSTOMER'}">
                                         <a href="${pageContext.request.contextPath}/customer/profile" class="dropdown-item">
-                                            <i class="fa-solid fa-id-card"></i> Hồ sơ
+                                            <i class="fa-solid fa-id-card"></i> <fmt:message key="nav.profile" />
                                         </a>
                                         <a href="${pageContext.request.contextPath}/customer/bookings" class="dropdown-item">
-                                            <i class="fa-solid fa-calendar-check"></i> Đặt phòng của tôi
+                                            <i class="fa-solid fa-calendar-check"></i> <fmt:message key="nav.mybookings" />
+                                        </a>
+                                        <a href="${pageContext.request.contextPath}/customer/feedbacks" class="dropdown-item">
+                                            <i class="fa-solid fa-star"></i> Đánh giá lưu trú
+                                        </a>
+                                        <a href="${pageContext.request.contextPath}/customer/booking/change" class="dropdown-item">
+                                            <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
                                         </a>
                                         <a href="${pageContext.request.contextPath}/customer/services" class="dropdown-item">
-                                            <i class="fa-solid fa-bell-concierge"></i> Yêu cầu dịch vụ
-                                        </a>
-                                        <a href="${pageContext.request.contextPath}/customer/maintenance" class="dropdown-item">
-                                            <i class="fa-solid fa-screwdriver-wrench"></i> Yêu cầu sửa chữa
+                                            <i class="fa-solid fa-bell-concierge"></i> <fmt:message key="nav.servicerequests" />
                                         </a>
                                         <a href="${pageContext.request.contextPath}/customer/services/history" class="dropdown-item">
-                                            <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử yêu cầu
+                                            <i class="fa-solid fa-clock-rotate-left"></i> <fmt:message key="nav.servicehistory" />
+                                        <a href="${pageContext.request.contextPath}/customer/maintenance" class="dropdown-item">
+                                            <i class="fa-solid fa-screwdriver-wrench"></i> Yêu cầu sửa chữa
                                         </a>
                                         <a href="${pageContext.request.contextPath}/customer/payments" class="dropdown-item">
                                             <i class="fa-solid fa-credit-card"></i> Thanh toán & Lịch sử
@@ -53,22 +64,22 @@
                                         <c:choose>
                                             <c:when test="${sessionScope.role eq 'ADMIN'}">
                                                 <a href="${pageContext.request.contextPath}/admin/dashboard" class="dropdown-item">
-                                                    <i class="fa-solid fa-chart-line"></i> Dashboard Admin
+                                                    <i class="fa-solid fa-chart-line"></i> <fmt:message key="nav.dashboard.admin" />
                                                 </a>
                                             </c:when>
                                             <c:when test="${sessionScope.role eq 'HOTEL_MANAGER'}">
                                                 <a href="${pageContext.request.contextPath}/manager/dashboard" class="dropdown-item">
-                                                    <i class="fa-solid fa-chart-line"></i> Dashboard Manager
+                                                    <i class="fa-solid fa-chart-line"></i> <fmt:message key="nav.dashboard.manager" />
                                                 </a>
                                             </c:when>
                                             <c:when test="${sessionScope.role eq 'RECEPTIONIST'}">
                                                 <a href="${pageContext.request.contextPath}/receptionist/dashboard" class="dropdown-item">
-                                                    <i class="fa-solid fa-chart-line"></i> Dashboard Lễ tân
+                                                    <i class="fa-solid fa-chart-line"></i> <fmt:message key="nav.dashboard.receptionist" />
                                                 </a>
                                             </c:when>
                                             <c:when test="${sessionScope.role eq 'HOUSEKEEPING'}">
                                                 <a href="${pageContext.request.contextPath}/housekeeping/dashboard" class="dropdown-item">
-                                                    <i class="fa-solid fa-broom"></i> Dashboard Dọn phòng
+                                                    <i class="fa-solid fa-broom"></i> <fmt:message key="nav.dashboard.housekeeping" />
                                                 </a>
                                             </c:when>
                                         </c:choose>
@@ -76,22 +87,22 @@
                                 </c:choose>
                                 <div class="dropdown-divider"></div>
                                 <a href="${pageContext.request.contextPath}/logout" class="dropdown-item logout-item">
-                                    <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                                    <i class="fa-solid fa-right-from-bracket"></i> <fmt:message key="nav.logout" />
                                 </a>
                             </div>
                         </div>
                     </c:when>
                     <c:otherwise>
-                        <a href="${pageContext.request.contextPath}/home/login" class="btn-login">Đăng nhập</a>
-                        <a href="${pageContext.request.contextPath}/home/register" class="btn-register">Đăng ký</a>
+                        <a href="${pageContext.request.contextPath}/home/login" class="btn-login"><fmt:message key="nav.login" /></a>
+                        <a href="${pageContext.request.contextPath}/home/register" class="btn-register"><fmt:message key="nav.register" /></a>
                     </c:otherwise>
                 </c:choose>
             </div>
         </nav>
 
         <div class="hero-content">
-            <h1>Trải nghiệm kỳ nghỉ<br>tuyệt vời tại HotelOps</h1>
-            <p>Nơi sang trọng gặp gỡ sự tinh tế, mang đến cho bạn trải nghiệm nghỉ dưỡng đích thực tại trung tâm thành phố.</p>
+            <h1>${heroTitle}</h1>
+            <p>${heroSubtitle}</p>
         </div>
 
     </header>
@@ -101,26 +112,24 @@
             <img src="https://images.unsplash.com/photo-1439066615861-d1af74d74000?q=80&w=1200" alt="Resort HotelOps">
         </div>
         <div class="about-text">
-            <span class="sub-title">VỀ HOTELOPS</span>
-            <h2>Định nghĩa lại lòng hiếu khách</h2>
+            <span class="sub-title">${aboutTag}</span>
+            <h2>${aboutTitle}</h2>
             <p>
-                HotelOps cung cấp không gian lưu trú sạch sẽ, tiện nghi và thoải mái
-                dành cho cá nhân, gia đình và khách du lịch. Chúng tôi luôn cố gắng
-                mang đến trải nghiệm nghỉ ngơi thuận tiện với mức giá phù hợp cho mọi khách hàng.
+                ${aboutDesc}
             </p>
             <div class="about-features">
                 <div class="feat-item">
                     <i class="fa-solid fa-shield-halved"></i>
                     <div>
-                        <h4>An ninh và Bảo mật tối đa</h4>
-                        <p>Đảm bảo sự riêng tư tuyệt đối cho khách hàng.</p>
+                        <h4><fmt:message key="about.feat1.title" /></h4>
+                        <p><fmt:message key="about.feat1.desc" /></p>
                     </div>
                 </div>
                 <div class="feat-item">
                     <i class="fa-solid fa-bell"></i>
                     <div>
-                        <h4>Phục vụ phòng 24/7</h4>
-                        <p>Luôn sẵn sàng đáp ứng mọi yêu cầu của bạn bất cứ lúc nào.</p>
+                        <h4><fmt:message key="about.feat2.title" /></h4>
+                        <p><fmt:message key="about.feat2.desc" /></p>
                     </div>
                 </div>
             </div>
@@ -129,39 +138,39 @@
 
     <section class="values-section">
         <div class="container text-center">
-            <span class="sub-title">TẠI SAO CHỌN CHÚNG TÔI</span>
+            <span class="sub-title"><fmt:message key="values.tag" /></span>
 
             <div class="values-grid">
 
                 <div class="value-card">
                     <i class="fa-solid fa-wallet"></i>
-                    <h3>Giá cả hợp lý</h3>
+                    <h3><fmt:message key="values.card1.title" /></h3>
                     <p>
-                        Phù hợp với nhu cầu lưu trú phổ thông và tiết kiệm chi phí.
+                        <fmt:message key="values.card1.desc" />
                     </p>
                 </div>
 
                 <div class="value-card">
                     <i class="fa-solid fa-bed"></i>
-                    <h3>Phòng sạch sẽ</h3>
+                    <h3><fmt:message key="values.card2.title" /></h3>
                     <p>
-                        Không gian nghỉ ngơi được vệ sinh thường xuyên và gọn gàng.
+                        <fmt:message key="values.card2.desc" />
                     </p>
                 </div>
 
                 <div class="value-card">
                     <i class="fa-solid fa-map-location-dot"></i>
-                    <h3>Vị trí thuận tiện</h3>
+                    <h3><fmt:message key="values.card3.title" /></h3>
                     <p>
-                        Dễ dàng di chuyển đến các khu vực trung tâm và địa điểm du lịch.
+                        <fmt:message key="values.card3.desc" />
                     </p>
                 </div>
 
                 <div class="value-card">
                     <i class="fa-solid fa-headset"></i>
-                    <h3>Hỗ trợ thân thiện</h3>
+                    <h3><fmt:message key="values.card4.title" /></h3>
                     <p>
-                        Nhân viên luôn sẵn sàng hỗ trợ khách hàng nhanh chóng và nhiệt tình.
+                        <fmt:message key="values.card4.desc" />
                     </p>
                 </div>
 
@@ -172,10 +181,10 @@
     <section class="rooms-section container" id="phong-gia">
         <div class="section-header">
             <div>
-                <span class="sub-title">PHÒNG & SUITES</span>
-                <h2>Không gian sống thoải mái</h2>
+                <span class="sub-title"><fmt:message key="rooms.tag" /></span>
+                <h2><fmt:message key="rooms.title" /></h2>
             </div>
-            <a href="${pageContext.request.contextPath}/rooms" class="btn-outline" style="display: inline-block; text-align: center;">Xem tất cả phòng</a>
+            <a href="${pageContext.request.contextPath}/rooms" class="btn-outline" style="display: inline-block; text-align: center;"><fmt:message key="rooms.all" /></a>
         </div>
 
         <div class="rooms-grid">
@@ -190,7 +199,7 @@
                              alt="${room.typeName}">
 
                         <c:if test="${room.availableCount > 0}">
-                            <span class="room-tag">Còn phòng</span>
+                            <span class="room-tag"><fmt:message key="rooms.available" /></span>
                         </c:if>
 
                     </div>
@@ -220,14 +229,14 @@
                             <span class="room-price">
                                 <fmt:formatNumber value="${room.basePrice}"
                                                   type="number"/>
-                                đ
-                                <span>/ đêm</span>
+                                <fmt:message key="rooms.currency" />
+                                <span>/ <fmt:message key="rooms.night" /></span>
                             </span>
 
                             <a href="${pageContext.request.contextPath}/rooms/detail?id=${room.typeId}"
                                class="btn-sm"
                                style="display:inline-block;text-align:center;">
-                                Chi tiết
+                                <fmt:message key="rooms.detail" />
                             </a>
 
                         </div>
@@ -244,8 +253,8 @@
     <section class="services-section" id="dich-vu">
     <div class="container text-center">
 
-        <span class="sub-title">DỊCH VỤ</span>
-        <h2>Các tiện ích cơ bản</h2>
+        <span class="sub-title"><fmt:message key="services.tag" /></span>
+        <h2><fmt:message key="services.title" /></h2>
 
         <div class="services-grid">
 
@@ -297,13 +306,13 @@
     <section class="testimonial-section text-center">
         <div class="container">
             <i class="fa-solid fa-quote-left quote-icon"></i>
-            <p class="testimonial-text">"Kỳ nghỉ tại đây thật sự vượt xa mong đợi của tôi. Từ quy trình nhận phòng thông minh đến sự chu đáo của đội ngũ nhân viên, tất cả đều toát lên vẻ chuyên nghiệp và sang trọng."</p>
+            <p class="testimonial-text"><fmt:message key="testi.quote" /></p>
             <div class="stars">
                 <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
             </div>
             <div class="client-info">
-                <h4>Nguyễn Thúy Vân</h4>
-                <span>Giám đốc Điều hành - VinTech</span>
+                <h4><fmt:message key="testi.author" /></h4>
+                <span><fmt:message key="testi.role" /></span>
             </div>
         </div>
     </section>
