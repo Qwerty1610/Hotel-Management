@@ -2,11 +2,30 @@ package com.mycompany.hotelmanagement.entity;
 
 import java.sql.Timestamp;
 
+/**
+ * Project: Hotel Management System
+ * Class: CheckOut
+ *
+ * Description:
+ * Thực thể đại diện cho hồ sơ trả phòng (check-out). Tổng hợp phí phòng,
+ * phí dịch vụ, phụ phí, phương thức thanh toán và số tiền quyết toán cuối
+ * cùng. Cũng chứa các trường chỉ dùng để hiển thị (tên khách hàng, số
+ * phòng, ngày tháng) và danh sách các khoản để xuất hóa đơn.
+ *
+ * Related Use Cases:
+ * - UC-16 Check-Out Customer
+ * 
+ * Date: 09-07-2026
+ * 
+ * @author BinhHD
+ * @version 1.0
+ */
+
 public class CheckOut {
     private int checkOutId;
     private int bookingId;
     private int receptionistId;
-    
+
     private double roomCharge;
     private double serviceCharge;
     private double extraCharge;
@@ -14,7 +33,7 @@ public class CheckOut {
     private double amountPaid;
     private double remainingAmount;
     private String paymentMethod;
-    
+
     private Timestamp checkedOutAt;
     private String notes;
 
@@ -29,66 +48,167 @@ public class CheckOut {
     private java.util.List<InvoiceItem> surchargeItems;
     private java.util.List<Payment> paymentHistory;
 
-    public CheckOut() {}
+    public CheckOut() {
+    }
 
-    public int getCheckOutId() { return checkOutId; }
-    public void setCheckOutId(int checkOutId) { this.checkOutId = checkOutId; }
+    public int getCheckOutId() {
+        return checkOutId;
+    }
 
-    public int getBookingId() { return bookingId; }
-    public void setBookingId(int bookingId) { this.bookingId = bookingId; }
+    public void setCheckOutId(int checkOutId) {
+        this.checkOutId = checkOutId;
+    }
 
-    public int getReceptionistId() { return receptionistId; }
-    public void setReceptionistId(int receptionistId) { this.receptionistId = receptionistId; }
+    public int getBookingId() {
+        return bookingId;
+    }
 
-    public double getRoomCharge() { return roomCharge; }
-    public void setRoomCharge(double roomCharge) { this.roomCharge = roomCharge; }
+    public void setBookingId(int bookingId) {
+        this.bookingId = bookingId;
+    }
 
-    public double getServiceCharge() { return serviceCharge; }
-    public void setServiceCharge(double serviceCharge) { this.serviceCharge = serviceCharge; }
+    public int getReceptionistId() {
+        return receptionistId;
+    }
 
-    public double getExtraCharge() { return extraCharge; }
-    public void setExtraCharge(double extraCharge) { this.extraCharge = extraCharge; }
+    public void setReceptionistId(int receptionistId) {
+        this.receptionistId = receptionistId;
+    }
 
-    public double getTotalAmount() { return totalAmount; }
-    public void setTotalAmount(double totalAmount) { this.totalAmount = totalAmount; }
+    public double getRoomCharge() {
+        return roomCharge;
+    }
 
-    public double getAmountPaid() { return amountPaid; }
-    public void setAmountPaid(double amountPaid) { this.amountPaid = amountPaid; }
+    public void setRoomCharge(double roomCharge) {
+        this.roomCharge = roomCharge;
+    }
 
-    public double getRemainingAmount() { return remainingAmount; }
-    public void setRemainingAmount(double remainingAmount) { this.remainingAmount = remainingAmount; }
+    public double getServiceCharge() {
+        return serviceCharge;
+    }
 
-    public String getPaymentMethod() { return paymentMethod; }
-    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+    public void setServiceCharge(double serviceCharge) {
+        this.serviceCharge = serviceCharge;
+    }
 
-    public Timestamp getCheckedOutAt() { return checkedOutAt; }
-    public void setCheckedOutAt(Timestamp checkedOutAt) { this.checkedOutAt = checkedOutAt; }
+    public double getExtraCharge() {
+        return extraCharge;
+    }
 
-    public String getNotes() { return notes; }
-    public void setNotes(String notes) { this.notes = notes; }
+    public void setExtraCharge(double extraCharge) {
+        this.extraCharge = extraCharge;
+    }
+
+    public double getTotalAmount() {
+        return totalAmount;
+    }
+
+    public void setTotalAmount(double totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+    public double getAmountPaid() {
+        return amountPaid;
+    }
+
+    public void setAmountPaid(double amountPaid) {
+        this.amountPaid = amountPaid;
+    }
+
+    public double getRemainingAmount() {
+        return remainingAmount;
+    }
+
+    public void setRemainingAmount(double remainingAmount) {
+        this.remainingAmount = remainingAmount;
+    }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public Timestamp getCheckedOutAt() {
+        return checkedOutAt;
+    }
+
+    public void setCheckedOutAt(Timestamp checkedOutAt) {
+        this.checkedOutAt = checkedOutAt;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
 
     // Display fields getters & setters
-    public String getCustomerName() { return customerName; }
-    public void setCustomerName(String customerName) { this.customerName = customerName; }
+    public String getCustomerName() {
+        return customerName;
+    }
 
-    public String getRoomNumber() { return roomNumber; }
-    public void setRoomNumber(String roomNumber) { this.roomNumber = roomNumber; }
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
 
-    public Timestamp getCheckInDate() { return checkInDate; }
-    public void setCheckInDate(Timestamp checkInDate) { this.checkInDate = checkInDate; }
+    public String getRoomNumber() {
+        return roomNumber;
+    }
 
-    public Timestamp getCheckOutDate() { return checkOutDate; }
-    public void setCheckOutDate(Timestamp checkOutDate) { this.checkOutDate = checkOutDate; }
+    public void setRoomNumber(String roomNumber) {
+        this.roomNumber = roomNumber;
+    }
 
-    public String getRoomTypeName() { return roomTypeName; }
-    public void setRoomTypeName(String roomTypeName) { this.roomTypeName = roomTypeName; }
+    public Timestamp getCheckInDate() {
+        return checkInDate;
+    }
 
-    public java.util.List<InvoiceItem> getServiceItems() { return serviceItems; }
-    public void setServiceItems(java.util.List<InvoiceItem> serviceItems) { this.serviceItems = serviceItems; }
+    public void setCheckInDate(Timestamp checkInDate) {
+        this.checkInDate = checkInDate;
+    }
 
-    public java.util.List<InvoiceItem> getSurchargeItems() { return surchargeItems; }
-    public void setSurchargeItems(java.util.List<InvoiceItem> surchargeItems) { this.surchargeItems = surchargeItems; }
+    public Timestamp getCheckOutDate() {
+        return checkOutDate;
+    }
 
-    public java.util.List<Payment> getPaymentHistory() { return paymentHistory; }
-    public void setPaymentHistory(java.util.List<Payment> paymentHistory) { this.paymentHistory = paymentHistory; }
+    public void setCheckOutDate(Timestamp checkOutDate) {
+        this.checkOutDate = checkOutDate;
+    }
+
+    public String getRoomTypeName() {
+        return roomTypeName;
+    }
+
+    public void setRoomTypeName(String roomTypeName) {
+        this.roomTypeName = roomTypeName;
+    }
+
+    public java.util.List<InvoiceItem> getServiceItems() {
+        return serviceItems;
+    }
+
+    public void setServiceItems(java.util.List<InvoiceItem> serviceItems) {
+        this.serviceItems = serviceItems;
+    }
+
+    public java.util.List<InvoiceItem> getSurchargeItems() {
+        return surchargeItems;
+    }
+
+    public void setSurchargeItems(java.util.List<InvoiceItem> surchargeItems) {
+        this.surchargeItems = surchargeItems;
+    }
+
+    public java.util.List<Payment> getPaymentHistory() {
+        return paymentHistory;
+    }
+
+    public void setPaymentHistory(java.util.List<Payment> paymentHistory) {
+        this.paymentHistory = paymentHistory;
+    }
 }
