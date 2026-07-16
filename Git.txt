@@ -1,0 +1,22 @@
+# 1. Khởi tạo một repository Git mới trong thư mục hiện tại
+git init
+
+# 2. Kết nối với repository trên GitHub
+git remote add origin https://github.com/Qwerty1610/Hotel-Management.git
+
+# 3. Tải thông tin lịch sử của repo về (không làm ảnh hưởng file hiện tại)
+git fetch origin
+
+# 4. Đồng bộ lịch sử commit với branch BinhHD trên GitHub 
+git reset --mixed origin/BinhHD
+
+# 5. Thêm các file thay đổi vào stage
+git add .
+
+# 6. Tạo commit
+git commit -m ""
+
+# 7. Đẩy code lên branch của bạn
+git branch -m BinhHD
+git push -u origin BinhHD
+

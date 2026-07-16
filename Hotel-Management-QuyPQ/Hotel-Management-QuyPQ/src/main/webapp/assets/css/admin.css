@@ -1,0 +1,494 @@
+/* =========================================================
+   ADMIN DASHBOARD PAGE
+========================================================= */
+
+
+.dashboard-card {
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    text-align: center;
+    max-width: 500px;
+    width: 100%;
+}
+
+.dashboard-card h1 {
+    color: #0b132b;
+    margin-bottom: 10px;
+}
+
+.dashboard-card p {
+    color: #6c757d;
+    margin-bottom: 0px;
+}
+
+.dashboard-card .btn-logout {
+    background-color: #ef4444;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s;
+}
+
+.dashboard-card .btn-logout:hover {
+    background-color: #dc2626;
+    transform: translateY(-2px);
+}
+
+/* =========================================================
+   ADMIN CHANGE PASSWORD MODAL & BUTTONS
+========================================================= */
+
+/* Header Change Password Button */
+.btn-change-password-header {
+    background: var(--brand-blue-light);
+    border: 1px solid rgba(0, 86, 179, 0.25);
+    color: var(--brand-blue);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.btn-change-password-header:hover {
+    background: var(--brand-blue-hover);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 86, 179, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Password Input and Toggle Styles */
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.password-input-wrapper .modal-input {
+    width: 100%;
+    padding-right: 42px !important; /* reserve space for eye icon */
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 15px;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+    color: #475569;
+}
+
+.password-toggle-btn:focus {
+    outline: none;
+}
+
+/* Strength Hints */
+.password-strength-hint {
+    display: block;
+    font-size: 11.5px;
+    color: #64748b;
+    margin-top: 5px;
+    line-height: 1.4;
+}
+
+.password-strength-hint i {
+    color: var(--brand-blue);
+    margin-right: 3px;
+}
+
+/* Inline Alerts within Modal */
+.alert-toast-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 13.5px;
+    font-weight: 500;
+    line-height: 1.5;
+    animation: slideDownIn 0.3s ease;
+}
+
+.alert-toast-inline.error-alert {
+    background-color: #fef2f2;
+    border: 1px solid #fee2e2;
+    color: #ef4444;
+}
+
+.alert-toast-inline.success-alert {
+    background-color: #f0fdf4;
+    border: 1px solid #dcfce7;
+    color: #15803d;
+}
+
+@keyframes slideDownIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Ghi chú khi biểu đồ không có dữ liệu (UC 2.7.4 - AF-1) */
+.empty-chart-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 180px;
+    color: var(--text-muted, #94a3b8);
+    font-size: 14px;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Global Floating Toasts */
+.alert-toast {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 10000;
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14.5px;
+    font-weight: 600;
+    line-height: 1.5;
+    min-width: 320px;
+    max-width: 450px;
+    backdrop-filter: blur(8px);
+    transition: all 0.5s ease;
+    animation: toastSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.alert-toast.success-toast {
+    background-color: rgba(240, 253, 244, 0.95);
+    border: 1px solid rgba(74, 222, 128, 0.4);
+    color: #15803d;
+}
+
+.alert-toast.error-toast {
+    background-color: rgba(254, 242, 242, 0.95);
+    border: 1px solid rgba(248, 113, 113, 0.4);
+    color: #b91c1c;
+}
+
+.alert-toast i {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.alert-toast span {
+    flex-grow: 1;
+}
+
+.toast-close-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.6;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.toast-close-btn:hover {
+    opacity: 1;
+    transform: scale(1.15);
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+/* =========================================================
+   SYSTEM DASHBOARD (UC 2.7.4)
+   Thẻ KPI bấm được + bộ lọc kỳ riêng, bộ lọc riêng từng
+   biểu đồ, danh sách chi tiết phân trang.
+========================================================= */
+
+/* --- Thẻ KPI dạng cột: phần chính bấm được + chân thẻ / bộ lọc --- */
+.stat-card-col {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 18px 20px 14px;
+}
+
+.stat-main {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    border-radius: 10px;
+}
+
+.stat-main .stat-open-icon {
+    margin-left: auto;
+    font-size: 13px;
+    color: #cbd5e1;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.stat-card-col:hover .stat-open-icon {
+    color: var(--brand-blue, #0056b3);
+    transform: translateX(2px);
+}
+
+.stat-period {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--brand-blue, #0056b3);
+}
+
+.stat-foot {
+    border-top: 1px dashed var(--border-color, #e2e8f0);
+    padding-top: 10px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-muted, #94a3b8);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* --- Bộ lọc kỳ bên trong thẻ KPI --- */
+.stat-filter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-top: 1px dashed var(--border-color, #e2e8f0);
+    padding-top: 10px;
+    flex-wrap: wrap;
+}
+
+.stat-filter-select,
+.stat-filter-date {
+    height: 30px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 6px;
+    background: #f8fafc;
+    color: var(--text-navy, #0b132b);
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    padding: 0 8px;
+    outline: none;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.stat-filter-select:focus,
+.stat-filter-date:focus,
+.chart-filter input[type="date"]:focus {
+    border-color: var(--brand-blue, #0056b3);
+    background: #ffffff;
+}
+
+.stat-filter-apply {
+    height: 30px;
+    width: 34px;
+    flex: 0 0 auto;
+    border: none;
+    border-radius: 6px;
+    background: var(--brand-blue, #0056b3);
+    color: #ffffff;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.stat-filter-apply:hover {
+    background: #004494;
+}
+
+/* --- Đầu thẻ biểu đồ: tiêu đề + nhãn gom nhóm + bộ lọc riêng --- */
+.chart-head-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.chart-head-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chart-head-title h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-navy, #0b132b);
+    margin: 0;
+}
+
+.gran-chip {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--brand-blue, #0056b3);
+    background: #e6f0fa;
+    border-radius: 999px;
+    padding: 3px 10px;
+    white-space: nowrap;
+}
+
+.chart-filter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chart-filter input[type="date"] {
+    height: 30px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 6px;
+    background: #f8fafc;
+    color: var(--text-navy, #0b132b);
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    padding: 0 8px;
+    outline: none;
+}
+
+.chart-filter-sep {
+    color: var(--text-muted, #94a3b8);
+    font-size: 12px;
+}
+
+/* --- Danh sách chi tiết khi bấm một thẻ KPI --- */
+.detail-panel {
+    margin-bottom: 24px;
+    scroll-margin-top: 16px;
+    border-left: 3px solid var(--brand-blue, #0056b3);
+}
+
+.detail-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.detail-head h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-navy, #0b132b);
+    margin: 0 0 4px;
+}
+
+.detail-sub {
+    font-size: 12.5px;
+    color: var(--text-muted, #94a3b8);
+    margin: 0;
+}
+
+.detail-close {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    color: var(--text-muted, #94a3b8);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.detail-close:hover {
+    color: #ef4444;
+    border-color: #ef4444;
+    background: #fef2f2;
+}
+
+.detail-table-wrap {
+    overflow-x: auto;
+}
+
+/* --- Thanh phân trang (20 dòng / trang) --- */
+.pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding-top: 14px;
+}
+
+.page-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    color: #475569;
+    font-size: 12px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.page-btn:hover {
+    border-color: var(--brand-blue, #0056b3);
+    color: var(--brand-blue, #0056b3);
+    background: #e6f0fa;
+}
+
+.page-info {
+    font-size: 13px;
+    color: var(--text-muted, #94a3b8);
+    padding: 0 6px;
+}
+
+.page-info strong {
+    color: var(--text-navy, #0b132b);
+}
