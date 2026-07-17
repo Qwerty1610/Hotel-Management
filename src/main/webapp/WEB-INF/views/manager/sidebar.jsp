@@ -54,11 +54,6 @@
                             <i class="fa-solid fa-user-group"></i> <span>Khách hàng</span>
                         </a>
                     </li>
-                    <li class="menu-item ${activePage eq 'promotions' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/manager/promotions">
-                            <i class="fa-solid fa-ticket"></i> <span>Mã giảm giá</span>
-                        </a>
-                    </li>
                 </ul>
 
                 <div class="sidebar-footer">

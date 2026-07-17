@@ -267,6 +267,33 @@ public class CustomerBookingsController extends HttpServlet {
         }
     }
 
+    private void showBookingChangePage(HttpServletRequest request, HttpServletResponse response, int accountId)
+            throws ServletException, IOException {
+        String idStr = request.getParameter("id");
+        if (idStr != null && !idStr.trim().isEmpty()) {
+            try {
+                int bookingId = Integer.parseInt(idStr);
+                Booking booking = bookingService.getBookingById(bookingId);
+                if (booking != null && booking.getAccountId() != null && booking.getAccountId() == accountId) {
+                    request.setAttribute("booking", booking);
+                }
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        // Propagate error/success messages if redirected back here
+        String error = request.getParameter("error");
+        if (error != null) {
+            request.setAttribute("errorCode", error);
+            request.setAttribute("errorMessage", ERROR_MESSAGES.getOrDefault(error, ERROR_MESSAGES.get("MSG55")));
+        }
+
+        List<RoomTypeInfo> roomTypes = roomTypeService.getAllRoomTypes();
+        request.setAttribute("roomTypes", roomTypes);
+
+        request.getRequestDispatcher("/WEB-INF/views/customer/booking-change.jsp").forward(request, response);
+    }
+
     private void handleCreateBooking(HttpServletRequest request, HttpServletResponse response, int accountId)
             throws ServletException, IOException {
 
