@@ -17,6 +17,9 @@ import jakarta.servlet.http.Cookie;
  * Chỉ cho phép các vai trò ADMIN, HOTEL_MANAGER, RECEPTIONIST, HOUSEKEEPING.
  * 
  * @author TungNQ
+ * @version 1.0.3
+ * Created: 25/06/2026
+ * Modified: 16/07/2026
  */
 @WebServlet(name = "StaffLoginController", urlPatterns = { "/staff/login" })
 public class StaffLoginController extends HttpServlet {
@@ -66,6 +69,11 @@ public class StaffLoginController extends HttpServlet {
         }
         if (pass != null) {
             pass = pass.trim();
+        }
+
+        if (username == null || username.isEmpty() || pass == null || pass.isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/staff/login?error=invalid_input");
+            return;
         }
 
         // Call Service layer to process login
@@ -129,7 +137,11 @@ public class StaffLoginController extends HttpServlet {
             response.sendRedirect(request.getContextPath() + result.getRedirectUrl());
         } else {
             // Authentication failed, redirect back to login page with error parameter
-            response.sendRedirect(request.getContextPath() + "/staff/login?error=invalid_credentials");
+            String err = "invalid_credentials";
+            if ("account_locked".equals(result.getErrorCode())) {
+                err = "account_locked";
+            }
+            response.sendRedirect(request.getContextPath() + "/staff/login?error=" + err);
         }
     }
 }

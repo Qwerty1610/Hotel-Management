@@ -81,6 +81,69 @@ IF NOT EXISTS (SELECT 1 FROM dbo.Role WHERE role_name = N'Customer')
     INSERT INTO dbo.Role (role_name, description) VALUES (N'Customer', N'Customer account');
 GO
 
+/* Create Permission and RolePermission tables for dynamic many-to-many authorization */
+IF OBJECT_ID(N'dbo.Permission', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Permission (
+        permission_id INT IDENTITY(1,1) PRIMARY KEY,
+        permission_name NVARCHAR(100) NOT NULL UNIQUE,
+        path_prefix NVARCHAR(100) NOT NULL UNIQUE,
+        description NVARCHAR(255) NULL
+    );
+END
+
+IF OBJECT_ID(N'dbo.RolePermission', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.RolePermission (
+        role_id INT NOT NULL,
+        permission_id INT NOT NULL,
+        CONSTRAINT PK_RolePermission PRIMARY KEY (role_id, permission_id),
+        CONSTRAINT FK_RolePermission_Role FOREIGN KEY (role_id) REFERENCES dbo.Role(role_id),
+        CONSTRAINT FK_RolePermission_Permission FOREIGN KEY (permission_id) REFERENCES dbo.Permission(permission_id)
+    );
+
+    INSERT INTO dbo.Permission (permission_name, path_prefix, description)
+    VALUES 
+    (N'ACCESS_ADMIN', '/admin', N'Quyền truy cập khu vực Quản trị viên'),
+    (N'ACCESS_MANAGER', '/manager', N'Quyền truy cập khu vực Quản lý khách sạn'),
+    (N'ACCESS_RECEPTIONIST', '/receptionist', N'Quyền truy cập khu vực Lễ tân'),
+    (N'ACCESS_HOUSEKEEPING', '/housekeeping', N'Quyền truy cập khu vực Dọn phòng');
+
+    INSERT INTO dbo.RolePermission (role_id, permission_id)
+    SELECT 1, permission_id FROM dbo.Permission WHERE permission_name = 'ACCESS_ADMIN';
+
+    INSERT INTO dbo.RolePermission (role_id, permission_id)
+    SELECT 2, permission_id FROM dbo.Permission WHERE permission_name = 'ACCESS_MANAGER';
+
+    INSERT INTO dbo.RolePermission (role_id, permission_id)
+    SELECT 3, permission_id FROM dbo.Permission WHERE permission_name = 'ACCESS_RECEPTIONIST';
+
+    INSERT INTO dbo.RolePermission (role_id, permission_id)
+    SELECT 4, permission_id FROM dbo.Permission WHERE permission_name = 'ACCESS_HOUSEKEEPING';
+END
+GO
+
+/* Create SystemConfig table for dynamic settings (Email, API Keys, etc.) */
+IF OBJECT_ID(N'dbo.SystemConfig', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.SystemConfig (
+        config_key NVARCHAR(100) PRIMARY KEY,
+        config_value NVARCHAR(500) NOT NULL,
+        description NVARCHAR(255) NULL,
+        updated_at DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+    );
+
+    INSERT INTO dbo.SystemConfig (config_key, config_value, description)
+    VALUES 
+    ('google.client.id', 'YOUR_GOOGLE_CLIENT_ID', 'Google OAuth Client ID'),
+    ('google.client.secret', 'YOUR_GOOGLE_CLIENT_SECRET', 'Google OAuth Client Secret'),
+    ('smtp.user', 'YOUR_SMTP_EMAIL', 'SMTP Email Account'),
+    ('smtp.password', 'YOUR_SMTP_PASSWORD', 'SMTP Email App Password'),
+    ('smtp.host', 'smtp.gmail.com', 'SMTP Host address'),
+    ('smtp.port', '587', 'SMTP Port');
+END
+GO
+
 /*
     Test login accounts:
     admin@hotel.com         / admin123
@@ -1536,7 +1599,8 @@ BEGIN
             (
                 N'Pending',
                 N'InProgress',
-                N'Completed',
+                N'Resolved',
+                N'Unresolvable',
                 N'Cancelled'
             )),
 

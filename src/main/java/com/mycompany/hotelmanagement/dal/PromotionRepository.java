@@ -130,6 +130,46 @@ public class PromotionRepository {
     }
 
     /**
+     * Lấy một khuyến mãi theo mã Code.
+     */
+    public Promotion getPromotionByCode(String code) {
+        String sql = "SELECT PromotionID, PromotionCode, PromotionName, Description, "
+                + "DiscountType, DiscountValue, StartDate, EndDate, EventName, "
+                + "MinBookingAmount, MaxDiscountAmount, UsageLimit, UsedCount, "
+                + "Status, CreatedAt, UpdatedAt "
+                + "FROM Promotion WHERE PromotionCode = ?";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            useDatabase(conn);
+            ps.setString(1, code);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Tăng số lượng đã sử dụng (UsedCount) của khuyến mãi lên 1.
+     */
+    public void incrementUsedCount(int promotionId) {
+        String sql = "UPDATE Promotion SET UsedCount = UsedCount + 1, UpdatedAt = GETDATE() WHERE PromotionID = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            useDatabase(conn);
+            ps.setInt(1, promotionId);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * Kiểm tra mã khuyến mãi có bị trùng không (bỏ qua chính nó khi update).
      *
      * @param code        Mã cần kiểm tra

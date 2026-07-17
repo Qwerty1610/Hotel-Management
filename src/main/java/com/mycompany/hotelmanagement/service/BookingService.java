@@ -12,14 +12,25 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Service xử lý các nghiệp vụ logic liên quan đến Đặt phòng (Booking). Thực
- * hiện kiểm tra ngày hợp lệ, sức chứa tối đa, tính tổng tiền, đặt cọc 30% và
- * gọi DAO lưu thông tin.
+ * Project: Hotel Management System
+ * Class: BookingService
  *
- * @author BinhHD
- * @date 20/06/2026
- * @version 1.0
+ * Description:
+ * Lớp dịch vụ (Service) xử lý logic nghiệp vụ đặt phòng. Xác thực ngày nhận/
+ * trả phòng, sức chứa khách, tình trạng phòng trống và các yêu cầu đặc biệt.
+ * Tính tổng tiền, áp dụng đặt cọc 30% và ủy quyền lưu trữ cho BookingDAO. Ném
+ * ra mã ngoại lệ (MSGxx) khi xác thực thất bại.
+ *
+ * Related Use Cases:
+ * - UC-11 Create Booking (Customer Online)
+ * - UC-13 Create Walk-in Booking
+ * 
+ * Date: 17-06-2026
+ * 
+ * @author BinhHD, QuyPQ, MinhTDP
+ * @version 1.3
  */
+
 public class BookingService {
 
     private static final Logger LOGGER = Logger.getLogger(BookingService.class.getName());
@@ -247,16 +258,14 @@ public class BookingService {
         long nights = parent.getNights();
         double total = 0;
 
-        RoomTypeInfo parentType
-                = roomTypeRepository.getRoomTypeById(parent.getRoomTypeId());
+        RoomTypeInfo parentType = roomTypeRepository.getRoomTypeById(parent.getRoomTypeId());
         if (parentType != null) {
             total += parentType.getBasePrice() * parent.getRoomQuantity();
         }
 
         List<Booking> children = bookingDAO.getChildBookings(parentBookingId);
         for (Booking child : children) {
-            RoomTypeInfo type
-                    = roomTypeRepository.getRoomTypeById(child.getRoomTypeId());
+            RoomTypeInfo type = roomTypeRepository.getRoomTypeById(child.getRoomTypeId());
             if (type != null) {
                 total += type.getBasePrice() * child.getRoomQuantity();
             }
@@ -275,5 +284,43 @@ public class BookingService {
         return roomType.getBasePrice()
                 * booking.getRoomQuantity()
                 * booking.getNights();
+    }
+
+    /**
+     * Phân bổ số tiền giảm giá vào booking cha (và các booking con nếu có).
+     */
+    public void applyDiscountToGroup(int parentBookingId, double totalDiscount, String promoCode) {
+        Booking parent = bookingDAO.getBookingById(parentBookingId);
+        if (parent == null)
+            return;
+        List<Booking> children = bookingDAO.getChildBookings(parentBookingId);
+
+        double remainingDiscount = totalDiscount;
+        String noteAppend = "[Áp dụng mã: " + promoCode + " - Giảm: " + Math.round(totalDiscount) + " VND]";
+
+        // Trừ ở booking cha trước
+        double parentAmount = parent.getTotalAmount();
+        if (parentAmount >= remainingDiscount) {
+            bookingDAO.updateBookingTotalAmountAndNote(parentBookingId, parentAmount - remainingDiscount, noteAppend);
+            remainingDiscount = 0;
+        } else {
+            bookingDAO.updateBookingTotalAmountAndNote(parentBookingId, 0, noteAppend);
+            remainingDiscount -= parentAmount;
+        }
+
+        // Nếu còn dư, trừ tiếp ở booking con
+        for (Booking child : children) {
+            if (remainingDiscount <= 0)
+                break;
+            double childAmount = child.getTotalAmount();
+            if (childAmount >= remainingDiscount) {
+                bookingDAO.updateBookingTotalAmountAndNote(child.getBookingId(), childAmount - remainingDiscount,
+                        noteAppend);
+                remainingDiscount = 0;
+            } else {
+                bookingDAO.updateBookingTotalAmountAndNote(child.getBookingId(), 0, noteAppend);
+                remainingDiscount -= childAmount;
+            }
+        }
     }
 }

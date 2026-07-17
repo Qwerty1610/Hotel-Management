@@ -55,17 +55,23 @@
                                     <i class="fa-solid fa-triangle-exclamation"></i>
                                     <span>
                                         <c:choose>
+                                            <c:when test="${param.error eq 'invalid_input'}">
+                                                Vui lòng điền đầy đủ các trường bắt buộc.
+                                            </c:when>
                                             <c:when test="${param.error eq 'invalid_credentials'}">
                                                 Tên đăng nhập hoặc mật khẩu không đúng!
                                             </c:when>
                                             <c:when test="${param.error eq 'unauthorized'}">
                                                 Vui lòng đăng nhập để truy cập hệ thống.
                                             </c:when>
+                                            <c:when test="${param.error eq 'account_locked'}">
+                                                Tài khoản của bạn đã bị khóa hoặc ngừng hoạt động!
+                                            </c:when>
                                             <c:when test="${param.error eq 'not_customer'}">
                                                 Tài khoản nhân sự không được phép đăng nhập cổng này!
                                             </c:when>
                                             <c:otherwise>
-                                                Lỗi hệ thống. Vui lòng thử lại.
+                                                Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.
                                             </c:otherwise>
                                         </c:choose>
                                     </span>

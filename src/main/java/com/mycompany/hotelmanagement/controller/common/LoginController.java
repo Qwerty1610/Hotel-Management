@@ -19,6 +19,9 @@ import jakarta.servlet.http.Cookie;
  * phân vai trò người dùng để điều hướng phù hợp, đồng thời quản lý Cookie Remember Me.
  * 
  * @author TùngNQ
+ * @version 1.0.1
+ * Created: 24/06/2026
+ * Modified: 16/07/2026
  */
 @WebServlet(name = "LoginController", urlPatterns = { "/home/login" })
 public class LoginController extends HttpServlet {
@@ -77,6 +80,11 @@ public class LoginController extends HttpServlet {
         }
         if (pass != null) {
             pass = pass.trim();
+        }
+
+        if (username == null || username.isEmpty() || pass == null || pass.isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/home/login?error=invalid_input");
+            return;
         }
 
         // Call Service layer to process login
@@ -141,7 +149,7 @@ public class LoginController extends HttpServlet {
                 String redirectUrl = (String) session.getAttribute("redirectAfterLogin");
                 session.removeAttribute("redirectAfterLogin");
                 if (redirectUrl == null || redirectUrl.isEmpty()) {
-                    redirectUrl = request.getContextPath() + "/home/login";
+                    redirectUrl = request.getContextPath() + "/home";
                 }
                 response.sendRedirect(redirectUrl);
             } else {
@@ -149,7 +157,11 @@ public class LoginController extends HttpServlet {
             }
         } else {
             // Authentication failed, redirect back to login page with error parameter
-            response.sendRedirect(request.getContextPath() + "/home/login?error=invalid_credentials");
+            String err = "invalid_credentials";
+            if ("account_locked".equals(result.getErrorCode())) {
+                err = "account_locked";
+            }
+            response.sendRedirect(request.getContextPath() + "/home/login?error=" + err);
         }
     }
 

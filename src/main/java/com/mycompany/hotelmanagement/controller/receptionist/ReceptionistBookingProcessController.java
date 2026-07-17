@@ -24,14 +24,26 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * ReceptionistBookingProcessController URL: /receptionist/booking/process
+ * Project: Hotel Management System
+ * Class: ReceptionistBookingProcessController
  *
- * handles room assignment and status approvals (Confirm, Reject, Cancel) for a
- * specific booking request on a standalone page.
+ * Description:
+ * Controller cho trang xử lý đặt phòng của lễ tân. Hỗ trợ xếp phòng cho
+ * các đơn đã xác nhận, các hành động duyệt/từ chối/hủy cho các yêu cầu
+ * đang chờ, và tải phòng trống bằng AJAX có lọc theo loại phòng và ngày.
+ * Ủy quyền logic nghiệp vụ cho BookingService và PaymentService.
  *
- * @author BinhHD, MinhTDP
+ * Related Use Cases:
+ * - UC-12 Process Booking Request
+ * - UC-13 Create Walk-in Booking
+ * 
+ * Date: 17-06-2026
+ * 
+ * @author BinhHD, TungNQ, MinhTDP
+ * @version 1.3
  */
-@WebServlet(name = "ReceptionistBookingProcessController", urlPatterns = {"/receptionist/booking/process"})
+
+@WebServlet(name = "ReceptionistBookingProcessController", urlPatterns = { "/receptionist/booking/process" })
 public class ReceptionistBookingProcessController extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(ReceptionistBookingProcessController.class.getName());
@@ -85,8 +97,7 @@ public class ReceptionistBookingProcessController extends HttpServlet {
             List<Room> assignedRooms = bookingService.getAssignedRoomsForBooking(
                     bookingId,
                     booking.getCheckInDate(),
-                    booking.getCheckOutDate()
-            );
+                    booking.getCheckOutDate());
 
             List<RoomTypeInfo> roomTypesList = new RoomTypeService().getAllRoomTypes();
 
@@ -121,6 +132,7 @@ public class ReceptionistBookingProcessController extends HttpServlet {
             request.setAttribute("childBookings", childBookings);
             request.setAttribute("childAssignedRoomsMap", childAssignedRoomsMap);
 
+            request.setAttribute("currentTab", "bookings");
             request.getRequestDispatcher("/WEB-INF/views/receptionist/booking-process.jsp")
                     .forward(request, response);
 
@@ -226,8 +238,7 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                     existing.setNote(note.trim());
                 }
                 existing.setTotalAmount(
-                        bookingService.calculateBookingAmount(existing)
-                );
+                        bookingService.calculateBookingAmount(existing));
                 bookingService.updateBookingDetails(existing);
 
                 // Update child bookings
@@ -247,8 +258,7 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                     }
 
                     child.setTotalAmount(
-                            bookingService.calculateBookingAmount(child)
-                    );
+                            bookingService.calculateBookingAmount(child));
 
                     bookingService.updateBookingDetails(child);
                 }
@@ -266,7 +276,8 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                             }
                         }
                         for (Booking child : children) {
-                            String[] cRoomIdStrings = request.getParameterValues("childRoomIds_" + child.getBookingId());
+                            String[] cRoomIdStrings = request
+                                    .getParameterValues("childRoomIds_" + child.getBookingId());
                             if (cRoomIdStrings != null && cRoomIdStrings.length == child.getRoomQuantity()) {
                                 for (String rIdStr : cRoomIdStrings) {
                                     allSubmittedRoomIds.add(Integer.parseInt(rIdStr.trim()));
@@ -283,7 +294,8 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                         }
 
                         // Check overlap with other bookings
-                        List<Integer> conflicts = bookingService.getConflictingRooms(allSubmittedRoomIds, existing.getCheckInDate(), existing.getCheckOutDate(), bookingId);
+                        List<Integer> conflicts = bookingService.getConflictingRooms(allSubmittedRoomIds,
+                                existing.getCheckInDate(), existing.getCheckOutDate(), bookingId);
                         if (!conflicts.isEmpty()) {
                             response.sendRedirect(request.getContextPath() + "/receptionist/booking/process?bookingId="
                                     + bookingId + "&error=conflict");
@@ -303,7 +315,8 @@ public class ReceptionistBookingProcessController extends HttpServlet {
 
                         // Child assignments
                         for (Booking child : children) {
-                            String[] cRoomIdStrings = request.getParameterValues("childRoomIds_" + child.getBookingId());
+                            String[] cRoomIdStrings = request
+                                    .getParameterValues("childRoomIds_" + child.getBookingId());
                             if (cRoomIdStrings != null && cRoomIdStrings.length == child.getRoomQuantity()) {
                                 List<Integer> cRoomIds = new ArrayList<>();
                                 for (String rIdStr : cRoomIdStrings) {
@@ -345,7 +358,8 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                     for (Booking child : children) {
                         String[] cRoomIdStrings = request.getParameterValues("childRoomIds_" + child.getBookingId());
                         if (cRoomIdStrings == null || cRoomIdStrings.length != child.getRoomQuantity()) {
-                            LOGGER.log(Level.WARNING, "Confirm failed: Room selection mismatch for child booking: " + child.getBookingId());
+                            LOGGER.log(Level.WARNING, "Confirm failed: Room selection mismatch for child booking: "
+                                    + child.getBookingId());
                             response.sendRedirect(request.getContextPath() + "/receptionist/booking/process?bookingId="
                                     + bookingId + "&error=validation");
                             return;
@@ -364,7 +378,8 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                     }
 
                     // Check overlap with other bookings
-                    List<Integer> conflicts = bookingService.getConflictingRooms(allSubmittedRoomIds, existing.getCheckInDate(), existing.getCheckOutDate(), bookingId);
+                    List<Integer> conflicts = bookingService.getConflictingRooms(allSubmittedRoomIds,
+                            existing.getCheckInDate(), existing.getCheckOutDate(), bookingId);
                     if (!conflicts.isEmpty()) {
                         response.sendRedirect(request.getContextPath() + "/receptionist/booking/process?bookingId="
                                 + bookingId + "&error=conflict");
@@ -477,8 +492,7 @@ public class ReceptionistBookingProcessController extends HttpServlet {
             List<Room> rooms = bookingService.getRoomsByTypeId(
                     roomTypeId,
                     checkIn,
-                    checkOut
-            );
+                    checkOut);
 
             StringBuilder json = new StringBuilder();
             json.append("[");

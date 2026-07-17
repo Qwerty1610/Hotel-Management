@@ -7,6 +7,9 @@ import java.io.Serializable;
  * Used by all roles.
  * 
  * @author TungNQ
+ * @version 1.0.1
+ * Created: 24/06/2026
+ * Modified: 16/07/2026
  */
 public class ChangePasswordRequest implements Serializable {
     private static final long serialVersionUID = 1L;

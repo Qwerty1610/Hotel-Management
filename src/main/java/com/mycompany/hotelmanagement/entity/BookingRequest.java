@@ -39,6 +39,10 @@ public class BookingRequest implements Serializable {
     private String newRoomTypeName;
     private String currentRoomTypeName;
 
+    // Display-only fields for the staff processing list (UC 2.4.5 Process Booking Change)
+    private String customerName;
+    private String bookingStatus;
+
     public int getRequestId() { return requestId; }
     public void setRequestId(int requestId) { this.requestId = requestId; }
 
@@ -86,6 +90,12 @@ public class BookingRequest implements Serializable {
 
     public String getCurrentRoomTypeName() { return currentRoomTypeName; }
     public void setCurrentRoomTypeName(String currentRoomTypeName) { this.currentRoomTypeName = currentRoomTypeName; }
+
+    public String getCustomerName() { return customerName; }
+    public void setCustomerName(String customerName) { this.customerName = customerName; }
+
+    public String getBookingStatus() { return bookingStatus; }
+    public void setBookingStatus(String bookingStatus) { this.bookingStatus = bookingStatus; }
 
     public boolean isExtension() { return TYPE_EXTENSION.equalsIgnoreCase(requestType); }
     public boolean isChange() { return TYPE_CHANGE.equalsIgnoreCase(requestType); }

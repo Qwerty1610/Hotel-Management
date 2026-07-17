@@ -19,13 +19,23 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * ReceptionistBookingDetailController URL: /receptionist/booking/detail
+ * Project: Hotel Management System
+ * Class: ReceptionistBookingDetailController
  *
- * Hiển thị chi tiết (read-only) của một yêu cầu đặt phòng.
+ * Description:
+ * Controller chỉ đọc dùng để tải và hiển thị toàn bộ chi tiết của một đơn
+ * đặt phòng cho lễ tân. Truy xuất dữ liệu đặt phòng, các phòng đã xếp, chi
+ * tiết tài khoản khách hàng, sau đó chuyển tiếp đến trang JSP chi tiết.
  *
+ * Related Use Cases:
+ * - UC-12 Process Booking Request
+ * 
+ * Date: 01-06-2026
+ * 
  * @author BinhHD, MinhTDP
+ * @version 1.2
  */
-@WebServlet(name = "ReceptionistBookingDetailController", urlPatterns = {"/receptionist/booking/detail"})
+@WebServlet(name = "ReceptionistBookingDetailController", urlPatterns = { "/receptionist/booking/detail" })
 public class ReceptionistBookingDetailController extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(ReceptionistBookingDetailController.class.getName());
@@ -87,6 +97,7 @@ public class ReceptionistBookingDetailController extends HttpServlet {
             request.setAttribute("childBookings", childBookings);
             request.setAttribute("childAssignedRoomsMap", childAssignedRoomsMap);
 
+            request.setAttribute("currentTab", "bookings");
             request.getRequestDispatcher("/WEB-INF/views/receptionist/booking-detail.jsp")
                     .forward(request, response);
 

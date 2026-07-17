@@ -36,14 +36,14 @@ import java.util.List;
 public class RoomDetailController extends HttpServlet {
 
     private final RoomTypeService roomTypeService = new RoomTypeService();
-
+    private final String ROOM_URL = "/rooms";
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
         String idParam = request.getParameter("id");
         if (idParam == null || idParam.trim().isEmpty()) {
-            response.sendRedirect(request.getContextPath() + "/rooms");
+            response.sendRedirect(request.getContextPath() + ROOM_URL);
             return;
         }
 
@@ -51,7 +51,7 @@ public class RoomDetailController extends HttpServlet {
         try {
             typeId = Integer.parseInt(idParam);
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/rooms");
+            response.sendRedirect(request.getContextPath() + ROOM_URL);
             return;
         }
 
@@ -60,7 +60,7 @@ public class RoomDetailController extends HttpServlet {
 
         if (roomDetail == null) {
             // Room type ID does not exist in database or database query failed
-            response.sendRedirect(request.getContextPath() + "/rooms");
+            response.sendRedirect(request.getContextPath() + ROOM_URL);
             return;
         }
 

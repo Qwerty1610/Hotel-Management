@@ -11,6 +11,9 @@ import java.security.SecureRandom;
 /**
  *
  * @author TungNQ
+ * @version 1.0.8
+ * Created: 01/06/2026
+ * Modified: 16/07/2026
  */
 public class AuthService {
     private final AccountRepository accountRepository = new AccountRepository();
@@ -49,6 +52,9 @@ public class AuthService {
         // 1. Authenticate using database via AccountRepository
         Account account = authenticate(username, password);
         if (account != null) {
+            if (!account.isActive()) {
+                return new LoginResult(false, null, null, null, null, -1, "account_locked");
+            }
             String dbRoleName = account.getRoleName();
             String fullName = account.getFullName();
             emailVal = account.getEmail();
@@ -136,6 +142,9 @@ public class AuthService {
         int accountIdVal = -1;
 
         if (account != null) {
+            if (!account.isActive()) {
+                return new LoginResult(false, null, null, null, null, -1, "account_locked");
+            }
             String dbFullName = account.getFullName();
             String dbRoleName = account.getRoleName();
             userDisplayName = (dbFullName != null && !dbFullName.trim().isEmpty()) ? dbFullName : name;
@@ -218,10 +227,13 @@ public class AuthService {
         }
 
         // 4. Password complexity validation: min length 8, contains letters, digits, and special characters
+        if (password.length() < 8) {
+            return "password_too_short";
+        }
         boolean hasLetter = password.matches(".*[a-zA-Z].*");
         boolean hasDigit = password.matches(".*[0-9].*");
         boolean hasSpecial = password.matches(".*[^a-zA-Z0-9].*");
-        if (password.length() < 8 || !hasLetter || !hasDigit || !hasSpecial) {
+        if (!hasLetter || !hasDigit || !hasSpecial) {
             return "invalid_password";
         }
 
@@ -279,17 +291,19 @@ public class AuthService {
 
         // 5. Send OTP via Email
         String subject = "Mã xác minh khôi phục mật khẩu - HotelOps Pro";
-        String emailBody = "<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #fcfcfc;\">" +
-                "    <div style=\"text-align: center; border-bottom: 2px solid #c29a30; padding-bottom: 15px; margin-bottom: 20px;\">" +
-                "        <h2 style=\"color: #0b132b; margin: 0;\">Hotel<span style=\"color: #c29a30;\">Ops</span> Pro</h2>" +
+        String emailBody = "<div style=\"font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 30px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);\">" +
+                "    <div style=\"text-align: center; border-bottom: 2px solid #c29a30; padding-bottom: 20px; margin-bottom: 25px;\">" +
+                "        <h2 style=\"color: #0b132b; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;\">Hotel<span style=\"color: #c29a30;\">Ops</span> Pro</h2>" +
                 "    </div>" +
-                "    <p style=\"font-size: 16px; color: #1c2541;\">Xin chào,</p>" +
-                "    <p style=\"font-size: 15px; color: #1c2541; line-height: 1.6;\">Bạn vừa yêu cầu cấp lại mật khẩu cho tài khoản trên hệ thống HotelOps Pro. Vui lòng sử dụng mã xác thực (OTP) dưới đây để tiến hành đặt lại mật khẩu của mình:</p>" +
-                "    <div style=\"text-align: center; margin: 30px 0;\">" +
-                "        <span style=\"font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #c29a30; background: #0b132b; padding: 12px 30px; border-radius: 8px; display: inline-block;\">" + otpCode + "</span>" +
+                "    <p style=\"font-size: 16px; color: #1e293b; font-weight: 600; margin-top: 0; margin-bottom: 12px;\">Xin chào,</p>" +
+                "    <p style=\"font-size: 15px; color: #334155; line-height: 1.6; margin-bottom: 24px;\">Bạn vừa yêu cầu cấp lại mật khẩu cho tài khoản trên hệ thống <strong>HotelOps Pro</strong>. Vui lòng sử dụng mã xác thực (OTP) dưới đây để tiến hành đặt lại mật khẩu của mình:</p>" +
+                "    <div style=\"text-align: center; margin: 35px 0;\">" +
+                "        <span style=\"font-size: 36px; font-weight: 700; letter-spacing: 6px; color: #ffffff; background-color: #0b132b; padding: 14px 35px; border-radius: 10px; display: inline-block; border: 1px solid #c29a30;\">" + otpCode + "</span>" +
                 "    </div>" +
-                "    <p style=\"font-size: 13px; color: #6c757d; line-height: 1.5;\">Lưu ý: Mã OTP này có hiệu lực trong vòng <b>10 phút</b> kể từ lúc yêu cầu và chỉ sử dụng được 1 lần duy nhất. Nếu bạn không yêu cầu hành động này, vui lòng bỏ qua email này.</p>" +
-                "    <div style=\"margin-top: 30px; border-top: 1px solid #e0e0e0; padding-top: 15px; text-align: center; font-size: 12px; color: #999;\">" +
+                "    <p style=\"font-size: 13px; color: #64748b; line-height: 1.6; margin-top: 25px; margin-bottom: 0; padding: 12px; background-color: #f8fafc; border-left: 3px solid #c29a30; border-radius: 4px;\">" +
+                "        <strong>Lưu ý:</strong> Mã OTP này có hiệu lực trong vòng <strong>10 phút</strong> kể từ lúc yêu cầu và chỉ sử dụng được 1 lần duy nhất. Nếu bạn không yêu cầu hành động này, vui lòng bỏ qua email này." +
+                "    </p>" +
+                "    <div style=\"margin-top: 35px; border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center; font-size: 12px; color: #94a3b8;\">" +
                 "        © 2026 HotelOps Pro. Mọi quyền được bảo lưu." +
                 "    </div>" +
                 "</div>";

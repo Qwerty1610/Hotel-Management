@@ -23,6 +23,8 @@ import java.util.logging.Logger;
  * (MSGxx / NOT_ELIGIBLE) that the controller maps to user-facing messages.
  *
  * @author QuyPQ
+ * date: 12/07/2026
+ * version: 1.1
  */
 public class BookingRequestService {
 
@@ -47,6 +49,141 @@ public class BookingRequestService {
 
     public List<BookingRequest> getRequestsByAccount(int accountId) {
         return requestDAO.getRequestsByAccount(accountId);
+    }
+
+    // =====================================================================
+    // UC 2.4.5 Process Booking Change (Receptionist)
+    // =====================================================================
+
+    public List<BookingRequest> getRequestsForStaff(String statusFilter, String keyword, int offset, int limit) {
+        return requestDAO.getRequestsForStaff(statusFilter, keyword, offset, limit);
+    }
+
+    public int countRequestsForStaff(String statusFilter, String keyword) {
+        return requestDAO.countRequestsForStaff(statusFilter, keyword);
+    }
+
+    /**
+     * Approves a pending request and applies it to the booking:
+     * <ul>
+     *   <li>Change    — new dates / room type / quantity; room assignments are
+     *                   cleared so reception can re-assign; amount recalculated.</li>
+     *   <li>Extension — later check-out on the current stay; amount recalculated.</li>
+     * </ul>
+     *
+     * @return null on success, or an error code:
+     *         notfound | not_pending | not_eligible | no_room | unknown
+     */
+    public String approveRequest(int requestId) {
+        try {
+            BookingRequest req = requestDAO.getRequestById(requestId);
+            if (req == null) {
+                return "notfound";
+            }
+            if (!"Pending".equalsIgnoreCase(req.getStatus())) {
+                return "not_pending";
+            }
+            Booking booking = bookingDAO.getBookingById(req.getBookingId());
+            if (booking == null) {
+                return "notfound";
+            }
+
+            BookingService bookingService = new BookingService();
+
+            if (req.isChange()) {
+                // Booking must still be changeable (not checked-in / cancelled)
+                String status = booking.getStatus();
+                boolean eligible = "Pending".equalsIgnoreCase(status) || "Confirmed".equalsIgnoreCase(status);
+                if (!eligible || req.getNewCheckIn() == null || req.getNewCheckOut() == null
+                        || req.getNewRoomTypeId() == null || req.getNewRoomQuantity() == null) {
+                    return "not_eligible";
+                }
+                // Yêu cầu đã quá hạn: ngày nhận phòng mới nằm trong quá khứ
+                if (req.getNewCheckIn().toLocalDate().isBefore(LocalDate.now())) {
+                    return "not_eligible";
+                }
+
+                // Re-check availability at approval time (the current booking's own
+                // rooms count back in when the type is unchanged)
+                int available = bookingDAO.checkRoomAvailability(
+                        req.getNewRoomTypeId(), req.getNewCheckIn(), req.getNewCheckOut());
+                boolean sameType = booking.getRoomTypeId() != null
+                        && booking.getRoomTypeId().intValue() == req.getNewRoomTypeId().intValue();
+                int effectiveAvailable = available + (sameType ? booking.getRoomQuantity() : 0);
+                if (req.getNewRoomQuantity() > effectiveAvailable) {
+                    return "no_room";
+                }
+
+                booking.setCheckInDate(req.getNewCheckIn());
+                booking.setCheckOutDate(req.getNewCheckOut());
+                booking.setRoomTypeId(req.getNewRoomTypeId());
+                booking.setRoomQuantity(req.getNewRoomQuantity());
+                booking.setTotalAmount(bookingService.calculateBookingAmount(booking));
+                // updateBookingDetails chỉ nhận đơn Pending nên dùng applyBookingChange
+                // để cập nhật được cả đơn Confirmed
+                if (!bookingDAO.applyBookingChange(booking)) {
+                    return "unknown";
+                }
+                // Old room assignments may no longer fit the new dates/type
+                bookingService.assignRoomsToBooking(booking.getBookingId(), new java.util.ArrayList<>());
+
+            } else if (req.isExtension()) {
+                if (!"CheckedIn".equalsIgnoreCase(booking.getStatus())
+                        || req.getNewCheckOut() == null || booking.getCheckOutDate() == null
+                        || !booking.getCheckOutDate().before(req.getNewCheckOut())) {
+                    return "not_eligible";
+                }
+
+                // Re-check availability of the same type for the extra nights
+                if (booking.getRoomTypeId() == null) {
+                    return "unknown";
+                }
+                int qty = booking.getRoomQuantity() > 0 ? booking.getRoomQuantity() : 1;
+                int available = bookingDAO.checkRoomAvailability(
+                        booking.getRoomTypeId(), booking.getCheckOutDate(), req.getNewCheckOut());
+                if (qty > available) {
+                    return "no_room";
+                }
+
+                booking.setCheckOutDate(req.getNewCheckOut());
+                booking.setTotalAmount(bookingService.calculateBookingAmount(booking));
+                // Đơn gia hạn đang CheckedIn nên phải dùng applyBookingChange
+                if (!bookingDAO.applyBookingChange(booking)) {
+                    return "unknown";
+                }
+            } else {
+                return "unknown";
+            }
+
+            if (!requestDAO.updateStatus(requestId, "Approved")) {
+                return "unknown";
+            }
+            return null;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error approving request " + requestId, e);
+            return "unknown";
+        }
+    }
+
+    /**
+     * Rejects a pending request. The booking itself is left untouched.
+     *
+     * @return null on success, or an error code: notfound | not_pending | unknown
+     */
+    public String rejectRequest(int requestId) {
+        try {
+            BookingRequest req = requestDAO.getRequestById(requestId);
+            if (req == null) {
+                return "notfound";
+            }
+            if (!"Pending".equalsIgnoreCase(req.getStatus())) {
+                return "not_pending";
+            }
+            return requestDAO.updateStatus(requestId, "Rejected") ? null : "unknown";
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error rejecting request " + requestId, e);
+            return "unknown";
+        }
     }
 
     /**

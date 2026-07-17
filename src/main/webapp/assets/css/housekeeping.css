@@ -779,3 +779,114 @@
 .outofservice-message i {
     font-size: 22px;
 }
+/* ==========================
+   Maintenance Request
+========================== */
+
+.maintenance-wrapper{
+    display:flex;
+    flex-direction:column;
+    gap:24px;
+}
+
+.page-header h2{
+    margin:0;
+    font-size:28px;
+    font-weight:700;
+    color:#0f172a;
+}
+
+.page-header p{
+    margin-top:6px;
+    color:#64748b;
+}
+
+/* ==========================
+   Filter Cards
+========================== */
+
+.maintenance-filter{
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    gap:16px;
+}
+
+.filter-card{
+    background:#fff;
+    border:2px solid #e2e8f0;
+    border-radius:14px;
+
+    padding:18px;
+
+    text-decoration:none;
+
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+
+    transition:.25s;
+}
+
+.filter-card span{
+    color:#64748b;
+    font-size:14px;
+}
+
+.filter-card strong{
+    font-size:30px;
+    color:#0f172a;
+}
+
+.filter-card:hover{
+    transform:translateY(-3px);
+    border-color:#2563eb;
+}
+
+.filter-card.active{
+    background:#2563eb;
+    border-color:#2563eb;
+}
+
+.filter-card.active span,
+.filter-card.active strong{
+    color:white;
+}
+
+/* ==========================
+   Table
+========================== */
+
+.maintenance-table-card{
+    background:white;
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 4px 12px rgba(0,0,0,.06);
+}
+.maintenance-table{
+    width:100%;
+    border-collapse:collapse;
+}
+.maintenance-table thead{
+    background:#f8fafc;
+}
+.maintenance-table th{
+    padding:16px;
+    text-align:left;
+    color:#334155;
+    font-size:14px;
+    font-weight:700;
+}
+.maintenance-table td{
+    padding:16px;
+    border-top:1px solid #e2e8f0;
+    vertical-align:middle;
+}
+.maintenance-table tr:hover{
+    background:#f8fafc;
+}
+.btn-task.disabled{
+    background:#e2e8f0;
+    color:#64748b;
+    cursor:not-allowed;
+    pointer-events:none;
+}

@@ -74,6 +74,8 @@
                     <a href="${ctx}/customer/bookings" class="dropdown-item">
                         <i class="fa-solid fa-calendar-check"></i> Đặt phòng của tôi
                     </a>
+                    <a href="${ctx}/customer/booking/change" class="dropdown-item">
+                        <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
                     <a href="${ctx}/customer/feedbacks" class="dropdown-item">
                         <i class="fa-solid fa-star"></i> Đánh giá lưu trú
                     </a>
