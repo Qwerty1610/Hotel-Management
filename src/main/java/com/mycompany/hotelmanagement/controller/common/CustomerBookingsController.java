@@ -542,4 +542,19 @@ public class CustomerBookingsController extends HttpServlet {
                     .write("{\"success\": false, \"message\": \"Dữ liệu không hợp lệ.\", \"discountAmount\": 0}");
         }
     }
+    private void showBookingChangePage(HttpServletRequest request, HttpServletResponse response, int accountId)
+            throws ServletException, IOException {
+        List<Booking> bookings = bookingService.getBookingsByAccount(accountId, "All", null);
+        request.setAttribute("bookings", bookings);
+        request.setAttribute("roomTypes", roomTypeService.getAllRoomTypes());
+        request.setAttribute("myRequests", bookingRequestService.getRequestsByAccount(accountId));
+
+        String error = request.getParameter("error");
+        if (error != null) {
+            request.setAttribute("errorCode", error);
+            request.setAttribute("errorMessage", ERROR_MESSAGES.getOrDefault(error, ERROR_MESSAGES.get("MSG55")));
+        }
+
+        request.getRequestDispatcher("/WEB-INF/views/customer/booking-change.jsp").forward(request, response);
+    }
 }
