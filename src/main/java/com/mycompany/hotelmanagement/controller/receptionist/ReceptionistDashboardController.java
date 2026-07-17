@@ -17,6 +17,22 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+
+/**
+ * ReceptionistDashboardController
+ * URL: /receptionist/dashboard
+ *
+ * Quản lý dashboard chính của Lễ tân, xử lý hiển thị và tải dữ liệu cho các tab công việc:
+ * - bookings: Xem và tìm kiếm danh sách đặt phòng (UC-12: Process Booking Request)
+ * - checkin: Xem danh sách chờ nhận phòng và làm thủ tục check-in (UC-14: Check In Customer)
+ * - checkout: Xem danh sách chờ trả phòng và làm thủ tục check-out (UC-16: Check Out Customer)
+ * - servicerequests: Xem danh sách yêu cầu dịch vụ của khách hàng để duyệt/hủy (UC-35: View Service Requests)
+ * - roommap: Xem sơ đồ phòng theo thời gian thực (UC-38: View Room Map)
+ * - walkin-bookings: Tạo đặt phòng trực tiếp tại quầy (UC-15: Create Walk-in Booking)
+ * 
+ * Date: 01/6/2026
+ * @author BinhHD, MinhTDP, KhanhTD
+ */
 import java.io.IOException;
 import java.sql.Date;
 import java.util.ArrayList;

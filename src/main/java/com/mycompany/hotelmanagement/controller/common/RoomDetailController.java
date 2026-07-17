@@ -13,14 +13,24 @@ import com.mycompany.hotelmanagement.entity.Feedback;
 import java.util.List;
 
 /**
- * RoomDetailController
- * URL: /rooms/detail
+ * Project: Hotel Management System
+ * Class: RoomDetailController
  *
- * Xử lý các hành động liên quan đến chi tiết loại phòng:
- * - view GET (/rooms/detail?id=...): Hiển thị thông tin chi tiết, hình ảnh, tiện nghi và số phòng còn trống của một loại phòng được chọn trước khi đặt phòng (UC-31: View Room Type Detail)
- * 
- * Date: 01/6/2026
- * @author DINH KHANH
+ * Description:
+ * Controller hiển thị thông tin chi tiết một loại phòng cho khách hàng
+ * (Customer), bao gồm thông tin loại phòng, danh sách hình ảnh, tiện nghi,
+ * số phòng còn trống và danh sách đánh giá kèm thống kê điểm trung bình.
+ * Gọi RoomTypeService và FeedbackService để lấy dữ liệu, chuyển tiếp đến
+ * trang room_detail.jsp.
+ *
+ * Related Use Cases:
+ * - UC-30 View Room Type Detail
+ * - UC-63 View Room Type Reviews
+ *
+ * Date: 31-05-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
  */
 @WebServlet(name = "RoomDetailController", urlPatterns = {"/rooms/detail"})
 public class RoomDetailController extends HttpServlet {

@@ -2,6 +2,26 @@ package com.mycompany.hotelmanagement.entity;
 
 import java.io.Serializable;
 
+/**
+ * Project: Hotel Management System
+ * Class: HotelService
+ *
+ * Description:
+ * Entity biểu diễn một dịch vụ khách sạn. Bao gồm các thuộc tính serviceId,
+ * serviceName, description, price, unit và trạng thái hoạt động (isActive).
+ *
+ * Related Use Cases:
+ * - UC-08 View Available Services
+ * - UC-09 Submit Service Request
+ * - UC-59 View Service Records
+ * - UC-60 Add Service
+ * - UC-61 Edit Service
+ *
+ * Date: 31-05-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
+ */
 public class HotelService implements Serializable {
     private int serviceId;
     private String serviceName;

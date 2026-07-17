@@ -8,12 +8,24 @@ import com.mycompany.hotelmanagement.entity.StaffInfo;
 import java.util.List;
 
 /**
- * RequestManagementService
- * Tầng nghiệp vụ cho trang "Quản lý yêu cầu khách hàng & theo dõi công việc nhân viên".
+ * Project: Hotel Management System
+ * Class: RequestManagementService
  *
- * Date: 02/6/2026
- * version 1.0
- * @author Pham Quoc Quy
+ * Description:
+ * Tầng nghiệp vụ quản lý yêu cầu bảo trì (Maintenance) của khách hàng và
+ * theo dõi công việc nhân viên Housekeeping. Cung cấp các phương thức lấy
+ * danh sách Maintenance requests có lọc/phân trang, đếm tổng, tra cứu thông
+ * tin nhân viên, lấy công việc theo nhân viên, gán nhân viên xử lý và cập
+ * nhật trạng thái yêu cầu. Ủy quyền thao tác dữ liệu cho CustomerRequestDAO
+ * và StaffDAO.
+ *
+ * Related Use Cases:
+ * - UC-34 View Service Requests
+ *
+ * Date: 02-06-2026
+ *
+ * @author Pham Quoc Quy, KhanhTD
+ * @version 1.0
  */
 public class RequestManagementService {
 

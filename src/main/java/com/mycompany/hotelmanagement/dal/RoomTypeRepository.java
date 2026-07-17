@@ -13,6 +13,29 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Project: Hotel Management System
+ * Class: RoomTypeRepository
+ *
+ * Description:
+ * Tầng truy cập dữ liệu cho bảng RoomType, RoomImage, Amenity và
+ * RoomType_Amenity. Cung cấp các phương thức lấy toàn bộ danh sách loại
+ * phòng, hình ảnh và tiện nghi, lấy chi tiết theo ID, đếm số phòng trống,
+ * thêm, cập nhật và xóa loại phòng. Các thao tác ghi nhận connection từ
+ * bên ngoài để hỗ trợ transaction trong RoomTypeService.
+ *
+ * Related Use Cases:
+ * - UC-29 Browse Available Room Types
+ * - UC-30 View Room Type Detail
+ * - UC-53 View Room Type Records
+ * - UC-54 Add Room Type
+ * - UC-55 Edit Room Type
+ *
+ * Date: 01-06-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
+ */
 public class RoomTypeRepository {
 
     private void useDatabase(Connection conn) {

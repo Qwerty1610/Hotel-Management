@@ -6,13 +6,26 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Promotion entity
- * Đại diện cho một chương trình khuyến mãi / mã giảm giá trong hệ thống.
+ * Project: Hotel Management System
+ * Class: Promotion
  *
- * UC-48: Manage Promotions
- * Date: 07/7/2026
+ * Description:
+ * Entity biểu diễn một chương trình khuyến mãi. Bao gồm các thuộc tính
+ * promotionId, promotionCode, promotionName, description, discountType
+ * (PERCENT/FIXED), discountValue, startDate, endDate, eventName,
+ * minBookingAmount, maxDiscountAmount, usageLimit, usedCount và status.
+ * Cung cấp phương thức getEffectiveStatus() để tính trạng thái hiển thị
+ * thực tế dựa trên endDate và status trong cơ sở dữ liệu.
  *
- * @author DINH KHANH
+ * Related Use Cases:
+ * - UC-46 View Promotions
+ * - UC-64 Add Promotion
+ * - UC-65 Edit Promotion
+ *
+ * Date: 11-07-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
  */
 public class Promotion implements Serializable {
 

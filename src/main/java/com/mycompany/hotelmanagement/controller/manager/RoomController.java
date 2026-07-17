@@ -14,18 +14,25 @@ import com.mycompany.hotelmanagement.service.RoomService;
 import com.mycompany.hotelmanagement.service.RoomTypeService;
 
 /**
- * RoomController
- * URL: controller/manager
+ * Project: Hotel Management System
+ * Class: RoomController
  *
- * Xử lý các hành động (action param):
- * - view : Hiển thị danh sách phòng và loại phòng (Manage Room)
- * - save : Thêm mới hoặc cập nhật thông tin phòng (Manage Room)
- * - delete : Xóa thông tin phòng (Manage Room)
- * - updateStatus : Cập nhật trạng thái của phòng (Manage Room)
- * 
- * Date: 01/6/2026
- * 
- * @author DINH KHANH
+ * Description:
+ * Controller quản lý danh sách phòng cho Hotel Manager, xử lý hiển thị danh
+ * sách phòng kèm loại phòng, thêm mới, chỉnh sửa, xóa và cập nhật trạng thái
+ * phòng. Class kiểm tra dữ liệu đầu vào, xử lý kết quả trùng số phòng,
+ * điều hướng về trang quản lý và ủy quyền nghiệp vụ cho RoomService và
+ * RoomTypeService.
+ *
+ * Related Use Cases:
+ * - UC-56 View Room List
+ * - UC-57 Add Room
+ * - UC-58 Edit Room
+ *
+ * Date: 31-05-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
  */
 @WebServlet(name = "RoomController", urlPatterns = { "/manager/rooms" })
 public class RoomController extends HttpServlet {

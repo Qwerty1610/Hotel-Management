@@ -18,8 +18,7 @@ import java.util.List;
  * khách hàng và phê duyệt yêu cầu từ lễ tân.
  *
  * Date: 21/6/2026
- *
- * @author DINH KHANH
+ * @author KhanhTD
  */
 public class BookingServiceRequestDAO {
 

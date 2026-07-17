@@ -12,18 +12,24 @@ import com.mycompany.hotelmanagement.entity.HotelService;
 import com.mycompany.hotelmanagement.service.HotelServiceService;
 
 /**
- * ServiceController
- * URL: controller/manager
+ * Project: Hotel Management System
+ * Class: ServiceController
  *
- * Xử lý các hành động (action param):
- * - view : Hiển thị danh sách các dịch vụ khách sạn (Manage Service)
- * - save : Thêm mới hoặc cập nhật thông tin dịch vụ (Manage Service)
- * - delete : Xóa dịch vụ khỏi hệ thống (Manage Service)
- * - toggle : Kích hoạt hoặc vô hiệu hóa trạng thái của dịch vụ (Manage Service)
- * 
- * Date: 01/6/2026
- * 
- * @author DINH KHANH
+ * Description:
+ * Controller quản lý dịch vụ khách sạn cho Hotel Manager, xử lý hiển thị
+ * danh sách, thêm mới, chỉnh sửa, bật/tắt trạng thái và xóa dịch vụ.
+ * Class kiểm tra dữ liệu đầu vào, xử lý trùng tên dịch vụ, điều hướng
+ * kết quả về trang quản lý và ủy quyền nghiệp vụ cho HotelServiceService.
+ *
+ * Related Use Cases:
+ * - UC-59 View Service Records
+ * - UC-60 Add Service
+ * - UC-61 Edit Service
+ *
+ * Date: 31-05-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
  */
 @WebServlet(name = "ServiceController", urlPatterns = { "/manager/services" })
 public class ServiceController extends HttpServlet {

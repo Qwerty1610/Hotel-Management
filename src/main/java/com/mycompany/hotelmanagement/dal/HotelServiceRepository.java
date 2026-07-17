@@ -10,6 +10,26 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Project: Hotel Management System
+ * Class: HotelServiceRepository
+ *
+ * Description:
+ * Tầng truy cập dữ liệu cho bảng HotelService. Cung cấp các phương thức
+ * lấy toàn bộ danh sách dịch vụ, thêm mới, cập nhật, bật/tắt trạng thái
+ * hoạt động (is_active) và xóa dịch vụ.
+ *
+ * Related Use Cases:
+ * - UC-08 View Available Services
+ * - UC-59 View Service Records
+ * - UC-60 Add Service
+ * - UC-61 Edit Service
+ *
+ * Date: 01-06-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
+ */
 public class HotelServiceRepository {
 
     private void useDatabase(Connection conn) {
