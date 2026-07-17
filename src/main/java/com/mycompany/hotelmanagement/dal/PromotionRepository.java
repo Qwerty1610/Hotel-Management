@@ -9,13 +9,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * PromotionRepository
- * Tầng truy cập dữ liệu (DAL) cho bảng Promotion.
+ * Project: Hotel Management System
+ * Class: PromotionRepository
  *
- * UC-48: Manage Promotions
- * Date: 07/7/2026
+ * Description:
+ * Tầng truy cập dữ liệu cho bảng Promotion. Cung cấp các phương thức lấy
+ * toàn bộ danh sách khuyến mãi, lấy theo ID, kiểm tra trùng mã khuyến mãi,
+ * thêm mới, cập nhật, bật/tắt trạng thái và xóa khuyến mãi. Xóa chỉ thực
+ * hiện được khi used_count = 0.
  *
- * @author DINH KHANH
+ * Related Use Cases:
+ * - UC-46 View Promotions
+ * - UC-64 Add Promotion
+ * - UC-65 Edit Promotion
+ *
+ * Date: 11-07-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
  */
 public class PromotionRepository {
 

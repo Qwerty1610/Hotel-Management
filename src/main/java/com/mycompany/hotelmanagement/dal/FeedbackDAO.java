@@ -10,6 +10,25 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Project: Hotel Management System
+ * Class: FeedbackDAO
+ *
+ * Description:
+ * Tầng truy cập dữ liệu cho bảng Feedback. Cung cấp các phương thức lấy
+ * danh sách phòng đã trả kèm trạng thái đánh giá của khách hàng, kiểm tra
+ * quyền đánh giá, kiểm tra đánh giá trùng lặp, tạo mới đánh giá, lấy danh
+ * sách đánh giá theo loại phòng và tính điểm trung bình theo loại phòng.
+ *
+ * Related Use Cases:
+ * - UC-35 Submit Stay Feedback
+ * - UC-63 View Room Type Reviews
+ *
+ * Date: 11-07-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
+ */
 public class FeedbackDAO {
 
     private void useDatabase(Connection conn) {

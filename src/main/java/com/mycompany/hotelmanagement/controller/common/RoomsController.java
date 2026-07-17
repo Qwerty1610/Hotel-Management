@@ -11,15 +11,23 @@ import com.mycompany.hotelmanagement.service.RoomTypeService;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 
 /**
- * RoomsController
- * URL: /rooms
+ * Project: Hotel Management System
+ * Class: RoomsController
  *
- * Xử lý các hành động liên quan đến hiển thị và tìm kiếm loại phòng:
- * - view GET (/rooms): Hiển thị danh sách thông tin các loại phòng đang có (UC-30: View Room Types)
- * - search GET (/rooms với bộ lọc): Tìm kiếm và lọc danh sách phòng trống theo loại phòng, số lượng khách, khoảng giá (UC-03: Search Available Rooms)
- * 
- * Date: 01/6/2026
- * @author DINH KHANH
+ * Description:
+ * Controller hiển thị và tìm kiếm danh sách loại phòng cho khách hàng
+ * (Customer). Xử lý lọc theo loại phòng, số lượng khách và khoảng giá,
+ * gọi RoomTypeService để lấy dữ liệu và chuyển tiếp kết quả đến trang
+ * rooms.jsp.
+ *
+ * Related Use Cases:
+ * - UC-03 Search Available Rooms
+ * - UC-29 Browse Available Room Types
+ *
+ * Date: 31-05-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
  */
 @WebServlet(name = "RoomsController", urlPatterns = {"/rooms"})
 public class RoomsController extends HttpServlet {

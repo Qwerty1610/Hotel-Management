@@ -16,19 +16,25 @@ import com.mycompany.hotelmanagement.entity.Promotion;
 import com.mycompany.hotelmanagement.service.PromotionService;
 
 /**
- * PromotionController
- * URL: /manager/promotions
+ * Project: Hotel Management System
+ * Class: PromotionController
  *
- * Xử lý các hành động (action param):
- * - (default) : Hiển thị danh sách khuyến mãi
- * - save      : Thêm mới hoặc cập nhật khuyến mãi (POST)
- * - toggle    : Bật/Tắt trạng thái khuyến mãi (GET)
- * - delete    : Xóa khuyến mãi nếu chưa được sử dụng (GET)
+ * Description:
+ * Controller quản lý khuyến mãi cho Hotel Manager, xử lý hiển thị danh sách,
+ * thêm mới, chỉnh sửa, bật/tắt trạng thái và xóa khuyến mãi. Class thực hiện
+ * validation đầy đủ các trường (mã, tên, loại giảm giá, giá trị, ngày hiệu lực,
+ * giới hạn sử dụng, số tiền tối thiểu/tối đa), kiểm tra mã khuyến mãi trùng
+ * lặp và ủy quyền lưu trữ cho PromotionService.
  *
- * UC-48: Manage Promotions
- * Date: 07/7/2026
+ * Related Use Cases:
+ * - UC-46 View Promotions
+ * - UC-64 Add Promotion
+ * - UC-65 Edit Promotion
  *
- * @author DINH KHANH
+ * Date: 11-07-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
  */
 @WebServlet(name = "PromotionController", urlPatterns = {"/manager/promotions"})
 public class PromotionController extends HttpServlet {

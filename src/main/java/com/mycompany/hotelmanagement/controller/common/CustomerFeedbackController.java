@@ -11,6 +11,25 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Project: Hotel Management System
+ * Class: CustomerFeedbackController
+ *
+ * Description:
+ * Controller xử lý đánh giá lưu trú cho khách hàng (Customer). Hiển thị
+ * danh sách phòng đã trả kèm trạng thái đánh giá, hỗ trợ lọc theo bộ lọc
+ * và từ khoá. Tiếp nhận và xử lý yêu cầu gửi đánh giá, kiểm tra điểm số
+ * (1-5), độ dài nhận xét, quyền đánh giá và trùng lặp. Ủy quyền xử lý
+ * nghiệp vụ cho FeedbackService.
+ *
+ * Related Use Cases:
+ * - UC-35 Submit Stay Feedback
+ *
+ * Date: 11-07-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
+ */
 @WebServlet(
     name = "CustomerFeedbackController",
     urlPatterns = {"/customer/feedbacks"}

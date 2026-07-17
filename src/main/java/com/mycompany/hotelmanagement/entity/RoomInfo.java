@@ -2,6 +2,29 @@ package com.mycompany.hotelmanagement.entity;
 
 import java.io.Serializable;
 
+/**
+ * Project: Hotel Management System
+ * Class: RoomInfo
+ *
+ * Description:
+ * Entity biểu diễn thông tin phòng kết hợp từ bảng Room và RoomType.
+ * Bao gồm các thuộc tính roomId, roomNumber, typeId, status, floor và
+ * các thuộc tính hiển thị từ RoomType (typeName, basePrice, bedType, area).
+ * Được sử dụng cho trang quản lý phòng của Manager và danh sách tìm kiếm
+ * phòng trống.
+ *
+ * Related Use Cases:
+ * - UC-03 Search Available Rooms
+ * - UC-29 Browse Available Room Types
+ * - UC-56 View Room List
+ * - UC-57 Add Room
+ * - UC-58 Edit Room
+ *
+ * Date: 31-05-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
+ */
 public class RoomInfo implements Serializable {
     private int roomId;
     private String roomNumber;

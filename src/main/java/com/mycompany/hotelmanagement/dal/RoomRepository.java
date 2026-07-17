@@ -11,6 +11,27 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Project: Hotel Management System
+ * Class: RoomRepository
+ *
+ * Description:
+ * Tầng truy cập dữ liệu cho bảng Room. Cung cấp các phương thức lấy toàn
+ * bộ danh sách phòng kèm thông tin loại phòng, kiểm tra trùng số phòng,
+ * lấy phòng bị xóa mềm theo số phòng, thêm mới, cập nhật, xóa (mềm),
+ * khôi phục phòng và cập nhật trạng thái phòng.
+ *
+ * Related Use Cases:
+ * - UC-03 Search Available Rooms
+ * - UC-56 View Room List
+ * - UC-57 Add Room
+ * - UC-58 Edit Room
+ *
+ * Date: 01-06-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
+ */
 public class RoomRepository {
 
     private void useDatabase(Connection conn) {

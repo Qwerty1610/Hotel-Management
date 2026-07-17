@@ -8,6 +8,27 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Project: Hotel Management System
+ * Class: RoomService
+ *
+ * Description:
+ * Tầng nghiệp vụ quản lý phòng khách sạn. Cung cấp các phương thức lấy
+ * danh sách phòng, xóa phòng, cập nhật trạng thái phòng và lưu phòng (thêm
+ * mới hoặc cập nhật). Khi thêm mới, kiểm tra trùng số phòng và tự động khôi
+ * phục phòng bị xóa mềm nếu trùng số. Ủy quyền thao tác dữ liệu cho
+ * RoomRepository.
+ *
+ * Related Use Cases:
+ * - UC-56 View Room List
+ * - UC-57 Add Room
+ * - UC-58 Edit Room
+ *
+ * Date: 01-06-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
+ */
 public class RoomService {
 
     private final RoomRepository roomRepository = new RoomRepository();

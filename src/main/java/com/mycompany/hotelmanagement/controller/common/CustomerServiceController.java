@@ -22,17 +22,26 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * CustomerServiceController
- * URL: /customer/services, /customer/services/history, /customer/services/cancel
+ * Project: Hotel Management System
+ * Class: CustomerServiceController
  *
- * Xử lý các hành động của khách hàng (Customer) liên quan đến dịch vụ khách sạn:
- * - view/default GET (/customer/services): Xem danh sách các dịch vụ đang hoạt động (tên, mô tả, đơn giá) để lựa chọn đặt phòng/phòng đang ở (UC-09: View Available Service)
- * - submit POST (/customer/services): Khách hàng đang lưu trú gửi yêu cầu dịch vụ cho phòng của mình (UC-10: Submit Service Request)
- * - history GET (/customer/services/history): Xem danh sách lịch sử yêu cầu dịch vụ đã gửi cùng trạng thái hiện tại (Pending, Completed, Cancelled) (UC-64: View Service Request History)
- * - cancel POST (/customer/services/cancel): Khách hàng tự hủy yêu cầu dịch vụ ở trạng thái chờ xử lý (Pending) (UC-64: View Service Request History - Action Cancel)
- * 
- * Date: 21/6/2026
- * @author DINH KHANH
+ * Description:
+ * Controller xử lý các yêu cầu liên quan đến dịch vụ khách sạn cho khách hàng
+ * (Customer). Hiển thị danh sách dịch vụ đang hoạt động kèm phân trang và form
+ * gửi yêu cầu dịch vụ. Tiếp nhận, kiểm tra quyền sở hữu booking, số lượng
+ * (1-99) và tình trạng dịch vụ trước khi lưu yêu cầu. Hiển thị lịch sử yêu
+ * cầu theo bộ lọc trạng thái và hỗ trợ khách hàng tự hủy yêu cầu ở trạng
+ * thái Pending. Ủy quyền nghiệp vụ cho HotelServiceService và BookingService.
+ *
+ * Related Use Cases:
+ * - UC-08 View Available Services
+ * - UC-09 Submit Service Request
+ * - UC-62 View Service Request History
+ *
+ * Date: 22-06-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
  */
 @WebServlet(name = "CustomerServiceController", urlPatterns = {
     "/customer/services",

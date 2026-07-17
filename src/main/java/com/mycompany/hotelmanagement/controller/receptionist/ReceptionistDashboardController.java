@@ -31,7 +31,7 @@ import jakarta.servlet.http.HttpSession;
  * - walkin-bookings: Tạo đặt phòng trực tiếp tại quầy (UC-15: Create Walk-in Booking)
  * 
  * Date: 01/6/2026
- * @author BinhHD, MinhTDP, DINH KHANH
+ * @author BinhHD, MinhTDP, KhanhTD
  */
 import java.io.IOException;
 import java.sql.Date;
