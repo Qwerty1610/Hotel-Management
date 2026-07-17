@@ -1,0 +1,40 @@
+Workflow	Login Management
+Test requirement
+Number of TCs	7
+Testing Round	Passed	Failed	Pending	N/A
+Round 1	7	0	0	0
+Round 2	0	0		0
+Round 3	0	0		0
+
+Test Case ID	Test Case Description	Test Case Procedure	Expected Results	Pre-conditions	Round 1	Test date	Tester	Round 2	Test date	Tester	Round 3	Test date	Tester
+Scenario: Login & Authentication													
+TC_L_01	Login Customer successfully	"1. Navigate to `/home/login`.
+2. Enter Email = `customer@hotel.com`, Password = `customer123`.
+3. Click ""Login"" button."	"- Login successfully, session is established.
+- Redirect to homepage `/home`."	Account `customer@hotel.com` exists and is active (`is_active = 1`).	Passed	16/07/2026	TungNQ	Pending			Pending		
+TC_L_02	Login Staff/Manager/Admin successfully	"1. Navigate to `/staff/login`.
+2. Enter Email = `receptionist@hotel.com`, Password = `receptionist123`.
+3. Click ""Login"" button."	"- Login successfully, session is established.
+- Redirect to `/receptionist/dashboard` (or corresponding dashboard)."	Account `receptionist@hotel.com` exists and is active (`is_active = 1`).	Passed	16/07/2026	TungNQ	Pending			Pending		
+TC_L_03	Login with locked account (Exception E3 -> MSG06)	"1. Navigate to `/home/login` or `/staff/login`.
+2. Enter locked account credentials.
+3. Click ""Login"" button."	"- Login failed.
+- Redirect to login page with `error=account_locked`.
+- Display warning: ""Your account is locked or inactive!""."	Account exists in the database with status `is_active = 0`.	Passed	16/07/2026	TungNQ	Pending			Pending		
+TC_L_04	Login with missing required fields (Exception E1 -> MSG02)	"1. Navigate to `/home/login` or `/staff/login`.
+2. Leave Email or Password field empty.
+3. Click ""Login"" button."	"- Redirect to login page with `error=invalid_input`.
+- Display warning: ""Please fill in all required fields.""."	None	Passed	16/07/2026	TungNQ	Pending			Pending		
+TC_L_05	Login with incorrect credentials (Exception E2 -> MSG05)	"1. Navigate to `/home/login` or `/staff/login`.
+2. Enter non-existent Email or incorrect Password.
+3. Click ""Login"" button."	"- Login failed.
+- Redirect to login page with `error=invalid_credentials`.
+- Display warning: ""Incorrect username or password!"" (Staff) or ""Incorrect username or password!"" (Customer)."	None	Passed	16/07/2026	TungNQ	Pending			Pending		
+TC_L_06	Login with Google for the first time (Automatic registration)	"1. Navigate to `/home/login`.
+2. Click ""Sign in with Google"" button.
+3. Authenticate with a new Gmail account."	"- Login successfully, automatically register a new Customer account with Google email.
+- Redirect to `/home`."	Gmail account has not been linked or registered before.	Passed	16/07/2026	TungNQ	Pending			Pending		
+TC_L_07	Login with Google using locked account	"1. Navigate to `/home/login` and click ""Sign in with Google"" button.
+2. Authenticate with Gmail account linked to locked account (`is_active = 0`)."	"- Login failed.
+- Redirect to `/home/login?error=account_locked`.
+- Display warning: ""Your account is locked or inactive!""."	Linked Google account has status `is_active = 0` in the database.	Passed	16/07/2026	TungNQ	Pending			Pending		
