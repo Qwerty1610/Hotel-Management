@@ -110,6 +110,9 @@
                                 <c:when test="${currentTab eq 'bookings'}">Quản lý đặt phòng
                                 </c:when>
                                 <c:when test="${currentTab eq 'roommap'}">Sơ đồ phòng</c:when>
+                                <c:when test="${currentTab eq 'changerequests'}">
+                                    Xử lý thay đổi đặt phòng
+                                </c:when>
                                 <c:when test="${currentTab eq 'checkin'}">Nhận phòng (Check-in)
                                 </c:when>
                                 <c:when test="${currentTab eq 'walkin-bookings'}">Đặt phòng tại quầy

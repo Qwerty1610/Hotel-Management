@@ -75,7 +75,7 @@ public class ReceptionistDashboardController extends HttpServlet {
     private static final int PAGE_SIZE = 8;
     private static final int PAGE_SIZE_CHECKIN = 11;
 
-    private static final Set<String> ALLOWED_TABS = Set.of("bookings", "checkin", "checkout", "servicerequests",
+    private static final Set<String> ALLOWED_TABS = Set.of("bookings","changerequests", "checkin", "checkout", "servicerequests",
             "roommap", "walkin-bookings");
     private static final Set<String> STATUS_WHITELIST = Set.of("All", "Pending", "Confirmed", "Rejected", "Cancelled",
             "CheckedIn", "CheckedOut");
