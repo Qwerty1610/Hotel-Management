@@ -131,6 +131,7 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
             }
 
             bookingDAO.updateStatus(bookingId, "CheckedIn");
+            new com.mycompany.hotelmanagement.dal.InvoiceDAO().createInvoiceForBooking(bookingId);
             Booking booking = bookingDAO.getBookingById(bookingId);
 
             String customerName = (booking != null && booking.getCustomerName() != null)

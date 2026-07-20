@@ -402,16 +402,24 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                     }
 
                     // Children
-                    for (Booking child : children) {
-                        List<Integer> cRoomIds = new ArrayList<>();
-                        String[] cRoomIdStrings = request.getParameterValues("childRoomIds_" + child.getBookingId());
-                        for (String rIdStr : cRoomIdStrings) {
-                            cRoomIds.add(Integer.parseInt(rIdStr.trim()));
+                    if (children != null) {
+                        for (Booking child : children) {
+                            List<Integer> cRoomIds = new ArrayList<>();
+                            String[] cRoomIdStrings = request.getParameterValues("childRoomIds_" + child.getBookingId());
+                            if (cRoomIdStrings != null) {
+                                for (String rIdStr : cRoomIdStrings) {
+                                    cRoomIds.add(Integer.parseInt(rIdStr.trim()));
+                                }
+                                boolean cAssigned = bookingService.assignRoomsToBooking(child.getBookingId(), cRoomIds);
+                                if (cAssigned) {
+                                    bookingService.updateBookingStatus(child.getBookingId(), "Confirmed", noteText);
+                                }
+                            }
                         }
-                        boolean cAssigned = bookingService.assignRoomsToBooking(child.getBookingId(), cRoomIds);
-                        if (cAssigned) {
-                            bookingService.updateBookingStatus(child.getBookingId(), "Confirmed", noteText);
-                        }
+                    }
+
+                    if (success) {
+                        new com.mycompany.hotelmanagement.dal.InvoiceDAO().createInvoiceForBooking(bookingId);
                     }
                     break;
                 }
