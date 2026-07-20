@@ -1,6 +1,6 @@
 package com.mycompany.hotelmanagement.service;
 
-import com.mycompany.hotelmanagement.dal.AdminDashboardRepository;
+import com.mycompany.hotelmanagement.dal.AdminDashboardDAO;
 import com.mycompany.hotelmanagement.entity.SystemDashboardStats;
 import com.mycompany.hotelmanagement.entity.SystemDashboardStats.ChartSeries;
 import com.mycompany.hotelmanagement.entity.SystemDashboardStats.DetailTable;
@@ -38,7 +38,7 @@ public class AdminDashboardService {
     private static final DateTimeFormatter DAY_LABEL_FMT = DateTimeFormatter.ofPattern("dd/MM");
     private static final DateTimeFormatter DAY_LABEL_FULL_FMT = DateTimeFormatter.ofPattern("dd/MM/yy");
 
-    private final AdminDashboardRepository repo = new AdminDashboardRepository();
+    private final AdminDashboardDAO repo = new AdminDashboardDAO();
 
     /** Tham số truy vấn dashboard: khoảng lọc riêng của từng thẻ / biểu đồ + view chi tiết. */
     public static class DashboardQuery {
@@ -99,12 +99,12 @@ public class AdminDashboardService {
     private String granularityFor(LocalDate from, LocalDate to) {
         long days = ChronoUnit.DAYS.between(from, to) + 1;
         if (days <= MAX_DAY_BUCKETS) {
-            return AdminDashboardRepository.GRAN_DAY;
+            return AdminDashboardDAO.GRAN_DAY;
         }
         if (days <= MAX_MONTH_BUCKET_DAYS) {
-            return AdminDashboardRepository.GRAN_MONTH;
+            return AdminDashboardDAO.GRAN_MONTH;
         }
-        return AdminDashboardRepository.GRAN_QUARTER;
+        return AdminDashboardDAO.GRAN_QUARTER;
     }
 
     /**
@@ -125,14 +125,14 @@ public class AdminDashboardService {
         s.setGranularity(gran);
 
         switch (gran) {
-            case AdminDashboardRepository.GRAN_MONTH:
+            case AdminDashboardDAO.GRAN_MONTH:
                 s.setGranularityLabel("Theo tháng");
                 for (YearMonth ym = YearMonth.from(from); !ym.isAfter(YearMonth.from(to)); ym = ym.plusMonths(1)) {
                     s.getLabels().add(String.format("%02d/%d", ym.getMonthValue(), ym.getYear()));
                     s.getValues().add(raw.getOrDefault(ym.toString(), 0d));
                 }
                 break;
-            case AdminDashboardRepository.GRAN_QUARTER:
+            case AdminDashboardDAO.GRAN_QUARTER:
                 s.setGranularityLabel("Theo quý");
                 int year = from.getYear();
                 int quarter = (from.getMonthValue() - 1) / 3 + 1;

@@ -1,6 +1,6 @@
 package com.mycompany.hotelmanagement.service;
 
-import com.mycompany.hotelmanagement.dal.AccountRepository;
+import com.mycompany.hotelmanagement.dal.AccountDAO;
 import com.mycompany.hotelmanagement.entity.ProfileView;
 
 /**
@@ -16,7 +16,7 @@ public class ProfileService {
     // Same phone rule used at registration: starts with 0, then 3/5/7/8/9, then 8 digits.
     private static final String PHONE_REGEX = "^0[35789]\\d{8}$";
 
-    private final AccountRepository accountRepository = new AccountRepository();
+    private final AccountDAO accountRepository = new AccountDAO();
 
     public ProfileView getProfile(int accountId) {
         if (accountId <= 0) {

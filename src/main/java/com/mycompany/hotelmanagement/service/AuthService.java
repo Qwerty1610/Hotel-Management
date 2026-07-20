@@ -1,7 +1,7 @@
 package com.mycompany.hotelmanagement.service;
 
-import com.mycompany.hotelmanagement.dal.AccountRepository;
-import com.mycompany.hotelmanagement.dal.PasswordResetRepository;
+import com.mycompany.hotelmanagement.dal.AccountDAO;
+import com.mycompany.hotelmanagement.dal.PasswordResetDAO;
 import com.mycompany.hotelmanagement.entity.Account;
 import com.mycompany.hotelmanagement.config.EmailUtil;
 import org.mindrot.jbcrypt.BCrypt;
@@ -16,8 +16,8 @@ import java.security.SecureRandom;
  * Modified: 16/07/2026
  */
 public class AuthService {
-    private final AccountRepository accountRepository = new AccountRepository();
-    private final PasswordResetRepository passwordResetRepository = new PasswordResetRepository();
+    private final AccountDAO accountRepository = new AccountDAO();
+    private final PasswordResetDAO passwordResetRepository = new PasswordResetDAO();
     private static final SecureRandom random = new SecureRandom();
 
     public Account authenticate(String username, String password) {
@@ -49,7 +49,7 @@ public class AuthService {
         String emailVal = null;
         int accountIdVal = -1;
 
-        // 1. Authenticate using database via AccountRepository
+        // 1. Authenticate using database via AccountDAO
         Account account = authenticate(username, password);
         if (account != null) {
             if (!account.isActive()) {
@@ -269,7 +269,7 @@ public class AuthService {
             return "invalid_input";
         }
 
-        // 1. Check if email exists in active accounts via AccountRepository
+        // 1. Check if email exists in active accounts via AccountDAO
         Account account = accountRepository.getAccountByEmail(email);
         if (account == null) {
             return "email_not_found";
@@ -283,7 +283,7 @@ public class AuthService {
         long expiryMillis = System.currentTimeMillis() + (10 * 60 * 1000); // 10 mins
         Timestamp expiryTime = new Timestamp(expiryMillis);
 
-        // 4. Save to PasswordReset table using PasswordResetRepository
+        // 4. Save to PasswordReset table using PasswordResetDAO
         boolean saved = passwordResetRepository.insertResetToken(email, otpCode, expiryTime);
         if (!saved) {
             return "server_error";

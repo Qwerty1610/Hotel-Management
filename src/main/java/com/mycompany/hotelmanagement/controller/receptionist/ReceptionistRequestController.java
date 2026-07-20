@@ -1,7 +1,7 @@
 package com.mycompany.hotelmanagement.controller.receptionist;
 
 import com.mycompany.hotelmanagement.dal.BookingServiceRequestDAO;
-import com.mycompany.hotelmanagement.dal.HotelServiceRepository;
+import com.mycompany.hotelmanagement.dal.HotelServiceDAO;
 import com.mycompany.hotelmanagement.dal.InvoiceDAO;
 import com.mycompany.hotelmanagement.entity.BookingServiceRequest;
 import com.mycompany.hotelmanagement.entity.HotelService;
@@ -25,7 +25,7 @@ import java.util.logging.Logger;
  * Description:
  * Controller xử lý duyệt và hủy yêu cầu dịch vụ của khách hàng từ phía
  * Receptionist. Khi duyệt (approve): tra cứu BookingServiceRequest, lấy đơn
- * giá dịch vụ từ HotelServiceRepository nếu cần, tìm Invoice của booking,
+ * giá dịch vụ từ HotelServiceDAO nếu cần, tìm Invoice của booking,
  * thêm InvoiceItem loại Service và cập nhật trạng thái yêu cầu thành
  * Completed. Khi hủy (cancel): cập nhật trạng thái thành Cancelled kèm
  * người thực hiện và lý do hủy.
@@ -97,9 +97,9 @@ public class ReceptionistRequestController extends HttpServlet {
                     if (req.getBookingId() != null) {
                         double servicePrice = req.getUnitPrice();
 
-                        // Nếu unitPrice <= 0 thì fallback tìm trong HotelServiceRepository như code cũ
+                        // Nếu unitPrice <= 0 thì fallback tìm trong HotelServiceDAO như code cũ
                         if (servicePrice <= 0.0) {
-                            HotelServiceRepository hsRepo = new HotelServiceRepository();
+                            HotelServiceDAO hsRepo = new HotelServiceDAO();
                             List<HotelService> allServices = hsRepo.getAllServices();
                             for (HotelService hs : allServices) {
                                 if (hs.getServiceName().equalsIgnoreCase(req.getTitle()) && hs.isIsActive()) {

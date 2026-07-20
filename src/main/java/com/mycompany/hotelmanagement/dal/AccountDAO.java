@@ -18,7 +18,7 @@ import java.util.List;
  * Created: 01/06/2026
  * Modified: 16/07/2026
  */
-public class AccountRepository {
+public class AccountDAO {
 
     public Account getAccountByEmail(String email) {
         String sql = "SELECT a.account_id, a.email, a.password, a.full_name, r.role_name, a.is_active " +

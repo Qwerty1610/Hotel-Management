@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * Project: Hotel Management System
- * Class: RoomRepository
+ * Class: RoomDAO
  *
  * Description:
  * Tầng truy cập dữ liệu cho bảng Room. Cung cấp các phương thức lấy toàn
@@ -32,7 +32,7 @@ import java.util.List;
  * @author KhanhTD
  * @version 1.0
  */
-public class RoomRepository {
+public class RoomDAO {
 
     private void useDatabase(Connection conn) {
         try (Statement stmt = conn.createStatement()) {

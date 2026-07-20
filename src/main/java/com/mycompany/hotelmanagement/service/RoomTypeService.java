@@ -1,7 +1,7 @@
 package com.mycompany.hotelmanagement.service;
 
 import com.mycompany.hotelmanagement.config.DBContext;
-import com.mycompany.hotelmanagement.dal.RoomTypeRepository;
+import com.mycompany.hotelmanagement.dal.RoomTypeDAO;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import com.mycompany.hotelmanagement.entity.AmenityInfo;
 import java.sql.Connection;
@@ -18,7 +18,7 @@ import java.util.Map;
  * lấy danh sách toàn bộ loại phòng kèm hình ảnh và tiện nghi, lọc loại
  * phòng theo tên/sức chứa/khoảng giá, lấy chi tiết một loại phòng kèm
  * số phòng trống, lưu (thêm hoặc cập nhật) và xóa loại phòng. Phối hợp
- * nhiều truy vấn từ RoomTypeRepository trong một transaction khi lưu.
+ * nhiều truy vấn từ RoomTypeDAO trong một transaction khi lưu.
  *
  * Related Use Cases:
  * - UC-03 Search Available Rooms
@@ -34,7 +34,7 @@ import java.util.Map;
  * @version 1.0
  */
 public class RoomTypeService {
-    private final RoomTypeRepository roomTypeRepository = new RoomTypeRepository();
+    private final RoomTypeDAO roomTypeRepository = new RoomTypeDAO();
 
     /**
      * UC-30: View Room Types
