@@ -149,11 +149,11 @@ public class CustomerServiceController extends HttpServlet {
             paginatedServices = activeServices.subList(startIndex, endIndex);
         }
 
-        // Fetch customer's active bookings (CheckedIn or Confirmed)
+        // Fetch customer's active bookings - only CheckedIn bookings are eligible for service requests
         List<Booking> allBookings = bookingService.getBookingsByAccount(accountId, "All", null);
         List<Booking> activeBookings = new ArrayList<>();
         for (Booking b : allBookings) {
-            if ("CheckedIn".equals(b.getStatus()) || "Confirmed".equals(b.getStatus())) {
+            if ("CheckedIn".equals(b.getStatus())) {
                 activeBookings.add(b);
             }
         }
@@ -179,6 +179,8 @@ public class CustomerServiceController extends HttpServlet {
                 request.setAttribute("errorMessage", "Bạn không có quyền thực hiện yêu cầu này.");
             } else if ("service_not_found".equals(error)) {
                 request.setAttribute("errorMessage", "Dịch vụ không tồn tại hoặc đã bị vô hiệu hóa.");
+            } else if ("not_checked_in".equals(error)) {
+                request.setAttribute("errorMessage", "Bạn chỉ có thể đặt dịch vụ khi đã nhận phòng (Check-in).");
             } else {
                 request.setAttribute("errorMessage", "Không thể gửi yêu cầu. Vui lòng thử lại sau.");
             }
@@ -267,6 +269,12 @@ public class CustomerServiceController extends HttpServlet {
             // Verify booking ownership
             if (booking == null || booking.getAccountId() == null || booking.getAccountId() != accountId) {
                 response.sendRedirect(request.getContextPath() + "/customer/services?error=unauthorized");
+                return;
+            }
+
+            // Verify booking is CheckedIn - only checked-in guests can request services
+            if (!"CheckedIn".equals(booking.getStatus())) {
+                response.sendRedirect(request.getContextPath() + "/customer/services?error=not_checked_in");
                 return;
             }
 
