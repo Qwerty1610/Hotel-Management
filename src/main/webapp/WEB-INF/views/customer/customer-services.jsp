@@ -262,8 +262,8 @@
                                                     style="padding: 20px; text-align: center; background-color: #f8fafc; border-radius: 12px; color: var(--text-muted); font-size: 14.5px;">
                                                     <i class="fa-solid fa-hotel"
                                                         style="font-size: 32px; display: block; margin-bottom: 12px; color: #cbd5e1;"></i>
-                                                    Bạn cần có đơn đặt phòng đang hoạt động (Đã xác nhận hoặc Đã nhận
-                                                    phòng) để gửi yêu cầu dịch vụ.
+                                                     Bạn cần đã nhận phòng (Check-in) để có thể gửi yêu cầu dịch vụ.
+                                                    Vui lòng liên hệ lễ tân để nhận phòng trước.
                                                 </div>
                                             </c:when>
                                             <c:when test="${empty allActiveServices}">
