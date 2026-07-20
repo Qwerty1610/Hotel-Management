@@ -1,6 +1,6 @@
 package com.mycompany.hotelmanagement.service;
 
-import com.mycompany.hotelmanagement.dal.HotelServiceRepository;
+import com.mycompany.hotelmanagement.dal.HotelServiceDAO;
 import com.mycompany.hotelmanagement.entity.HotelService;
 import java.util.List;
 
@@ -12,7 +12,7 @@ import java.util.List;
  * Tầng nghiệp vụ quản lý dịch vụ khách sạn. Cung cấp các phương thức lấy
  * toàn bộ danh sách dịch vụ, xóa dịch vụ, bật/tắt trạng thái hoạt động và
  * lưu dịch vụ (thêm mới nếu serviceId <= 0, cập nhật nếu > 0). Ủy quyền
- * thao tác dữ liệu cho HotelServiceRepository.
+ * thao tác dữ liệu cho HotelServiceDAO.
  *
  * Related Use Cases:
  * - UC-08 View Available Services
@@ -28,7 +28,7 @@ import java.util.List;
  * @version 1.0
  */
 public class HotelServiceService {
-    private final HotelServiceRepository hotelServiceRepository = new HotelServiceRepository();
+    private final HotelServiceDAO hotelServiceRepository = new HotelServiceDAO();
 
     /**
      * UC-09: View Available Service

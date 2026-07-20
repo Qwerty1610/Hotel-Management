@@ -2,8 +2,8 @@ package com.mycompany.hotelmanagement.controller.receptionist;
 
 import com.mycompany.hotelmanagement.dal.BookingDAO;
 import com.mycompany.hotelmanagement.dal.BookingServiceRequestDAO;
-import com.mycompany.hotelmanagement.dal.RoomRepository;
-import com.mycompany.hotelmanagement.dal.RoomTypeRepository;
+import com.mycompany.hotelmanagement.dal.RoomDAO;
+import com.mycompany.hotelmanagement.dal.RoomTypeDAO;
 import com.mycompany.hotelmanagement.dal.WalkInBookingDAO;
 import com.mycompany.hotelmanagement.dal.CheckOutDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
@@ -145,7 +145,7 @@ public class ReceptionistDashboardController extends HttpServlet {
     private void loadBookingTab(HttpServletRequest request) {
         try {
             BookingDAO dao = new BookingDAO();
-            RoomTypeRepository roomTypeRepo = new RoomTypeRepository();
+            RoomTypeDAO roomTypeRepo = new RoomTypeDAO();
 
             // Tham số lọc
             String statusFilter = request.getParameter("status");
@@ -400,7 +400,7 @@ public class ReceptionistDashboardController extends HttpServlet {
 
     private void loadRoomMapTab(HttpServletRequest request) {
 
-        RoomRepository repo = new RoomRepository();
+        RoomDAO repo = new RoomDAO();
 
         String fromDate = request.getParameter("fromDate");
         String toDate = request.getParameter("toDate");
@@ -473,7 +473,7 @@ public class ReceptionistDashboardController extends HttpServlet {
     }
 
     private void loadWalkInBookingTab(HttpServletRequest request) {
-        RoomTypeRepository roomTypeRepo = new RoomTypeRepository();
+        RoomTypeDAO roomTypeRepo = new RoomTypeDAO();
         request.setAttribute("roomTypesList", roomTypeRepo.getAllRoomTypes());
     }
 

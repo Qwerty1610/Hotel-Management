@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * DashboardRepository
+ * DashboardDAO
  * Truy vấn số liệu doanh thu và công suất phòng cho trang Tổng quan của Manager.
  * Mọi truy vấn doanh thu chỉ tính các đơn đã ghi nhận (Confirmed / CheckedIn / CheckedOut),
  * 
@@ -22,7 +22,7 @@ import java.util.Map;
  * version 1.0
  * @author Pham Quoc Quy
  */
-public class DashboardRepository {
+public class DashboardDAO {
 
     /** Các trạng thái được tính vào doanh thu / công suất. */
     private static final String REVENUE_STATUS_IN =

@@ -1,8 +1,8 @@
 package com.mycompany.hotelmanagement.controller.common;
 
-import com.mycompany.hotelmanagement.dal.RoomTypeRepository;
+import com.mycompany.hotelmanagement.dal.RoomTypeDAO;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
-import com.mycompany.hotelmanagement.dal.HotelServiceRepository;
+import com.mycompany.hotelmanagement.dal.HotelServiceDAO;
 import com.mycompany.hotelmanagement.entity.HotelService;
 import java.io.IOException;
 import java.util.List;
@@ -20,11 +20,11 @@ public class HomeController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        RoomTypeRepository repo = new RoomTypeRepository();
+        RoomTypeDAO repo = new RoomTypeDAO();
 
         List<RoomTypeInfo> roomTypes = repo.getAllRoomTypes();
 
-        HotelServiceRepository serviceRepo = new HotelServiceRepository();
+        HotelServiceDAO serviceRepo = new HotelServiceDAO();
 
         List<HotelService> services = serviceRepo.getActiveServices();
         System.out.println("Services count = " + services.size());

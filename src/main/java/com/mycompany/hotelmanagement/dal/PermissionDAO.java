@@ -15,7 +15,7 @@ import java.util.List;
  * Created: 07/07/2026
  * Modified: 16/07/2026
  */
-public class PermissionRepository {
+public class PermissionDAO {
 
     /**
      * Gets list of allowed role names for a given request path.

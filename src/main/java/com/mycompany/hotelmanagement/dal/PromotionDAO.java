@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * Project: Hotel Management System
- * Class: PromotionRepository
+ * Class: PromotionDAO
  *
  * Description:
  * Tầng truy cập dữ liệu cho bảng Promotion. Cung cấp các phương thức lấy
@@ -28,7 +28,7 @@ import java.util.List;
  * @author KhanhTD
  * @version 1.0
  */
-public class PromotionRepository {
+public class PromotionDAO {
 
     private void useDatabase(Connection conn) {
         try (Statement stmt = conn.createStatement()) {

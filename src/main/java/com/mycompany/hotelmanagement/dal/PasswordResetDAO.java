@@ -6,7 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 
-public class PasswordResetRepository {
+public class PasswordResetDAO {
 
     public boolean insertResetToken(String email, String token, Timestamp expiryTime) {
         String sql = "INSERT INTO PasswordReset (email, token, expiry_time, is_used, created_at) VALUES (?, ?, ?, 0, ?)";

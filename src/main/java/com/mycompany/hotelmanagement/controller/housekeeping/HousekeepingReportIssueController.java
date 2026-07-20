@@ -1,7 +1,7 @@
 package com.mycompany.hotelmanagement.controller.housekeeping;
 
 import com.mycompany.hotelmanagement.dal.RoomIssueDAO;
-import com.mycompany.hotelmanagement.dal.RoomRepository;
+import com.mycompany.hotelmanagement.dal.RoomDAO;
 import com.mycompany.hotelmanagement.entity.RoomIssue;
 
 import jakarta.servlet.ServletException;
@@ -22,7 +22,7 @@ import java.util.List;
 @WebServlet("/housekeeping/reportIssue")
 public class HousekeepingReportIssueController extends HttpServlet {
 
-    private final RoomRepository roomRepository = new RoomRepository();
+    private final RoomDAO roomRepository = new RoomDAO();
     private final RoomIssueDAO roomIssueDAO = new RoomIssueDAO();
 
     @Override

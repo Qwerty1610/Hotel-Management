@@ -12,7 +12,7 @@ import java.util.List;
 
 /**
  * Project: Hotel Management System
- * Class: HotelServiceRepository
+ * Class: HotelServiceDAO
  *
  * Description:
  * Tầng truy cập dữ liệu cho bảng HotelService. Cung cấp các phương thức
@@ -30,7 +30,7 @@ import java.util.List;
  * @author KhanhTD
  * @version 1.0
  */
-public class HotelServiceRepository {
+public class HotelServiceDAO {
 
     private void useDatabase(Connection conn) {
         try (Statement stmt = conn.createStatement()) {

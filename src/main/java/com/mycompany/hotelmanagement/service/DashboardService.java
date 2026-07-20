@@ -1,6 +1,6 @@
 package com.mycompany.hotelmanagement.service;
 
-import com.mycompany.hotelmanagement.dal.DashboardRepository;
+import com.mycompany.hotelmanagement.dal.DashboardDAO;
 import com.mycompany.hotelmanagement.entity.DashboardStats;
 
 import java.sql.Date;
@@ -24,7 +24,7 @@ import java.util.Map;
  */
 public class DashboardService {
 
-    private final DashboardRepository repo = new DashboardRepository();
+    private final DashboardDAO repo = new DashboardDAO();
     private static final DateTimeFormatter LABEL_FMT = DateTimeFormatter.ofPattern("dd/MM");
 
     public DashboardStats getStats(LocalDate from, LocalDate to) {

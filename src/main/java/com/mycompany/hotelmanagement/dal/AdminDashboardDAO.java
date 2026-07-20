@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * AdminDashboardRepository
+ * AdminDashboardDAO
  * Truy vấn số liệu giám sát toàn hệ thống cho Bảng điều khiển của Admin (UC 2.7.4):
  * thống kê tài khoản, đặt phòng theo trạng thái, chuỗi doanh thu / lượt đặt phòng
  * theo thời gian (gom nhóm ngày / tháng / quý) và các danh sách chi tiết phân trang.
@@ -28,7 +28,7 @@ import java.util.Map;
  * Date: 08/07/2006
  * Version: 1.1 
  */
-public class AdminDashboardRepository {
+public class AdminDashboardDAO {
 
     /** Các trạng thái được tính vào doanh thu. */
     private static final String REVENUE_STATUS_IN =

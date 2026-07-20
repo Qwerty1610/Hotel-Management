@@ -1,6 +1,6 @@
 package com.mycompany.hotelmanagement.controller.common;
 
-import com.mycompany.hotelmanagement.dal.AccountRepository;
+import com.mycompany.hotelmanagement.dal.AccountDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.BookingRequest;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
@@ -138,7 +138,7 @@ public class CustomerBookingsController extends HttpServlet {
         List<RoomTypeInfo> roomTypes = roomTypeService.getAllRoomTypes();
         request.setAttribute("roomTypes", roomTypes);
 
-        AccountRepository accountRepo = new AccountRepository();
+        AccountDAO accountRepo = new AccountDAO();
         List<String> customerNames = accountRepo.getAllCustomerNames();
         request.setAttribute("customerNames", customerNames);
 
@@ -449,7 +449,7 @@ public class CustomerBookingsController extends HttpServlet {
             request.setAttribute("roomTypes", roomTypes);
 
             // Reload customer names for lookup dropdown
-            AccountRepository accountRepo = new AccountRepository();
+            AccountDAO accountRepo = new AccountDAO();
             request.setAttribute("customerNames", accountRepo.getAllCustomerNames());
 
             request.getRequestDispatcher("/WEB-INF/views/customer/booking-create.jsp").forward(request, response);
@@ -541,20 +541,5 @@ public class CustomerBookingsController extends HttpServlet {
             response.getWriter()
                     .write("{\"success\": false, \"message\": \"Dữ liệu không hợp lệ.\", \"discountAmount\": 0}");
         }
-    }
-    private void showBookingChangePage(HttpServletRequest request, HttpServletResponse response, int accountId)
-            throws ServletException, IOException {
-        List<Booking> bookings = bookingService.getBookingsByAccount(accountId, "All", null);
-        request.setAttribute("bookings", bookings);
-        request.setAttribute("roomTypes", roomTypeService.getAllRoomTypes());
-        request.setAttribute("myRequests", bookingRequestService.getRequestsByAccount(accountId));
-
-        String error = request.getParameter("error");
-        if (error != null) {
-            request.setAttribute("errorCode", error);
-            request.setAttribute("errorMessage", ERROR_MESSAGES.getOrDefault(error, ERROR_MESSAGES.get("MSG55")));
-        }
-
-        request.getRequestDispatcher("/WEB-INF/views/customer/booking-change.jsp").forward(request, response);
     }
 }

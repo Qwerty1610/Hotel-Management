@@ -2,7 +2,7 @@ package com.mycompany.hotelmanagement.service;
 
 import com.mycompany.hotelmanagement.dal.BookingDAO;
 import com.mycompany.hotelmanagement.dal.BookingRequestDAO;
-import com.mycompany.hotelmanagement.dal.RoomTypeRepository;
+import com.mycompany.hotelmanagement.dal.RoomTypeDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.BookingRequest;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
@@ -32,7 +32,7 @@ public class BookingRequestService {
 
     private final BookingRequestDAO requestDAO = new BookingRequestDAO();
     private final BookingDAO bookingDAO = new BookingDAO();
-    private final RoomTypeRepository roomTypeRepository = new RoomTypeRepository();
+    private final RoomTypeDAO roomTypeRepository = new RoomTypeDAO();
 
     /** Outcome of a request operation: a result code plus any computed charge. */
     public static class Result {

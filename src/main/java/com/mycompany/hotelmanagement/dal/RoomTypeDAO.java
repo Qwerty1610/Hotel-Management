@@ -15,7 +15,7 @@ import java.util.Map;
 
 /**
  * Project: Hotel Management System
- * Class: RoomTypeRepository
+ * Class: RoomTypeDAO
  *
  * Description:
  * Tầng truy cập dữ liệu cho bảng RoomType, RoomImage, Amenity và
@@ -36,7 +36,7 @@ import java.util.Map;
  * @author KhanhTD
  * @version 1.0
  */
-public class RoomTypeRepository {
+public class RoomTypeDAO {
 
     private void useDatabase(Connection conn) {
         try (Statement stmt = conn.createStatement()) {
