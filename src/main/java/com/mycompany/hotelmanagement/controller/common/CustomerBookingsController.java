@@ -2,7 +2,6 @@ package com.mycompany.hotelmanagement.controller.common;
 
 import com.mycompany.hotelmanagement.dal.AccountDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
-import com.mycompany.hotelmanagement.entity.BookingRequest;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import com.mycompany.hotelmanagement.service.BookingRequestService;
 import com.mycompany.hotelmanagement.service.BookingService;
@@ -137,6 +136,11 @@ public class CustomerBookingsController extends HttpServlet {
             throws ServletException, IOException {
         List<RoomTypeInfo> roomTypes = roomTypeService.getAllRoomTypes();
         request.setAttribute("roomTypes", roomTypes);
+
+        String roomTypeIdStr = request.getParameter("roomTypeId");
+        if (roomTypeIdStr != null && !roomTypeIdStr.trim().isEmpty()) {
+            request.setAttribute("selectedRoomTypeId", roomTypeIdStr.trim());
+        }
 
         AccountDAO accountRepo = new AccountDAO();
         List<String> customerNames = accountRepo.getAllCustomerNames();
