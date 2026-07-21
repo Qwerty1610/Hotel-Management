@@ -1,8 +1,7 @@
 package com.mycompany.hotelmanagement.controller.common;
 
-import com.mycompany.hotelmanagement.dal.AccountRepository;
+import com.mycompany.hotelmanagement.dal.AccountDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
-import com.mycompany.hotelmanagement.entity.BookingRequest;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import com.mycompany.hotelmanagement.service.BookingRequestService;
 import com.mycompany.hotelmanagement.service.BookingService;
@@ -138,7 +137,12 @@ public class CustomerBookingsController extends HttpServlet {
         List<RoomTypeInfo> roomTypes = roomTypeService.getAllRoomTypes();
         request.setAttribute("roomTypes", roomTypes);
 
-        AccountRepository accountRepo = new AccountRepository();
+        String roomTypeIdStr = request.getParameter("roomTypeId");
+        if (roomTypeIdStr != null && !roomTypeIdStr.trim().isEmpty()) {
+            request.setAttribute("selectedRoomTypeId", roomTypeIdStr.trim());
+        }
+
+        AccountDAO accountRepo = new AccountDAO();
         List<String> customerNames = accountRepo.getAllCustomerNames();
         request.setAttribute("customerNames", customerNames);
 
@@ -265,6 +269,33 @@ public class CustomerBookingsController extends HttpServlet {
         } catch (NumberFormatException e) {
             response.sendRedirect(request.getContextPath() + "/customer/bookings?error=MSG55");
         }
+    }
+
+    private void showBookingChangePage(HttpServletRequest request, HttpServletResponse response, int accountId)
+            throws ServletException, IOException {
+        String idStr = request.getParameter("id");
+        if (idStr != null && !idStr.trim().isEmpty()) {
+            try {
+                int bookingId = Integer.parseInt(idStr);
+                Booking booking = bookingService.getBookingById(bookingId);
+                if (booking != null && booking.getAccountId() != null && booking.getAccountId() == accountId) {
+                    request.setAttribute("booking", booking);
+                }
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        // Propagate error/success messages if redirected back here
+        String error = request.getParameter("error");
+        if (error != null) {
+            request.setAttribute("errorCode", error);
+            request.setAttribute("errorMessage", ERROR_MESSAGES.getOrDefault(error, ERROR_MESSAGES.get("MSG55")));
+        }
+
+        List<RoomTypeInfo> roomTypes = roomTypeService.getAllRoomTypes();
+        request.setAttribute("roomTypes", roomTypes);
+
+        request.getRequestDispatcher("/WEB-INF/views/customer/booking-change.jsp").forward(request, response);
     }
 
     private void handleCreateBooking(HttpServletRequest request, HttpServletResponse response, int accountId)
@@ -422,7 +453,7 @@ public class CustomerBookingsController extends HttpServlet {
             request.setAttribute("roomTypes", roomTypes);
 
             // Reload customer names for lookup dropdown
-            AccountRepository accountRepo = new AccountRepository();
+            AccountDAO accountRepo = new AccountDAO();
             request.setAttribute("customerNames", accountRepo.getAllCustomerNames());
 
             request.getRequestDispatcher("/WEB-INF/views/customer/booking-create.jsp").forward(request, response);

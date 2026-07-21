@@ -12,9 +12,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * CustomerRequestDAO
- * Truy vấn bảng CustomerRequest phục vụ trang quản lý yêu cầu khách hàng của Manager.
+ * Project: Hotel Management System
+ * Class: CustomerRequestDAO
  *
+ * Description:
+ * Tầng truy cập dữ liệu cho bảng CustomerRequest. Cung cấp các phương thức
+ * lấy tất cả yêu cầu, lấy/đếm Maintenance requests có lọc và phân trang,
+ * lấy/đếm yêu cầu theo nhân viên, lấy yêu cầu đang thực hiện của nhân viên,
+ * gán nhân viên, cập nhật trạng thái, hủy yêu cầu (từ phía khách hàng), lấy
+ * yêu cầu theo ID và thêm mới yêu cầu dịch vụ. Phân biệt Maintenance requests
+ * (booking_id IS NULL) và Service requests (booking_id IS NOT NULL).
+ * 
  * thêm 6 hàm để hỗ trợ việc render danh sách từ BE:
  * buildReqWhere: xây dựng hàm điều kiện theo input của người dùng
  * getRequests: lấy tất cả request theo bộ lọc
@@ -23,9 +31,15 @@ import java.util.List;
  * countRequestsByStaff: tổng số công việc đã nhận của nhân viên
  * getInProgressByStaff: lấy công việc đang thực hiện của nhân viên
  * 
- * Date: 02/6/2026
- * version 1.0
- * @author Pham Quoc Quy
+ * Related Use Cases:
+ * - UC-09 Submit Service Request
+ * - UC-34 View Service Requests
+ * - UC-62 View Service Request History
+ *
+ * Date: 02-06-2026
+ *
+ * @author Pham Quoc Quy, KhanhTD
+ * @version 1.0
  */
 public class CustomerRequestDAO {
 

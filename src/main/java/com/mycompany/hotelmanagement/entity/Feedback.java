@@ -3,6 +3,25 @@ package com.mycompany.hotelmanagement.entity;
 import java.sql.Timestamp;
 import java.util.Date;
 
+/**
+ * Project: Hotel Management System
+ * Class: Feedback
+ *
+ * Description:
+ * Entity biểu diễn một đánh giá lưu trú của khách hàng. Bao gồm các thuộc
+ * tính feedbackId, bookingId, roomId, accountId, rating, comment, createdAt
+ * và các thuộc tính hỗ trợ hiển thị (roomNumber, roomTypeName, checkInDate,
+ * checkOutDate, checkedOutAt, customerName, reviewed).
+ *
+ * Related Use Cases:
+ * - UC-35 Submit Stay Feedback
+ * - UC-63 View Room Type Reviews
+ *
+ * Date: 11-07-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
+ */
 public class Feedback {
     private int feedbackId;
     private int bookingId;

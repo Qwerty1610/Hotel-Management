@@ -80,11 +80,32 @@ QuyPQ commits Add Admin_SystemDashboard
 QuyPQ commits Add Admin_SystemDashboard
 TungNQ commits "validate create staff"
 TungNQ commits "fix conflict"
+29/06/2026
+KhanhTD commits "Refactor BookingService"
+30/06/2026
+KhanhTD commits "Add comment for ServiceRequest"
+QuyPQ commits "Quý: fix_jsp_receptionist cant view personal profile"
+05/07/2026
+KhanhTD commits "Fix Manage Room Function for Manager"
+KhanhTD commits "Update ServiceRequest for customer"
+11/07/2026
+KhanhTD commits "Promotion Management"
+KhanhTD commits "Feedback for customer"
+KhanhTD commits "Fix sql"
+17/07/2026
+KhanhTD commits "comment code"
+08/07/2026
+QuyPQ commits "Quý: update admin dashboard"
+QuyPQ commits "add Make online payment and View booking history"
 09/07/2026
 BinhHD commits "Implement checkout feature for Customer and Receptionist"
 11/07/2026
 BinhHD commits "Fix issue regarding Rooms JS not showing"
 12/07/2026
 BinhHD commits "Finish Promotion Code use for Customer Booking"
+QuyPQ commits "Combine request booking change and request stay extension to booking change"
+QuyPQ commits "add process booking change for receptionist"
+13/07/2026
+QuyPQ commits "Quý: fix UI"
 16/07/2026
 BinhHD commits "Finalize comments for better understanding"

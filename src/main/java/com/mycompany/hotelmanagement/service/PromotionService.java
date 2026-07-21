@@ -2,21 +2,32 @@ package com.mycompany.hotelmanagement.service;
 
 import java.util.List;
 
-import com.mycompany.hotelmanagement.dal.PromotionRepository;
+import com.mycompany.hotelmanagement.dal.PromotionDAO;
 import com.mycompany.hotelmanagement.entity.Promotion;
 
 /**
- * PromotionService
- * Tầng nghiệp vụ (Service) quản lý Khuyến mãi.
+ * Project: Hotel Management System
+ * Class: PromotionService
  *
- * UC-48: Manage Promotions
- * Date: 07/7/2026
+ * Description:
+ * Tầng nghiệp vụ quản lý khuyến mãi. Cung cấp các phương thức lấy toàn
+ * bộ danh sách, lấy theo ID, kiểm tra trùng mã khuyến mãi, lưu (thêm mới
+ * hoặc cập nhật), bật/tắt trạng thái và xóa khuyến mãi. Xóa chỉ cho phép
+ * khi UsedCount = 0. Ủy quyền thao tác dữ liệu cho PromotionDAO.
  *
- * @author DINH KHANH
+ * Related Use Cases:
+ * - UC-46 View Promotions
+ * - UC-64 Add Promotion
+ * - UC-65 Edit Promotion
+ *
+ * Date: 11-07-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
  */
 public class PromotionService {
 
-    private final PromotionRepository promotionRepository = new PromotionRepository();
+    private final PromotionDAO promotionRepository = new PromotionDAO();
 
     /**
      * Lấy toàn bộ danh sách khuyến mãi.

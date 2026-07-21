@@ -1,7 +1,7 @@
 package com.mycompany.hotelmanagement.controller.receptionist;
 
 import com.mycompany.hotelmanagement.dal.BookingDAO;
-import com.mycompany.hotelmanagement.dal.RoomRepository;
+import com.mycompany.hotelmanagement.dal.RoomDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;

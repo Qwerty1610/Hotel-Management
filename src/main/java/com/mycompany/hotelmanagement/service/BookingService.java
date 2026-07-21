@@ -1,7 +1,7 @@
 package com.mycompany.hotelmanagement.service;
 
 import com.mycompany.hotelmanagement.dal.BookingDAO;
-import com.mycompany.hotelmanagement.dal.RoomTypeRepository;
+import com.mycompany.hotelmanagement.dal.RoomTypeDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.Room;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
@@ -35,7 +35,7 @@ public class BookingService {
 
     private static final Logger LOGGER = Logger.getLogger(BookingService.class.getName());
     private final BookingDAO bookingDAO = new BookingDAO();
-    private final RoomTypeRepository roomTypeRepository = new RoomTypeRepository();
+    private final RoomTypeDAO roomTypeRepository = new RoomTypeDAO();
 
     /**
      * Creates a new booking with validation. Throws exception with message keys

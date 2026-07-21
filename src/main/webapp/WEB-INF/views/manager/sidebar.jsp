@@ -44,14 +44,14 @@
                             <i class="fa-solid fa-file-invoice-dollar"></i> <span>Hóa đơn</span>
                         </a>
                     </li>
+                    <li class="menu-item ${activePage eq 'promotions' ? 'active' : ''}">
+                        <a href="${pageContext.request.contextPath}/manager/promotions">
+                            <i class="fa-solid fa-tag"></i> <span>Khuyến mãi</span>
+                        </a>
+                    </li>
                     <li class="menu-item ${activePage eq 'customers' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/manager/dashboard?tab=customers">
                             <i class="fa-solid fa-user-group"></i> <span>Khách hàng</span>
-                        </a>
-                    </li>
-                    <li class="menu-item ${activePage eq 'promotions' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/manager/promotions">
-                            <i class="fa-solid fa-ticket"></i> <span>Mã giảm giá</span>
                         </a>
                     </li>
                 </ul>

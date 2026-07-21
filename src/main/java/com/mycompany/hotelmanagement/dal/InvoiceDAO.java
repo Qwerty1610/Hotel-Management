@@ -1,6 +1,7 @@
 package com.mycompany.hotelmanagement.dal;
 
 import com.mycompany.hotelmanagement.config.DBContext;
+import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.Invoice;
 import com.mycompany.hotelmanagement.entity.InvoiceItem;
 import com.mycompany.hotelmanagement.entity.Refund;
@@ -345,12 +346,19 @@ public class InvoiceDAO {
     }
 
     /**
-     * Lấy hóa đơn theo booking_id — dùng khi Receptionist approve service request
-     * để tìm invoice cần thêm dòng dịch vụ.
+     * Lấy hóa đơn theo booking_id — hỗ trợ cả root booking ID lẫn child booking ID.
      * Trả về null nếu booking chưa có hóa đơn.
      */
     public Invoice getInvoiceByBookingId(int bookingId) {
-        String sql = BASE_SELECT + "WHERE i.booking_id = ?";
+        String sql = "SELECT TOP 1 i.invoice_id, i.booking_id, i.customer_name, i.room_number, i.status, i.created_at, "
+                + "  (SELECT ISNULL(SUM(ii.amount),0) FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id) AS total_amount, "
+                + "  (SELECT ISNULL(SUM(ii.amount),0) * 0.3 FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id AND ii.item_type = N'Room') AS deposit_amount, "
+                + "  (SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Done') AS refunded_amount, "
+                + "  (SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Pending') AS pending_refund_amount "
+                + "FROM dbo.Invoice i "
+                + "JOIN dbo.Booking b ON i.booking_id = b.booking_id OR i.booking_id = b.group_booking_id "
+                + "WHERE b.booking_id = ? "
+                + "ORDER BY i.invoice_id DESC";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -363,6 +371,101 @@ public class InvoiceDAO {
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * Tạo hóa đơn ở trạng thái Pending (Chưa thanh toán) kèm khoản tiền phòng cho một đặt phòng
+     * nếu đặt phòng chưa có hóa đơn. Nếu đã có thì cập nhật lại số phòng nếu phòng đã phân.
+     *
+     * @param bookingId ID của đặt phòng cần tạo/cập nhật hóa đơn
+     * @return invoice_id vừa tạo hoặc đã tồn tại, -1 nếu thất bại
+     */
+    public synchronized int createInvoiceForBooking(int bookingId) {
+        if (bookingId <= 0) return -1;
+
+        Invoice existing = getInvoiceByBookingId(bookingId);
+        BookingDAO bookingDAO = new BookingDAO();
+        Booking b = bookingDAO.getBookingById(bookingId);
+        if (b == null) return -1;
+
+        int rootBookingId = (b.getGroupBookingId() != null && b.getGroupBookingId() > 0)
+                ? b.getGroupBookingId()
+                : b.getBookingId();
+
+        String assignedRooms = b.getAssignedRoomsStr();
+        if (existing != null) {
+            if (assignedRooms != null && !assignedRooms.trim().isEmpty()
+                    && !assignedRooms.equals(existing.getRoomNumber())) {
+                String updateRoom = "UPDATE dbo.Invoice SET room_number = ?, updated_at = SYSDATETIME() WHERE invoice_id = ?";
+                try (Connection conn = DBContext.getConnection()) {
+                    useDatabase(conn);
+                    try (PreparedStatement ps = conn.prepareStatement(updateRoom)) {
+                        ps.setString(1, assignedRooms);
+                        ps.setInt(2, existing.getInvoiceId());
+                        ps.executeUpdate();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            return existing.getInvoiceId();
+        }
+
+        if (rootBookingId != bookingId) {
+            b = bookingDAO.getBookingById(rootBookingId);
+            if (b == null) return -1;
+            assignedRooms = b.getAssignedRoomsStr();
+        }
+
+        String customerName = b.getCustomerName() != null ? b.getCustomerName() : "Khách hàng";
+        String roomNumber = (assignedRooms != null && !assignedRooms.trim().isEmpty())
+                ? assignedRooms
+                : (b.getRoomTypeName() != null ? b.getRoomTypeName() : "");
+        double totalAmount = b.getOverallTotalAmount() > 0 ? b.getOverallTotalAmount() : b.getTotalAmount();
+
+        String insertInvoice = "INSERT INTO dbo.Invoice (booking_id, customer_name, room_number, status, created_at) "
+                + "VALUES (?, ?, ?, N'Pending', SYSDATETIME())";
+        String insertRoomItem = "INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount) "
+                + "VALUES (?, N'Room', ?, 1, ?, ?)";
+
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            conn.setAutoCommit(false);
+            try {
+                int invoiceId = -1;
+                try (PreparedStatement ps = conn.prepareStatement(insertInvoice, Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setInt(1, rootBookingId);
+                    ps.setString(2, customerName);
+                    ps.setString(3, roomNumber);
+                    ps.executeUpdate();
+                    try (ResultSet rs = ps.getGeneratedKeys()) {
+                        if (rs.next()) invoiceId = rs.getInt(1);
+                    }
+                }
+
+                if (invoiceId > 0) {
+                    String itemDesc = "Tiền phòng " + (roomNumber.isEmpty() ? "" : roomNumber)
+                            + (b.getNights() > 0 ? " (" + b.getNights() + " đêm)" : "");
+                    try (PreparedStatement ps = conn.prepareStatement(insertRoomItem)) {
+                        ps.setInt(1, invoiceId);
+                        ps.setString(2, itemDesc.trim());
+                        ps.setDouble(3, totalAmount);
+                        ps.setDouble(4, totalAmount);
+                        ps.executeUpdate();
+                    }
+                }
+                conn.commit();
+                return invoiceId;
+            } catch (SQLException ex) {
+                conn.rollback();
+                ex.printStackTrace();
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 
     /**

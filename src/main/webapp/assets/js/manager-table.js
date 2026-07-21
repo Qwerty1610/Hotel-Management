@@ -65,7 +65,14 @@ const ManagerTable = {
             table.filteredItems = [...table.items];
         }
 
-        table.currentPage = 1;
+        const savedPage = sessionStorage.getItem("ManagerTable_page_" + tableId);
+        if (savedPage) {
+            table.currentPage = parseInt(savedPage, 10);
+            sessionStorage.removeItem("ManagerTable_page_" + tableId);
+        } else {
+            table.currentPage = 1;
+        }
+        
         this.render(tableId);
     },
 

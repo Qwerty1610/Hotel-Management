@@ -2,6 +2,29 @@ package com.mycompany.hotelmanagement.entity;
 
 import java.util.List;
 
+/**
+ * Project: Hotel Management System
+ * Class: RoomTypeInfo
+ *
+ * Description:
+ * Entity biểu diễn thông tin loại phòng, bao gồm các thuộc tính cơ bản
+ * (typeId, typeName, basePrice, pricePerHour, depositPercent, capacity,
+ * description, area, bedType), danh sách hình ảnh, danh sách tiện nghi
+ * và số phòng còn trống. Được sử dụng cho cả trang hiển thị công khai
+ * lẫn trang quản lý của Manager.
+ *
+ * Related Use Cases:
+ * - UC-29 Browse Available Room Types
+ * - UC-30 View Room Type Detail
+ * - UC-53 View Room Type Records
+ * - UC-54 Add Room Type
+ * - UC-55 Edit Room Type
+ *
+ * Date: 31-05-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
+ */
 public class RoomTypeInfo {
     private int typeId;
     private String typeName;

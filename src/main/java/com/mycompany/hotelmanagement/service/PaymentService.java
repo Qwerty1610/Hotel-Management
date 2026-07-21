@@ -270,8 +270,13 @@ public class PaymentService {
         if (paymentDAO.getBookingIdIfExists(bookingId) == null) {
             return WebhookResult.INVOICE_NOT_PAYABLE;
         }
+        int invoiceId = invoiceDAO.createInvoiceForBooking(bookingId);
+
         Payment p = new Payment();
         p.setBookingId(bookingId);
+        if (invoiceId > 0) {
+            p.setInvoiceId(invoiceId);
+        }
         p.setSepayTxId(sepayTxId);
         p.setAmount(amount);
         p.setGateway(gateway);

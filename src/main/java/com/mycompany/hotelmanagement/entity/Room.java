@@ -1,5 +1,24 @@
 package com.mycompany.hotelmanagement.entity;
 
+/**
+ * Project: Hotel Management System
+ * Class: Room
+ *
+ * Description:
+ * Entity biểu diễn một phòng khách sạn dùng trong ngữ cảnh hiển thị
+ * danh sách phòng đã gán cho booking. Bao gồm các thuộc tính roomId,
+ * roomNumber, typeName, status, floor và imageUrl.
+ *
+ * Related Use Cases:
+ * - UC-56 View Room List
+ * - UC-57 Add Room
+ * - UC-58 Edit Room
+ *
+ * Date: 31-05-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
+ */
 public class Room {
 
     private int roomId;

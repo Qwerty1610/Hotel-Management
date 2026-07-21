@@ -2,7 +2,7 @@
     <%@ include file="../../includes/taglibs.jsp" %>
         <%@ include file="../../includes/header.jsp" %>
 
-            <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/rooms.css?v=20" />
+            <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/rooms.css?v=21" />
             <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/room_detail.css?v=2" />
             <fmt:setLocale value="vi_VN" />
 

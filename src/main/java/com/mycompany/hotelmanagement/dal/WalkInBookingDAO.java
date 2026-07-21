@@ -253,66 +253,6 @@ public class WalkInBookingDAO {
         return 0;
     }
 
-    private int createParentBooking(
-            String customerName,
-            String phone,
-            String email,
-            String note,
-            Date checkIn,
-            Date checkOut,
-            double totalAmount,
-            Connection con)
-            throws SQLException {
-
-        String sql = """
-        INSERT INTO Booking
-        (
-            customer_name,
-            phone,
-            email,
-            room_quantity,
-            check_in_date,
-            check_out_date,
-            total_amount,
-            status,
-            note
-        )
-        OUTPUT INSERTED.booking_id
-        VALUES
-        (
-            ?,?,
-            ?,0,
-            ?,?,
-            ?,
-            'Pending',
-            ?
-        )
-        """;
-
-        try (PreparedStatement ps
-                = con.prepareStatement(sql)) {
-
-            ps.setString(1, customerName);
-            ps.setString(2, phone);
-            ps.setString(3, email);
-
-            ps.setDate(4, checkIn);
-            ps.setDate(5, checkOut);
-
-            ps.setDouble(6, totalAmount);
-
-            ps.setString(7, note);
-
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        }
-
-        return -1;
-    }
-
     private int createChildBooking(
             Integer parentId,
             String customerName,
@@ -507,25 +447,7 @@ public class WalkInBookingDAO {
             boolean isGroupBooking = roomTypeIds.length > 1;
 
             int parentId = -1;
-            if (isGroupBooking) {
-                parentId = createParentBooking(
-                        customerName,
-                        phone,
-                        email,
-                        note,
-                        checkIn,
-                        checkOut,
-                        grandTotal,
-                        con
-                );
 
-                if (parentId <= 0) {
-
-                    con.rollback();
-
-                    return -1;
-                }
-            }
             //------------------------------------------------
             // CHILD BOOKINGS
             //------------------------------------------------
@@ -553,9 +475,12 @@ public class WalkInBookingDAO {
                         * qty
                         * nights;
 
-                Integer groupId = isGroupBooking
-                        ? parentId
-                        : null;
+                Integer groupId = null;
+
+                if (i > 0) {
+                    groupId = parentId;
+                }
+
                 int childId
                         = createChildBooking(
                                 groupId,
@@ -577,6 +502,7 @@ public class WalkInBookingDAO {
                 }
                 if (firstBookingId == -1) {
                     firstBookingId = childId;
+                    parentId = childId;
                 }
                 //------------------------------------
                 // assign rooms
@@ -651,6 +577,7 @@ public class WalkInBookingDAO {
             }
             con.commit();
 
+            new InvoiceDAO().createInvoiceForBooking(bookingRootId);
             return bookingRootId;
 
         } catch (Exception e) {

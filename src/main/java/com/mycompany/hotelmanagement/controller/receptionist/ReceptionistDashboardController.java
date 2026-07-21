@@ -2,8 +2,8 @@ package com.mycompany.hotelmanagement.controller.receptionist;
 
 import com.mycompany.hotelmanagement.dal.BookingDAO;
 import com.mycompany.hotelmanagement.dal.BookingServiceRequestDAO;
-import com.mycompany.hotelmanagement.dal.RoomRepository;
-import com.mycompany.hotelmanagement.dal.RoomTypeRepository;
+import com.mycompany.hotelmanagement.dal.RoomDAO;
+import com.mycompany.hotelmanagement.dal.RoomTypeDAO;
 import com.mycompany.hotelmanagement.dal.WalkInBookingDAO;
 import com.mycompany.hotelmanagement.dal.CheckOutDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
@@ -17,6 +17,22 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+
+/**
+ * ReceptionistDashboardController
+ * URL: /receptionist/dashboard
+ *
+ * Quản lý dashboard chính của Lễ tân, xử lý hiển thị và tải dữ liệu cho các tab công việc:
+ * - bookings: Xem và tìm kiếm danh sách đặt phòng (UC-12: Process Booking Request)
+ * - checkin: Xem danh sách chờ nhận phòng và làm thủ tục check-in (UC-14: Check In Customer)
+ * - checkout: Xem danh sách chờ trả phòng và làm thủ tục check-out (UC-16: Check Out Customer)
+ * - servicerequests: Xem danh sách yêu cầu dịch vụ của khách hàng để duyệt/hủy (UC-35: View Service Requests)
+ * - roommap: Xem sơ đồ phòng theo thời gian thực (UC-38: View Room Map)
+ * - walkin-bookings: Tạo đặt phòng trực tiếp tại quầy (UC-15: Create Walk-in Booking)
+ * 
+ * Date: 01/6/2026
+ * @author BinhHD, MinhTDP, KhanhTD
+ */
 import java.io.IOException;
 import java.sql.Date;
 import java.util.ArrayList;
@@ -59,7 +75,7 @@ public class ReceptionistDashboardController extends HttpServlet {
     private static final int PAGE_SIZE = 8;
     private static final int PAGE_SIZE_CHECKIN = 11;
 
-    private static final Set<String> ALLOWED_TABS = Set.of("bookings", "checkin", "checkout", "servicerequests",
+    private static final Set<String> ALLOWED_TABS = Set.of("bookings","changerequests", "checkin", "checkout", "servicerequests",
             "roommap", "walkin-bookings");
     private static final Set<String> STATUS_WHITELIST = Set.of("All", "Pending", "Confirmed", "Rejected", "Cancelled",
             "CheckedIn", "CheckedOut");
@@ -129,7 +145,7 @@ public class ReceptionistDashboardController extends HttpServlet {
     private void loadBookingTab(HttpServletRequest request) {
         try {
             BookingDAO dao = new BookingDAO();
-            RoomTypeRepository roomTypeRepo = new RoomTypeRepository();
+            RoomTypeDAO roomTypeRepo = new RoomTypeDAO();
 
             // Tham số lọc
             String statusFilter = request.getParameter("status");
@@ -384,7 +400,7 @@ public class ReceptionistDashboardController extends HttpServlet {
 
     private void loadRoomMapTab(HttpServletRequest request) {
 
-        RoomRepository repo = new RoomRepository();
+        RoomDAO repo = new RoomDAO();
 
         String fromDate = request.getParameter("fromDate");
         String toDate = request.getParameter("toDate");
@@ -457,7 +473,7 @@ public class ReceptionistDashboardController extends HttpServlet {
     }
 
     private void loadWalkInBookingTab(HttpServletRequest request) {
-        RoomTypeRepository roomTypeRepo = new RoomTypeRepository();
+        RoomTypeDAO roomTypeRepo = new RoomTypeDAO();
         request.setAttribute("roomTypesList", roomTypeRepo.getAllRoomTypes());
     }
 

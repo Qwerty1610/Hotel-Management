@@ -12,7 +12,7 @@ import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import com.mycompany.hotelmanagement.dal.PermissionRepository;
+import com.mycompany.hotelmanagement.dal.PermissionDAO;
 import java.util.List;
 
 /**
@@ -61,7 +61,7 @@ public class AuthFilter implements Filter {
         
         boolean authorized = false;
         
-        PermissionRepository permissionRepository = new PermissionRepository();
+        PermissionDAO permissionRepository = new PermissionDAO();
         List<String> allowedRoles = permissionRepository.getAllowedRolesForPath(path);
         
         if (allowedRoles.isEmpty()) {

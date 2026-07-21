@@ -1,6 +1,6 @@
 package com.mycompany.hotelmanagement.service;
 
-import com.mycompany.hotelmanagement.dal.AccountRepository;
+import com.mycompany.hotelmanagement.dal.AccountDAO;
 import com.mycompany.hotelmanagement.entity.Account;
 import com.mycompany.hotelmanagement.entity.CustomerInfo;
 import com.mycompany.hotelmanagement.entity.Role;
@@ -20,7 +20,7 @@ import java.util.List;
  */
 public class AdminService {
     private static final Logger logger = LoggerFactory.getLogger(AdminService.class);
-    private final AccountRepository accountRepository = new AccountRepository();
+    private final AccountDAO accountRepository = new AccountDAO();
 
     public List<Account> getStaffAccounts() {
         return accountRepository.getAllStaffAccounts();

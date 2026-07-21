@@ -1,7 +1,7 @@
 package com.mycompany.hotelmanagement.controller.receptionist;
 
 import com.mycompany.hotelmanagement.dal.BookingServiceRequestDAO;
-import com.mycompany.hotelmanagement.dal.HotelServiceRepository;
+import com.mycompany.hotelmanagement.dal.HotelServiceDAO;
 import com.mycompany.hotelmanagement.dal.InvoiceDAO;
 import com.mycompany.hotelmanagement.entity.BookingServiceRequest;
 import com.mycompany.hotelmanagement.entity.HotelService;
@@ -19,20 +19,24 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * ReceptionistRequestController
- * URL: /receptionist/servicerequest
+ * Project: Hotel Management System
+ * Class: ReceptionistRequestController
  *
- * Xử lý các hành động duyệt hoặc hủy yêu cầu dịch vụ của khách hàng từ phía lễ tân (UC-35: View Service Requests):
- * - approve POST: Duyệt yêu cầu dịch vụ. Thực hiện các bước:
- *   1. Đọc BookingServiceRequest để lấy bookingId và tên dịch vụ.
- *   2. Tra cứu đơn giá dịch vụ trong HotelService.
- *   3. Tìm Invoice tương ứng của booking.
- *   4. Thêm InvoiceItem loại 'Service' với đơn giá tra cứu được để tự động cập nhật tổng hóa đơn.
- *   5. Cập nhật trạng thái yêu cầu dịch vụ thành Completed.
- * - cancel POST: Hủy yêu cầu dịch vụ, ghi nhận người thực hiện và lý do hủy, cập nhật trạng thái yêu cầu thành Cancelled.
+ * Description:
+ * Controller xử lý duyệt và hủy yêu cầu dịch vụ của khách hàng từ phía
+ * Receptionist. Khi duyệt (approve): tra cứu BookingServiceRequest, lấy đơn
+ * giá dịch vụ từ HotelServiceDAO nếu cần, tìm Invoice của booking,
+ * thêm InvoiceItem loại Service và cập nhật trạng thái yêu cầu thành
+ * Completed. Khi hủy (cancel): cập nhật trạng thái thành Cancelled kèm
+ * người thực hiện và lý do hủy.
  *
- * Date: 21/6/2026 — updated 25/6/2026
- * @author DINH KHANH
+ * Related Use Cases:
+ * - UC-34 View Service Requests
+ *
+ * Date: 25-06-2026
+ *
+ * @author KhanhTD
+ * @version 1.0
  */
 @WebServlet(name = "ReceptionistRequestController", urlPatterns = { "/receptionist/servicerequest" })
 public class ReceptionistRequestController extends HttpServlet {
@@ -93,9 +97,9 @@ public class ReceptionistRequestController extends HttpServlet {
                     if (req.getBookingId() != null) {
                         double servicePrice = req.getUnitPrice();
 
-                        // Nếu unitPrice <= 0 thì fallback tìm trong HotelServiceRepository như code cũ
+                        // Nếu unitPrice <= 0 thì fallback tìm trong HotelServiceDAO như code cũ
                         if (servicePrice <= 0.0) {
-                            HotelServiceRepository hsRepo = new HotelServiceRepository();
+                            HotelServiceDAO hsRepo = new HotelServiceDAO();
                             List<HotelService> allServices = hsRepo.getAllServices();
                             for (HotelService hs : allServices) {
                                 if (hs.getServiceName().equalsIgnoreCase(req.getTitle()) && hs.isIsActive()) {
