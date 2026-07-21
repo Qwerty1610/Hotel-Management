@@ -561,6 +561,11 @@
                     return;
                 }
             }
+            
+            // Save current page to sessionStorage to restore it after reload
+            if (ManagerTable && ManagerTable.tables["roomTypesTable"]) {
+                sessionStorage.setItem("ManagerTable_page_roomTypesTable", ManagerTable.tables["roomTypesTable"].currentPage);
+            }
         });
     </script>
 </body>

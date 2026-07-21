@@ -189,7 +189,8 @@
                                         <label for="roomTypeId">Loại phòng</label>
                                         <select name="roomTypeId" id="roomTypeId" onchange="calculatePricing(); validateForm()">
                                             <c:forEach var="rt" items="${roomTypes}">
-                                                <option value="${rt.typeId}" data-price="${rt.basePrice}" data-capacity="${rt.capacity}">
+                                                <option value="${rt.typeId}" data-price="${rt.basePrice}" data-capacity="${rt.capacity}"
+                                                        <c:if test="${not empty selectedRoomTypeId and selectedRoomTypeId eq rt.typeId}">selected</c:if>>
                                                     ${rt.typeName} - <fmt:formatNumber value="${rt.basePrice}" type="number" pattern="#,##0" /> VND / đêm (Tối đa ${rt.capacity} khách)
                                                 </option>
                                             </c:forEach>

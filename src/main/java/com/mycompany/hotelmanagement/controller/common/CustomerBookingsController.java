@@ -139,6 +139,11 @@ public class CustomerBookingsController extends HttpServlet {
         List<RoomTypeInfo> roomTypes = roomTypeService.getAllRoomTypes();
         request.setAttribute("roomTypes", roomTypes);
 
+        String roomTypeIdStr = request.getParameter("roomTypeId");
+        if (roomTypeIdStr != null && !roomTypeIdStr.trim().isEmpty()) {
+            request.setAttribute("selectedRoomTypeId", roomTypeIdStr.trim());
+        }
+
         AccountDAO accountRepo = new AccountDAO();
         List<String> customerNames = accountRepo.getAllCustomerNames();
         request.setAttribute("customerNames", customerNames);
@@ -291,6 +296,15 @@ public class CustomerBookingsController extends HttpServlet {
 
         List<RoomTypeInfo> roomTypes = roomTypeService.getAllRoomTypes();
         request.setAttribute("roomTypes", roomTypes);
+
+        // Load the customer's bookings so the change/extension dropdowns can be
+        // populated. Without this, the JSP's <c:forEach items="${bookings}"> has
+        // nothing to iterate and both selects stay empty (no eligible booking).
+        List<Booking> bookings = bookingService.getBookingsByAccount(accountId, "All", null);
+        request.setAttribute("bookings", bookings);
+
+        // Customer's change/extension requests, for the status-tracking table.
+        request.setAttribute("myRequests", bookingRequestService.getRequestsByAccount(accountId));
 
         request.getRequestDispatcher("/WEB-INF/views/customer/booking-change.jsp").forward(request, response);
     }
