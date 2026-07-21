@@ -1,0 +1,38 @@
+Workflow	System & Hotel Configuration
+Test requirement
+Number of TCs	6
+Testing Round	Passed	Failed	Pending	N/A
+Round 1	6	0	0	0
+Round 2	0	0		0
+Round 3	0	0		0
+
+Test Case ID	Test Case Description	Test Case Procedure	Expected Results	Pre-conditions	Round 1	Test date	Tester	Round 2	Test date	Tester	Round 3	Test date	Tester
+Scenario: Hotel Information Management (UC-49)													
+TC_HC_01	Update hotel information successfully (UC-49)	"1. Log in as Admin, navigate to Hotel Info configuration page.
+2. Modify Hotel Name = ""Grand Plaza Hotel"", Address = ""123 Luxury St, New York"", Contact = ""0123456789"", Introduction = ""Welcome to Grand Plaza Hotel!"", Website = ""https://grandplazahotel.com"".
+3. Click ""Save Config"" button."	"- Hotel details updated in DB.
+- Success message displayed.
+- Public website displays updated information."	Admin is logged in.	Passed	16/07/2026	TungNQ	Pending			Pending		
+TC_HC_02	Update hotel info failed with missing required fields (UC-49)	"1. Open Hotel Info page.
+2. Clear Hotel Name and Address fields.
+3. Click ""Save Config""."	"- System prevents submission.
+- Required field validation warnings are shown.
+- DB remains unchanged."	Admin is logged in.	Passed	16/07/2026	TungNQ	Pending			Pending		
+TC_HC_03	Update hotel info failed with invalid website URL (UC-49)	"1. Open Hotel Info page.
+2. Enter Website = ""invalid-url-format"".
+3. Click ""Save Config""."	"- Validation error displayed: ""Invalid URL format!"".
+- DB remains unchanged."	Admin is logged in.	Passed	16/07/2026	TungNQ	Pending			Pending		
+Scenario: System Configuration Management (UC-66)													
+TC_HC_04	Update Google OAuth and SMTP settings successfully (UC-66)	"1. Log in as Admin, navigate to System Config page.
+2. Update values: Google Client ID = ""client-id-123.apps.googleusercontent.com"", Google Client Secret = ""secret-456"", SMTP Host = ""smtp.gmail.com"", SMTP Port = ""587"", SMTP Username = ""hotel@gmail.com"", SMTP Password = ""smtp-pass-123"".
+3. Click ""Save Configurations"" button."	"- System configurations updated in DB.
+- Success message displayed.
+- Mail and OAuth integrations use the new credentials immediately."	Admin is logged in.	Passed	16/07/2026	TungNQ	Pending			Pending		
+TC_HC_05	Update system configurations failed with missing fields (UC-66)	"1. Open System Config page.
+2. Clear Google Client ID and SMTP Host.
+3. Click ""Save Configurations""."	"- Validation error shown for missing required fields.
+- DB remains unchanged."	Admin is logged in.	Passed	16/07/2026	TungNQ	Pending			Pending		
+TC_HC_06	Update system configs failed with invalid SMTP Port (UC-66)	"1. Open System Config page.
+2. Enter SMTP Port = ""invalid_port"".
+3. Click ""Save Configurations""."	"- Validation error displayed: ""SMTP Port must be a number!"".
+- DB remains unchanged."	Admin is logged in.	Passed	16/07/2026	TungNQ	Pending			Pending		
