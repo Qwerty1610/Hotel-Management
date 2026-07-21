@@ -64,6 +64,21 @@
                 border-radius:50%;
                 background:#0ea5e9;
             }
+            .section-card h3{
+                display:flex;
+                align-items:center;
+                gap:10px;
+
+                margin:0 0 18px;
+
+                color:#1e293b;
+                font-size:20px;
+                font-weight:700;
+            }
+            .section-divider{
+                margin:30px 0;
+                border-top:1px solid #e5e7eb;
+            }
             /* ================= SECTION 1 LAYOUT ================= */
             .grid-top{
                 display:grid;
@@ -159,7 +174,22 @@
                 border-color:#3b82f6;
                 box-shadow:0 0 0 3px rgba(59,130,246,.15);
             }
+            #companionBody select{
+                width:100%;
+                padding:10px 12px;
+                border:1px solid #cbd5e1;
+                border-radius:8px;
+                background:#fff;
+            }
 
+            #companionBody select:invalid{
+                border:1px solid #ef4444;
+            }
+
+            #companionBody select:focus{
+                outline:none;
+                border-color:#3b82f6;
+            }
             /* ================= BUTTON STYLE ================= */
 
             /* ---------- Add Companion ---------- */
@@ -269,7 +299,7 @@
 
             /* ================= FOOTER ================= */
             .footer-bar{
-                margin-top:24px;
+                margin-top:40px;
                 padding-top:20px;
                 border-top:2px solid #e5e7eb;
                 display:flex;
@@ -469,146 +499,270 @@
                 </header>
 
                 <main class="workspace-content">
+                    <form method="post"
+                          enctype="multipart/form-data"
+                          action="${pageContext.request.contextPath}/receptionist/checkin-detail">
+                        <input type="hidden" name="bookingId" value="${booking.bookingId}"/>
+                        <!-- ================= BOOKING INFO ================= -->
+                        <div class="section-card">
+                            <h3>Chi tiết đặt phòng</h3>
 
-                    <!-- ================= 1. BOOKING INFO ================= -->
-                    <div class="section-card">
-                        <h3>1. Chi tiết đặt phòng</h3>
+                            <div class="grid-top">
+                                <div class="field"><b>Mã:</b> #${booking.bookingId}</div>
+                                <div class="field"><b>Khách:</b> ${booking.customerName}</div>
+                                <div class="field"><b>SĐT:</b> ${booking.phone}</div>
+                                <div class="field"><b>Email:</b> ${booking.email}</div>
+                            </div>
 
-                        <div class="grid-top">
-                            <div class="field"><b>Mã:</b> #${booking.bookingId}</div>
-                            <div class="field"><b>Khách:</b> ${booking.customerName}</div>
-                            <div class="field"><b>SĐT:</b> ${booking.phone}</div>
-                            <div class="field"><b>Email:</b> ${booking.email}</div>
-                        </div>
+                            <div class="grid-bottom">
+                                <div class="field"><b>Ngày đến:</b> ${booking.checkInDate}</div>
+                                <div class="field"><b>Ngày đi:</b> ${booking.checkOutDate}</div>
+                                <div style="margin-top:20px;">
+                                    <c:choose>
+                                        <c:when test="${booking.status eq 'Confirmed'}">
+                                            <label>
+                                                <b>Ảnh CCCD khách đại diện</b>
+                                            </label>
+                                            <input
+                                                type="file"
+                                                name="customerImage"
+                                                accept="image/*"
+                                                required>
+                                        </c:when>
+                                        <c:when test="${booking.status eq 'CheckedIn'}">
+                                            <label>
+                                                <b>Ảnh CCCD khách đại diện</b>
+                                            </label>
+                                            <br>
+                                            <img
+                                                src="${checkIn.imageUrl}"
+                                                style="
+                                                width:220px;
+                                                height:150px;
+                                                object-fit:cover;
+                                                border-radius:12px;
+                                                border:1px solid #ddd;
+                                                "
+                                                />
+                                        </c:when>
+                                    </c:choose>
+                                </div>
+                            </div>
 
-                        <div class="grid-bottom">
-                            <div class="field"><b>Ngày đến:</b> ${booking.checkInDate}</div>
-                            <div class="field"><b>Ngày đi:</b> ${booking.checkOutDate}</div>
-                        </div>
-                    </div>
+                            <!-- ================= ROOM ASSIGN ================= -->
+                            <div class="section-divider"></div>
+                            <h3>Danh sách phòng được xếp</h3>
 
-                    <!-- ================= 2. ROOM ASSIGN ================= -->
-                    <div class="section-card">
-                        <h3>2. Danh sách phòng được xếp</h3>
-
-                        <table class="room-table">
-                            <thead>
-                                <tr>
-                                    <th>Số phòng</th>
-                                    <th>Loại phòng</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <c:forEach var="r" items="${rooms}">
+                            <table class="room-table">
+                                <thead>
                                     <tr>
-                                        <td>${r.roomNumber}</td>
-                                        <td>${r.typeName}</td>
+                                        <th>Số phòng</th>
+                                        <th>Loại phòng</th>
                                     </tr>
-                                </c:forEach>
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    <c:forEach var="r" items="${rooms}">
+                                        <tr>
+                                            <td>${r.roomNumber}</td>
+                                            <td>${r.typeName}</td>
+                                        </tr>
+                                    </c:forEach>
+                                </tbody>
+                            </table>
 
-                    <!-- ================= 3. COMPANION ================= -->
-                    <div class="section-card">
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <h3>3. Bạn đồng hành</h3>
-                            <button class="add-btn" type="button" onclick="addCompanion()">+ Thêm bạn đồng hành</button>
-                        </div>
-
-                        <table class="room-table">
-                            <thead>
-                                <tr>
-                                    <th>Họ và tên</th>
-                                    <th>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody id="companionBody"></tbody>
-                        </table>
-                    </div>
-
-                    <!-- ================= 4. REQUEST ================= -->
-                    <div class="section-card">
-                        <h3>4. Yêu cầu khách hàng</h3>
-                        <textarea id="specialRequest" style="width:100%;height:80px"></textarea>
-                    </div>
-
-                    <!-- ================= 5. NOTES ================= -->
-                    <div class="section-card">
-                        <h3>5. Ghi chú</h3>
-                        <textarea id="notes" style="width:100%;height:80px"></textarea>
-                    </div>
-
-                    <!-- ================= FOOTER ================= -->
-                    <div class="footer-bar">
-
-                        <div class="shield">
-                            <i class="fa-solid fa-shield-halved" style="font-size:28px;color:#0ea5e9;"></i>
-                            <span>Cam kết chính sách bảo mật của HotelOps</span>
-                        </div>
-
-                        <div class="actions">
-
-                            <button class="btn-back" onclick="goBack()" type="button">
-                                Quay lại
-                            </button>
-
-                            <c:choose>
-                                <c:when test="${booking.status eq 'CheckedIn'}">
-                                    <button class="btn btn-disabled" disabled>
-                                        ✓ Đã check in
+                            <!-- ================= COMPANION ================= -->
+                            <div class="section-divider"></div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <h3>Bạn đồng hành</h3>
+                                <c:if test="${booking.status eq 'Confirmed'}">
+                                    <button 
+                                        class="add-btn" 
+                                        type="button"
+                                        onclick="addCompanion()">
+                                        + Thêm bạn đồng hành
                                     </button>
+                                </c:if>
+                            </div>
+
+                            <table class="room-table">
+                                <thead>
+                                    <tr>
+                                        <th>Họ và tên</th>
+                                        <th>Ảnh CCCD / Giấy khai sinh</th>
+                                        <th>Độ tuổi</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="companionBody">
+                                    <c:choose>
+                                        <c:when test="${booking.status eq 'Confirmed'}">
+                                        </c:when>
+                                        <c:when test="${booking.status eq 'CheckedIn'}">
+                                            <c:forEach var="c" items="${companions}">
+                                                <tr>
+                                                    <td>
+                                                        ${c.fullName}
+                                                    </td>
+                                                    <td>
+                                                        <c:choose>
+                                                            <c:when test="${not empty c.imageUrl}">
+                                                                <img
+                                                                    src="${c.imageUrl}"
+                                                                    style="
+                                                                    width:120px;
+                                                                    height:90px;
+                                                                    object-fit:cover;
+                                                                    border-radius:10px;
+                                                                    "
+                                                                    />
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                Không có ảnh
+                                                            </c:otherwise>
+                                                        </c:choose>
+                                                    </td>
+                                                    <td>
+                                                        ${c.ageRange}
+                                                    </td>
+                                                    <td>
+                                                        <span style="
+                                                              color:#10b981;
+                                                              font-weight:600;
+                                                              ">
+                                                            Đã check in
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            </c:forEach>
+                                        </c:when>
+                                    </c:choose>
+                                </tbody>
+                            </table>
+
+                            <!-- ================= REQUEST ================= -->
+                            <div class="section-divider"></div>
+                            <h3>Yêu cầu khách hàng</h3>
+                            <c:choose>
+                                <c:when test="${booking.status eq 'Confirmed'}">
+                                    <textarea
+                                        id="specialRequest"
+                                        name="specialRequest"
+                                        placeholder="Ví dụ: Phòng tầng cao...">
+                                    </textarea>
                                 </c:when>
-
-                                <c:otherwise>
-                                    <form method="post"
-                                          action="${pageContext.request.contextPath}/receptionist/checkin-detail"
-                                          onsubmit="prepareSubmit()">
-
-                                        <input type="hidden" name="bookingId" value="${booking.bookingId}"/>
-                                        <input type="hidden" name="specialRequest" id="hiddenRequest"/>
-                                        <input type="hidden" name="notes" id="hiddenNotes"/>
-
-                                        <div id="hiddenCompanions"></div>
-
-                                        <button type="submit" class="btn-confirm">
-                                            Xác nhận check in
-                                        </button>
-
-                                    </form>
-                                </c:otherwise>
+                                <c:when test="${booking.status eq 'CheckedIn'}">
+                                    <div class="field">
+                                        <b>Yêu cầu khách hàng</b>
+                                        <p>
+                                            ${checkIn.specialRequest}
+                                        </p>
+                                    </div>
+                                </c:when>
                             </c:choose>
 
+                            <!-- ================= NOTES ================= -->
+                            <div class="section-divider"></div>
+                            <h3>Ghi chú</h3>
+                            <c:choose>
+                                <c:when test="${booking.status eq 'Confirmed'}">
+                                    <textarea
+                                        id="notes"
+                                        name="notes">
+                                    </textarea>
+                                </c:when>
+                                <c:when test="${booking.status eq 'CheckedIn'}">
+                                    <div class="field">
+                                        <b>Ghi chú lễ tân</b>
+                                        <p>
+                                            ${checkIn.notes}
+                                        </p>
+                                    </div>
+                                </c:when>
+                            </c:choose>
+
+                            <!-- ================= FOOTER ================= -->
+                            <div class="footer-bar">
+
+                                <div class="shield">
+                                    <i class="fa-solid fa-shield-halved" style="font-size:28px;color:#0ea5e9;"></i>
+                                    <span>Cam kết chính sách bảo mật của HotelOps</span>
+                                </div>
+
+                                <div class="actions">
+
+                                    <button class="btn-back" onclick="goBack()" type="button">
+                                        Quay lại
+                                    </button>
+
+                                    <c:choose>
+                                        <c:when test="${booking.status eq 'CheckedIn'}">
+                                            <button
+                                                class="btn btn-disabled"
+                                                disabled>
+                                                ✓ Đã check in
+                                            </button>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <button
+                                                type="submit"
+                                                class="btn-confirm">
+                                                Xác nhận check in
+                                            </button>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                            </div>
                         </div>
-
-                    </div>
-
+                    </form>
                 </main>
             </div>
         </div>
 
         <script>
-            let i = 0;
+            let companionIndex = 0;
 
             function addCompanion() {
                 const body = document.getElementById("companionBody");
 
+                const index = companionIndex++;
                 const row = document.createElement("tr");
 
                 row.innerHTML = `
-        <td>
-            <input type="text"
-                   name="companions"
-                   placeholder="Nhập họ và tên">
-        </td>
-        <td>
-            <button type="button"
-                    class="danger-btn"
-                    onclick="this.closest('tr').remove()">
-                Xóa
-            </button>
-        </td>
-    `;
+                    <td>
+                        <input
+                            type="text"
+                            name="companions"
+                            placeholder="Nhập họ và tên"
+                            required>
+                    </td>
+                    <td>
+                        <input
+                            type="file"
+                            name="companionImage"
+                            accept="image/*">
+                    </td>
+                    <td>
+                        <select
+                            name="ageRanges"
+                            class="age-select"
+                            required>
+
+                            <option value="">-- Chọn --</option>
+                            <option value="UNDER_6">Dưới 6 tuổi</option>
+                            <option value="CHILD">Trẻ em (6 - 14 tuổi)</option>
+                            <option value="ADULT">Người lớn (Từ 15 tuổi)</option>
+
+                        </select>
+                    </td>
+                    <td>
+                        <button
+                            type="button"
+                            class="danger-btn"
+                            onclick="this.closest('tr').remove()">
+                            Xóa
+                        </button>
+                    </td>
+                `;
 
                 body.appendChild(row);
             }
@@ -625,27 +779,6 @@
                 btn.style.cursor = "not-allowed";
             }
 
-            function prepareSubmit() {
-
-                document.getElementById("hiddenRequest").value =
-                        document.getElementById("specialRequest").value;
-
-                document.getElementById("hiddenNotes").value =
-                        document.getElementById("notes").value;
-
-                const container = document.getElementById("hiddenCompanions");
-                container.innerHTML = "";
-
-                document.querySelectorAll("input[name='companions']").forEach(input => {
-                    if (input.value.trim() !== "") {
-                        const hidden = document.createElement("input");
-                        hidden.type = "hidden";
-                        hidden.name = "companions";
-                        hidden.value = input.value;
-                        container.appendChild(hidden);
-                    }
-                });
-            }
         </script>
 
     </body>

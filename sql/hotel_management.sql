@@ -1335,6 +1335,7 @@ CREATE TABLE dbo.CheckIn (
 
     special_request NVARCHAR(500) NULL,
     notes NVARCHAR(500) NULL,
+    image_url NVARCHAR(500) NULL,
 
     CONSTRAINT FK_CheckIn_Booking
         FOREIGN KEY (booking_id)
@@ -1358,6 +1359,8 @@ CREATE TABLE dbo.CheckInCompanion (
     check_in_id INT NOT NULL,
 
     full_name NVARCHAR(100) NOT NULL,
+    age_range VARCHAR(20) NOT NULL,
+    image_url NVARCHAR(500) NULL,
     created_at DATETIME NOT NULL DEFAULT GETDATE(),
 
     CONSTRAINT FK_CheckInCompanion_CheckIn
@@ -1368,6 +1371,151 @@ CREATE TABLE dbo.CheckInCompanion (
 
 CREATE INDEX IX_CheckInCompanion_CheckInId ON dbo.CheckInCompanion(check_in_id);
 
+IF OBJECT_ID(N'dbo.ExtraGuestFee', N'U') IS NOT NULL
+    DROP TABLE dbo.ExtraGuestFee;
+GO
+
+CREATE TABLE ExtraGuestFee
+(
+    fee_id INT IDENTITY PRIMARY KEY,
+    room_type_id INT NOT NULL,
+    age_range VARCHAR(20) NOT NULL,
+    fee DECIMAL(18,2) NOT NULL,
+
+    CONSTRAINT FK_ExtraGuestFee_RoomType
+        FOREIGN KEY(room_type_id)
+        REFERENCES RoomType(type_id),
+
+    CONSTRAINT UQ_ExtraGuestFee
+        UNIQUE(room_type_id, age_range)
+);
+/* PHÒNG STANDARD */
+
+INSERT INTO ExtraGuestFee(room_type_id, age_range, fee)
+SELECT type_id, 'UNDER_6', 0
+FROM RoomType
+WHERE type_name = N'Phòng Standard'
+AND NOT EXISTS (
+    SELECT 1 FROM ExtraGuestFee
+    WHERE room_type_id = RoomType.type_id
+      AND age_range = 'UNDER_6'
+);
+
+INSERT INTO ExtraGuestFee(room_type_id, age_range, fee)
+SELECT type_id, 'CHILD', 150000
+FROM RoomType
+WHERE type_name = N'Phòng Standard'
+AND NOT EXISTS (
+    SELECT 1 FROM ExtraGuestFee
+    WHERE room_type_id = RoomType.type_id
+      AND age_range = 'CHILD'
+);
+
+INSERT INTO ExtraGuestFee(room_type_id, age_range, fee)
+SELECT type_id, 'ADULT', 300000
+FROM RoomType
+WHERE type_name = N'Phòng Standard'
+AND NOT EXISTS (
+    SELECT 1 FROM ExtraGuestFee
+    WHERE room_type_id = RoomType.type_id
+      AND age_range = 'ADULT'
+);
+
+/* PHÒNG DELUXE */
+
+INSERT INTO ExtraGuestFee(room_type_id, age_range, fee)
+SELECT type_id, 'UNDER_6', 0
+FROM RoomType
+WHERE type_name = N'Phòng Deluxe'
+AND NOT EXISTS (
+    SELECT 1 FROM ExtraGuestFee
+    WHERE room_type_id = RoomType.type_id
+      AND age_range = 'UNDER_6'
+);
+
+INSERT INTO ExtraGuestFee(room_type_id, age_range, fee)
+SELECT type_id, 'CHILD', 250000
+FROM RoomType
+WHERE type_name = N'Phòng Deluxe'
+AND NOT EXISTS (
+    SELECT 1 FROM ExtraGuestFee
+    WHERE room_type_id = RoomType.type_id
+      AND age_range = 'CHILD'
+);
+
+INSERT INTO ExtraGuestFee(room_type_id, age_range, fee)
+SELECT type_id, 'ADULT', 500000
+FROM RoomType
+WHERE type_name = N'Phòng Deluxe'
+AND NOT EXISTS (
+    SELECT 1 FROM ExtraGuestFee
+    WHERE room_type_id = RoomType.type_id
+      AND age_range = 'ADULT'
+);
+
+/* PHÒNG FAMILY */
+
+INSERT INTO ExtraGuestFee(room_type_id, age_range, fee)
+SELECT type_id, 'UNDER_6', 0
+FROM RoomType
+WHERE type_name = N'Phòng Family'
+AND NOT EXISTS (
+    SELECT 1 FROM ExtraGuestFee
+    WHERE room_type_id = RoomType.type_id
+      AND age_range = 'UNDER_6'
+);
+
+INSERT INTO ExtraGuestFee(room_type_id, age_range, fee)
+SELECT type_id, 'CHILD', 300000
+FROM RoomType
+WHERE type_name = N'Phòng Family'
+AND NOT EXISTS (
+    SELECT 1 FROM ExtraGuestFee
+    WHERE room_type_id = RoomType.type_id
+      AND age_range = 'CHILD'
+);
+
+INSERT INTO ExtraGuestFee(room_type_id, age_range, fee)
+SELECT type_id, 'ADULT', 600000
+FROM RoomType
+WHERE type_name = N'Phòng Family'
+AND NOT EXISTS (
+    SELECT 1 FROM ExtraGuestFee
+    WHERE room_type_id = RoomType.type_id
+      AND age_range = 'ADULT'
+);
+
+/* PHÒNG SUITE */
+
+INSERT INTO ExtraGuestFee(room_type_id, age_range, fee)
+SELECT type_id, 'UNDER_6', 0
+FROM RoomType
+WHERE type_name = N'Phòng Suite'
+AND NOT EXISTS (
+    SELECT 1 FROM ExtraGuestFee
+    WHERE room_type_id = RoomType.type_id
+      AND age_range = 'UNDER_6'
+);
+
+INSERT INTO ExtraGuestFee(room_type_id, age_range, fee)
+SELECT type_id, 'CHILD', 500000
+FROM RoomType
+WHERE type_name = N'Phòng Suite'
+AND NOT EXISTS (
+    SELECT 1 FROM ExtraGuestFee
+    WHERE room_type_id = RoomType.type_id
+      AND age_range = 'CHILD'
+);
+
+INSERT INTO ExtraGuestFee(room_type_id, age_range, fee)
+SELECT type_id, 'ADULT', 1000000
+FROM RoomType
+WHERE type_name = N'Phòng Suite'
+AND NOT EXISTS (
+    SELECT 1 FROM ExtraGuestFee
+    WHERE room_type_id = RoomType.type_id
+      AND age_range = 'ADULT'
+);
 /* ============================================================
    12. BOOKING CHANGE & STAY EXTENSION REQUESTS (Customer)
    - UC 2.3.9  Request Booking Change   (request_type = 'Change')

@@ -248,9 +248,50 @@ body.dashboard-body {
 /* ---- ACTION BUTTONS ---- */
 .actions-cell { display: flex; gap: 8px; }
 .btn-action-icon {
-    background: none; border: none; cursor: pointer;
-    font-size: 15px; padding: 5px; border-radius: 6px;
-    transition: all .2s; line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    padding: 8px 14px;
+
+    border-radius: 8px;
+    border: 1px solid transparent;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    text-decoration: none !important;
+
+    cursor: pointer;
+
+    transition: all .2s ease;
+}
+
+
+/* CHECK IN BUTTON */
+.btn-checkin {
+    background: #0056b3;
+    color: #fff !important;
+    border-color: #0056b3;
+}
+
+.btn-checkin:hover {
+    background: #e6f0fa;
+    color: #0056b3 !important;
+}
+
+
+/* ALREADY CHECKED IN BUTTON */
+.btn-checkedin {
+    background: #059669;
+    color: #fff !important;
+    border-color: #059669;
+}
+
+.btn-checkedin:hover {
+    background: #d1fae5;
+    color: #059669 !important;
 }
 .btn-confirm  { color: var(--success-green); }
 .btn-confirm:hover  { background: #f0fdf4; transform: scale(1.1); }

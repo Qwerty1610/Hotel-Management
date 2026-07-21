@@ -19,18 +19,20 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 /**
- * ReceptionistDashboardController
- * URL: /receptionist/dashboard
+ * ReceptionistDashboardController URL: /receptionist/dashboard
  *
- * Quản lý dashboard chính của Lễ tân, xử lý hiển thị và tải dữ liệu cho các tab công việc:
- * - bookings: Xem và tìm kiếm danh sách đặt phòng (UC-12: Process Booking Request)
- * - checkin: Xem danh sách chờ nhận phòng và làm thủ tục check-in (UC-14: Check In Customer)
- * - checkout: Xem danh sách chờ trả phòng và làm thủ tục check-out (UC-16: Check Out Customer)
- * - servicerequests: Xem danh sách yêu cầu dịch vụ của khách hàng để duyệt/hủy (UC-35: View Service Requests)
- * - roommap: Xem sơ đồ phòng theo thời gian thực (UC-38: View Room Map)
- * - walkin-bookings: Tạo đặt phòng trực tiếp tại quầy (UC-15: Create Walk-in Booking)
- * 
+ * Quản lý dashboard chính của Lễ tân, xử lý hiển thị và tải dữ liệu cho các tab
+ * công việc: - bookings: Xem và tìm kiếm danh sách đặt phòng (UC-12: Process
+ * Booking Request) - checkin: Xem danh sách chờ nhận phòng và làm thủ tục
+ * check-in (UC-14: Check In Customer) - checkout: Xem danh sách chờ trả phòng
+ * và làm thủ tục check-out (UC-16: Check Out Customer) - servicerequests: Xem
+ * danh sách yêu cầu dịch vụ của khách hàng để duyệt/hủy (UC-35: View Service
+ * Requests) - roommap: Xem sơ đồ phòng theo thời gian thực (UC-38: View Room
+ * Map) - walkin-bookings: Tạo đặt phòng trực tiếp tại quầy (UC-15: Create
+ * Walk-in Booking)
+ *
  * Date: 01/6/2026
+ *
  * @author BinhHD, MinhTDP, KhanhTD
  */
 import java.io.IOException;
@@ -44,38 +46,31 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Project: Hotel Management System
- * Class: ReceptionistDashboardController
+ * Project: Hotel Management System Class: ReceptionistDashboardController
  *
- * Description:
- * Controller chính cho dashboard của vai trò lễ tân. Quản lý điều hướng qua
- * các tab: danh sách đặt phòng (UC-12), danh sách chờ nhận phòng (UC-14),
- * danh sách chờ trả phòng (UC-16), yêu cầu dịch vụ (UC-35), sơ đồ phòng
- * (UC-38) và đặt phòng trực tiếp (UC-13). Tổng hợp dữ liệu từ BookingDAO,
+ * Description: Controller chính cho dashboard của vai trò lễ tân. Quản lý điều
+ * hướng qua các tab: danh sách đặt phòng (UC-12), danh sách chờ nhận phòng
+ * (UC-14), danh sách chờ trả phòng (UC-16), yêu cầu dịch vụ (UC-35), sơ đồ
+ * phòng (UC-38) và đặt phòng trực tiếp (UC-13). Tổng hợp dữ liệu từ BookingDAO,
  * CheckOutDAO, WalkInBookingDAO và BookingServiceRequestDAO.
  *
- * Related Use Cases:
- * - UC-12 Process Booking Request
- * - UC-13 Create Walk-in Booking
- * - UC-14 Check-In Customer
- * - UC-16 Check-Out Customer
- * - UC-35 View Service Requests
- * - UC-38 View Room Map
- * 
+ * Related Use Cases: - UC-12 Process Booking Request - UC-13 Create Walk-in
+ * Booking - UC-14 Check-In Customer - UC-16 Check-Out Customer - UC-35 View
+ * Service Requests - UC-38 View Room Map
+ *
  * Date: 01-06-2026
- * 
+ *
  * @author BinhHD, KhanhTD, MinhTDP
  * @version 1.4
  */
-
-@WebServlet(name = "ReceptionistDashboardController", urlPatterns = { "/receptionist/dashboard" })
+@WebServlet(name = "ReceptionistDashboardController", urlPatterns = {"/receptionist/dashboard"})
 public class ReceptionistDashboardController extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(ReceptionistDashboardController.class.getName());
     private static final int PAGE_SIZE = 8;
-    private static final int PAGE_SIZE_CHECKIN = 11;
+    private static final int PAGE_SIZE_CHECKIN = 12;
 
-    private static final Set<String> ALLOWED_TABS = Set.of("bookings","changerequests", "checkin", "checkout", "servicerequests",
+    private static final Set<String> ALLOWED_TABS = Set.of("bookings", "changerequests", "checkin", "checkout", "servicerequests",
             "roommap", "walkin-bookings");
     private static final Set<String> STATUS_WHITELIST = Set.of("All", "Pending", "Confirmed", "Rejected", "Cancelled",
             "CheckedIn", "CheckedOut");
@@ -223,9 +218,9 @@ public class ReceptionistDashboardController extends HttpServlet {
     }
 
     /**
-     * UC-35: View Service Requests
-     * Tải danh sách yêu cầu dịch vụ của khách hàng để hiển thị trên tab của Lễ tân,
-     * hỗ trợ tìm kiếm, lọc theo trạng thái và phân trang.
+     * UC-35: View Service Requests Tải danh sách yêu cầu dịch vụ của khách hàng
+     * để hiển thị trên tab của Lễ tân, hỗ trợ tìm kiếm, lọc theo trạng thái và
+     * phân trang.
      */
     private void loadServiceRequestsTab(HttpServletRequest request) {
         try {
@@ -291,9 +286,9 @@ public class ReceptionistDashboardController extends HttpServlet {
     }
 
     /**
-     * UC 2.4.5 Process Booking Change
-     * Tải danh sách yêu cầu thay đổi đặt phòng / gia hạn lưu trú của khách hàng
-     * để lễ tân duyệt hoặc từ chối; hỗ trợ tìm kiếm, lọc trạng thái, phân trang.
+     * UC 2.4.5 Process Booking Change Tải danh sách yêu cầu thay đổi đặt phòng
+     * / gia hạn lưu trú của khách hàng để lễ tân duyệt hoặc từ chối; hỗ trợ tìm
+     * kiếm, lọc trạng thái, phân trang.
      */
     private void loadChangeRequestsTab(HttpServletRequest request) {
         try {
@@ -358,7 +353,12 @@ public class ReceptionistDashboardController extends HttpServlet {
 
         String keyword = request.getParameter("keyword");
 
-        // page
+        String status = request.getParameter("status");
+
+        if (status == null || status.isBlank()) {
+            status = "All";
+        }
+
         int page = 1;
         try {
             String pageStr = request.getParameter("page");
@@ -373,25 +373,26 @@ public class ReceptionistDashboardController extends HttpServlet {
             page = 1;
         }
 
-        // total
-        int totalItems = dao.countCheckInBookings(keyword);
+        int totalItems = dao.countCheckInBookings(status, keyword);
+
         int totalPages = (int) Math.ceil(totalItems / (double) PAGE_SIZE_CHECKIN);
 
         if (totalPages < 1) {
             totalPages = 1;
         }
+
         if (page > totalPages) {
             page = totalPages;
         }
 
         int offset = (page - 1) * PAGE_SIZE_CHECKIN;
 
-        // DATA
-        List<Booking> checkInList = dao.getCheckInBookings(keyword, offset, PAGE_SIZE_CHECKIN);
+        List<Booking> checkInList
+                = dao.getCheckInBookings(status, keyword, offset, PAGE_SIZE_CHECKIN);
 
-        // SET ATTRIBUTES
         request.setAttribute("checkInList", checkInList);
-        request.setAttribute("keyword", keyword != null ? keyword : "");
+        request.setAttribute("keyword", keyword == null ? "" : keyword);
+        request.setAttribute("currentStatus", status);
 
         request.setAttribute("currentPage", page);
         request.setAttribute("totalPages", totalPages);

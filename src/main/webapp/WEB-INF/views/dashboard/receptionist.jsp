@@ -624,6 +624,12 @@
                                         class="status-tab ${currentStatus eq 'Maintenance' ? 'active' : ''}">
                                     Bảo trì
                                 </button>
+                                <button type="submit"
+                                        name="status"
+                                        value="OutOfService"
+                                        class="status-tab ${currentStatus eq 'OutOfService' ? 'active' : ''}">
+                                    Ngừng hoạt động
+                                </button>
                             </div>
                         </form>
 
@@ -674,9 +680,25 @@
                                                         </div>
 
                                                         <div class="room-card-body">
-                                                            <span
-                                                                class="badge-status badge-${room.status}">
-                                                                ${room.status}
+                                                            <span class="badge-status badge-${room.status}">
+                                                                <c:choose>
+                                                                    <c:when test="${room.status eq 'Available'}">
+                                                                        Trống
+                                                                    </c:when>
+                                                                    <c:when test="${room.status eq 'Occupied'}">
+                                                                        Đang sử dụng
+                                                                    </c:when>
+                                                                    <c:when test="${room.status eq 'Maintenance'}">
+                                                                        Bảo trì
+                                                                    </c:when>
+                                                                    <c:when test="${room.status eq 'OutOfService'}">
+                                                                        Ngừng hoạt động
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        ${room.status}
+                                                                    </c:otherwise>
+                                                                </c:choose>
+
                                                             </span>
                                                         </div>
 
@@ -713,21 +735,67 @@
                             </div>
                         </div>
 
+                        <!-- ================= STATUS FILTER ================= -->
                         <form method="get"
                               action="${pageContext.request.contextPath}/receptionist/dashboard">
 
-                            <input type="hidden" name="tab" value="checkin" />
-                            <input type="hidden" name="page" value="1" />
+                            <input type="hidden" name="tab" value="checkin"/>
+                            <input type="hidden" name="keyword" value="${keyword}"/>
+                            <input type="hidden" name="page" value="1"/>
+
+                            <div class="status-tabs">
+
+                                <button type="submit"
+                                        name="status"
+                                        value="All"
+                                        class="status-tab ${currentStatus eq 'All' ? 'active' : ''}">
+                                    Tất cả
+                                </button>
+
+                                <button type="submit"
+                                        name="status"
+                                        value="Confirmed"
+                                        class="status-tab ${currentStatus eq 'Confirmed' ? 'active' : ''}">
+                                    Chưa check-in
+                                </button>
+
+                                <button type="submit"
+                                        name="status"
+                                        value="CheckedIn"
+                                        class="status-tab ${currentStatus eq 'CheckedIn' ? 'active' : ''}">
+                                    Đã check-in
+                                </button>
+
+                                <button type="submit"
+                                        name="status"
+                                        value="CheckedOut"
+                                        class="status-tab ${currentStatus eq 'CheckedOut' ? 'active' : ''}">
+                                    Đã check-out
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                        <!-- ================= SEARCH + PAGINATION ================= -->
+                        <form id="searchForm"
+                              method="get"
+                              action="${pageContext.request.contextPath}/receptionist/dashboard">
+
+                            <input type="hidden" name="tab" value="checkin"/>
+                            <input type="hidden" name="status" value="${currentStatus}"/>
+                            <input type="hidden" id="pageInput" name="page" value="${currentPage}"/>
 
                             <div class="table-filter-bar">
 
                                 <div class="search-wrapper">
                                     <i class="fa-solid fa-magnifying-glass"></i>
 
-                                    <input type="text" name="keyword"
+                                    <input type="text"
+                                           name="keyword"
                                            class="search-input"
                                            placeholder="Tên khách hoặc Booking ID"
-                                           value="${keyword}" />
+                                           value="${keyword}"/>
                                 </div>
 
                                 <button type="submit"
@@ -735,35 +803,48 @@
                                     Tìm kiếm
                                 </button>
 
-                                <div
-                                    style="margin-left:auto;display:flex;gap:8px;">
+                                <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+
                                     <c:if test="${currentPage > 1}">
-                                        <a class="btn-action-icon"
-                                           href="?tab=checkin&page=${currentPage - 1}&keyword=${keyword}">
-                                            <i
-                                                class="fa-solid fa-chevron-left"></i>
-                                        </a>
+                                        <button type="button"
+                                                class="btn-action-icon"
+                                                onclick="gotoPage(${currentPage-1})">
+                                            <i class="fa-solid fa-chevron-left"></i>
+                                        </button>
                                     </c:if>
 
+                                    <span style="font-weight:600;">
+                                        ${currentPage}/${totalPages}
+                                    </span>
+
                                     <c:if test="${currentPage < totalPages}">
-                                        <a class="btn-action-icon"
-                                           href="?tab=checkin&page=${currentPage + 1}&keyword=${keyword}">
-                                            <i
-                                                class="fa-solid fa-chevron-right"></i>
-                                        </a>
+                                        <button type="button"
+                                                class="btn-action-icon"
+                                                onclick="gotoPage(${currentPage+1})">
+                                            <i class="fa-solid fa-chevron-right"></i>
+                                        </button>
                                     </c:if>
+
                                 </div>
 
                             </div>
 
                         </form>
 
+                        <script>
+                            function gotoPage(page) {
+                                document.getElementById("pageInput").value = page;
+                                document.getElementById("searchForm").submit();
+                            }
+                        </script>
+
                         <div class="table-card">
 
                             <table class="booking-table">
 
                                 <thead>
-                                    <tr>
+                                    <tr class="checkin-row"
+                                        data-status="${b.status}">
                                         <th>Mã đặt phòng</th>
                                         <th>Khách hàng</th>
                                         <th>Loại phòng</th>
@@ -778,7 +859,8 @@
 
                                     <c:forEach var="b" items="${checkInList}">
 
-                                        <tr>
+                                        <tr class="checkin-row"
+                                            data-status="${b.status}">
 
                                             <td>
                                                 <span class="booking-id-badge">
@@ -833,7 +915,7 @@
                                                     <c:when
                                                         test="${b.status eq 'Confirmed'}">
 
-                                                        <a class="btn-action-icon btn-edit"
+                                                        <a class="btn-action-icon btn-checkin"
                                                            href="${pageContext.request.contextPath}/receptionist/checkin-detail?bookingId=${b.bookingId}">
                                                             <i
                                                                 class="fa-solid fa-key"></i>
@@ -841,14 +923,14 @@
                                                         </a>
                                                     </c:when>
 
-                                                    <c:when
-                                                        test="${b.status eq 'CheckedIn'}">
+                                                    <c:when test="${b.status eq 'CheckedIn'}">
 
-                                                        <span
-                                                            style="color:#10b981;font-weight:600">
+                                                        <a class="btn-action-icon btn-checkedin"
+                                                           style="color:#10b981;border-color:#10b981"
+                                                           href="${pageContext.request.contextPath}/receptionist/checkin-detail?bookingId=${b.bookingId}">
+                                                            <i class="fa-solid fa-eye"></i>
                                                             Đã check in
-                                                        </span>
-
+                                                        </a>
                                                     </c:when>
 
                                                     <c:when
