@@ -178,6 +178,17 @@
                 alertContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         });
+
+        document.querySelectorAll('input[required], select[required], textarea[required]').forEach(function (input) {
+            input.addEventListener('invalid', function () {
+                if (this.validity.valueMissing) {
+                    this.setCustomValidity('Vui lòng điền vào trường này.');
+                }
+            });
+            input.addEventListener('input', function () {
+                this.setCustomValidity('');
+            });
+        });
     </script>
 </body>
 </html>

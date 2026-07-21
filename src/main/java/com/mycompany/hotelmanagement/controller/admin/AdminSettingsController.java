@@ -1,11 +1,8 @@
 package com.mycompany.hotelmanagement.controller.admin;
 
 import com.mycompany.hotelmanagement.config.ConfigUtil;
-import com.mycompany.hotelmanagement.config.DBContext;
+import com.mycompany.hotelmanagement.dal.SystemConfigDAO;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
 import jakarta.servlet.ServletException;
@@ -18,93 +15,59 @@ import jakarta.servlet.http.HttpServletResponse;
  * Controller to manage system configurations (Google Login API, SMTP Email Settings).
  * Only accessible to Admin users.
  * 
- * @author Antigravity
+ * @author TungNQ
+ * @version 1.0.1
+ * Created: 24/06/2026
+ * Modified: 16/07/2026
  */
 @WebServlet(name = "AdminSettingsController", urlPatterns = {"/admin/settings"})
 public class AdminSettingsController extends HttpServlet {
 
+    private final SystemConfigDAO systemConfigDAO = new SystemConfigDAO();
+
+    /**
+     * Xử lý yêu cầu GET: nạp danh sách cấu hình hệ thống từ CSDL và chuyển hướng tới trang quản trị settings.jsp.
+     * 
+     * @param request HttpServletRequest
+     * @param response HttpServletResponse
+     * @throws ServletException nếu có lỗi Servlet
+     * @throws IOException nếu có lỗi I/O
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        Map<String, String> configs = new HashMap<>();
-        String sql = "SELECT config_key, config_value FROM dbo.SystemConfig";
-        
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                configs.put(rs.getString("config_key"), rs.getString("config_value"));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            request.setAttribute("error", "Không thể nạp cấu hình từ database: " + e.getMessage());
-        }
-        
+        Map<String, String> configs = systemConfigDAO.getAllConfigs();
         request.setAttribute("configs", configs);
         request.getRequestDispatcher("/WEB-INF/views/admin/settings.jsp").forward(request, response);
     }
 
+    /**
+     * Xử lý yêu cầu POST: cập nhật các giá trị cấu hình hệ thống (Google OAuth, SMTP Email) vào CSDL.
+     * 
+     * @param request HttpServletRequest chứa các giá trị cấu hình mới từ form
+     * @param response HttpServletResponse
+     * @throws ServletException nếu có lỗi Servlet
+     * @throws IOException nếu có lỗi I/O
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        String googleClientId = request.getParameter("googleClientId");
-        String googleClientSecret = request.getParameter("googleClientSecret");
-        String smtpUser = request.getParameter("smtpUser");
-        String smtpPassword = request.getParameter("smtpPassword");
-        String smtpHost = request.getParameter("smtpHost");
-        String smtpPort = request.getParameter("smtpPort");
+        Map<String, String> newConfigs = new HashMap<>();
+        newConfigs.put("google.client.id", request.getParameter("googleClientId"));
+        newConfigs.put("google.client.secret", request.getParameter("googleClientSecret"));
+        newConfigs.put("smtp.user", request.getParameter("smtpUser"));
+        newConfigs.put("smtp.password", request.getParameter("smtpPassword"));
+        newConfigs.put("smtp.host", request.getParameter("smtpHost"));
+        newConfigs.put("smtp.port", request.getParameter("smtpPort"));
         
-        String sql = "UPDATE dbo.SystemConfig SET config_value = ?, updated_at = SYSDATETIME() WHERE config_key = ?";
-        
-        try (Connection conn = DBContext.getConnection()) {
-            conn.setAutoCommit(false);
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                // 1. Google Client ID
-                ps.setString(1, googleClientId != null ? googleClientId.trim() : "");
-                ps.setString(2, "google.client.id");
-                ps.addBatch();
-                
-                // 2. Google Client Secret
-                ps.setString(1, googleClientSecret != null ? googleClientSecret.trim() : "");
-                ps.setString(2, "google.client.secret");
-                ps.addBatch();
-                
-                // 3. SMTP User
-                ps.setString(1, smtpUser != null ? smtpUser.trim() : "");
-                ps.setString(2, "smtp.user");
-                ps.addBatch();
-                
-                // 4. SMTP Password
-                ps.setString(1, smtpPassword != null ? smtpPassword.trim() : "");
-                ps.setString(2, "smtp.password");
-                ps.addBatch();
-                
-                // 5. SMTP Host
-                ps.setString(1, smtpHost != null ? smtpHost.trim() : "");
-                ps.setString(2, "smtp.host");
-                ps.addBatch();
-                
-                // 6. SMTP Port
-                ps.setString(1, smtpPort != null ? smtpPort.trim() : "");
-                ps.setString(2, "smtp.port");
-                ps.addBatch();
-                
-                ps.executeBatch();
-                conn.commit();
-                
-                // Refresh memory cache in ConfigUtil
-                ConfigUtil.reload();
-                
-                request.setAttribute("success", "Cập nhật cấu hình hệ thống thành công!");
-            } catch (Exception e) {
-                conn.rollback();
-                throw e;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            request.setAttribute("error", "Lỗi lưu cấu hình: " + e.getMessage());
+        boolean success = systemConfigDAO.updateConfigs(newConfigs);
+        if (success) {
+            ConfigUtil.reload();
+            request.setAttribute("success", "Cập nhật cấu hình hệ thống thành công!");
+        } else {
+            request.setAttribute("error", "Lỗi lưu cấu hình hệ thống!");
         }
         
         doGet(request, response);

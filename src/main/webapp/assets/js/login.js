@@ -47,4 +47,16 @@ document.addEventListener('DOMContentLoaded', function () {
             this.classList.toggle('fa-eye-slash');
         });
     }
+
+    // Custom Vietnamese validation message for required inputs
+    document.querySelectorAll('input[required], select[required], textarea[required]').forEach(function (input) {
+        input.addEventListener('invalid', function () {
+            if (this.validity.valueMissing) {
+                this.setCustomValidity('Vui lòng điền vào trường này.');
+            }
+        });
+        input.addEventListener('input', function () {
+            this.setCustomValidity('');
+        });
+    });
 });

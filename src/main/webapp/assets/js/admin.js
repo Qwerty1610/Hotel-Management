@@ -103,6 +103,18 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     }
+
+    // Custom Vietnamese validation message for required inputs across Admin forms and modals
+    document.querySelectorAll('input[required], select[required], textarea[required]').forEach(function (input) {
+        input.addEventListener('invalid', function () {
+            if (this.validity.valueMissing) {
+                this.setCustomValidity('Vui lòng điền vào trường này.');
+            }
+        });
+        input.addEventListener('input', function () {
+            this.setCustomValidity('');
+        });
+    });
 });
 
 /* Hiển thị / Ẩn Modal Đổi mật khẩu */
