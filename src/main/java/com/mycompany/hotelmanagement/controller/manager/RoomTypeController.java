@@ -1,12 +1,20 @@
 package com.mycompany.hotelmanagement.controller.manager;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.UUID;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Part;
 
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import com.mycompany.hotelmanagement.service.RoomTypeService;
@@ -32,6 +40,11 @@ import com.mycompany.hotelmanagement.service.RoomTypeService;
  * @version 1.0
  */
 @WebServlet(name = "RoomTypeController", urlPatterns = { "/manager/roomtypes" })
+@MultipartConfig(
+    fileSizeThreshold = 1024 * 1024,      // 1 MB – buffer before writing to disk
+    maxFileSize       = 10 * 1024 * 1024, // 10 MB max per file
+    maxRequestSize    = 15 * 1024 * 1024  // 15 MB max per request
+)
 public class RoomTypeController extends HttpServlet {
 
     private final RoomTypeService roomTypeService = new RoomTypeService();
@@ -83,6 +96,32 @@ public class RoomTypeController extends HttpServlet {
             String area = request.getParameter("area");
             String imageUrl = request.getParameter("imageUrl");
             String description = request.getParameter("description");
+
+            // --- Handle file upload (if provided, it overrides the URL field) ---
+            try {
+                Part filePart = request.getPart("imageFile");
+                if (filePart != null && filePart.getSize() > 0) {
+                    String submittedFileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+                    String ext = "";
+                    int dotIdx = submittedFileName.lastIndexOf('.');
+                    if (dotIdx >= 0) {
+                        ext = submittedFileName.substring(dotIdx).toLowerCase();
+                    }
+                    String uniqueName = UUID.randomUUID().toString() + ext;
+                    String uploadDir = getServletContext().getRealPath("/assets/uploads/room-types");
+                    File dir = new File(uploadDir);
+                    if (!dir.exists()) {
+                        dir.mkdirs();
+                    }
+                    try (InputStream is = filePart.getInputStream()) {
+                        Files.copy(is, new File(dir, uniqueName).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    }
+                    imageUrl = request.getContextPath() + "/assets/uploads/room-types/" + uniqueName;
+                    System.out.println("[RoomTypeController] File uploaded: " + uniqueName);
+                }
+            } catch (Exception ex) {
+                System.out.println("[RoomTypeController] File upload skipped/error: " + ex.getMessage());
+            }
 
             System.out.println("[RoomTypeController] Form values: name=" + name +
                     ", price=" + priceParam +

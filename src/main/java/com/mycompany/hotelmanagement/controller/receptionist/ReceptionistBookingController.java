@@ -84,6 +84,9 @@ public class ReceptionistBookingController extends HttpServlet {
                     String confirmNote = request.getParameter("note");
                     success = dao.updateBookingStatus(bookingId, "Confirmed",
                             confirmNote != null ? confirmNote.trim() : "Đã xác nhận bởi lễ tân");
+                    if (success) {
+                        new com.mycompany.hotelmanagement.dal.InvoiceDAO().createInvoiceForBooking(bookingId);
+                    }
                     break;
                 }
 

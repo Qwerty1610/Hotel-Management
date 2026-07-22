@@ -12,7 +12,7 @@
               rel="stylesheet" />
         <link rel="stylesheet"
               href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/receptionist.css?v=5" />
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/receptionist.css?v=6" />
     </head>
     <fmt:setLocale value="vi_VN" />
 
@@ -260,37 +260,7 @@
 
                                 </div>
 
-                                <!-- Pagination bên phải -->
-                                <div
-                                    style="margin-left:auto;display:flex;align-items:center;gap:8px;">
 
-                                    <%-- Gmail-style counter --%>
-                                    <span
-                                        style="font-size:13px; color:var(--text-muted); white-space:nowrap;">
-                                        ${(currentPage - 1) * 8 +
-                                          1}–${(currentPage - 1) * 8 +
-                                          fn:length(bookingList)}
-                                        trong số
-                                        <strong>${totalItems}</strong>
-                                    </span>
-
-                                    <c:if test="${currentPage > 1}">
-                                        <a class="btn-action-icon"
-                                           href="${pageContext.request.contextPath}/receptionist/dashboard?tab=bookings&page=${currentPage-1}&status=${currentStatus}&keyword=${keyword}">
-                                            <i
-                                                class="fa-solid fa-chevron-left"></i>
-                                        </a>
-                                    </c:if>
-                                    <c:if
-                                        test="${currentPage < totalPages}">
-                                        <a class="btn-action-icon"
-                                           href="${pageContext.request.contextPath}/receptionist/dashboard?tab=bookings&page=${currentPage+1}&status=${currentStatus}&keyword=${keyword}">
-                                            <i
-                                                class="fa-solid fa-chevron-right"></i>
-                                        </a>
-                                    </c:if>
-
-                                </div>
 
                             </div>
                         </form>
@@ -543,6 +513,33 @@
                                             </c:forEach>
                                         </tbody>
                                     </table>
+                                    <%-- Pagination Footer --%>
+                                    <div class="table-pagination-bar">
+                                        <div class="pagination-info">
+                                            <c:choose>
+                                                <c:when test="${totalItems == 0}">Không có đơn hàng nào</c:when>
+                                                <c:otherwise>Hiển thị ${(currentPage-1)*8+1}–${(currentPage-1)*8+fn:length(bookingList)} trong số ${totalItems} đơn hàng</c:otherwise>
+                                            </c:choose>
+                                        </div>
+                                        <div class="pagination-controls">
+                                            <c:if test="${currentPage > 1}">
+                                                <a class="btn-page"
+                                                   href="${pageContext.request.contextPath}/receptionist/dashboard?tab=bookings&page=${currentPage-1}&status=${currentStatus}&keyword=${keyword}">
+                                                    <i class="fa-solid fa-chevron-left"></i>
+                                                </a>
+                                            </c:if>
+                                            <c:forEach begin="1" end="${totalPages}" var="p">
+                                                <a class="btn-page ${p eq currentPage ? 'active' : ''}"
+                                                   href="${pageContext.request.contextPath}/receptionist/dashboard?tab=bookings&page=${p}&status=${currentStatus}&keyword=${keyword}">${p}</a>
+                                            </c:forEach>
+                                            <c:if test="${currentPage < totalPages}">
+                                                <a class="btn-page"
+                                                   href="${pageContext.request.contextPath}/receptionist/dashboard?tab=bookings&page=${currentPage+1}&status=${currentStatus}&keyword=${keyword}">
+                                                    <i class="fa-solid fa-chevron-right"></i>
+                                                </a>
+                                            </c:if>
+                                        </div>
+                                    </div>
                                 </c:otherwise>
                             </c:choose>
                         </div><%-- end table-card --%>
@@ -826,6 +823,7 @@
                                     </c:if>
 
                                 </div>
+
 
                             </div>
 
@@ -1465,6 +1463,15 @@
                                             </c:forEach>
                                         </tbody>
                                     </table>
+                                    <%-- Pagination Footer --%>
+                                    <div class="table-pagination-bar">
+                                        <div class="pagination-info">
+                                            Hiển thị 1–${fn:length(checkOutList)} trong số ${fn:length(checkOutList)} đơn hàng
+                                        </div>
+                                        <div class="pagination-controls">
+                                            <a class="btn-page active" href="#">1</a>
+                                        </div>
+                                    </div>
                                 </c:otherwise>
                             </c:choose>
                         </div>

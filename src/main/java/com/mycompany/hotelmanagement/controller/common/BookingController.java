@@ -23,7 +23,7 @@ import jakarta.servlet.http.HttpSession;
  * 
  * Date: 31-05-2026
  * 
- * @author BinhHD, TungNQ
+ * @author BinhHD
  * @version 1.1
  */
 
@@ -47,7 +47,13 @@ public class BookingController extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/home/login");
             return;
         }
-        response.sendRedirect(request.getContextPath() + "/customer/booking/create");
+        
+        String typeId = request.getParameter("id");
+        String redirectUrl = request.getContextPath() + "/customer/booking/create";
+        if (typeId != null && !typeId.trim().isEmpty()) {
+            redirectUrl += "?roomTypeId=" + typeId.trim();
+        }
+        response.sendRedirect(redirectUrl);
     }
 
     @Override

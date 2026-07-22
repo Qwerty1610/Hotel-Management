@@ -20,6 +20,12 @@ import java.util.List;
  */
 public class AccountDAO {
 
+    /**
+     * Tìm kiếm thông tin tài khoản bằng địa chỉ Email.
+     * 
+     * @param email Địa chỉ email của tài khoản
+     * @return Đối tượng Account nếu tìm thấy, ngược lại trả về null
+     */
     public Account getAccountByEmail(String email) {
         String sql = "SELECT a.account_id, a.email, a.password, a.full_name, r.role_name, a.is_active " +
                      "FROM Account a JOIN Role r ON a.role_id = r.role_id " +
@@ -135,6 +141,15 @@ public class AccountDAO {
         return false;
     }
 
+    /**
+     * Thêm tài khoản mới vào CSDL và trả về ID tài khoản được sinh tự động.
+     * 
+     * @param email Email tài khoản
+     * @param passwordHash Mật khẩu đã mã hóa băm
+     * @param fullName Họ và tên
+     * @param roleId ID vai trò
+     * @return ID tài khoản mới tạo, hoặc -1 nếu thất bại
+     */
     public int insertAccount(String email, String passwordHash, String fullName, int roleId) {
         String sql = "INSERT INTO Account (email, password, full_name, role_id, is_active) VALUES (?, ?, ?, ?, 1)";
         try (Connection conn = DBContext.getConnection();
@@ -157,6 +172,12 @@ public class AccountDAO {
         return -1;
     }
 
+    /**
+     * Lấy ID vai trò từ tên vai trò (ví dụ: 'Customer', 'Admin', 'Receptionist').
+     * 
+     * @param roleName Tên vai trò
+     * @return ID vai trò tương ứng hoặc -1 nếu không tìm thấy
+     */
     public int getRoleIdByName(String roleName) {
         String sql = "SELECT role_id FROM Role WHERE role_name = ?";
         try (Connection conn = DBContext.getConnection();
@@ -174,6 +195,11 @@ public class AccountDAO {
         return -1;
     }
 
+    /**
+     * Lấy danh sách tên của tất cả khách hàng đang hoạt động trong hệ thống.
+     * 
+     * @return Danh sách chuỗi chứa họ và tên khách hàng
+     */
     public java.util.List<String> getAllCustomerNames() {
         java.util.List<String> names = new java.util.ArrayList<>();
         String sql = "SELECT a.full_name " +
@@ -192,6 +218,12 @@ public class AccountDAO {
         return names;
     }
     
+    /**
+     * Kiểm tra sự tồn tại của Email trong CSDL.
+     * 
+     * @param email Địa chỉ email cần kiểm tra
+     * @return true nếu email đã tồn tại, ngược lại false
+     */
     public boolean existsByEmail(String email) {
         String sql = "SELECT 1 FROM Account WHERE email = ?";
         try (Connection conn = DBContext.getConnection();
@@ -206,6 +238,12 @@ public class AccountDAO {
         return false;
     }
 
+    /**
+     * Kiểm tra sự tồn tại của Số điện thoại trong CSDL.
+     * 
+     * @param phone Số điện thoại cần kiểm tra
+     * @return true nếu số điện thoại đã tồn tại, ngược lại false
+     */
     public boolean existsByPhone(String phone) {
         String sql = "SELECT 1 FROM Account WHERE phone = ?";
         try (Connection conn = DBContext.getConnection();
@@ -220,6 +258,13 @@ public class AccountDAO {
         return false;
     }
 
+    /**
+     * Cập nhật mật khẩu mới đã băm cho tài khoản theo email.
+     * 
+     * @param email Email tài khoản
+     * @param hashedPassword Mật khẩu mới đã mã hóa băm
+     * @return true nếu cập nhật thành công, false nếu thất bại
+     */
     public boolean updatePassword(String email, String hashedPassword) {
         String sql = "UPDATE Account SET password = ? WHERE email = ? AND is_active = 1";
         try (Connection conn = DBContext.getConnection();
@@ -233,6 +278,16 @@ public class AccountDAO {
         return false;
     }
 
+    /**
+     * Đăng ký tài khoản khách hàng mới (thêm vào bảng Account và bảng Customer trong một Transaction).
+     * 
+     * @param email Email đăng ký
+     * @param passwordHash Mật khẩu mã hóa
+     * @param fullName Họ và tên
+     * @param phone Số điện thoại
+     * @param roleId ID vai trò Khách hàng
+     * @return true nếu đăng ký thành công, false nếu thất bại
+     */
     public boolean registerCustomer(String email, String passwordHash, String fullName, String phone, int roleId) {
         String insertAccountSql = "INSERT INTO Account (email, password, full_name, phone, role_id, is_active, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)";
         String insertCustomerSql = "INSERT INTO Customer (account_id, loyalty_points, membership_level) VALUES (?, 0, 'Standard')";
@@ -297,11 +352,16 @@ public class AccountDAO {
         }
     }
 
+    /**
+     * Lấy danh sách tất cả các tài khoản nhân viên (loại trừ Admin và Customer).
+     * 
+     * @return Danh sách đối tượng Account của nhân viên
+     */
     public List<Account> getAllStaffAccounts() {
         List<Account> list = new ArrayList<>();
         String sql = "SELECT a.account_id, a.email, a.full_name, a.phone, a.role_id, r.role_name, a.is_active, a.created_at " +
                      "FROM Account a JOIN Role r ON a.role_id = r.role_id " +
-                     "WHERE r.role_name != 'Customer' AND r.role_name != 'Admin' " +
+                     "WHERE r.role_name != 'Customer' " +
                      "ORDER BY a.account_id DESC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -324,6 +384,11 @@ public class AccountDAO {
         return list;
     }
 
+    /**
+     * Lấy danh sách tất cả tài khoản khách hàng kèm thông tin điểm tích lũy và hạng thành viên.
+     * 
+     * @return Danh sách đối tượng CustomerInfo
+     */
     public List<CustomerInfo> getAllCustomerAccounts() {
         List<CustomerInfo> list = new ArrayList<>();
         String sql = "SELECT a.account_id, a.email, a.full_name, a.phone, a.is_active, a.created_at, " +
@@ -354,9 +419,14 @@ public class AccountDAO {
         return list;
     }
 
+    /**
+     * Lấy danh sách các vai trò dành cho nhân viên (loại trừ Customer).
+     * 
+     * @return Danh sách các đối tượng Role của nhân viên
+     */
     public List<Role> getStaffRoles() {
         List<Role> list = new ArrayList<>();
-        String sql = "SELECT role_id, role_name, description FROM Role WHERE role_name != 'Customer' AND role_name != 'Admin'";
+        String sql = "SELECT role_id, role_name, description FROM Role WHERE role_name != 'Customer'";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -373,6 +443,16 @@ public class AccountDAO {
         return list;
     }
 
+    /**
+     * Thêm tài khoản nhân viên mới do Admin tạo.
+     * 
+     * @param email Email nhân viên
+     * @param passwordHash Mật khẩu đã băm
+     * @param fullName Họ và tên
+     * @param phone Số điện thoại
+     * @param roleId ID vai trò công việc
+     * @return true nếu thêm thành công, false nếu thất bại
+     */
     public boolean insertStaffAccount(String email, String passwordHash, String fullName, String phone, int roleId) {
         String sql = "INSERT INTO Account (email, password, full_name, phone, role_id, is_active, created_at) " +
                      "VALUES (?, ?, ?, ?, ?, 1, ?)";
@@ -391,6 +471,17 @@ public class AccountDAO {
         return false;
     }
 
+    /**
+     * Cập nhật thông tin tài khoản nhân viên (email, họ tên, sĐT, vai trò, mật khẩu).
+     * 
+     * @param accountId ID tài khoản
+     * @param email Email mới
+     * @param fullName Họ tên mới
+     * @param phone Số điện thoại mới
+     * @param roleId ID vai trò mới
+     * @param passwordHash Mật khẩu mới đã băm (hoặc null/rỗng nếu không đổi)
+     * @return true nếu cập nhật thành công, false nếu thất bại
+     */
     public boolean updateStaffAccount(int accountId, String email, String fullName, String phone, int roleId, String passwordHash) {
         String sql;
         boolean hasPassword = passwordHash != null && !passwordHash.isEmpty();
@@ -418,6 +509,13 @@ public class AccountDAO {
         return false;
     }
 
+    /**
+     * Bật/Tắt trạng thái hoạt động (is_active) của tài khoản.
+     * 
+     * @param accountId ID tài khoản
+     * @param isActive Trạng thái hoạt động (true = 1, false = 0)
+     * @return true nếu thay đổi trạng thái thành công, false nếu thất bại
+     */
     public boolean toggleAccountStatus(int accountId, boolean isActive) {
         String sql = "UPDATE Account SET is_active = ? WHERE account_id = ?";
         try (Connection conn = DBContext.getConnection();
@@ -431,6 +529,18 @@ public class AccountDAO {
         return false;
     }
 
+    /**
+     * Cập nhật thông tin tài khoản khách hàng (bảng Account và Customer trong 1 Transaction).
+     * 
+     * @param accountId ID tài khoản
+     * @param email Email mới
+     * @param fullName Họ tên mới
+     * @param phone Số điện thoại mới
+     * @param loyaltyPoints Điểm tích lũy mới
+     * @param membershipLevel Hạng thành viên mới
+     * @param passwordHash Mật khẩu mới đã băm (hoặc null/rỗng nếu không đổi)
+     * @return true nếu cập nhật thành công, false nếu thất bại
+     */
     public boolean updateCustomerAccount(int accountId, String email, String fullName, String phone, int loyaltyPoints, String membershipLevel, String passwordHash) {
         String updateAccountSql;
         boolean hasPassword = passwordHash != null && !passwordHash.isEmpty();
@@ -500,6 +610,12 @@ public class AccountDAO {
         }
     }
 
+    /**
+     * Lấy đối tượng Account theo ID tài khoản.
+     * 
+     * @param accountId ID tài khoản
+     * @return Đối tượng Account hoặc null nếu không tìm thấy
+     */
     public Account getAccountById(int accountId) {
         String sql = "SELECT a.account_id, a.email, a.password, a.full_name, a.phone, a.role_id, r.role_name, a.is_active " +
                      "FROM Account a JOIN Role r ON a.role_id = r.role_id " +
@@ -527,6 +643,12 @@ public class AccountDAO {
         return null;
     }
 
+    /**
+     * Lấy tên vai trò theo ID vai trò.
+     * 
+     * @param roleId ID vai trò
+     * @return Tên vai trò (ví dụ: 'Admin', 'Customer') hoặc null
+     */
     public String getRoleNameById(int roleId) {
         String sql = "SELECT role_name FROM Role WHERE role_id = ?";
         try (Connection conn = DBContext.getConnection();

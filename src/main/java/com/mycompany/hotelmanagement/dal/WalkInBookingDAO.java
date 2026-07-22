@@ -577,6 +577,7 @@ public class WalkInBookingDAO {
             }
             con.commit();
 
+            new InvoiceDAO().createInvoiceForBooking(bookingRootId);
             return bookingRootId;
 
         } catch (Exception e) {
