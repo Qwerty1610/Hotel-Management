@@ -216,7 +216,7 @@
                                                             <div class="table-actions"
                                                                 style="justify-content: flex-end;">
                                                                 <button class="btn-action edit"
-                                                                    onclick="openEditModal(${staff.accountId}, '${staff.email}', '${staff.fullName}', '${staff.phone}', ${staff.roleId})"
+                                                                    onclick="openEditModal('${staff.accountId}', '${staff.email}', '${staff.fullName}', '${staff.phone}', '${staff.roleId}')"
                                                                     title="Chỉnh sửa tài khoản">
                                                                     <i
                                                                         class="fa-solid fa-pen-to-square"></i>
@@ -380,7 +380,7 @@
                                                                 <div class="table-actions"
                                                                     style="justify-content: flex-end;">
                                                                     <button class="btn-action edit"
-                                                                        onclick="openEditCustomerModal(${customer.accountId}, '${customer.email}', '${customer.fullName}', '${customer.phone}', ${customer.loyaltyPoints}, '${customer.membershipLevel}')"
+                                                                        onclick="openEditCustomerModal('${customer.accountId}', '${customer.email}', '${customer.fullName}', '${customer.phone}', '${customer.loyaltyPoints}', '${customer.membershipLevel}')"
                                                                         title="Chỉnh sửa tài khoản khách hàng">
                                                                         <i
                                                                             class="fa-solid fa-pen-to-square"></i>
