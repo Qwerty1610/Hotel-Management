@@ -47,7 +47,13 @@ public class BookingController extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/home/login");
             return;
         }
-        response.sendRedirect(request.getContextPath() + "/customer/booking/create");
+        
+        String typeId = request.getParameter("id");
+        String redirectUrl = request.getContextPath() + "/customer/booking/create";
+        if (typeId != null && !typeId.trim().isEmpty()) {
+            redirectUrl += "?roomTypeId=" + typeId.trim();
+        }
+        response.sendRedirect(redirectUrl);
     }
 
     @Override
