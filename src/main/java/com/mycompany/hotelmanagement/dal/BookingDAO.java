@@ -1192,8 +1192,7 @@ public class BookingDAO {
                 """;
 
         try (
-                Connection conn = DBContext.getConnection(); 
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             useDatabase(conn);
 
@@ -1247,8 +1246,7 @@ public class BookingDAO {
         }
 
         try (
-                Connection conn = DBContext.getConnection(); 
-                PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int index = 1;
 
@@ -1307,8 +1305,7 @@ public class BookingDAO {
                 """);
 
         try (
-                Connection conn = DBContext.getConnection(); 
-                PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int index = 1;
 

@@ -387,6 +387,98 @@
                 min-height:90px;
                 line-height:1.6;
             }
+            .extra-fee-box{
+                margin-top:18px;
+                background:#fff7ed;
+                border:1px solid #fdba74;
+                border-left:5px solid #f97316;
+                padding:16px;
+                border-radius:10px;
+            }
+            .extra-fee-box h4{
+                margin:0 0 10px;
+                color:#c2410c;
+            }
+            .extra-fee-box ul{
+                margin:0;
+                padding-left:18px;
+            }
+            .extra-fee-box li{
+                margin-bottom:6px;
+            }
+            .extra-fee-total{
+                margin-top:10px;
+                font-weight:bold;
+                color:#dc2626;
+                font-size:18px;
+            }
+            .upload-box{
+                width:260px;
+            }
+            .upload-label{
+                display:block;
+                cursor:pointer;
+            }
+            .upload-label input[type=file]{
+                display:none;
+            }
+            .upload-content{
+                border:2px dashed #3b82f6;
+                border-radius:14px;
+                padding:30px 20px;
+                text-align:center;
+                background:#f8fbff;
+                transition:.25s;
+            }
+            .upload-content:hover{
+                background:#eef6ff;
+                border-color:#2563eb;
+            }
+            .upload-content i{
+                font-size:42px;
+                color:#3b82f6;
+                margin-bottom:10px;
+            }
+            .upload-content span{
+                display:block;
+                font-weight:600;
+                color:#1e293b;
+            }
+            .upload-content small{
+                color:#64748b;
+            }
+            .preview-image{
+                display:none;
+                width:260px;
+                height:170px;
+                object-fit:cover;
+                border-radius:12px;
+                border:1px solid #dbeafe;
+                margin-top:12px;
+            }
+            .upload-mini{
+                border:2px dashed #cbd5e1;
+                border-radius:10px;
+                padding:12px;
+                text-align:center;
+                cursor:pointer;
+                background:#fafafa;
+            }
+            .upload-mini:hover{
+                border-color:#3b82f6;
+            }
+            .preview-small{
+                display:none;
+                width:120px;
+                height:90px;
+                object-fit:cover;
+                border-radius:8px;
+                border:1px solid #ddd;
+            }
+            .upload-box input[type=file],
+            .upload-small input[type=file]{
+                display:none;
+            }
         </style>
     </head>
 
@@ -503,6 +595,23 @@
                           enctype="multipart/form-data"
                           action="${pageContext.request.contextPath}/receptionist/checkin-detail">
                         <input type="hidden" name="bookingId" value="${booking.bookingId}"/>
+                        <input type="hidden"
+                               id="totalCapacity"
+                               value="${totalCapacity}"/>
+                        <input
+                            type="hidden"
+                            id="checkInDate"
+                            value="${booking.checkInDate}"/>
+
+                        <input
+                            type="hidden"
+                            id="checkOutDate"
+                            value="${booking.checkOutDate}"/>
+                        <input
+                            type="hidden"
+                            id="extraFee"
+                            name="extraFee"
+                            value="0"/>
                         <!-- ================= BOOKING INFO ================= -->
                         <div class="section-card">
                             <h3>Chi tiết đặt phòng</h3>
@@ -523,11 +632,27 @@
                                             <label>
                                                 <b>Ảnh CCCD khách đại diện</b>
                                             </label>
-                                            <input
-                                                type="file"
-                                                name="customerImage"
-                                                accept="image/*"
-                                                required>
+                                            <div class="upload-box">
+                                                <label class="upload-label">
+                                                    <input
+                                                        type="file"
+                                                        id="customerImage"
+                                                        name="customerImage"
+                                                        accept="image/*"
+                                                        required
+                                                        onchange="previewCustomerImage(this)">
+
+                                                    <div class="upload-content">
+                                                        <i class="fa-solid fa-cloud-arrow-up"></i>
+
+                                                        <span>Chọn ảnh CCCD</span>
+
+                                                        <small>PNG, JPG, JPEG</small>
+                                                    </div>
+
+                                                    <img id="customerPreview" class="preview-image">
+                                                </label>
+                                            </div>
                                         </c:when>
                                         <c:when test="${booking.status eq 'CheckedIn'}">
                                             <label>
@@ -638,7 +763,9 @@
                                     </c:choose>
                                 </tbody>
                             </table>
-
+                            <div id="extraFeeArea"
+                                 style="margin-top:20px;">
+                            </div>
                             <!-- ================= REQUEST ================= -->
                             <div class="section-divider"></div>
                             <h3>Yêu cầu khách hàng</h3>
@@ -704,6 +831,7 @@
                                         </c:when>
                                         <c:otherwise>
                                             <button
+                                                id="checkinBtn"
                                                 type="submit"
                                                 class="btn-confirm">
                                                 Xác nhận check in
@@ -720,7 +848,83 @@
 
         <script>
             let companionIndex = 0;
+            const FEE = {
+                Baby: 0,
+                Child: 150000,
+                Adult: 300000
+            };
+            function calculateExtraFee() {
 
+                const capacity = parseInt(document.getElementById("totalCapacity").value);
+                const checkIn = new Date(document.getElementById("checkInDate").value);
+                const checkOut = new Date(document.getElementById("checkOutDate").value);
+
+                const nights = Math.round(
+                        (checkOut - checkIn) / (1000 * 60 * 60 * 24)
+                        );
+
+                // +1 vì có khách đại diện
+                const totalPeople = document.querySelectorAll("#companionBody tr").length + 1;
+
+                const extra = totalPeople - capacity;
+
+                const area = document.getElementById("extraFeeArea");
+
+                if (extra <= 0) {
+                    area.innerHTML = "";
+                    document.getElementById("extraFee").value = 0;
+                    return;
+                }
+
+                const ages = [];
+
+                document.querySelectorAll(".age-select").forEach(s => {
+                    if (s.value)
+                        ages.push(s.value);
+                });
+
+                const order = {
+                    Baby: 1,
+                    Child: 2,
+                    Adult: 3
+                };
+
+                ages.sort((a, b) => order[a] - order[b]);
+
+                const charged = ages.slice(0, extra);
+
+                let html = `
+                    <div class="extra-fee-box">
+                        <h4>Phụ phí phát sinh</h4>
+                        <ul>
+                    `;
+
+                let feePerNight = 0;
+                charged.forEach(type => {
+                    feePerNight += FEE[type];
+                });
+                const total = feePerNight * nights;
+
+                html += `
+                    </ul>
+                    <div class="extra-fee-total">
+                        Phụ phí mỗi đêm: \${feePerNight.toLocaleString()} VNĐ
+                        <br>
+
+                        Số đêm lưu trú: \${nights}
+                        <br>
+
+                        <strong>
+                            Tổng phụ phí: \${total.toLocaleString()} VNĐ
+                        </strong>
+                    </div>
+
+                    `;
+
+                area.innerHTML = html;
+                document.getElementById("extraFee").value = total;
+
+            }
             function addCompanion() {
                 const body = document.getElementById("companionBody");
 
@@ -736,21 +940,31 @@
                             required>
                     </td>
                     <td>
-                        <input
-                            type="file"
-                            name="companionImage"
-                            accept="image/*">
+                        <div class="upload-small">
+                            <label>
+                                <input
+                                    type="file"
+                                    name="companionImage"
+                                    accept="image/*"
+                                    onchange="previewCompanion(this)">
+                                <div class="upload-mini">
+                                    <i class="fa-solid fa-image"></i>
+                                    Chọn ảnh
+                                </div>
+                                <img class="preview-small">
+                            </label>
+                        </div>
                     </td>
                     <td>
                         <select
                             name="ageRanges"
                             class="age-select"
-                            required>
+                            onchange="calculateExtraFee()">
 
                             <option value="">-- Chọn --</option>
-                            <option value="UNDER_6">Dưới 6 tuổi</option>
-                            <option value="CHILD">Trẻ em (6 - 14 tuổi)</option>
-                            <option value="ADULT">Người lớn (Từ 15 tuổi)</option>
+                            <option value="Baby">Dưới 6 tuổi</option>
+                            <option value="Child">Trẻ em (6 - 14 tuổi)</option>
+                            <option value="Adult">Người lớn (Từ 15 tuổi)</option>
 
                         </select>
                     </td>
@@ -758,13 +972,17 @@
                         <button
                             type="button"
                             class="danger-btn"
-                            onclick="this.closest('tr').remove()">
+                            onclick="
+                                this.closest('tr').remove();
+                                calculateExtraFee();
+                            ">
                             Xóa
                         </button>
                     </td>
                 `;
 
                 body.appendChild(row);
+                calculateExtraFee();
             }
 
             function goBack() {
@@ -779,6 +997,45 @@
                 btn.style.cursor = "not-allowed";
             }
 
+            function previewCustomerImage(input) {
+
+                if (!input.files || !input.files[0]) {
+                    return;
+                }
+
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+
+                    const img = document.getElementById("customerPreview");
+
+                    img.src = e.target.result;
+                    img.style.display = "block";
+
+                    document.querySelector(".upload-content").style.display = "none";
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+            function previewCompanion(input) {
+
+                if (!input.files.length)
+                    return;
+
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+
+                    const img = input.parentNode.querySelector(".preview-small");
+
+                    img.src = e.target.result;
+                    img.style.display = "block";
+
+                    input.parentNode.querySelector(".upload-mini").style.display = "none";
+                }
+
+                reader.readAsDataURL(input.files[0]);
+            }
         </script>
 
     </body>

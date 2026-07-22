@@ -969,20 +969,7 @@
                                         hàng tại quầy lễ tân.
                                     </p>
                                 </div>
-                                <div class="walkin-mode-card">
-                                    <label class="mode-option">
-                                        <input type="radio"
-                                               name="walkinMode"
-                                               value="booking" checked>
-                                        <span>📅 Đặt phòng</span>
-                                    </label>
-                                    <label class="mode-option">
-                                        <input type="radio"
-                                               name="walkinMode"
-                                               value="checkin">
-                                        <span>🏨 Check In</span>
-                                    </label>
-                                </div>
+
                             </div>
                             <div id="searchAccountMessage"
                                  class="search-account-message hidden">
@@ -1149,28 +1136,6 @@
                                         trả phòng và loại phòng
                                     </div>
                                 </div>
-                                <%--=========================================================CARD
-                                    3.1 - BẠN ĐỒNG
-                                    HÀNH=========================================================--%>
-                            </div>
-                            <div class="walkin-card"
-                                 id="companionCard"
-                                 style="display:none;">
-                                <div
-                                    class="walkin-section-header">
-                                    <div>
-                                        <i
-                                            class="fa-solid fa-users"></i>
-                                        Bạn đồng hành
-                                    </div>
-                                    <button type="button"
-                                            class="btn-add-companion"
-                                            onclick="addCompanionRow()">
-                                        + Thêm bạn đồng hành
-                                    </button>
-                                </div>
-                                <div id="companionContainer">
-                                </div>
                             </div>
                             <%--=========================================================CARD
                                 4 - YÊU CẦU KHÁCH
@@ -1299,15 +1264,6 @@
                                     <i
                                         class="fa-solid fa-calendar-check"></i>
                                     Đặt phòng
-                                </button>
-                                <button
-                                    type="submit"
-                                    id="checkinBtn"
-                                    class="btn-booking-submit"
-                                    onclick="return beforeWalkInSubmit('CHECKIN')">
-                                    <i
-                                        class="fa-solid fa-door-open"></i>
-                                    Check In
                                 </button>
                             </div>
                         </form>

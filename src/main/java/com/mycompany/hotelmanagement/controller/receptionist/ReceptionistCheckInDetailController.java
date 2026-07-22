@@ -20,6 +20,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -58,28 +59,22 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
         int bookingId = Integer.parseInt(request.getParameter("bookingId"));
 
         Booking booking = bookingDAO.getBookingById(bookingId);
-        if ("CheckedIn".equals(booking.getStatus())) {
-
-    CheckIn checkIn =
-            checkInDAO.getCheckInByBookingId(bookingId);
-
-    System.out.println("CHECKIN ID: "
-            + checkIn.getCheckInId());
-
-    System.out.println("IMAGE: "
-            + checkIn.getImageUrl());
-
-}
         if ("CheckedIn".equalsIgnoreCase(booking.getStatus())) {
 
-            CheckIn checkIn = checkInDAO.getCheckInByBookingId(bookingId);
+            CheckIn checkIn
+                    = checkInDAO.getCheckInByBookingId(bookingId);
+
             request.setAttribute("checkIn", checkIn);
 
             if (checkIn != null) {
+
                 request.setAttribute(
                         "companions",
-                        checkInDAO.getCompanionsByCheckInId(checkIn.getCheckInId())
+                        checkInDAO.getCompanionsByCheckInId(
+                                checkIn.getCheckInId()
+                        )
                 );
+
             }
         }
 
@@ -94,12 +89,27 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
                 ? booking.getGroupBookingId()
                 : booking.getBookingId();
 
+        // Lấy tổng capacity của tất cả phòng được assign
+        int totalCapacity
+                = checkInDAO.getTotalCapacityByBookingId(rootBookingId);
+
+        System.out.println(
+                "TOTAL CAPACITY: " + totalCapacity
+        );
+
+        request.setAttribute(
+                "totalCapacity",
+                totalCapacity
+        );
+
         request.setAttribute("booking", booking);
 
         request.setAttribute("rooms",
                 bookingDAO.getAllAssignedRoomsForGroup(rootBookingId));
 
-        request.getRequestDispatcher("/WEB-INF/views/receptionist/checkin-detail.jsp")
+        request.getRequestDispatcher(
+                "/WEB-INF/views/receptionist/checkin-detail.jsp"
+        )
                 .forward(request, response);
     }
 
@@ -111,6 +121,13 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
 
         String specialRequest = request.getParameter("specialRequest");
         String notes = request.getParameter("notes");
+        String extraFeeStr = request.getParameter("extraFee");
+
+        BigDecimal extraFee = BigDecimal.ZERO;
+
+        if (extraFeeStr != null && !extraFeeStr.isBlank()) {
+            extraFee = new BigDecimal(extraFeeStr);
+        }
         String[] companions = request.getParameterValues("companions");
         String[] ageRanges = request.getParameterValues("ageRanges");
         List<Part> companionParts = new ArrayList<>();
@@ -161,6 +178,7 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
                     specialRequest,
                     notes,
                     customerUrl,
+                    extraFee,
                     companions,
                     companionUrls,
                     ageRanges

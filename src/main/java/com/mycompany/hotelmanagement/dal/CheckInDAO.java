@@ -3,6 +3,7 @@ package com.mycompany.hotelmanagement.dal;
 import com.mycompany.hotelmanagement.config.DBContext;
 import com.mycompany.hotelmanagement.entity.CheckIn;
 import com.mycompany.hotelmanagement.entity.CheckInCompanion;
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,7 @@ public class CheckInDAO {
             String specialRequest,
             String notes,
             String imageUrl,
+            BigDecimal extraFee,
             String[] companions,
             List<String> companionImageUrls,
             String[] ageRanges
@@ -41,9 +43,10 @@ public class CheckInDAO {
                     receptionist_id,
                     special_request,
                     notes,
-                    image_url
+                    image_url,
+                    extra_fee     
                 )
-                VALUES (?, ?, ?, ?, ?)
+                VALUES(?,?,?,?,?,?)
                 """;
 
             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -52,7 +55,8 @@ public class CheckInDAO {
             ps.setString(3, specialRequest);
             ps.setString(4, notes);
             ps.setString(5, imageUrl);
-
+            ps.setBigDecimal(6, extraFee);
+            
             ps.executeUpdate();
 
             ResultSet rs = ps.getGeneratedKeys();
@@ -229,5 +233,51 @@ public class CheckInDAO {
         }
 
         return list;
+    }
+
+    public int getTotalCapacityByBookingId(int bookingId) {
+
+        String sql = """
+            SELECT SUM(rt.capacity) AS total_capacity
+            FROM RoomAssignment ra
+            JOIN Room r
+                ON ra.room_id = r.room_id
+            JOIN RoomType rt
+                ON r.type_id = rt.type_id
+            WHERE ra.booking_id = ?
+               OR ra.booking_id IN
+               (
+                    SELECT booking_id
+                    FROM Booking
+                    WHERE group_booking_id = ?
+               )
+            """;
+
+        try (
+                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, bookingId);
+            ps.setInt(2, bookingId);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+
+                return rs.getInt("total_capacity");
+
+            }
+
+        } catch (Exception e) {
+
+            LOGGER.log(
+                    Level.SEVERE,
+                    "Cannot calculate total capacity for booking "
+                    + bookingId,
+                    e
+            );
+
+        }
+
+        return 0;
     }
 }
