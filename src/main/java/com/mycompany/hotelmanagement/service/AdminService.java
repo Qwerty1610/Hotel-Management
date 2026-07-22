@@ -22,14 +22,29 @@ public class AdminService {
     private static final Logger logger = LoggerFactory.getLogger(AdminService.class);
     private final AccountDAO accountRepository = new AccountDAO();
 
+    /**
+     * Lấy danh sách tất cả các tài khoản nhân viên.
+     * 
+     * @return Danh sách tài khoản nhân viên
+     */
     public List<Account> getStaffAccounts() {
         return accountRepository.getAllStaffAccounts();
     }
 
+    /**
+     * Lấy danh sách tất cả các tài khoản khách hàng.
+     * 
+     * @return Danh sách thông tin tài khoản khách hàng
+     */
     public List<CustomerInfo> getCustomerAccounts() {
         return accountRepository.getAllCustomerAccounts();
     }
 
+    /**
+     * Lấy danh sách các vai trò dành cho nhân viên.
+     * 
+     * @return Danh sách vai trò nhân viên
+     */
     public List<Role> getStaffRoles() {
         return accountRepository.getStaffRoles();
     }
@@ -39,6 +54,12 @@ public class AdminService {
         return email == null || !email.trim().matches(emailRegex);
     }
 
+    /**
+     * Làm sạch và chuẩn hóa định dạng số điện thoại.
+     * 
+     * @param phone Số điện thoại đầu vào
+     * @return Chuỗi số điện thoại đã làm sạch hoặc null
+     */
     public String sanitizePhone(String phone) {
         if (phone == null) {
             return null;
@@ -71,6 +92,16 @@ public class AdminService {
         return password.length() < 8 || !hasLetter || !hasDigit || !hasSpecial;
     }
 
+    /**
+     * Tạo tài khoản nhân viên mới kèm mã hóa mật khẩu băm BCrypt.
+     * 
+     * @param email Email nhân viên
+     * @param fullName Họ tên
+     * @param phone Số điện thoại
+     * @param password Mật khẩu
+     * @param roleId ID vai trò
+     * @return Chuỗi mã kết quả ("success", "invalid_email", "weak_password",...)
+     */
     public String createStaffAccount(String email, String fullName, String phone, String password, int roleId) {
         if (email == null || email.trim().isEmpty() || fullName == null || fullName.trim().isEmpty() || password == null || password.isEmpty()) {
             return "invalid_input";
@@ -100,6 +131,17 @@ public class AdminService {
         return "create_failed";
     }
 
+    /**
+     * Cập nhật thông tin tài khoản nhân viên (xác thực quy tắc BR-65 không giáng chức Admin đơn lẻ).
+     * 
+     * @param accountId ID tài khoản
+     * @param email Email mới
+     * @param fullName Họ tên mới
+     * @param phone Số điện thoại mới
+     * @param password Mật khẩu mới (nếu đổi)
+     * @param roleId ID vai trò mới
+     * @return Chuỗi mã kết quả
+     */
     public String updateStaffAccount(int accountId, String email, String fullName, String phone, String password, int roleId) {
         if (email == null || email.trim().isEmpty() || fullName == null || fullName.trim().isEmpty()) {
             return "invalid_input";
@@ -144,6 +186,13 @@ public class AdminService {
         return "update_failed";
     }
 
+    /**
+     * Đổi trạng thái Bật/Khóa tài khoản (xác thực quy tắc BR-65 không khóa tài khoản Admin).
+     * 
+     * @param accountId ID tài khoản
+     * @param active Trạng thái kích hoạt mới
+     * @return Chuỗi mã kết quả
+     */
     public String toggleAccountStatus(int accountId, boolean active) {
         // BR-65 validation: Cannot lock/deactivate the Admin account
         if (!active) {
@@ -160,22 +209,60 @@ public class AdminService {
         return "failed";
     }
 
+    /**
+     * Kiểm tra email đã tồn tại trong CSDL.
+     * 
+     * @param email Email cần kiểm tra
+     * @return true nếu tồn tại, ngược lại false
+     */
     public boolean existsByEmail(String email) {
         return accountRepository.existsByEmail(email);
     }
 
+    /**
+     * Kiểm tra số điện thoại đã tồn tại trong CSDL.
+     * 
+     * @param phone Số điện thoại cần kiểm tra
+     * @return true nếu tồn tại, ngược lại false
+     */
     public boolean existsByPhone(String phone) {
         return accountRepository.existsByPhone(phone);
     }
 
+    /**
+     * Kiểm tra email đã tồn tại ở tài khoản khác.
+     * 
+     * @param email Email
+     * @param excludeId ID tài khoản cần loại trừ
+     * @return true nếu tồn tại, ngược lại false
+     */
     public boolean existsByEmailExcept(String email, int excludeId) {
         return accountRepository.existsByEmailExcept(email, excludeId);
     }
 
+    /**
+     * Kiểm tra số điện thoại đã tồn tại ở tài khoản khác.
+     * 
+     * @param phone Số điện thoại
+     * @param excludeId ID tài khoản cần loại trừ
+     * @return true nếu tồn tại, ngược lại false
+     */
     public boolean existsByPhoneExcept(String phone, int excludeId) {
         return accountRepository.existsByPhoneExcept(phone, excludeId);
     }
 
+    /**
+     * Cập nhật thông tin tài khoản khách hàng (điểm thưởng, hạng thành viên, mật khẩu).
+     * 
+     * @param accountId ID tài khoản
+     * @param email Email
+     * @param fullName Họ tên
+     * @param phone Số điện thoại
+     * @param password Mật khẩu mới (nếu đổi)
+     * @param loyaltyPoints Điểm tích lũy
+     * @param membershipLevel Hạng thành viên
+     * @return Chuỗi mã kết quả
+     */
     public String updateCustomerAccount(int accountId, String email, String fullName, String phone, String password, int loyaltyPoints, String membershipLevel) {
         if (email == null || email.trim().isEmpty() || fullName == null || fullName.trim().isEmpty()) {
             return "invalid_input";

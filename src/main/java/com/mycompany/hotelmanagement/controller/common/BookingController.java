@@ -23,7 +23,7 @@ import jakarta.servlet.http.HttpSession;
  * 
  * Date: 31-05-2026
  * 
- * @author BinhHD, TungNQ
+ * @author BinhHD
  * @version 1.1
  */
 

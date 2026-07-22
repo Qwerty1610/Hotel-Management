@@ -27,6 +27,14 @@ public class AdminDashboardController extends HttpServlet {
 
     private final AdminService adminService = new AdminService();
 
+    /**
+     * Xử lý yêu cầu GET: hiển thị bảng thông tin tài khoản nhân viên / khách hàng hoặc kiểm tra trùng lặp qua AJAX.
+     * 
+     * @param request HttpServletRequest chứa các tham số (action, tab, email, phone,...)
+     * @param response HttpServletResponse
+     * @throws ServletException nếu có lỗi Servlet
+     * @throws IOException nếu có lỗi I/O
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -90,6 +98,14 @@ public class AdminDashboardController extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/views/dashboard/admin.jsp").forward(request, response);
     }
 
+    /**
+     * Xử lý yêu cầu POST: tiếp nhận hành động tạo/cập nhật tài khoản nhân viên, cập nhật tài khoản khách hàng, hoặc đổi trạng thái hoạt động.
+     * 
+     * @param request HttpServletRequest chứa thông tin form
+     * @param response HttpServletResponse
+     * @throws ServletException nếu có lỗi Servlet
+     * @throws IOException nếu có lỗi I/O
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

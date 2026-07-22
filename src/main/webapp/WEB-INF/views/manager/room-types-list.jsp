@@ -154,7 +154,7 @@
                 <button class="btn-close-modal" onclick="closeRoomTypeModal()"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
-                <form id="roomTypeForm" action="${pageContext.request.contextPath}/manager/roomtypes?action=save" method="post">
+                <form id="roomTypeForm" action="${pageContext.request.contextPath}/manager/roomtypes?action=save" method="post" enctype="multipart/form-data">
                     <input type="hidden" id="modalRtId" name="roomTypeId" value="" />
 
                     <div class="modal-form-group">
@@ -185,8 +185,55 @@
                     </div>
 
                     <div class="modal-form-group">
-                        <label for="modalRtImageUrl">URL hình ảnh</label>
-                        <input type="text" id="modalRtImageUrl" name="imageUrl" class="modal-input" placeholder="Ví dụ: https://..." required />
+                        <label>Hình ảnh loại phòng</label>
+
+                        <%-- Tab toggle buttons --%>
+                        <div class="img-mode-tabs" style="display:flex; gap:8px; margin-bottom:10px;">
+                            <button type="button" id="tabUrlBtn"
+                                onclick="switchImageMode('url')"
+                                style="flex:1; padding:7px 0; border-radius:8px; border:2px solid var(--brand-blue); background:var(--brand-blue); color:#fff; font-size:13px; font-weight:600; cursor:pointer; transition:all .2s;">
+                                <i class="fa-solid fa-link"></i> Nhập URL
+                            </button>
+                            <button type="button" id="tabUploadBtn"
+                                onclick="switchImageMode('upload')"
+                                style="flex:1; padding:7px 0; border-radius:8px; border:2px solid #cbd5e1; background:#f8fafc; color:#475569; font-size:13px; font-weight:600; cursor:pointer; transition:all .2s;">
+                                <i class="fa-solid fa-upload"></i> Upload ảnh
+                            </button>
+                        </div>
+
+                        <%-- URL mode --%>
+                        <div id="imgModeUrl">
+                            <input type="text" id="modalRtImageUrl" name="imageUrl" class="modal-input"
+                                   placeholder="Ví dụ: https://..." />
+                        </div>
+
+                        <%-- Upload mode --%>
+                        <div id="imgModeUpload" style="display:none;">
+                            <label for="modalRtImageFile" id="uploadDropZone"
+                                style="display:flex; flex-direction:column; align-items:center; justify-content:center;
+                                       border:2px dashed #cbd5e1; border-radius:10px; padding:20px 12px; cursor:pointer;
+                                       background:#f8fafc; transition:border-color .2s, background .2s;
+                                       min-height:90px; color:#64748b; font-size:13px; text-align:center; gap:6px;">
+                                <i class="fa-solid fa-cloud-arrow-up" style="font-size:28px; color:#94a3b8;"></i>
+                                <span id="uploadLabel">Nhấn để chọn ảnh hoặc kéo thả vào đây</span>
+                                <span style="font-size:11px; color:#94a3b8;">PNG, JPG, WEBP – tối đa 10 MB</span>
+                            </label>
+                            <input type="file" id="modalRtImageFile" name="imageFile"
+                                   accept="image/*" style="display:none;"
+                                   onchange="handleImageFileChange(this)" />
+
+                            <%-- Preview --%>
+                            <div id="imgPreviewWrap" style="display:none; margin-top:10px; position:relative;">
+                                <img id="imgPreview" src="" alt="Preview"
+                                     style="width:100%; max-height:160px; object-fit:cover; border-radius:8px; border:1px solid #e2e8f0;" />
+                                <button type="button" onclick="clearImageUpload()"
+                                    style="position:absolute; top:6px; right:6px; background:rgba(0,0,0,.55); border:none;
+                                           border-radius:50%; width:26px; height:26px; color:#fff; cursor:pointer;
+                                           font-size:13px; display:flex; align-items:center; justify-content:center;">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="modal-form-group">
@@ -313,6 +360,62 @@
             });
         });
 
+        // ==========================================
+        //  IMAGE MODE TOGGLE
+        // ==========================================
+        let currentImageMode = 'url'; // 'url' | 'upload'
+
+        function switchImageMode(mode) {
+            currentImageMode = mode;
+            const urlDiv    = document.getElementById('imgModeUrl');
+            const uploadDiv = document.getElementById('imgModeUpload');
+            const tabUrl    = document.getElementById('tabUrlBtn');
+            const tabUp     = document.getElementById('tabUploadBtn');
+
+            if (mode === 'url') {
+                urlDiv.style.display    = '';
+                uploadDiv.style.display = 'none';
+                tabUrl.style.background = 'var(--brand-blue)';
+                tabUrl.style.color      = '#fff';
+                tabUrl.style.borderColor = 'var(--brand-blue)';
+                tabUp.style.background  = '#f8fafc';
+                tabUp.style.color       = '#475569';
+                tabUp.style.borderColor = '#cbd5e1';
+                // clear file input so server won't receive a file
+                clearImageUpload();
+            } else {
+                urlDiv.style.display    = 'none';
+                uploadDiv.style.display = '';
+                tabUp.style.background  = 'var(--brand-blue)';
+                tabUp.style.color       = '#fff';
+                tabUp.style.borderColor = 'var(--brand-blue)';
+                tabUrl.style.background = '#f8fafc';
+                tabUrl.style.color      = '#475569';
+                tabUrl.style.borderColor = '#cbd5e1';
+            }
+        }
+
+        function handleImageFileChange(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('imgPreview').src = e.target.result;
+                document.getElementById('imgPreviewWrap').style.display = '';
+                document.getElementById('uploadLabel').textContent = file.name;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearImageUpload() {
+            const fi = document.getElementById('modalRtImageFile');
+            if (fi) fi.value = '';
+            const wrap = document.getElementById('imgPreviewWrap');
+            if (wrap) wrap.style.display = 'none';
+            const lbl = document.getElementById('uploadLabel');
+            if (lbl) lbl.textContent = 'Nhấn để chọn ảnh hoặc kéo thả vào đây';
+        }
+
         // Filter trigger
         function filterRoomTypes() {
             ManagerTable.filter("roomTypesTable");
@@ -320,7 +423,7 @@
 
         // Clear validation errors
         function clearRoomTypeErrors() {
-            ['modalRtName', 'modalRtPrice', 'modalRtCapacity', 'modalRtBedType', 'modalRtArea', 'modalRtImageUrl', 'modalRtDescription']
+            ['modalRtName', 'modalRtPrice', 'modalRtCapacity', 'modalRtBedType', 'modalRtArea', 'modalRtImageUrl']
                 .forEach(id => {
                     const el = document.getElementById(id);
                     if (el) el.setCustomValidity("");
@@ -333,6 +436,8 @@
             document.getElementById("roomTypeModalTitle").innerText = "Thêm loại phòng mới";
             document.getElementById("modalRtId").value = "";
             document.getElementById("roomTypeForm").reset();
+            clearImageUpload();
+            switchImageMode('url');
             document.getElementById("roomTypeModal").style.display = "flex";
         }
 
@@ -342,6 +447,8 @@
             const rt = table.items.find(item => item.id === id);
             if (rt) {
                 clearRoomTypeErrors();
+                clearImageUpload();
+                switchImageMode('url'); // default to URL mode when editing
                 document.getElementById("roomTypeModalTitle").innerText = "Chỉnh sửa loại phòng";
                 document.getElementById("modalRtId").value = rt.id;
                 document.getElementById("modalRtName").value = rt.name;
@@ -357,6 +464,7 @@
 
         function closeRoomTypeModal() {
             clearRoomTypeErrors();
+            clearImageUpload();
             document.getElementById("roomTypeModal").style.display = "none";
         }
 
@@ -367,7 +475,7 @@
         }
 
         // Input listeners for real-time validity clearing
-        ['modalRtName', 'modalRtPrice', 'modalRtCapacity', 'modalRtBedType', 'modalRtArea', 'modalRtImageUrl', 'modalRtDescription']
+        ['modalRtName', 'modalRtPrice', 'modalRtCapacity', 'modalRtBedType', 'modalRtArea', 'modalRtImageUrl']
             .forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.addEventListener('input', function () { this.setCustomValidity(""); });
@@ -436,11 +544,22 @@
                 areaInput.value = numericArea + " m²";
             }
 
-            if (imageUrlVal === "") {
-                e.preventDefault();
-                imageUrlInput.setCustomValidity("Vui lòng điền vào trường này.");
-                imageUrlInput.reportValidity();
-                return;
+            // Image validation: depends on which mode is active
+            if (currentImageMode === 'url') {
+                if (imageUrlVal === "") {
+                    e.preventDefault();
+                    imageUrlInput.setCustomValidity("Vui lòng nhập URL hình ảnh.");
+                    imageUrlInput.reportValidity();
+                    return;
+                }
+            } else {
+                // Upload mode: check a file has been selected
+                const fileInput = document.getElementById('modalRtImageFile');
+                if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                    e.preventDefault();
+                    alert("Vui lòng chọn một file ảnh để upload.");
+                    return;
+                }
             }
             
             // Save current page to sessionStorage to restore it after reload
