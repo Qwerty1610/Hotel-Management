@@ -394,39 +394,12 @@
                                     </tr>
                                 </c:if>
                                 <tr>
-                                    <td>Phụ phí (Hư hỏng, Quá giờ, v.v...)</td>
+                                    <td>Phụ phí quá số người ở</td>
                                     <td class="amount-col">
                                         <fmt:formatNumber value="${summary.extraCharge}" type="number"
                                                           groupingUsed="true" /> đ
                                     </td>
                                 </tr>
-                                <c:if test="${not empty summary.surchargeItems}">
-                                    <tr>
-                                        <td colspan="2"
-                                            style="padding: 0; background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">
-                                            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                                                <tbody>
-                                                    <c:forEach var="item" items="${summary.surchargeItems}">
-                                                        <tr>
-                                                            <td
-                                                                style="padding: 8px 16px; border-bottom: 1px dashed #cbd5e1; color: #475569;">
-                                                                <i class="fa-solid fa-caret-right"
-                                                                   style="margin-right: 8px;"></i>
-                                                                <c:out value="${item.description}" />
-                                                                (x${item.quantity})
-                                                            </td>
-                                                            <td
-                                                                style="padding: 8px 16px; border-bottom: 1px dashed #cbd5e1; text-align: right; color: #475569;">
-                                                                <fmt:formatNumber value="${item.amount}"
-                                                                                  type="number" groupingUsed="true" /> đ
-                                                            </td>
-                                                        </tr>
-                                                    </c:forEach>
-                                                </tbody>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </c:if>
                             </tbody>
                         </table>
 

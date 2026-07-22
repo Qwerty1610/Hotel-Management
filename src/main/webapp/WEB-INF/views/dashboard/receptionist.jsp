@@ -745,50 +745,96 @@
                             </div>
                         </div>
 
+                        <!-- ================= STATUS FILTER ================= -->
                         <form method="get"
                               action="${pageContext.request.contextPath}/receptionist/dashboard">
 
-                            <input type="hidden" name="tab" value="checkin" />
-                            <input type="hidden" name="page" value="1" />
+                            <input type="hidden" name="tab" value="checkin"/>
+                            <input type="hidden" name="keyword" value="${keyword}"/>
+                            <input type="hidden" name="page" value="1"/>
+
+                            <div class="status-tabs">
+
+                                <button type="submit"
+                                        name="status"
+                                        value="All"
+                                        class="status-tab ${currentStatus eq 'All' ? 'active' : ''}">
+                                    Tất cả
+                                </button>
+
+                                <button type="submit"
+                                        name="status"
+                                        value="Confirmed"
+                                        class="status-tab ${currentStatus eq 'Confirmed' ? 'active' : ''}">
+                                    Chưa check-in
+                                </button>
+
+                                <button type="submit"
+                                        name="status"
+                                        value="CheckedIn"
+                                        class="status-tab ${currentStatus eq 'CheckedIn' ? 'active' : ''}">
+                                    Đã check-in
+                                </button>
+
+                                <button type="submit"
+                                        name="status"
+                                        value="CheckedOut"
+                                        class="status-tab ${currentStatus eq 'CheckedOut' ? 'active' : ''}">
+                                    Đã check-out
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                        <!-- ================= SEARCH + PAGINATION ================= -->
+                        <form id="searchForm"
+                              method="get"
+                              action="${pageContext.request.contextPath}/receptionist/dashboard">
+
+                            <input type="hidden" name="tab" value="checkin"/>
+                            <input type="hidden" name="status" value="${currentStatus}"/>
+                            <input type="hidden" id="pageInput" name="page" value="${currentPage}"/>
 
                             <div class="table-filter-bar">
 
                                 <div class="search-wrapper">
                                     <i class="fa-solid fa-magnifying-glass"></i>
 
-                                    <input type="text" name="keyword"
+                                    <input type="text"
+                                           name="keyword"
                                            class="search-input"
                                            placeholder="Tên khách hoặc Booking ID"
-                                           value="${keyword}" />
+                                           value="${keyword}"/>
                                 </div>
 
                                 <button type="submit"
                                         style="height:40px;padding:0 16px;background:var(--brand-blue);color:white;border:none;border-radius:8px;">
                                     Tìm kiếm
                                 </button>
-                                <div
-                                    style="margin-left:auto;display:flex;align-items:center;gap:8px;">
-                                    
-                                    <c:set var="sizeOfPage" value="${not empty pageSize ? pageSize : 11}" />
-                                    <span style="font-size: 13px; color: var(--text-muted); margin-right: 8px;">
-                                        Hiển thị ${(currentPage - 1) * sizeOfPage + 1}-${currentPage * sizeOfPage > totalItems ? totalItems : currentPage * sizeOfPage} trong số ${totalItems} đơn hàng
-                                    </span>
+
+                                <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
 
                                     <c:if test="${currentPage > 1}">
-                                        <a class="btn-action-icon"
-                                           href="?tab=checkin&page=${currentPage - 1}&keyword=${keyword}">
-                                            <i
-                                                class="fa-solid fa-chevron-left"></i>
-                                        </a>
+                                        <button type="button"
+                                                class="btn-action-icon"
+                                                onclick="gotoPage(${currentPage-1})">
+                                            <i class="fa-solid fa-chevron-left"></i>
+                                        </button>
                                     </c:if>
 
+                                    <span style="font-weight:600;">
+                                        ${currentPage}/${totalPages}
+                                    </span>
+
                                     <c:if test="${currentPage < totalPages}">
-                                        <a class="btn-action-icon"
-                                           href="?tab=checkin&page=${currentPage + 1}&keyword=${keyword}">
-                                            <i
-                                                class="fa-solid fa-chevron-right"></i>
-                                        </a>
+                                        <button type="button"
+                                                class="btn-action-icon"
+                                                onclick="gotoPage(${currentPage+1})">
+                                            <i class="fa-solid fa-chevron-right"></i>
+                                        </button>
                                     </c:if>
+
                                 </div>
 
 
@@ -796,12 +842,20 @@
 
                         </form>
 
+                        <script>
+                            function gotoPage(page) {
+                                document.getElementById("pageInput").value = page;
+                                document.getElementById("searchForm").submit();
+                            }
+                        </script>
+
                         <div class="table-card">
 
                             <table class="booking-table">
 
                                 <thead>
-                                    <tr>
+                                    <tr class="checkin-row"
+                                        data-status="${b.status}">
                                         <th>Mã đặt phòng</th>
                                         <th>Khách hàng</th>
                                         <th>Loại phòng</th>
@@ -816,7 +870,8 @@
 
                                     <c:forEach var="b" items="${checkInList}">
 
-                                        <tr>
+                                        <tr class="checkin-row"
+                                            data-status="${b.status}">
 
                                             <td>
                                                 <span class="booking-id-badge">
@@ -871,7 +926,7 @@
                                                     <c:when
                                                         test="${b.status eq 'Confirmed'}">
 
-                                                        <a class="btn-action-icon btn-edit"
+                                                        <a class="btn-action-icon btn-checkin"
                                                            href="${pageContext.request.contextPath}/receptionist/checkin-detail?bookingId=${b.bookingId}">
                                                             <i
                                                                 class="fa-solid fa-key"></i>
@@ -879,14 +934,14 @@
                                                         </a>
                                                     </c:when>
 
-                                                    <c:when
-                                                        test="${b.status eq 'CheckedIn'}">
+                                                    <c:when test="${b.status eq 'CheckedIn'}">
 
-                                                        <span
-                                                            style="color:#10b981;font-weight:600">
+                                                        <a class="btn-action-icon btn-checkedin"
+                                                           style="color:#10b981;border-color:#10b981"
+                                                           href="${pageContext.request.contextPath}/receptionist/checkin-detail?bookingId=${b.bookingId}">
+                                                            <i class="fa-solid fa-eye"></i>
                                                             Đã check in
-                                                        </span>
-
+                                                        </a>
                                                     </c:when>
 
                                                     <c:when
@@ -925,20 +980,7 @@
                                         hàng tại quầy lễ tân.
                                     </p>
                                 </div>
-                                <div class="walkin-mode-card">
-                                    <label class="mode-option">
-                                        <input type="radio"
-                                               name="walkinMode"
-                                               value="booking" checked>
-                                        <span>📅 Đặt phòng</span>
-                                    </label>
-                                    <label class="mode-option">
-                                        <input type="radio"
-                                               name="walkinMode"
-                                               value="checkin">
-                                        <span>🏨 Check In</span>
-                                    </label>
-                                </div>
+
                             </div>
                             <div id="searchAccountMessage"
                                  class="search-account-message hidden">
@@ -1105,28 +1147,6 @@
                                         trả phòng và loại phòng
                                     </div>
                                 </div>
-                                <%--=========================================================CARD
-                                    3.1 - BẠN ĐỒNG
-                                    HÀNH=========================================================--%>
-                            </div>
-                            <div class="walkin-card"
-                                 id="companionCard"
-                                 style="display:none;">
-                                <div
-                                    class="walkin-section-header">
-                                    <div>
-                                        <i
-                                            class="fa-solid fa-users"></i>
-                                        Bạn đồng hành
-                                    </div>
-                                    <button type="button"
-                                            class="btn-add-companion"
-                                            onclick="addCompanionRow()">
-                                        + Thêm bạn đồng hành
-                                    </button>
-                                </div>
-                                <div id="companionContainer">
-                                </div>
                             </div>
                             <%--=========================================================CARD
                                 4 - YÊU CẦU KHÁCH
@@ -1255,15 +1275,6 @@
                                     <i
                                         class="fa-solid fa-calendar-check"></i>
                                     Đặt phòng
-                                </button>
-                                <button
-                                    type="submit"
-                                    id="checkinBtn"
-                                    class="btn-booking-submit"
-                                    onclick="return beforeWalkInSubmit('CHECKIN')">
-                                    <i
-                                        class="fa-solid fa-door-open"></i>
-                                    Check In
                                 </button>
                             </div>
                         </form>

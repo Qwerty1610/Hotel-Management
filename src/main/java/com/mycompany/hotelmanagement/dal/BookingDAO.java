@@ -12,25 +12,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Project: Hotel Management System
- * Class: BookingDAO
+ * Project: Hotel Management System Class: BookingDAO
  *
- * Description:
- * Đối tượng truy cập dữ liệu (DAO) cho tất cả các thao tác CSDL liên quan
- * đến đặt phòng. Cung cấp các phương thức để tạo, truy xuất, cập nhật và
- * phân trang đặt phòng, quản lý xếp phòng, và hỗ trợ chuyển đổi trạng thái
+ * Description: Đối tượng truy cập dữ liệu (DAO) cho tất cả các thao tác CSDL
+ * liên quan đến đặt phòng. Cung cấp các phương thức để tạo, truy xuất, cập nhật
+ * và phân trang đặt phòng, quản lý xếp phòng, và hỗ trợ chuyển đổi trạng thái
  * nhận/trả phòng. Sử dụng JDBC thuần thông qua DBContext.
  *
- * Related Use Cases:
- * - UC-11 Create Booking (Customer Online)
- * - UC-12 Process Booking Request
- * - UC-13 Create Walk-in Booking
- * - UC-14 Check-In Customer
- * - UC-16 Check-Out Customer
- * - UC-38 View Booking History
- * 
+ * Related Use Cases: - UC-11 Create Booking (Customer Online) - UC-12 Process
+ * Booking Request - UC-13 Create Walk-in Booking - UC-14 Check-In Customer -
+ * UC-16 Check-Out Customer - UC-38 View Booking History
+ *
  * Date: 01-06-2026
- * 
+ *
  * @author BinhHD, QuyPQ
  * @version 1.5
  */
@@ -267,8 +261,9 @@ public class BookingDAO {
     }
 
     public boolean updateBookingTotalAmountAndNote(int bookingId, double newAmount, String noteAppend) {
-        if (bookingId <= 0)
+        if (bookingId <= 0) {
             return false;
+        }
         String sql = "UPDATE dbo.Booking "
                 + "SET total_amount = ?, note = ISNULL(note, '') + CHAR(13) + CHAR(10) + ?, updated_at = SYSDATETIME() "
                 + "WHERE booking_id = ?";
@@ -642,8 +637,7 @@ public class BookingDAO {
                 """;
 
         try (
-                Connection conn = DBContext.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setDate(1, checkOut);
             ps.setDate(2, checkIn);
             useDatabase(conn);
@@ -745,19 +739,19 @@ public class BookingDAO {
         } finally {
             if (deletePs != null)
                 try {
-                    deletePs.close();
-                } catch (Exception e) {
-                }
+                deletePs.close();
+            } catch (Exception e) {
+            }
             if (insertPs != null)
                 try {
-                    insertPs.close();
-                } catch (Exception e) {
-                }
+                insertPs.close();
+            } catch (Exception e) {
+            }
             if (conn != null)
                 try {
-                    conn.close();
-                } catch (Exception e) {
-                }
+                conn.close();
+            } catch (Exception e) {
+            }
         }
         return false;
     }
@@ -1005,99 +999,144 @@ public class BookingDAO {
         return conflictingRooms;
     }
 
-    public List<Booking> getCheckInBookings(String keyword, int offset, int pageSize) {
+    public List<Booking> getCheckInBookings(
+            String status,
+            String keyword,
+            int offset,
+            int pageSize) {
+
         List<Booking> list = new ArrayList<>();
 
         StringBuilder sql = new StringBuilder(BASE_SELECT);
 
         sql.append("""
-                    WHERE b.group_booking_id IS NULL
-                    AND b.status IN ('Confirmed','CheckedIn','CheckedOut')
-                """);
+            WHERE b.group_booking_id IS NULL
+        """);
 
         List<Object> params = new ArrayList<>();
 
-        if (keyword != null && !keyword.trim().isEmpty()) {
+        // Filter status
+        if ("Confirmed".equals(status)
+                || "CheckedIn".equals(status)
+                || "CheckedOut".equals(status)) {
+
+            sql.append(" AND b.status = ? ");
+            params.add(status);
+
+        } else {
+
             sql.append("""
-                        AND (
-                            b.customer_name LIKE ?
-                            OR CAST(b.booking_id AS NVARCHAR) LIKE ?
-                        )
-                    """);
+                AND b.status IN ('Confirmed','CheckedIn','CheckedOut')
+            """);
+        }
+
+        // Search
+        if (keyword != null && !keyword.trim().isEmpty()) {
+
+            sql.append("""
+                AND (
+                    b.customer_name LIKE ?
+                    OR CAST(b.booking_id AS NVARCHAR) LIKE ?
+                )
+            """);
 
             String kw = "%" + sanitizeLikeKeyword(keyword.trim()) + "%";
+
             params.add(kw);
             params.add(kw);
         }
 
         sql.append("""
-                    ORDER BY
-                    CASE
-                        WHEN b.status='Confirmed' THEN 1
-                        WHEN b.status='CheckedIn' THEN 2
-                        WHEN b.status='CheckedOut' THEN 3
-                    END,
-                    b.booking_id DESC
-                    OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
-                """);
+            ORDER BY
+                CASE
+                    WHEN b.status='Confirmed' THEN 1
+                    WHEN b.status='CheckedIn' THEN 2
+                    WHEN b.status='CheckedOut' THEN 3
+                END,
+                b.booking_id DESC
+            OFFSET ? ROWS
+            FETCH NEXT ? ROWS ONLY
+        """);
 
-        try (Connection conn = DBContext.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        params.add(offset);
+        params.add(pageSize);
+
+        try (Connection conn = DBContext.getConnection()) {
 
             useDatabase(conn);
 
-            int i = 1;
-            for (Object p : params) {
-                ps.setObject(i++, p);
+            PreparedStatement ps = conn.prepareStatement(sql.toString());
+
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
             }
 
-            ps.setInt(i++, offset);
-            ps.setInt(i++, pageSize);
-
             ResultSet rs = ps.executeQuery();
+
             while (rs.next()) {
                 list.add(mapRow(rs));
             }
 
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error getCheckInBookings paging", e);
+            LOGGER.log(Level.SEVERE, "Error getCheckInBookings", e);
         }
 
         return list;
     }
 
-    public int countCheckInBookings(String keyword) {
+    public int countCheckInBookings(
+            String status,
+            String keyword) {
 
         StringBuilder sql = new StringBuilder("""
-                    SELECT COUNT(*)
-                    FROM dbo.Booking b
-                    WHERE b.group_booking_id IS NULL
-                    AND b.status IN ('Confirmed','CheckedIn','CheckedOut')
-                """);
+        SELECT COUNT(*)
+        FROM dbo.Booking b
+        WHERE b.group_booking_id IS NULL
+    """);
 
-        boolean hasKeyword = keyword != null && !keyword.trim().isEmpty();
+        List<Object> params = new ArrayList<>();
 
-        if (hasKeyword) {
+        if ("Confirmed".equals(status)
+                || "CheckedIn".equals(status)
+                || "CheckedOut".equals(status)) {
+
+            sql.append(" AND b.status = ? ");
+            params.add(status);
+
+        } else {
+
             sql.append("""
-                        AND (
-                            b.customer_name LIKE ?
-                            OR CAST(b.booking_id AS NVARCHAR) LIKE ?
-                        )
-                    """);
+            AND b.status IN ('Confirmed','CheckedIn','CheckedOut')
+        """);
         }
 
-        try (Connection conn = DBContext.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        if (keyword != null && !keyword.trim().isEmpty()) {
+
+            sql.append("""
+            AND (
+                b.customer_name LIKE ?
+                OR CAST(b.booking_id AS NVARCHAR) LIKE ?
+            )
+        """);
+
+            String kw = "%" + sanitizeLikeKeyword(keyword.trim()) + "%";
+
+            params.add(kw);
+            params.add(kw);
+        }
+
+        try (Connection conn = DBContext.getConnection()) {
 
             useDatabase(conn);
 
-            if (hasKeyword) {
-                String kw = "%" + keyword.trim() + "%";
-                ps.setString(1, kw);
-                ps.setString(2, kw);
+            PreparedStatement ps = conn.prepareStatement(sql.toString());
+
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
             }
 
             ResultSet rs = ps.executeQuery();
+
             if (rs.next()) {
                 return rs.getInt(1);
             }
@@ -1153,8 +1192,7 @@ public class BookingDAO {
                 """;
 
         try (
-                Connection conn = DBContext.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             useDatabase(conn);
 
@@ -1208,8 +1246,7 @@ public class BookingDAO {
         }
 
         try (
-                Connection conn = DBContext.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int index = 1;
 
@@ -1268,8 +1305,7 @@ public class BookingDAO {
                 """);
 
         try (
-                Connection conn = DBContext.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int index = 1;
 

@@ -139,8 +139,8 @@ BEGIN
     ('google.client.secret', 'YOUR_GOOGLE_CLIENT_SECRET', 'Google OAuth Client Secret'),
     ('smtp.user', 'YOUR_SMTP_EMAIL', 'SMTP Email Account'),
     ('smtp.password', 'YOUR_SMTP_PASSWORD', 'SMTP Email App Password'),
-    ('smtp.host', 'smtp.gmail.com', 'SMTP Host address'),
-    ('smtp.port', '587', 'SMTP Port');
+    ('smtp.host', 'smtp.gmail.com', 'Địa chỉ máy chủ SMTP'),
+    ('smtp.port', '587', 'Cổng kết nối SMTP');
 END
 GO
 
@@ -1335,6 +1335,8 @@ CREATE TABLE dbo.CheckIn (
 
     special_request NVARCHAR(500) NULL,
     notes NVARCHAR(500) NULL,
+    image_url NVARCHAR(500) NULL,
+    extra_fee DECIMAL(18, 2) NULL,
 
     CONSTRAINT FK_CheckIn_Booking
         FOREIGN KEY (booking_id)
@@ -1358,6 +1360,8 @@ CREATE TABLE dbo.CheckInCompanion (
     check_in_id INT NOT NULL,
 
     full_name NVARCHAR(100) NOT NULL,
+    age_range VARCHAR(20) NOT NULL,
+    image_url NVARCHAR(500) NULL,
     created_at DATETIME NOT NULL DEFAULT GETDATE(),
 
     CONSTRAINT FK_CheckInCompanion_CheckIn
@@ -1367,6 +1371,10 @@ CREATE TABLE dbo.CheckInCompanion (
 );
 
 CREATE INDEX IX_CheckInCompanion_CheckInId ON dbo.CheckInCompanion(check_in_id);
+
+IF OBJECT_ID(N'dbo.ExtraGuestFee', N'U') IS NOT NULL
+    DROP TABLE dbo.ExtraGuestFee;
+GO
 
 /* ============================================================
    12. BOOKING CHANGE & STAY EXTENSION REQUESTS (Customer)
