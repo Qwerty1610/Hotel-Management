@@ -75,8 +75,11 @@ public class RoomController extends HttpServlet {
         }
 
         if ("delete".equalsIgnoreCase(action) && roomId != -1) {
-            boolean deleted = roomService.deleteRoom(roomId);
-            if (!deleted) {
+            String delResult = roomService.deleteRoomResult(roomId);
+            if ("roomHasActiveOrFutureBooking".equals(delResult)) {
+                response.sendRedirect(request.getContextPath() + "/manager/rooms?selectedDate=" + selectedDateStr + "&error=roomHasActiveOrFutureBooking");
+                return;
+            } else if (!"success".equals(delResult)) {
                 response.sendRedirect(request.getContextPath() + "/manager/rooms?selectedDate=" + selectedDateStr + "&error=deleteError");
                 return;
             }

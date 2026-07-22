@@ -36,7 +36,11 @@ public class RoomService {
 
     private final RoomDAO roomRepository = new RoomDAO();
 
-    private static final Set<String> ALLOWED_OPERATIONAL_STATUSES = Set.of(
+    private static final Set<String> VALID_OPERATIONAL_STATUSES = Set.of(
+            "Available", "Cleaning", "Maintenance", "OutOfService", "Refilling"
+    );
+
+    private static final Set<String> MANAGER_ASSIGNABLE_STATUSES = Set.of(
             "Available", "Cleaning", "Maintenance", "OutOfService"
     );
 
@@ -75,12 +79,16 @@ public class RoomService {
         return getRoomsByDate(date);
     }
 
-    public boolean deleteRoom(int roomId) {
+    public String deleteRoomResult(int roomId) {
         return roomRepository.deleteRoom(roomId);
     }
 
+    public boolean deleteRoom(int roomId) {
+        return "success".equals(roomRepository.deleteRoom(roomId));
+    }
+
     public String updateRoomStatus(int roomId, String status) {
-        if (status == null || !ALLOWED_OPERATIONAL_STATUSES.contains(status.trim())) {
+        if (status == null || !VALID_OPERATIONAL_STATUSES.contains(status.trim())) {
             return "invalidStatus";
         }
         status = status.trim();
@@ -100,8 +108,9 @@ public class RoomService {
         String num = room.getRoomNumber();
         int id = room.getRoomId();
         String requestedStatus = room.getOperationalStatus() != null ? room.getOperationalStatus().trim() : (room.getStatus() != null ? room.getStatus().trim() : "");
+        String currentDbStatus = id > 0 ? roomRepository.getRoomOperationalStatus(id) : null;
 
-        if (!ALLOWED_OPERATIONAL_STATUSES.contains(requestedStatus)) {
+        if (!VALID_OPERATIONAL_STATUSES.contains(requestedStatus)) {
             return "invalidStatus";
         }
 
@@ -123,7 +132,6 @@ public class RoomService {
         } else {
             // Check if currently occupied
             if (roomRepository.isRoomCurrentlyOccupied(id)) {
-                String currentDbStatus = roomRepository.getRoomOperationalStatus(id);
                 if (currentDbStatus != null && !currentDbStatus.equalsIgnoreCase(requestedStatus)) {
                     return "roomCurrentlyOccupied";
                 }

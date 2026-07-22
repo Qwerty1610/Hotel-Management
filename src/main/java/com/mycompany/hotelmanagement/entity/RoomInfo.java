@@ -41,6 +41,7 @@ public class RoomInfo implements Serializable {
     private String operationalStatus;
     private String displayStatus;
     private boolean currentlyOccupied;
+    private boolean hasActiveOrFutureBooking;
 
     public RoomInfo() {
     }
@@ -79,7 +80,7 @@ public class RoomInfo implements Serializable {
     }
 
     public String getStatus() {
-        return displayStatus != null ? displayStatus : status;
+        return status != null ? status : operationalStatus;
     }
 
     public void setStatus(String status) {
@@ -95,10 +96,13 @@ public class RoomInfo implements Serializable {
 
     public void setOperationalStatus(String operationalStatus) {
         this.operationalStatus = operationalStatus;
+        if (this.status == null) {
+            this.status = operationalStatus;
+        }
     }
 
     public String getDisplayStatus() {
-        return displayStatus != null ? displayStatus : status;
+        return displayStatus != null ? displayStatus : getOperationalStatus();
     }
 
     public void setDisplayStatus(String displayStatus) {
@@ -111,6 +115,14 @@ public class RoomInfo implements Serializable {
 
     public void setCurrentlyOccupied(boolean currentlyOccupied) {
         this.currentlyOccupied = currentlyOccupied;
+    }
+
+    public boolean isHasActiveOrFutureBooking() {
+        return hasActiveOrFutureBooking;
+    }
+
+    public void setHasActiveOrFutureBooking(boolean hasActiveOrFutureBooking) {
+        this.hasActiveOrFutureBooking = hasActiveOrFutureBooking;
     }
 
     public String getFloor() {

@@ -95,6 +95,17 @@ public class RoomDAO {
                     ) THEN 1
                     ELSE 0
                 END AS currently_occupied,
+                CASE 
+                    WHEN EXISTS (
+                        SELECT 1 
+                        FROM RoomAssignment ra
+                        JOIN Booking b ON ra.booking_id = b.booking_id
+                        WHERE ra.room_id = r.room_id
+                          AND b.status IN ('Confirmed', 'CheckedIn')
+                          AND b.check_out_date > CAST(SYSDATETIME() AS DATE)
+                    ) THEN 1
+                    ELSE 0
+                END AS has_active_or_future_booking,
                 (
                     SELECT COUNT(*)
                     FROM RoomAssignment ra
@@ -129,10 +140,11 @@ public class RoomDAO {
                     String dispStatus = rs.getString("display_status");
                     int overlapCount = rs.getInt("overlapping_booking_count");
 
+                    room.setStatus(opStatus);
                     room.setOperationalStatus(opStatus);
                     room.setDisplayStatus(dispStatus);
-                    room.setStatus(dispStatus);
                     room.setCurrentlyOccupied(rs.getInt("currently_occupied") == 1);
+                    room.setHasActiveOrFutureBooking(rs.getInt("has_active_or_future_booking") == 1);
                     room.setFloor(rs.getString("floor"));
                     room.setTypeName(rs.getString("type_name"));
                     room.setBasePrice(rs.getDouble("base_price"));
@@ -205,8 +217,7 @@ public class RoomDAO {
         return null;
     }
 
-    public boolean deleteRoom(int roomId) {
-        // Check if room is available and not currently occupied or assigned to active bookings
+    public String deleteRoom(int roomId) {
         String checkSql = """
             SELECT r.status,
                    (SELECT COUNT(*) 
@@ -214,9 +225,8 @@ public class RoomDAO {
                     JOIN Booking b ON ra.booking_id = b.booking_id 
                     WHERE ra.room_id = r.room_id 
                       AND b.status IN ('Confirmed', 'CheckedIn')
-                      AND CAST(SYSDATETIME() AS DATE) >= b.check_in_date
-                      AND CAST(SYSDATETIME() AS DATE) < b.check_out_date
-                   ) AS active_booking_count
+                      AND b.check_out_date > CAST(SYSDATETIME() AS DATE)
+                   ) AS active_or_future_booking_count
             FROM Room r 
             WHERE r.room_id = ? AND r.is_deleted = 0
             """;
@@ -226,28 +236,31 @@ public class RoomDAO {
             try (ResultSet rs = psCheck.executeQuery()) {
                 if (rs.next()) {
                     String status = rs.getString("status");
-                    int activeBookingCount = rs.getInt("active_booking_count");
-                    if (!"Available".equalsIgnoreCase(status) || activeBookingCount > 0) {
-                        return false; // Not allowed to delete room if occupied, cleaning, maintenance, or assigned
+                    int activeOrFutureCount = rs.getInt("active_or_future_booking_count");
+                    if (!"Available".equalsIgnoreCase(status)) {
+                        return "roomNotAvailableForDelete";
+                    }
+                    if (activeOrFutureCount > 0) {
+                        return "roomHasActiveOrFutureBooking";
                     }
                 } else {
-                    return false; // Room not found or already deleted
+                    return "error";
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return "error";
         }
 
         String sql = "UPDATE Room SET is_deleted = 1 WHERE room_id = ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setInt(1, roomId);
-            int rows = ps.executeUpdate();
-            return rows > 0;
+            boolean ok = ps.executeUpdate() > 0;
+            return ok ? "success" : "error";
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            return "error";
         }
     }
 

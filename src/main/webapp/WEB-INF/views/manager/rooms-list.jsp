@@ -42,6 +42,7 @@
                             data-operational-status="<c:out value="${r.operationalStatus}" />"
                             data-display-status="<c:out value="${r.displayStatus}" />"
                             data-currently-occupied="${r.currentlyOccupied}"
+                            data-has-future-booking="${r.hasActiveOrFutureBooking}"
                             data-floor="<c:out value="${r.floor}" />"
                             data-type-name="<c:out value="${r.typeName}" />"
                             data-base-price="${r.basePrice}"
@@ -58,10 +59,16 @@
                         Số phòng này đã tồn tại trong hệ thống. Vui lòng chọn số khác.
                     </div>
                 </c:if>
+                <c:if test="${param.error eq 'roomHasActiveOrFutureBooking'}">
+                    <div class="alert-banner alert-danger">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        Không thể xóa phòng vì phòng đang được sử dụng hoặc đã được phân cho một đơn đặt phòng trong tương lai.
+                    </div>
+                </c:if>
                 <c:if test="${param.error eq 'deleteError'}">
                     <div class="alert-banner alert-danger">
                         <i class="fa-solid fa-circle-exclamation"></i>
-                        Không thể xóa phòng này vì phòng đang có khách lưu trú, đang dọn dẹp, đang bảo trì hoặc liên kết dữ liệu khác.
+                        Không thể xóa phòng này vì phòng đang được sử dụng, có lịch đặt trong tương lai, hoặc ở trạng thái không khả dụng.
                     </div>
                 </c:if>
                 <c:if test="${param.error eq 'roomCurrentlyOccupied'}">
@@ -154,6 +161,7 @@
                                 <option value="Confirmed">Đã đặt</option>
                                 <option value="Occupied">Có khách</option>
                                 <option value="Cleaning">Đang dọn</option>
+                                <option value="Refilling">Đang bổ sung vật dụng</option>
                                 <option value="Maintenance">Bảo trì</option>
                                 <option value="OutOfService">Ngừng hoạt động</option>
                             </select>
@@ -295,6 +303,7 @@
                         operationalStatus: (item.getAttribute("data-operational-status") || "").trim(),
                         displayStatus: (item.getAttribute("data-display-status") || "").trim(),
                         currentlyOccupied: item.getAttribute("data-currently-occupied") === "true",
+                        hasFutureBooking: item.getAttribute("data-has-future-booking") === "true",
                         floor: (item.getAttribute("data-floor") || "").trim(),
                         typeName: (item.getAttribute("data-type-name") || "").trim(),
                         basePrice: parseFloat(item.getAttribute("data-base-price")),
@@ -311,15 +320,16 @@
                     else if (s === "Confirmed") { statusClass = "status-confirmed"; statusText = "ĐÃ ĐẶT"; }
                     else if (s === "Occupied") { statusClass = "status-occupied"; statusText = "CÓ KHÁCH"; }
                     else if (s === "Cleaning") { statusClass = "status-cleaning"; statusText = "ĐANG DỌN"; }
+                    else if (s === "Refilling") { statusClass = "status-refilling"; statusText = "BỔ SUNG VẬT DỤNG"; }
                     else if (s === "Maintenance") { statusClass = "status-maintenance"; statusText = "BẢO TRÌ"; }
                     else if (s === "OutOfService") { statusClass = "status-outofservice"; statusText = "NGỪNG HOẠT ĐỘNG"; }
 
-                    const canDelete = !room.currentlyOccupied && (room.operationalStatus === "Available") && (s === "Available");
+                    const canDelete = !room.hasFutureBooking && !room.currentlyOccupied && (room.operationalStatus === "Available") && (s === "Available");
                     const deleteBtnHtml = canDelete
                         ? `<button class="btn-action delete" onclick="deleteRoom(\${room.id})" title="Xóa">
                             <i class="fa-solid fa-trash-can"></i>
                            </button>`
-                        : `<button class="btn-action delete" style="opacity: 0.35; cursor: not-allowed;" onclick="deleteRoom(\${room.id})" title="Không thể xóa phòng đang có khách, đang dọn dẹp hoặc đang bảo trì">
+                        : `<button class="btn-action delete" style="opacity: 0.35; cursor: not-allowed;" onclick="deleteRoom(\${room.id})" title="Không thể xóa phòng đang có khách, có đơn đặt trong tương lai, đang dọn dẹp hoặc bảo trì">
                             <i class="fa-solid fa-trash-can"></i>
                            </button>`;
 
@@ -386,8 +396,8 @@
                 if (room) {
                     const opStatus = room.operationalStatus || room.status;
                     const dispStatus = room.displayStatus || room.status;
-                    if (room.currentlyOccupied || opStatus !== "Available" || dispStatus !== "Available") {
-                        alert("Không thể xóa phòng này vì phòng hiện đang có khách lưu trú, đang dọn dẹp, đang bảo trì hoặc ngừng hoạt động.");
+                    if (room.hasFutureBooking || room.currentlyOccupied || opStatus !== "Available" || dispStatus !== "Available") {
+                        alert("Không thể xóa phòng vì phòng đang được sử dụng hoặc đã được phân cho một đơn đặt phòng trong tương lai.");
                         return;
                     }
                 }

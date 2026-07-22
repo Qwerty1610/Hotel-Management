@@ -632,6 +632,11 @@
                                 Đang dọn
                             </button>
 
+                            <button type="submit" name="status" value="Refilling"
+                                    class="status-tab ${currentStatus eq 'Refilling' ? 'active' : ''}">
+                                Đang bổ sung vật dụng
+                            </button>
+
                             <button type="submit" name="status"
                                     value="Maintenance"
                                     class="status-tab ${currentStatus eq 'Maintenance' ? 'active' : ''}">
@@ -699,6 +704,7 @@
                                                                 <c:when test="${room.displayStatus eq 'Confirmed'}">Đã đặt</c:when>
                                                                 <c:when test="${room.displayStatus eq 'Occupied'}">Đang sử dụng</c:when>
                                                                 <c:when test="${room.displayStatus eq 'Cleaning'}">Đang dọn</c:when>
+                                                                <c:when test="${room.displayStatus eq 'Refilling'}">Đang bổ sung vật dụng</c:when>
                                                                 <c:when test="${room.displayStatus eq 'Maintenance'}">Bảo trì</c:when>
                                                                 <c:when test="${room.displayStatus eq 'OutOfService'}">Ngừng hoạt động</c:when>
                                                                 <c:otherwise>${room.displayStatus}</c:otherwise>
