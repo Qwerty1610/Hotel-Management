@@ -42,11 +42,11 @@
                                         <a href="${pageContext.request.contextPath}/customer/bookings" class="dropdown-item">
                                             <i class="fa-solid fa-calendar-check"></i> <fmt:message key="nav.mybookings" />
                                         </a>
-                                        <a href="${pageContext.request.contextPath}/customer/feedbacks" class="dropdown-item">
-                                            <i class="fa-solid fa-star"></i> Đánh giá lưu trú
-                                        </a>
                                         <a href="${pageContext.request.contextPath}/customer/booking/change" class="dropdown-item">
                                             <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
+                                        </a>
+                                        <a href="${pageContext.request.contextPath}/customer/feedbacks" class="dropdown-item">
+                                            <i class="fa-solid fa-star"></i> Đánh giá lưu trú
                                         </a>
                                         <a href="${pageContext.request.contextPath}/customer/services" class="dropdown-item">
                                             <i class="fa-solid fa-bell-concierge"></i> <fmt:message key="nav.servicerequests" />
@@ -249,57 +249,57 @@
     </section>
 
     <section class="services-section" id="dich-vu">
-    <div class="container text-center">
+        <div class="container text-center">
 
-        <span class="sub-title"><fmt:message key="services.tag" /></span>
-        <h2><fmt:message key="services.title" /></h2>
+            <span class="sub-title"><fmt:message key="services.tag" /></span>
+            <h2><fmt:message key="services.title" /></h2>
 
-        <div class="services-grid">
+            <div class="services-grid">
 
-            <c:forEach items="${services}" var="service">
+                <c:forEach items="${services}" var="service">
 
-                <div class="service-card">
+                    <div class="service-card">
 
-                    <div class="service-icon">
+                        <div class="service-icon">
 
-                        <c:choose>
+                            <c:choose>
 
-                            <c:when test="${service.serviceName eq 'Bữa sáng Buffet'}">
-                                <i class="fa-solid fa-utensils"></i>
-                            </c:when>
+                                <c:when test="${service.serviceName eq 'Bữa sáng Buffet'}">
+                                    <i class="fa-solid fa-utensils"></i>
+                                </c:when>
 
-                            <c:when test="${service.serviceName eq 'Giặt ủi quần áo'}">
-                                <i class="fa-solid fa-shirt"></i>
-                            </c:when>
+                                <c:when test="${service.serviceName eq 'Giặt ủi quần áo'}">
+                                    <i class="fa-solid fa-shirt"></i>
+                                </c:when>
 
-                            <c:when test="${service.serviceName eq 'Đưa đón sân bay'}">
-                                <i class="fa-solid fa-car-side"></i>
-                            </c:when>
+                                <c:when test="${service.serviceName eq 'Đưa đón sân bay'}">
+                                    <i class="fa-solid fa-car-side"></i>
+                                </c:when>
 
-                            <c:when test="${service.serviceName eq 'Spa thư giãn'}">
-                                <i class="fa-solid fa-spa"></i>
-                            </c:when>
+                                <c:when test="${service.serviceName eq 'Spa thư giãn'}">
+                                    <i class="fa-solid fa-spa"></i>
+                                </c:when>
 
-                            <c:otherwise>
-                                <i class="fa-solid fa-concierge-bell"></i>
-                            </c:otherwise>
+                                <c:otherwise>
+                                    <i class="fa-solid fa-concierge-bell"></i>
+                                </c:otherwise>
 
-                        </c:choose>
+                            </c:choose>
+
+                        </div>
+
+                        <h3>${service.serviceName}</h3>
+
+                        <p>${service.description}</p>
 
                     </div>
 
-                    <h3>${service.serviceName}</h3>
+                </c:forEach>
 
-                    <p>${service.description}</p>
-
-                </div>
-
-            </c:forEach>
+            </div>
 
         </div>
-
-    </div>
-</section>
+    </section>
 
     <section class="testimonial-section text-center">
         <div class="container">
