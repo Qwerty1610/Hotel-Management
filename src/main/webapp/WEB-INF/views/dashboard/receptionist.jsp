@@ -567,146 +567,159 @@
 
                             <input type="hidden" name="tab" value="roommap" />
 
-                            <div class="roommap-filter-row">
-
-                                <div class="form-group">
-                                    <label>Từ ngày</label>
-                                    <input type="date" name="fromDate"
-                                           value="${fromDate}" class="walkin-input">
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Đến ngày</label>
-                                    <input type="date" name="toDate"
-                                           value="${toDate}" class="walkin-input">
-                                </div>
-
-                                <button type="submit" class="btn-roommap-search">
-                                    <i class="fa-solid fa-magnifying-glass"></i>
-                                    Kiểm tra phòng
-                                </button>
-
+                        <c:if test="${not empty dateWarning}">
+                            <div class="alert-banner alert-warning" style="margin-bottom: 16px; background-color: #fffbebf5; border: 1px solid #fde68a; color: #b45309; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-triangle-exclamation"></i> ${dateWarning}
                             </div>
-                        </form>
-                        <form method="get"
-                              action="${pageContext.request.contextPath}/receptionist/dashboard">
+                        </c:if>
 
-                            <input type="hidden" name="tab" value="roommap" />
+                        <div class="roommap-filter-row">
 
-                            <input type="hidden" name="fromDate"
-                                   value="${fromDate}" />
-
-                            <input type="hidden" name="toDate" value="${toDate}" />
-
-                            <div class="status-tabs">
-
-                                <button type="submit" name="status" value="All"
-                                        class="status-tab ${currentStatus eq 'All' ? 'active' : ''}">
-                                    Tất cả
-                                </button>
-
-                                <button type="submit" name="status"
-                                        value="Available"
-                                        class="status-tab ${currentStatus eq 'Available' ? 'active' : ''}">
-                                    Trống
-                                </button>
-
-                                <button type="submit" name="status" value="Occupied"
-                                        class="status-tab ${currentStatus eq 'Occupied' ? 'active' : ''}">
-                                    Đang sử dụng
-                                </button>
-
-                                <button type="submit" name="status"
-                                        value="Maintenance"
-                                        class="status-tab ${currentStatus eq 'Maintenance' ? 'active' : ''}">
-                                    Bảo trì
-                                </button>
-                                <button type="submit"
-                                        name="status"
-                                        value="OutOfService"
-                                        class="status-tab ${currentStatus eq 'OutOfService' ? 'active' : ''}">
-                                    Ngừng hoạt động
-                                </button>
+                            <div class="form-group">
+                                <label>Từ ngày</label>
+                                <input type="date" name="fromDate"
+                                       value="${fromDate}" class="walkin-input">
                             </div>
-                        </form>
 
-                        <!-- ROOM MAP -->
-                        <div class="roommap-container">
+                            <div class="form-group">
+                                <label>Đến ngày</label>
+                                <input type="date" name="toDate"
+                                       value="${toDate}" class="walkin-input">
+                            </div>
 
-                            <c:choose>
+                            <button type="submit" class="btn-roommap-search">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                Kiểm tra phòng
+                            </button>
 
-                                <c:when test="${empty roomByFloor}">
-                                    <div class="empty-state">
-                                        <i class="fa-solid fa-door-closed"></i>
-                                        <p>Không có phòng nào</p>
-                                    </div>
-                                </c:when>
+                        </div>
+                    </form>
+                    <form method="get"
+                          action="${pageContext.request.contextPath}/receptionist/dashboard">
 
-                                <c:otherwise>
+                        <input type="hidden" name="tab" value="roommap" />
 
-                                    <c:forEach var="entry" items="${roomByFloor}">
+                        <input type="hidden" name="fromDate"
+                               value="${fromDate}" />
 
-                                        <div class="floor-block">
+                        <input type="hidden" name="toDate" value="${toDate}" />
 
-                                            <div class="floor-title">
-                                                <div class="floor-name">
-                                                    Tầng ${entry.key}
-                                                </div>
-                                                <div class="floor-room-count">
-                                                    ${fn:length(entry.value)} phòng
-                                                </div>
+                        <div class="status-tabs">
+
+                            <button type="submit" name="status" value="All"
+                                    class="status-tab ${currentStatus eq 'All' ? 'active' : ''}">
+                                Tất cả
+                            </button>
+
+                            <button type="submit" name="status"
+                                    value="Available"
+                                    class="status-tab ${currentStatus eq 'Available' ? 'active' : ''}">
+                                Trống
+                            </button>
+
+                            <button type="submit" name="status" value="Confirmed"
+                                    class="status-tab ${currentStatus eq 'Confirmed' ? 'active' : ''}">
+                                Đã đặt
+                            </button>
+
+                            <button type="submit" name="status" value="Occupied"
+                                    class="status-tab ${currentStatus eq 'Occupied' ? 'active' : ''}">
+                                Đang sử dụng
+                            </button>
+
+                            <button type="submit" name="status" value="Cleaning"
+                                    class="status-tab ${currentStatus eq 'Cleaning' ? 'active' : ''}">
+                                Đang dọn
+                            </button>
+
+                            <button type="submit" name="status" value="Refilling"
+                                    class="status-tab ${currentStatus eq 'Refilling' ? 'active' : ''}">
+                                Đang bổ sung vật dụng
+                            </button>
+
+                            <button type="submit" name="status"
+                                    value="Maintenance"
+                                    class="status-tab ${currentStatus eq 'Maintenance' ? 'active' : ''}">
+                                Bảo trì
+                            </button>
+
+                            <button type="submit" name="status" value="OutOfService"
+                                    class="status-tab ${currentStatus eq 'OutOfService' ? 'active' : ''}">
+                                Ngừng hoạt động
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- ROOM MAP -->
+                    <div class="roommap-container">
+
+                        <c:choose>
+
+                            <c:when test="${empty roomByFloor}">
+                                <div class="empty-state">
+                                    <i class="fa-solid fa-door-closed"></i>
+                                    <p>Không có phòng nào</p>
+                                </div>
+                            </c:when>
+
+                            <c:otherwise>
+
+                                <c:forEach var="entry" items="${roomByFloor}">
+
+                                    <div class="floor-block">
+
+                                        <div class="floor-title">
+                                            <div class="floor-name">
+                                                ${entry.key}
                                             </div>
-
-                                            <div class="room-grid">
-
-                                                <c:forEach var="room"
-                                                           items="${entry.value}">
-
-                                                    <div
-                                                        class="room-card status-${room.status}">
-
-                                                        <div
-                                                            class="room-card-header">
-                                                            <div
-                                                                class="room-number">
-                                                                ${room.roomNumber}
-                                                            </div>
-                                                            <div class="room-floor">
-                                                                ${room.typeName}
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="room-card-body">
-                                                            <span class="badge-status badge-${room.status}">
-                                                                <c:choose>
-                                                                    <c:when test="${room.status eq 'Available'}">
-                                                                        Trống
-                                                                    </c:when>
-                                                                    <c:when test="${room.status eq 'Occupied'}">
-                                                                        Đang sử dụng
-                                                                    </c:when>
-                                                                    <c:when test="${room.status eq 'Maintenance'}">
-                                                                        Bảo trì
-                                                                    </c:when>
-                                                                    <c:when test="${room.status eq 'OutOfService'}">
-                                                                        Ngừng hoạt động
-                                                                    </c:when>
-                                                                    <c:otherwise>
-                                                                        ${room.status}
-                                                                    </c:otherwise>
-                                                                </c:choose>
-
-                                                            </span>
-                                                        </div>
-
-                                                    </div>
-                                                </c:forEach>
+                                            <div class="floor-room-count">
+                                                ${fn:length(entry.value)} phòng
                                             </div>
                                         </div>
-                                    </c:forEach>
-                                </c:otherwise>
-                            </c:choose>
-                        </div>
+
+                                        <div class="room-grid">
+
+                                            <c:forEach var="room"
+                                                       items="${entry.value}">
+
+                                                <div
+                                                    class="room-card status-${room.displayStatus}">
+
+                                                    <div
+                                                        class="room-card-header">
+                                                        <div
+                                                            class="room-number">
+                                                            ${room.roomNumber}
+                                                        </div>
+                                                        <div class="room-floor">
+                                                            ${room.typeName}
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="room-card-body">
+                                                        <span
+                                                            class="badge-status badge-${room.displayStatus}">
+                                                            <c:choose>
+                                                                <c:when test="${room.displayStatus eq 'Available'}">Trống</c:when>
+                                                                <c:when test="${room.displayStatus eq 'Confirmed'}">Đã đặt</c:when>
+                                                                <c:when test="${room.displayStatus eq 'Occupied'}">Đang sử dụng</c:when>
+                                                                <c:when test="${room.displayStatus eq 'Cleaning'}">Đang dọn</c:when>
+                                                                <c:when test="${room.displayStatus eq 'Refilling'}">Đang bổ sung vật dụng</c:when>
+                                                                <c:when test="${room.displayStatus eq 'Maintenance'}">Bảo trì</c:when>
+                                                                <c:when test="${room.displayStatus eq 'OutOfService'}">Ngừng hoạt động</c:when>
+                                                                <c:otherwise>${room.displayStatus}</c:otherwise>
+                                                            </c:choose>
+                                                        </span>
+                                                    </div>
+
+                                                </div>
+                                            </c:forEach>
+                                        </div>
+                                    </div>
+                                </c:forEach>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
                     </c:if>
                     <%--=====CHECK-IN TAB (ITERATION 2/3)=====--%>
                     <c:if test="${currentTab eq 'checkin'}">
