@@ -235,6 +235,7 @@ public class SystemDashboardStats {
         private double totalAmount;
         private String status;
         private Date createdAt;
+        private String note;
 
         public int getBookingId()              { return bookingId; }
         public void setBookingId(int v)        { this.bookingId = v; }
@@ -256,5 +257,8 @@ public class SystemDashboardStats {
 
         public Date getCreatedAt()             { return createdAt; }
         public void setCreatedAt(Date v)       { this.createdAt = v; }
+
+        public String getNote()                { return note; }
+        public void setNote(String v)          { this.note = v; }
     }
 }
