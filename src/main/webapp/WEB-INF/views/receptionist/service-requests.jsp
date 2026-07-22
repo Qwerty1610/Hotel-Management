@@ -132,6 +132,7 @@
                             <i class="fa-solid fa-circle-xmark"></i>
                             <c:choose>
                                 <c:when test="${param.error eq 'invalid'}">Mã yêu cầu hoặc hành động không hợp lệ.</c:when>
+                                <c:when test="${param.error eq 'reason_required'}">Vui lòng nhập lý do từ chối yêu cầu.</c:when>
                                 <c:otherwise>Đã xảy ra lỗi. Vui lòng thử lại sau.</c:otherwise>
                             </c:choose>
                         </div>
@@ -477,9 +478,9 @@
 
                         <div class="modal-form-group">
                             <label for="rejectCancelReason" style="font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px;">
-                                Mô tả lý do hủy <span style="font-weight: normal; color: var(--text-muted); font-size: 11px;">(Có thể bỏ trống)</span>
+                                Mô tả lý do hủy <span style="font-weight: 600; color: #ef4444; font-size: 11px;">(Bắt buộc) *</span>
                             </label>
-                            <textarea id="rejectCancelReason" name="cancelReason" class="modal-textarea" placeholder="Nhập lý do chi tiết từ chối/hủy yêu cầu dịch vụ..." style="min-height: 120px;"></textarea>
+                            <textarea id="rejectCancelReason" name="cancelReason" class="modal-textarea" placeholder="Nhập lý do chi tiết từ chối/hủy yêu cầu dịch vụ..." style="min-height: 120px;" required></textarea>
                         </div>
 
                         <div class="modal-footer-row">
@@ -502,9 +503,37 @@
                                 function openRejectServiceModal(requestId, customerName, serviceTitle) {
                                     document.getElementById('rejectRequestId').value = requestId;
                                     document.getElementById('rejectRequestDetailText').innerText = "#" + requestId + " - " + serviceTitle + " (Khách: " + customerName + ")";
-                                    document.getElementById('rejectCancelReason').value = '';
+                                    const reasonInput = document.getElementById('rejectCancelReason');
+                                    reasonInput.value = '';
+                                    reasonInput.setCustomValidity('');
                                     openModal('rejectRequestModal');
                                 }
+
+                                document.addEventListener('DOMContentLoaded', () => {
+                                    const rejectForm = document.getElementById('rejectRequestForm');
+                                    const rejectReasonInput = document.getElementById('rejectCancelReason');
+                                    if (rejectReasonInput) {
+                                        rejectReasonInput.addEventListener('invalid', function() {
+                                            if (this.validity.valueMissing || !this.value.trim()) {
+                                                this.setCustomValidity('Vui lòng nhập lý do từ chối yêu cầu.');
+                                            }
+                                        });
+                                        rejectReasonInput.addEventListener('input', function() {
+                                            this.setCustomValidity('');
+                                        });
+                                    }
+                                    if (rejectForm) {
+                                        rejectForm.addEventListener('submit', function(e) {
+                                            if (!rejectReasonInput || !rejectReasonInput.value.trim()) {
+                                                e.preventDefault();
+                                                if (rejectReasonInput) {
+                                                    rejectReasonInput.setCustomValidity('Vui lòng nhập lý do từ chối yêu cầu.');
+                                                    rejectReasonInput.reportValidity();
+                                                }
+                                            }
+                                        });
+                                    }
+                                });
         </script>
     </body>
 </html>

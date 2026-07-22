@@ -142,8 +142,13 @@ public class ReceptionistRequestController extends HttpServlet {
                     break;
 
                 case "cancel":
-                    // Hủy yêu cầu dịch vụ — cập nhật người hủy và lý do hủy
-                    success = dao.updateStatusByReceptionist(requestId, "Cancelled", receptionistId, cancelReason);
+                    // Hủy yêu cầu dịch vụ — bắt buộc nhập lý do từ chối/hủy
+                    if (cancelReason == null || cancelReason.trim().isEmpty()) {
+                        response.sendRedirect(request.getContextPath()
+                                + "/receptionist/dashboard?tab=servicerequests&error=reason_required");
+                        return;
+                    }
+                    success = dao.updateStatusByReceptionist(requestId, "Cancelled", receptionistId, cancelReason.trim());
                     break;
 
                 default:

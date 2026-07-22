@@ -282,11 +282,17 @@
                                                         <div class="form-group">
                                                             <label for="bookingId">Đặt phòng</label>
                                                             <select name="bookingId" id="bookingId" required>
+                                                                <option value="">-- Chọn phòng --</option>
                                                                 <c:forEach var="b" items="${bookings}">
                                                                     <option value="${b.bookingId}">
-                                                                        #${b.bookingId} (${b.roomTypeName}) <c:if
-                                                                            test="${not empty b.assignedRoomsStr}">-
-                                                                            Phòng ${b.assignedRoomsStr}</c:if>
+                                                                        <c:choose>
+                                                                            <c:when test="${not empty b.assignedRoomsStr}">
+                                                                                Phòng ${b.assignedRoomsStr}
+                                                                            </c:when>
+                                                                            <c:otherwise>
+                                                                                Phòng #${b.bookingId} (${b.roomTypeName})
+                                                                            </c:otherwise>
+                                                                        </c:choose>
                                                                     </option>
                                                                 </c:forEach>
                                                             </select>
@@ -294,6 +300,7 @@
                                                         <div class="form-group">
                                                             <label for="serviceName">Loại dịch vụ</label>
                                                             <select name="serviceName" id="serviceName" required>
+                                                                <option value="" data-price="0" data-unit="">-- Chọn dịch vụ --</option>
                                                                 <c:forEach var="s" items="${allActiveServices}">
                                                                     <option value="${s.serviceName}" data-price="${s.price}" data-unit="${s.unit}">
                                                                         ${s.serviceName}
@@ -469,6 +476,7 @@
                                     }, 5000);
                                 }
 
+                                const bookingSelect = document.getElementById('bookingId');
                                 const serviceSelect = document.getElementById('serviceName');
                                 const quantityInput = document.getElementById('quantity');
                                 const unitPriceSpan = document.getElementById('unitPrice');
@@ -482,7 +490,12 @@
                                 function updateEstimation() {
                                     if (!serviceSelect || !quantityInput) return;
                                     const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
-                                    if (!selectedOption) return;
+                                    if (!selectedOption || !selectedOption.value) {
+                                        unitPriceSpan.textContent = "0";
+                                        unitNameSpan.textContent = "";
+                                        estimatedAmountSpan.textContent = "0";
+                                        return;
+                                    }
                                     
                                     const price = parseFloat(selectedOption.getAttribute('data-price') || 0);
                                     const unit = selectedOption.getAttribute('data-unit') || '';
@@ -493,12 +506,49 @@
                                     estimatedAmountSpan.textContent = formatCurrency(price * quantity);
                                 }
 
-                                if (serviceSelect && quantityInput) {
-                                    serviceSelect.addEventListener('change', updateEstimation);
-                                    quantityInput.addEventListener('input', updateEstimation);
-                                    quantityInput.addEventListener('change', updateEstimation);
-                                    updateEstimation();
+                                if (bookingSelect) {
+                                    bookingSelect.addEventListener('invalid', function() {
+                                        if (this.validity.valueMissing) {
+                                            this.setCustomValidity('Vui lòng chọn phòng trong danh sách.');
+                                        }
+                                    });
+                                    bookingSelect.addEventListener('change', function() {
+                                        this.setCustomValidity('');
+                                    });
                                 }
+
+                                if (serviceSelect) {
+                                    serviceSelect.addEventListener('invalid', function() {
+                                        if (this.validity.valueMissing) {
+                                            this.setCustomValidity('Vui lòng chọn một mục trong danh sách.');
+                                        }
+                                    });
+                                    serviceSelect.addEventListener('change', function() {
+                                        this.setCustomValidity('');
+                                        updateEstimation();
+                                    });
+                                }
+
+                                if (quantityInput) {
+                                    quantityInput.addEventListener('invalid', function() {
+                                        if (this.validity.valueMissing) {
+                                            this.setCustomValidity('Vui lòng nhập số lượng.');
+                                        } else if (this.validity.rangeUnderflow) {
+                                            this.setCustomValidity('Giá trị phải lớn hơn hoặc bằng 1.');
+                                        } else if (this.validity.rangeOverflow) {
+                                            this.setCustomValidity('Giá trị phải nhỏ hơn hoặc bằng 99.');
+                                        } else if (this.validity.badInput) {
+                                            this.setCustomValidity('Vui lòng nhập một số hợp lệ.');
+                                        }
+                                    });
+                                    quantityInput.addEventListener('input', function() {
+                                        this.setCustomValidity('');
+                                        updateEstimation();
+                                    });
+                                    quantityInput.addEventListener('change', updateEstimation);
+                                }
+
+                                updateEstimation();
                             });
                         </script>
             </body>

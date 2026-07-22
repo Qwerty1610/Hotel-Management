@@ -3,10 +3,13 @@ package com.mycompany.hotelmanagement.service;
 import com.mycompany.hotelmanagement.dal.RoomDAO;
 import com.mycompany.hotelmanagement.entity.Room;
 import com.mycompany.hotelmanagement.entity.RoomInfo;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Project: Hotel Management System
@@ -33,21 +36,74 @@ public class RoomService {
 
     private final RoomDAO roomRepository = new RoomDAO();
 
+    private static final Set<String> ALLOWED_OPERATIONAL_STATUSES = Set.of(
+            "Available", "Cleaning", "Maintenance", "OutOfService"
+    );
+
     public List<RoomInfo> getAllRooms() {
-        return roomRepository.getAllRooms();
+        return getRoomsByDate(LocalDate.now());
+    }
+
+    public List<RoomInfo> getRoomsByDateRange(LocalDate fromDate, LocalDate toDate) {
+        if (fromDate == null) {
+            fromDate = LocalDate.now();
+        }
+        if (toDate == null || !toDate.isAfter(fromDate)) {
+            toDate = fromDate.plusDays(1);
+        }
+        return roomRepository.getRoomsByDateRange(java.sql.Date.valueOf(fromDate), java.sql.Date.valueOf(toDate));
+    }
+
+    public List<RoomInfo> getRoomsByDate(LocalDate date) {
+        if (date == null) {
+            date = LocalDate.now();
+        }
+        return getRoomsByDateRange(date, date.plusDays(1));
+    }
+
+    public List<RoomInfo> getRoomsByDate(String dateStr) {
+        LocalDate date;
+        try {
+            if (dateStr != null && !dateStr.trim().isEmpty()) {
+                date = LocalDate.parse(dateStr.trim());
+            } else {
+                date = LocalDate.now();
+            }
+        } catch (DateTimeParseException e) {
+            date = LocalDate.now();
+        }
+        return getRoomsByDate(date);
     }
 
     public boolean deleteRoom(int roomId) {
         return roomRepository.deleteRoom(roomId);
     }
 
-    public void updateRoomStatus(int roomId, String status) {
+    public String updateRoomStatus(int roomId, String status) {
+        if (status == null || !ALLOWED_OPERATIONAL_STATUSES.contains(status.trim())) {
+            return "invalidStatus";
+        }
+        status = status.trim();
+
+        if (roomRepository.isRoomCurrentlyOccupied(roomId)) {
+            String currentStatus = roomRepository.getRoomOperationalStatus(roomId);
+            if (currentStatus == null || !status.equalsIgnoreCase(currentStatus)) {
+                return "roomCurrentlyOccupied";
+            }
+        }
+
         roomRepository.updateRoomStatus(roomId, status);
+        return "success";
     }
 
     public String saveRoom(RoomInfo room) {
         String num = room.getRoomNumber();
         int id = room.getRoomId();
+        String requestedStatus = room.getOperationalStatus() != null ? room.getOperationalStatus().trim() : (room.getStatus() != null ? room.getStatus().trim() : "");
+
+        if (!ALLOWED_OPERATIONAL_STATUSES.contains(requestedStatus)) {
+            return "invalidStatus";
+        }
 
         if (id <= 0) {
             // Check active duplicates
@@ -65,6 +121,18 @@ public class RoomService {
             boolean ok = roomRepository.insertRoom(room);
             return ok ? "success" : "error";
         } else {
+            // Check if currently occupied
+            if (roomRepository.isRoomCurrentlyOccupied(id)) {
+                String currentDbStatus = roomRepository.getRoomOperationalStatus(id);
+                if (currentDbStatus != null && !currentDbStatus.equalsIgnoreCase(requestedStatus)) {
+                    return "roomCurrentlyOccupied";
+                }
+                if (currentDbStatus != null) {
+                    room.setStatus(currentDbStatus);
+                    room.setOperationalStatus(currentDbStatus);
+                }
+            }
+
             // Check active duplicates excluding self
             if (roomRepository.isRoomNumberDuplicate(num, id)) {
                 return "duplicateNumber";
@@ -78,18 +146,5 @@ public class RoomService {
             boolean ok = roomRepository.updateRoom(room);
             return ok ? "success" : "error";
         }
-    }
-
-    public Map<String, List<Room>> groupByFloor(List<Room> rooms) {
-
-        Map<String, List<Room>> map = new LinkedHashMap<>();
-
-        for (Room r : rooms) {
-
-            map.computeIfAbsent(r.getFloor(), k -> new ArrayList<>())
-                    .add(r);
-        }
-
-        return map;
     }
 }

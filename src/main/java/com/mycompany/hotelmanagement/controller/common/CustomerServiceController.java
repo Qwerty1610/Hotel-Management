@@ -173,7 +173,9 @@ public class CustomerServiceController extends HttpServlet {
         }
         String error = request.getParameter("error");
         if (error != null) {
-            if ("invalid_quantity".equals(error)) {
+            if ("invalid_input".equals(error)) {
+                request.setAttribute("errorMessage", "Vui lòng chọn phòng và chọn dịch vụ trước khi gửi yêu cầu.");
+            } else if ("invalid_quantity".equals(error)) {
                 request.setAttribute("errorMessage", "Số lượng không hợp lệ. Vui lòng nhập số từ 1 đến 99.");
             } else if ("unauthorized".equals(error)) {
                 request.setAttribute("errorMessage", "Bạn không có quyền thực hiện yêu cầu này.");

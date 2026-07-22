@@ -38,6 +38,10 @@ public class RoomInfo implements Serializable {
     private String bedType;
     private String area;
 
+    private String operationalStatus;
+    private String displayStatus;
+    private boolean currentlyOccupied;
+
     public RoomInfo() {
     }
 
@@ -46,6 +50,7 @@ public class RoomInfo implements Serializable {
         this.roomNumber = roomNumber;
         this.typeId = typeId;
         this.status = status;
+        this.operationalStatus = status;
         this.floor = floor;
     }
 
@@ -74,11 +79,38 @@ public class RoomInfo implements Serializable {
     }
 
     public String getStatus() {
-        return status;
+        return displayStatus != null ? displayStatus : status;
     }
 
     public void setStatus(String status) {
         this.status = status;
+        if (this.operationalStatus == null) {
+            this.operationalStatus = status;
+        }
+    }
+
+    public String getOperationalStatus() {
+        return operationalStatus != null ? operationalStatus : status;
+    }
+
+    public void setOperationalStatus(String operationalStatus) {
+        this.operationalStatus = operationalStatus;
+    }
+
+    public String getDisplayStatus() {
+        return displayStatus != null ? displayStatus : status;
+    }
+
+    public void setDisplayStatus(String displayStatus) {
+        this.displayStatus = displayStatus;
+    }
+
+    public boolean isCurrentlyOccupied() {
+        return currentlyOccupied;
+    }
+
+    public void setCurrentlyOccupied(boolean currentlyOccupied) {
+        this.currentlyOccupied = currentlyOccupied;
     }
 
     public String getFloor() {

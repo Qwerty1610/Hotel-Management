@@ -42,29 +42,110 @@ public class RoomDAO {
         }
     }
 
+    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(RoomDAO.class.getName());
+
     public List<RoomInfo> getAllRooms() {
+        return getRoomsByDate(new java.sql.Date(System.currentTimeMillis()));
+    }
+
+    public List<RoomInfo> getRoomsByDateRange(java.sql.Date fromDate, java.sql.Date toDate) {
         List<RoomInfo> list = new ArrayList<>();
-        String sql = "SELECT r.room_id, r.room_number, r.type_id, r.status, r.floor, "
-                + "rt.type_name, rt.base_price, rt.bed_type, rt.area "
-                + "FROM Room r "
-                + "JOIN RoomType rt ON r.type_id = rt.type_id "
-                + "WHERE r.is_deleted = 0 "
-                + "ORDER BY r.room_number";
+        String sql = """
+            SELECT 
+                r.room_id,
+                r.room_number,
+                r.type_id,
+                r.status AS operational_status,
+                r.floor,
+                rt.type_name,
+                rt.base_price,
+                rt.bed_type,
+                rt.area,
+                CASE 
+                    WHEN r.status IN ('OutOfService', 'Maintenance', 'Cleaning', 'Refilling') THEN r.status
+                    WHEN EXISTS (
+                        SELECT 1 
+                        FROM RoomAssignment ra
+                        JOIN Booking b ON ra.booking_id = b.booking_id
+                        WHERE ra.room_id = r.room_id
+                          AND b.status = 'CheckedIn'
+                          AND b.check_in_date < ?
+                          AND b.check_out_date > ?
+                    ) THEN 'Occupied'
+                    WHEN EXISTS (
+                        SELECT 1 
+                        FROM RoomAssignment ra
+                        JOIN Booking b ON ra.booking_id = b.booking_id
+                        WHERE ra.room_id = r.room_id
+                          AND b.status = 'Confirmed'
+                          AND b.check_in_date < ?
+                          AND b.check_out_date > ?
+                    ) THEN 'Confirmed'
+                    ELSE 'Available'
+                END AS display_status,
+                CASE 
+                    WHEN EXISTS (
+                        SELECT 1 
+                        FROM RoomAssignment ra
+                        JOIN Booking b ON ra.booking_id = b.booking_id
+                        WHERE ra.room_id = r.room_id
+                          AND b.status = 'CheckedIn'
+                          AND CAST(SYSDATETIME() AS DATE) >= b.check_in_date
+                          AND CAST(SYSDATETIME() AS DATE) < b.check_out_date
+                    ) THEN 1
+                    ELSE 0
+                END AS currently_occupied,
+                (
+                    SELECT COUNT(*)
+                    FROM RoomAssignment ra
+                    JOIN Booking b ON ra.booking_id = b.booking_id
+                    WHERE ra.room_id = r.room_id
+                      AND b.status IN ('Confirmed', 'CheckedIn')
+                      AND b.check_in_date < ?
+                      AND b.check_out_date > ?
+                ) AS overlapping_booking_count
+            FROM Room r
+            JOIN RoomType rt ON r.type_id = rt.type_id
+            WHERE r.is_deleted = 0
+            ORDER BY TRY_CAST(REPLACE(r.floor, N'Tầng ', '') AS INT), r.room_number
+            """;
 
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
+            ps.setDate(1, toDate);
+            ps.setDate(2, fromDate);
+            ps.setDate(3, toDate);
+            ps.setDate(4, fromDate);
+            ps.setDate(5, toDate);
+            ps.setDate(6, fromDate);
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     RoomInfo room = new RoomInfo();
                     room.setRoomId(rs.getInt("room_id"));
                     room.setRoomNumber(rs.getString("room_number"));
                     room.setTypeId(rs.getInt("type_id"));
-                    room.setStatus(rs.getString("status"));
+                    String opStatus = rs.getString("operational_status");
+                    String dispStatus = rs.getString("display_status");
+                    int overlapCount = rs.getInt("overlapping_booking_count");
+
+                    room.setOperationalStatus(opStatus);
+                    room.setDisplayStatus(dispStatus);
+                    room.setStatus(dispStatus);
+                    room.setCurrentlyOccupied(rs.getInt("currently_occupied") == 1);
                     room.setFloor(rs.getString("floor"));
                     room.setTypeName(rs.getString("type_name"));
                     room.setBasePrice(rs.getDouble("base_price"));
                     room.setBedType(rs.getString("bed_type"));
                     room.setArea(rs.getString("area"));
+
+                    if (("Maintenance".equalsIgnoreCase(opStatus) || "OutOfService".equalsIgnoreCase(opStatus)) && overlapCount > 0) {
+                        LOGGER.warning(String.format(
+                            "DATA CONFLICT WARNING: Room %s (ID: %d, Operational Status: %s) has %d overlapping booking(s) between %s and %s",
+                            room.getRoomNumber(), room.getRoomId(), opStatus, overlapCount, fromDate.toString(), toDate.toString()
+                        ));
+                    }
+
                     list.add(room);
                 }
             }
@@ -74,17 +155,80 @@ public class RoomDAO {
         return list;
     }
 
+    public List<RoomInfo> getRoomsByDate(java.sql.Date selectedDate) {
+        java.sql.Date nextDate = java.sql.Date.valueOf(selectedDate.toLocalDate().plusDays(1));
+        return getRoomsByDateRange(selectedDate, nextDate);
+    }
+
+    public List<RoomInfo> getRoomMapByDate(java.sql.Date checkIn, java.sql.Date checkOut) {
+        return getRoomsByDateRange(checkIn, checkOut);
+    }
+
+    public boolean isRoomCurrentlyOccupied(int roomId) {
+        String sql = """
+            SELECT COUNT(*)
+            FROM RoomAssignment ra
+            JOIN Booking b ON ra.booking_id = b.booking_id
+            WHERE ra.room_id = ?
+              AND b.status = 'CheckedIn'
+              AND CAST(SYSDATETIME() AS DATE) >= b.check_in_date
+              AND CAST(SYSDATETIME() AS DATE) < b.check_out_date
+            """;
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            useDatabase(conn);
+            ps.setInt(1, roomId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public String getRoomOperationalStatus(int roomId) {
+        String sql = "SELECT status FROM Room WHERE room_id = ? AND is_deleted = 0";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            useDatabase(conn);
+            ps.setInt(1, roomId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("status");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public boolean deleteRoom(int roomId) {
-        // Check if room is available (only Available status is allowed for deletion)
-        String checkSql = "SELECT status FROM Room WHERE room_id = ? AND is_deleted = 0";
+        // Check if room is available and not currently occupied or assigned to active bookings
+        String checkSql = """
+            SELECT r.status,
+                   (SELECT COUNT(*) 
+                    FROM RoomAssignment ra 
+                    JOIN Booking b ON ra.booking_id = b.booking_id 
+                    WHERE ra.room_id = r.room_id 
+                      AND b.status IN ('Confirmed', 'CheckedIn')
+                      AND CAST(SYSDATETIME() AS DATE) >= b.check_in_date
+                      AND CAST(SYSDATETIME() AS DATE) < b.check_out_date
+                   ) AS active_booking_count
+            FROM Room r 
+            WHERE r.room_id = ? AND r.is_deleted = 0
+            """;
         try (Connection conn = DBContext.getConnection(); PreparedStatement psCheck = conn.prepareStatement(checkSql)) {
             useDatabase(conn);
             psCheck.setInt(1, roomId);
             try (ResultSet rs = psCheck.executeQuery()) {
                 if (rs.next()) {
                     String status = rs.getString("status");
-                    if (!"Available".equalsIgnoreCase(status)) {
-                        return false;
+                    int activeBookingCount = rs.getInt("active_booking_count");
+                    if (!"Available".equalsIgnoreCase(status) || activeBookingCount > 0) {
+                        return false; // Not allowed to delete room if occupied, cleaning, maintenance, or assigned
                     }
                 } else {
                     return false; // Room not found or already deleted
@@ -164,7 +308,7 @@ public class RoomDAO {
             useDatabase(conn);
             ps.setString(1, room.getFloor());
             ps.setInt(2, room.getTypeId());
-            ps.setString(3, room.getStatus());
+            ps.setString(3, room.getOperationalStatus());
             ps.setInt(4, roomId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
@@ -180,7 +324,7 @@ public class RoomDAO {
             ps.setString(1, room.getRoomNumber());
             ps.setString(2, room.getFloor());
             ps.setInt(3, room.getTypeId());
-            ps.setString(4, room.getStatus());
+            ps.setString(4, room.getOperationalStatus());
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
@@ -195,121 +339,13 @@ public class RoomDAO {
             ps.setString(1, room.getRoomNumber());
             ps.setString(2, room.getFloor());
             ps.setInt(3, room.getTypeId());
-            ps.setString(4, room.getStatus());
+            ps.setString(4, room.getOperationalStatus());
             ps.setInt(5, room.getRoomId());
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
-    }
-
-    public boolean updateRoomStatusByBooking(int bookingId, String status) {
-
-        String roomStatus;
-
-        if ("Confirmed".equals(status) || "CheckedIn".equals(status)) {
-            roomStatus = "Occupied";
-        } else {
-            roomStatus = "Available";
-        }
-
-        String sql = """
-        UPDATE Room
-        SET status = ?
-        WHERE room_id IN (
-            SELECT room_id
-            FROM RoomAssignment
-            WHERE booking_id = ?
-        )
-    """;
-
-        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            useDatabase(conn);
-
-            ps.setString(1, roomStatus);
-            ps.setInt(2, bookingId);
-
-            return ps.executeUpdate() > 0;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    public List<RoomInfo> getRoomMapByDate(
-            java.sql.Date checkIn,
-            java.sql.Date checkOut) {
-
-        List<RoomInfo> list = new ArrayList<>();
-
-        String sql = """
-        SELECT
-            r.room_id,
-            r.room_number,
-            r.floor,
-            rt.type_name,
-
-            CASE
-
-                WHEN r.status = 'Maintenance'
-                THEN 'Maintenance'
-
-                WHEN EXISTS (
-                    SELECT 1
-                    FROM Booking b
-                    JOIN RoomAssignment ra
-                        ON b.booking_id = ra.booking_id
-                    WHERE ra.room_id = r.room_id
-                      AND b.status IN ('Confirmed', 'CheckedIn')
-                      AND b.check_in_date < ?
-                      AND b.check_out_date > ?
-                )
-                THEN 'Occupied'
-
-                ELSE 'Available'
-
-            END AS display_status
-
-        FROM Room r
-        JOIN RoomType rt
-            ON r.type_id = rt.type_id
-        WHERE r.is_deleted = 0
-
-        ORDER BY
-            TRY_CAST(r.floor AS INT),
-            r.room_number
-        """;
-
-        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            useDatabase(conn);
-
-            ps.setDate(1, checkOut);
-            ps.setDate(2, checkIn);
-
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-
-                RoomInfo room = new RoomInfo();
-
-                room.setRoomId(rs.getInt("room_id"));
-                room.setRoomNumber(rs.getString("room_number"));
-                room.setFloor(rs.getString("floor"));
-                room.setTypeName(rs.getString("type_name"));
-                room.setStatus(rs.getString("display_status"));
-
-                list.add(room);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return list;
     }
 
     public List<RoomInfo> getRoomsForIssueReport() {
