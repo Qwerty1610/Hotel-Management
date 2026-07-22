@@ -1,13 +1,12 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.mycompany.hotelmanagement.entity;
 
 public class CheckInCompanion {
+
     private int companionId;
     private int checkInId;
     private String fullName;
+    private String ageRange;
+    private String imageUrl;
 
     public int getCompanionId() {
         return companionId;
@@ -33,5 +32,20 @@ public class CheckInCompanion {
         this.fullName = fullName;
     }
 
-    
+    public String getAgeRange() {
+        return ageRange;
+    }
+
+    public void setAgeRange(String ageRange) {
+        this.ageRange = ageRange;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
 }

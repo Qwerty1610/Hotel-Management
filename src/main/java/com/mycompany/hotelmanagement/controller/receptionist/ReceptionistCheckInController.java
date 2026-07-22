@@ -23,6 +23,10 @@ public class ReceptionistCheckInController extends HttpServlet {
 
         String keyword = request.getParameter("keyword");
 
+        String status = request.getParameter("status");
+        if (status == null || status.isBlank()) {
+            status = "All";
+        }
         int page = 1;
         try {
             page = Integer.parseInt(request.getParameter("page"));
@@ -34,7 +38,7 @@ public class ReceptionistCheckInController extends HttpServlet {
             page = 1;
         }
 
-        int totalItems = dao.countCheckInBookings(keyword);
+        int totalItems = dao.countCheckInBookings(status, keyword);
         int totalPages = (int) Math.ceil(totalItems / (double) PAGE_SIZE);
 
         if (totalPages < 1) {
@@ -46,10 +50,15 @@ public class ReceptionistCheckInController extends HttpServlet {
 
         int offset = (page - 1) * PAGE_SIZE;
 
-        List<Booking> list = dao.getCheckInBookings(keyword, offset, PAGE_SIZE);
+        List<Booking> list = dao.getCheckInBookings(
+                status,
+                keyword,
+                offset,
+                PAGE_SIZE);
 
         request.setAttribute("bookingList", list);
         request.setAttribute("keyword", keyword != null ? keyword : "");
+        request.setAttribute("currentStatus", status);
         request.setAttribute("currentPage", page);
         request.setAttribute("totalPages", totalPages);
 
@@ -68,7 +77,8 @@ public class ReceptionistCheckInController extends HttpServlet {
         boolean updated = dao.updateStatus(bookingId, "CheckedIn");
 
         response.sendRedirect(
-                request.getContextPath() + "/receptionist/dashboard?tab=checkin"
+                request.getContextPath()
+                + "/receptionist/dashboard?tab=checkin&status=CheckedIn"
         );
     }
 }

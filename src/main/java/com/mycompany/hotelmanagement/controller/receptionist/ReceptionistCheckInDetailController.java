@@ -9,23 +9,29 @@ import com.mycompany.hotelmanagement.dal.CheckInDAO;
 import com.mycompany.hotelmanagement.entity.Account;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.CheckIn;
+import com.mycompany.hotelmanagement.service.CloudinaryService;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
+import jakarta.servlet.http.Part;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import java.util.Arrays;
+import java.math.BigDecimal;
+import java.util.*;
 
 /**
  *
  * @author MinhTDP
  */
+@MultipartConfig
 @WebServlet(name = "ReceptionistCheckinDetailController", urlPatterns = {"/receptionist/checkin-detail"})
 public class ReceptionistCheckInDetailController extends HttpServlet {
 
+    private final CloudinaryService cloudinaryService = new CloudinaryService();
     private final BookingDAO bookingDAO = new BookingDAO();
     private final CheckInDAO checkInDAO = new CheckInDAO();
 
@@ -46,15 +52,6 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -62,6 +59,24 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
         int bookingId = Integer.parseInt(request.getParameter("bookingId"));
 
         Booking booking = bookingDAO.getBookingById(bookingId);
+        if ("CheckedIn".equalsIgnoreCase(booking.getStatus())) {
+
+            CheckIn checkIn
+                    = checkInDAO.getCheckInByBookingId(bookingId);
+
+            request.setAttribute("checkIn", checkIn);
+
+            if (checkIn != null) {
+
+                request.setAttribute(
+                        "companions",
+                        checkInDAO.getCompanionsByCheckInId(
+                                checkIn.getCheckInId()
+                        )
+                );
+
+            }
+        }
 
         if (booking == null) {
             response.sendRedirect(request.getContextPath()
@@ -74,23 +89,30 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
                 ? booking.getGroupBookingId()
                 : booking.getBookingId();
 
+        // Lấy tổng capacity của tất cả phòng được assign
+        int totalCapacity
+                = checkInDAO.getTotalCapacityByBookingId(rootBookingId);
+
+        System.out.println(
+                "TOTAL CAPACITY: " + totalCapacity
+        );
+
+        request.setAttribute(
+                "totalCapacity",
+                totalCapacity
+        );
+
         request.setAttribute("booking", booking);
 
         request.setAttribute("rooms",
                 bookingDAO.getAllAssignedRoomsForGroup(rootBookingId));
 
-        request.getRequestDispatcher("/WEB-INF/views/receptionist/checkin-detail.jsp")
+        request.getRequestDispatcher(
+                "/WEB-INF/views/receptionist/checkin-detail.jsp"
+        )
                 .forward(request, response);
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -99,8 +121,42 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
 
         String specialRequest = request.getParameter("specialRequest");
         String notes = request.getParameter("notes");
-        String[] companions = request.getParameterValues("companions");
+        String extraFeeStr = request.getParameter("extraFee");
 
+        BigDecimal extraFee = BigDecimal.ZERO;
+
+        if (extraFeeStr != null && !extraFeeStr.isBlank()) {
+            extraFee = new BigDecimal(extraFeeStr);
+        }
+        String[] companions = request.getParameterValues("companions");
+        String[] ageRanges = request.getParameterValues("ageRanges");
+        List<Part> companionParts = new ArrayList<>();
+
+        for (Part part : request.getParts()) {
+            if ("companionImage".equals(part.getName())) {
+                companionParts.add(part);
+            }
+        }
+        List<String> companionUrls = new ArrayList<>();
+
+        for (Part part : companionParts) {
+
+            String imageUrl = null;
+
+            if (part.getSize() > 0) {
+                imageUrl = cloudinaryService.uploadImage(part);
+            }
+
+            companionUrls.add(imageUrl);
+        }
+        Part customerImagePart = request.getPart("customerImage");
+        String customerUrl = null;
+
+        if (customerImagePart != null
+                && customerImagePart.getSize() > 0) {
+
+            customerUrl = cloudinaryService.uploadImage(customerImagePart);
+        }
         HttpSession session = request.getSession();
 
         Integer receptionistId = (Integer) session.getAttribute("accountId");
@@ -121,7 +177,11 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
                     receptionistId,
                     specialRequest,
                     notes,
-                    companions
+                    customerUrl,
+                    extraFee,
+                    companions,
+                    companionUrls,
+                    ageRanges
             );
 
             if (!success) {
@@ -149,15 +209,5 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
                     + "/receptionist/checkin-detail?bookingId=" + bookingId + "&error=exception");
         }
     }
-
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
-    @Override
-    public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
 
 }

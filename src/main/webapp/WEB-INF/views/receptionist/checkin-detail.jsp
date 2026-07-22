@@ -64,6 +64,21 @@
                 border-radius:50%;
                 background:#0ea5e9;
             }
+            .section-card h3{
+                display:flex;
+                align-items:center;
+                gap:10px;
+
+                margin:0 0 18px;
+
+                color:#1e293b;
+                font-size:20px;
+                font-weight:700;
+            }
+            .section-divider{
+                margin:30px 0;
+                border-top:1px solid #e5e7eb;
+            }
             /* ================= SECTION 1 LAYOUT ================= */
             .grid-top{
                 display:grid;
@@ -159,7 +174,22 @@
                 border-color:#3b82f6;
                 box-shadow:0 0 0 3px rgba(59,130,246,.15);
             }
+            #companionBody select{
+                width:100%;
+                padding:10px 12px;
+                border:1px solid #cbd5e1;
+                border-radius:8px;
+                background:#fff;
+            }
 
+            #companionBody select:invalid{
+                border:1px solid #ef4444;
+            }
+
+            #companionBody select:focus{
+                outline:none;
+                border-color:#3b82f6;
+            }
             /* ================= BUTTON STYLE ================= */
 
             /* ---------- Add Companion ---------- */
@@ -269,7 +299,7 @@
 
             /* ================= FOOTER ================= */
             .footer-bar{
-                margin-top:24px;
+                margin-top:40px;
                 padding-top:20px;
                 border-top:2px solid #e5e7eb;
                 display:flex;
@@ -356,6 +386,98 @@
                 resize:vertical;
                 min-height:90px;
                 line-height:1.6;
+            }
+            .extra-fee-box{
+                margin-top:18px;
+                background:#fff7ed;
+                border:1px solid #fdba74;
+                border-left:5px solid #f97316;
+                padding:16px;
+                border-radius:10px;
+            }
+            .extra-fee-box h4{
+                margin:0 0 10px;
+                color:#c2410c;
+            }
+            .extra-fee-box ul{
+                margin:0;
+                padding-left:18px;
+            }
+            .extra-fee-box li{
+                margin-bottom:6px;
+            }
+            .extra-fee-total{
+                margin-top:10px;
+                font-weight:bold;
+                color:#dc2626;
+                font-size:18px;
+            }
+            .upload-box{
+                width:260px;
+            }
+            .upload-label{
+                display:block;
+                cursor:pointer;
+            }
+            .upload-label input[type=file]{
+                display:none;
+            }
+            .upload-content{
+                border:2px dashed #3b82f6;
+                border-radius:14px;
+                padding:30px 20px;
+                text-align:center;
+                background:#f8fbff;
+                transition:.25s;
+            }
+            .upload-content:hover{
+                background:#eef6ff;
+                border-color:#2563eb;
+            }
+            .upload-content i{
+                font-size:42px;
+                color:#3b82f6;
+                margin-bottom:10px;
+            }
+            .upload-content span{
+                display:block;
+                font-weight:600;
+                color:#1e293b;
+            }
+            .upload-content small{
+                color:#64748b;
+            }
+            .preview-image{
+                display:none;
+                width:260px;
+                height:170px;
+                object-fit:cover;
+                border-radius:12px;
+                border:1px solid #dbeafe;
+                margin-top:12px;
+            }
+            .upload-mini{
+                border:2px dashed #cbd5e1;
+                border-radius:10px;
+                padding:12px;
+                text-align:center;
+                cursor:pointer;
+                background:#fafafa;
+            }
+            .upload-mini:hover{
+                border-color:#3b82f6;
+            }
+            .preview-small{
+                display:none;
+                width:120px;
+                height:90px;
+                object-fit:cover;
+                border-radius:8px;
+                border:1px solid #ddd;
+            }
+            .upload-box input[type=file],
+            .upload-small input[type=file]{
+                display:none;
             }
         </style>
     </head>
@@ -469,148 +591,398 @@
                 </header>
 
                 <main class="workspace-content">
+                    <form method="post"
+                          enctype="multipart/form-data"
+                          action="${pageContext.request.contextPath}/receptionist/checkin-detail">
+                        <input type="hidden" name="bookingId" value="${booking.bookingId}"/>
+                        <input type="hidden"
+                               id="totalCapacity"
+                               value="${totalCapacity}"/>
+                        <input
+                            type="hidden"
+                            id="checkInDate"
+                            value="${booking.checkInDate}"/>
 
-                    <!-- ================= 1. BOOKING INFO ================= -->
-                    <div class="section-card">
-                        <h3>1. Chi tiết đặt phòng</h3>
+                        <input
+                            type="hidden"
+                            id="checkOutDate"
+                            value="${booking.checkOutDate}"/>
+                        <input
+                            type="hidden"
+                            id="extraFee"
+                            name="extraFee"
+                            value="0"/>
+                        <!-- ================= BOOKING INFO ================= -->
+                        <div class="section-card">
+                            <h3>Chi tiết đặt phòng</h3>
 
-                        <div class="grid-top">
-                            <div class="field"><b>Mã:</b> #${booking.bookingId}</div>
-                            <div class="field"><b>Khách:</b> ${booking.customerName}</div>
-                            <div class="field"><b>SĐT:</b> ${booking.phone}</div>
-                            <div class="field"><b>Email:</b> ${booking.email}</div>
-                        </div>
+                            <div class="grid-top">
+                                <div class="field"><b>Mã:</b> #${booking.bookingId}</div>
+                                <div class="field"><b>Khách:</b> ${booking.customerName}</div>
+                                <div class="field"><b>SĐT:</b> ${booking.phone}</div>
+                                <div class="field"><b>Email:</b> ${booking.email}</div>
+                            </div>
 
-                        <div class="grid-bottom">
-                            <div class="field"><b>Ngày đến:</b> ${booking.checkInDate}</div>
-                            <div class="field"><b>Ngày đi:</b> ${booking.checkOutDate}</div>
-                        </div>
-                    </div>
+                            <div class="grid-bottom">
+                                <div class="field"><b>Ngày đến:</b> ${booking.checkInDate}</div>
+                                <div class="field"><b>Ngày đi:</b> ${booking.checkOutDate}</div>
+                                <div style="margin-top:20px;">
+                                    <c:choose>
+                                        <c:when test="${booking.status eq 'Confirmed'}">
+                                            <label>
+                                                <b>Ảnh CCCD khách đại diện</b>
+                                            </label>
+                                            <div class="upload-box">
+                                                <label class="upload-label">
+                                                    <input
+                                                        type="file"
+                                                        id="customerImage"
+                                                        name="customerImage"
+                                                        accept="image/*"
+                                                        required
+                                                        onchange="previewCustomerImage(this)">
 
-                    <!-- ================= 2. ROOM ASSIGN ================= -->
-                    <div class="section-card">
-                        <h3>2. Danh sách phòng được xếp</h3>
+                                                    <div class="upload-content">
+                                                        <i class="fa-solid fa-cloud-arrow-up"></i>
 
-                        <table class="room-table">
-                            <thead>
-                                <tr>
-                                    <th>Số phòng</th>
-                                    <th>Loại phòng</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <c:forEach var="r" items="${rooms}">
+                                                        <span>Chọn ảnh CCCD</span>
+
+                                                        <small>PNG, JPG, JPEG</small>
+                                                    </div>
+
+                                                    <img id="customerPreview" class="preview-image">
+                                                </label>
+                                            </div>
+                                        </c:when>
+                                        <c:when test="${booking.status eq 'CheckedIn'}">
+                                            <label>
+                                                <b>Ảnh CCCD khách đại diện</b>
+                                            </label>
+                                            <br>
+                                            <img
+                                                src="${checkIn.imageUrl}"
+                                                style="
+                                                width:220px;
+                                                height:150px;
+                                                object-fit:cover;
+                                                border-radius:12px;
+                                                border:1px solid #ddd;
+                                                "
+                                                />
+                                        </c:when>
+                                    </c:choose>
+                                </div>
+                            </div>
+
+                            <!-- ================= ROOM ASSIGN ================= -->
+                            <div class="section-divider"></div>
+                            <h3>Danh sách phòng được xếp</h3>
+
+                            <table class="room-table">
+                                <thead>
                                     <tr>
-                                        <td>${r.roomNumber}</td>
-                                        <td>${r.typeName}</td>
+                                        <th>Số phòng</th>
+                                        <th>Loại phòng</th>
                                     </tr>
-                                </c:forEach>
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    <c:forEach var="r" items="${rooms}">
+                                        <tr>
+                                            <td>${r.roomNumber}</td>
+                                            <td>${r.typeName}</td>
+                                        </tr>
+                                    </c:forEach>
+                                </tbody>
+                            </table>
 
-                    <!-- ================= 3. COMPANION ================= -->
-                    <div class="section-card">
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <h3>3. Bạn đồng hành</h3>
-                            <button class="add-btn" type="button" onclick="addCompanion()">+ Thêm bạn đồng hành</button>
-                        </div>
-
-                        <table class="room-table">
-                            <thead>
-                                <tr>
-                                    <th>Họ và tên</th>
-                                    <th>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody id="companionBody"></tbody>
-                        </table>
-                    </div>
-
-                    <!-- ================= 4. REQUEST ================= -->
-                    <div class="section-card">
-                        <h3>4. Yêu cầu khách hàng</h3>
-                        <textarea id="specialRequest" style="width:100%;height:80px"></textarea>
-                    </div>
-
-                    <!-- ================= 5. NOTES ================= -->
-                    <div class="section-card">
-                        <h3>5. Ghi chú</h3>
-                        <textarea id="notes" style="width:100%;height:80px"></textarea>
-                    </div>
-
-                    <!-- ================= FOOTER ================= -->
-                    <div class="footer-bar">
-
-                        <div class="shield">
-                            <i class="fa-solid fa-shield-halved" style="font-size:28px;color:#0ea5e9;"></i>
-                            <span>Cam kết chính sách bảo mật của HotelOps</span>
-                        </div>
-
-                        <div class="actions">
-
-                            <button class="btn-back" onclick="goBack()" type="button">
-                                Quay lại
-                            </button>
-
-                            <c:choose>
-                                <c:when test="${booking.status eq 'CheckedIn'}">
-                                    <button class="btn btn-disabled" disabled>
-                                        ✓ Đã check in
+                            <!-- ================= COMPANION ================= -->
+                            <div class="section-divider"></div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <h3>Bạn đồng hành</h3>
+                                <c:if test="${booking.status eq 'Confirmed'}">
+                                    <button 
+                                        class="add-btn" 
+                                        type="button"
+                                        onclick="addCompanion()">
+                                        + Thêm bạn đồng hành
                                     </button>
+                                </c:if>
+                            </div>
+
+                            <table class="room-table">
+                                <thead>
+                                    <tr>
+                                        <th>Họ và tên</th>
+                                        <th>Ảnh CCCD / Giấy khai sinh</th>
+                                        <th>Độ tuổi</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="companionBody">
+                                    <c:choose>
+                                        <c:when test="${booking.status eq 'Confirmed'}">
+                                        </c:when>
+                                        <c:when test="${booking.status eq 'CheckedIn'}">
+                                            <c:forEach var="c" items="${companions}">
+                                                <tr>
+                                                    <td>
+                                                        ${c.fullName}
+                                                    </td>
+                                                    <td>
+                                                        <c:choose>
+                                                            <c:when test="${not empty c.imageUrl}">
+                                                                <img
+                                                                    src="${c.imageUrl}"
+                                                                    style="
+                                                                    width:120px;
+                                                                    height:90px;
+                                                                    object-fit:cover;
+                                                                    border-radius:10px;
+                                                                    "
+                                                                    />
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                Không có ảnh
+                                                            </c:otherwise>
+                                                        </c:choose>
+                                                    </td>
+                                                    <td>
+                                                        ${c.ageRange}
+                                                    </td>
+                                                    <td>
+                                                        <span style="
+                                                              color:#10b981;
+                                                              font-weight:600;
+                                                              ">
+                                                            Đã check in
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            </c:forEach>
+                                        </c:when>
+                                    </c:choose>
+                                </tbody>
+                            </table>
+                            <div id="extraFeeArea"
+                                 style="margin-top:20px;">
+                            </div>
+                            <!-- ================= REQUEST ================= -->
+                            <div class="section-divider"></div>
+                            <h3>Yêu cầu khách hàng</h3>
+                            <c:choose>
+                                <c:when test="${booking.status eq 'Confirmed'}">
+                                    <textarea
+                                        id="specialRequest"
+                                        name="specialRequest"
+                                        placeholder="Ví dụ: Phòng tầng cao...">
+                                    </textarea>
                                 </c:when>
-
-                                <c:otherwise>
-                                    <form method="post"
-                                          action="${pageContext.request.contextPath}/receptionist/checkin-detail"
-                                          onsubmit="prepareSubmit()">
-
-                                        <input type="hidden" name="bookingId" value="${booking.bookingId}"/>
-                                        <input type="hidden" name="specialRequest" id="hiddenRequest"/>
-                                        <input type="hidden" name="notes" id="hiddenNotes"/>
-
-                                        <div id="hiddenCompanions"></div>
-
-                                        <button type="submit" class="btn-confirm">
-                                            Xác nhận check in
-                                        </button>
-
-                                    </form>
-                                </c:otherwise>
+                                <c:when test="${booking.status eq 'CheckedIn'}">
+                                    <div class="field">
+                                        <b>Yêu cầu khách hàng</b>
+                                        <p>
+                                            ${checkIn.specialRequest}
+                                        </p>
+                                    </div>
+                                </c:when>
                             </c:choose>
 
+                            <!-- ================= NOTES ================= -->
+                            <div class="section-divider"></div>
+                            <h3>Ghi chú</h3>
+                            <c:choose>
+                                <c:when test="${booking.status eq 'Confirmed'}">
+                                    <textarea
+                                        id="notes"
+                                        name="notes">
+                                    </textarea>
+                                </c:when>
+                                <c:when test="${booking.status eq 'CheckedIn'}">
+                                    <div class="field">
+                                        <b>Ghi chú lễ tân</b>
+                                        <p>
+                                            ${checkIn.notes}
+                                        </p>
+                                    </div>
+                                </c:when>
+                            </c:choose>
+
+                            <!-- ================= FOOTER ================= -->
+                            <div class="footer-bar">
+
+                                <div class="shield">
+                                    <i class="fa-solid fa-shield-halved" style="font-size:28px;color:#0ea5e9;"></i>
+                                    <span>Cam kết chính sách bảo mật của HotelOps</span>
+                                </div>
+
+                                <div class="actions">
+
+                                    <button class="btn-back" onclick="goBack()" type="button">
+                                        Quay lại
+                                    </button>
+
+                                    <c:choose>
+                                        <c:when test="${booking.status eq 'CheckedIn'}">
+                                            <button
+                                                class="btn btn-disabled"
+                                                disabled>
+                                                ✓ Đã check in
+                                            </button>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <button
+                                                id="checkinBtn"
+                                                type="submit"
+                                                class="btn-confirm">
+                                                Xác nhận check in
+                                            </button>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                            </div>
                         </div>
-
-                    </div>
-
+                    </form>
                 </main>
             </div>
         </div>
 
         <script>
-            let i = 0;
+            let companionIndex = 0;
+            const FEE = {
+                Baby: 0,
+                Child: 150000,
+                Adult: 300000
+            };
+            function calculateExtraFee() {
 
+                const capacity = parseInt(document.getElementById("totalCapacity").value);
+                const checkIn = new Date(document.getElementById("checkInDate").value);
+                const checkOut = new Date(document.getElementById("checkOutDate").value);
+
+                const nights = Math.round(
+                        (checkOut - checkIn) / (1000 * 60 * 60 * 24)
+                        );
+
+                // +1 vì có khách đại diện
+                const totalPeople = document.querySelectorAll("#companionBody tr").length + 1;
+
+                const extra = totalPeople - capacity;
+
+                const area = document.getElementById("extraFeeArea");
+
+                if (extra <= 0) {
+                    area.innerHTML = "";
+                    document.getElementById("extraFee").value = 0;
+                    return;
+                }
+
+                const ages = [];
+
+                document.querySelectorAll(".age-select").forEach(s => {
+                    if (s.value)
+                        ages.push(s.value);
+                });
+
+                const order = {
+                    Baby: 1,
+                    Child: 2,
+                    Adult: 3
+                };
+
+                ages.sort((a, b) => order[a] - order[b]);
+
+                const charged = ages.slice(0, extra);
+
+                let html = `
+                    <div class="extra-fee-box">
+                        <h4>Phụ phí phát sinh</h4>
+                        <ul>
+                    `;
+
+                let feePerNight = 0;
+                charged.forEach(type => {
+                    feePerNight += FEE[type];
+                });
+                const total = feePerNight * nights;
+
+                html += `
+                    </ul>
+                    <div class="extra-fee-total">
+                        Phụ phí mỗi đêm: \${feePerNight.toLocaleString()} VNĐ
+                        <br>
+
+                        Số đêm lưu trú: \${nights}
+                        <br>
+
+                        <strong>
+                            Tổng phụ phí: \${total.toLocaleString()} VNĐ
+                        </strong>
+                    </div>
+
+                    `;
+
+                area.innerHTML = html;
+                document.getElementById("extraFee").value = total;
+
+            }
             function addCompanion() {
                 const body = document.getElementById("companionBody");
 
+                const index = companionIndex++;
                 const row = document.createElement("tr");
 
                 row.innerHTML = `
-        <td>
-            <input type="text"
-                   name="companions"
-                   placeholder="Nhập họ và tên">
-        </td>
-        <td>
-            <button type="button"
-                    class="danger-btn"
-                    onclick="this.closest('tr').remove()">
-                Xóa
-            </button>
-        </td>
-    `;
+                    <td>
+                        <input
+                            type="text"
+                            name="companions"
+                            placeholder="Nhập họ và tên"
+                            required>
+                    </td>
+                    <td>
+                        <div class="upload-small">
+                            <label>
+                                <input
+                                    type="file"
+                                    name="companionImage"
+                                    accept="image/*"
+                                    onchange="previewCompanion(this)">
+                                <div class="upload-mini">
+                                    <i class="fa-solid fa-image"></i>
+                                    Chọn ảnh
+                                </div>
+                                <img class="preview-small">
+                            </label>
+                        </div>
+                    </td>
+                    <td>
+                        <select
+                            name="ageRanges"
+                            class="age-select"
+                            onchange="calculateExtraFee()">
+
+                            <option value="">-- Chọn --</option>
+                            <option value="Baby">Dưới 6 tuổi</option>
+                            <option value="Child">Trẻ em (6 - 14 tuổi)</option>
+                            <option value="Adult">Người lớn (Từ 15 tuổi)</option>
+
+                        </select>
+                    </td>
+                    <td>
+                        <button
+                            type="button"
+                            class="danger-btn"
+                            onclick="
+                                this.closest('tr').remove();
+                                calculateExtraFee();
+                            ">
+                            Xóa
+                        </button>
+                    </td>
+                `;
 
                 body.appendChild(row);
+                calculateExtraFee();
             }
 
             function goBack() {
@@ -625,26 +997,44 @@
                 btn.style.cursor = "not-allowed";
             }
 
-            function prepareSubmit() {
+            function previewCustomerImage(input) {
 
-                document.getElementById("hiddenRequest").value =
-                        document.getElementById("specialRequest").value;
+                if (!input.files || !input.files[0]) {
+                    return;
+                }
 
-                document.getElementById("hiddenNotes").value =
-                        document.getElementById("notes").value;
+                const reader = new FileReader();
 
-                const container = document.getElementById("hiddenCompanions");
-                container.innerHTML = "";
+                reader.onload = function (e) {
 
-                document.querySelectorAll("input[name='companions']").forEach(input => {
-                    if (input.value.trim() !== "") {
-                        const hidden = document.createElement("input");
-                        hidden.type = "hidden";
-                        hidden.name = "companions";
-                        hidden.value = input.value;
-                        container.appendChild(hidden);
-                    }
-                });
+                    const img = document.getElementById("customerPreview");
+
+                    img.src = e.target.result;
+                    img.style.display = "block";
+
+                    document.querySelector(".upload-content").style.display = "none";
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+            function previewCompanion(input) {
+
+                if (!input.files.length)
+                    return;
+
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+
+                    const img = input.parentNode.querySelector(".preview-small");
+
+                    img.src = e.target.result;
+                    img.style.display = "block";
+
+                    input.parentNode.querySelector(".upload-mini").style.display = "none";
+                }
+
+                reader.readAsDataURL(input.files[0]);
             }
         </script>
 

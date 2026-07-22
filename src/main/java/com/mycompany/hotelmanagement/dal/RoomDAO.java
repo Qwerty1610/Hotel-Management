@@ -256,7 +256,8 @@ public class RoomDAO {
 
                 WHEN r.status = 'Maintenance'
                 THEN 'Maintenance'
-
+                WHEN r.status = 'OutOfService'
+                THEN 'OutOfService'
                 WHEN EXISTS (
                     SELECT 1
                     FROM Booking b
