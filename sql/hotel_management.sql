@@ -139,8 +139,8 @@ BEGIN
     ('google.client.secret', 'YOUR_GOOGLE_CLIENT_SECRET', 'Google OAuth Client Secret'),
     ('smtp.user', 'YOUR_SMTP_EMAIL', 'SMTP Email Account'),
     ('smtp.password', 'YOUR_SMTP_PASSWORD', 'SMTP Email App Password'),
-    ('smtp.host', 'smtp.gmail.com', 'SMTP Host address'),
-    ('smtp.port', '587', 'SMTP Port');
+    ('smtp.host', 'smtp.gmail.com', 'Địa chỉ máy chủ SMTP'),
+    ('smtp.port', '587', 'Cổng kết nối SMTP');
 END
 GO
 

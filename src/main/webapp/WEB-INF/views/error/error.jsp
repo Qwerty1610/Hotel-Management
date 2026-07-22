@@ -1,4 +1,11 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%--
+  Giao diện xử lý hiển thị lỗi HTTP (403, 404, 500) của hệ thống.
+  @author TungNQ
+  @version 1.0.1
+  Created: 24/06/2026
+  Modified: 16/07/2026
+--%>
 <%@ include file="../../includes/taglibs.jsp" %>
 <%@ include file="../../includes/header.jsp" %>
 
