@@ -116,6 +116,10 @@ public class AdminService {
         if (isWeakPassword(password)) {
             return "weak_password";
         }
+        String targetRoleName = accountRepository.getRoleNameById(roleId);
+        if ("Admin".equalsIgnoreCase(targetRoleName)) {
+            return "cannot_create_admin";
+        }
         if (accountRepository.existsByEmail(email.trim())) {
             return "email_exists";
         }
@@ -148,11 +152,18 @@ public class AdminService {
         }
         
         // BR-65 validation: Cannot change role of the Admin account to non-Admin
+        // and cannot change role of a non-Admin account to Admin (only 1 admin allowed)
         Account existingAccount = accountRepository.getAccountById(accountId);
-        if (existingAccount != null && "Admin".equals(existingAccount.getRoleName())) {
+        if (existingAccount != null) {
             String targetRoleName = accountRepository.getRoleNameById(roleId);
-            if (!"Admin".equals(targetRoleName)) {
-                return "cannot_demote_admin";
+            if ("Admin".equals(existingAccount.getRoleName())) {
+                if (!"Admin".equals(targetRoleName)) {
+                    return "cannot_demote_admin";
+                }
+            } else {
+                if ("Admin".equals(targetRoleName)) {
+                    return "cannot_promote_to_admin";
+                }
             }
         }
 

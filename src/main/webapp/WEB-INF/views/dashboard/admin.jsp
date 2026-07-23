@@ -70,6 +70,8 @@
                                 <c:when test="${param.error eq 'weak_password'}">Lỗi: Mật khẩu mới phải bao gồm cả chữ, số và ký tự đặc biệt!</c:when>
                                 <c:when test="${param.error eq 'cannot_demote_admin'}">Lỗi (BR-65): Không thể thay đổi vai trò của tài khoản Admin duy nhất!</c:when>
                                 <c:when test="${param.error eq 'cannot_lock_admin'}">Lỗi (BR-65): Không thể vô hiệu hóa tài khoản Admin duy nhất!</c:when>
+                                <c:when test="${param.error eq 'cannot_create_admin'}">Lỗi: Không được phép tạo thêm tài khoản Admin mới!</c:when>
+                                <c:when test="${param.error eq 'cannot_promote_to_admin'}">Lỗi: Không được phép chuyển đổi tài khoản sang vai trò Admin!</c:when>
                                 <c:when test="${param.error eq 'create_failed'}">Lỗi: Không thể thêm tài khoản mới vào cơ sở dữ liệu.</c:when>
                                 <c:when test="${param.error eq 'update_failed'}">Lỗi: Cập nhật thông tin tài khoản thất bại.</c:when>
                                 <c:when test="${param.error eq 'status_change_failed'}">Lỗi: Không thể cập nhật trạng thái tài khoản.</c:when>
@@ -216,7 +218,7 @@
                                                             <div class="table-actions"
                                                                 style="justify-content: flex-end;">
                                                                 <button class="btn-action edit"
-                                                                    onclick="openEditModal('${staff.accountId}', '${staff.email}', '${staff.fullName}', '${staff.phone}', '${staff.roleId}')"
+                                                                    onclick="openEditModal('${staff.accountId}', '${staff.email}', '${staff.fullName}', '${staff.phone}', '${staff.roleId}', '${staff.roleName}')"
                                                                     title="Chỉnh sửa tài khoản">
                                                                     <i
                                                                         class="fa-solid fa-pen-to-square"></i>
@@ -493,16 +495,16 @@
                                     <option value="" disabled selected>-- Chọn vai trò nhân viên --
                                     </option>
                                     <c:forEach var="role" items="${roles}">
-                                        <option value="${role.roleId}">
-                                            <c:choose>
-                                                <c:when test="${role.roleName eq 'Manager'}">Quản lý khách sạn (Manager)</c:when>
-                                                <c:when test="${role.roleName eq 'Receptionist'}">Lễ tân (Receptionist)</c:when>
-                                                <c:when test="${role.roleName eq 'Housekeeping'}">Nhân viên buồng phòng (Housekeeping)</c:when>
-                                                <c:when test="${role.roleName eq 'Admin'}">Quản trị viên hệ thống (Admin)</c:when>
-                                                <c:when test="${role.roleName eq 'Customer'}">Khách hàng (Customer)</c:when>
-                                                <c:otherwise>${role.roleName} - ${role.description}</c:otherwise>
-                                            </c:choose>
-                                        </option>
+                                        <c:if test="${role.roleName ne 'Admin' and role.roleName ne 'Customer'}">
+                                            <option value="${role.roleId}">
+                                                <c:choose>
+                                                    <c:when test="${role.roleName eq 'Manager'}">Quản lý khách sạn (Manager)</c:when>
+                                                    <c:when test="${role.roleName eq 'Receptionist'}">Lễ tân (Receptionist)</c:when>
+                                                    <c:when test="${role.roleName eq 'Housekeeping'}">Nhân viên buồng phòng (Housekeeping)</c:when>
+                                                    <c:otherwise>${role.roleName} - ${role.description}</c:otherwise>
+                                                </c:choose>
+                                            </option>
+                                        </c:if>
                                     </c:forEach>
                                 </select>
                             </div>
@@ -526,6 +528,7 @@
                         action="${pageContext.request.contextPath}/admin/dashboard?action=update-staff"
                         method="post">
                         <input type="hidden" id="editAccountId" name="accountId" />
+                        <input type="hidden" id="editRoleIdHidden" name="roleId" disabled />
                         <div class="modal-body">
                             <div class="modal-form-group">
                                 <label for="editFullName">Họ và Tên <span
@@ -561,16 +564,17 @@
                                         style="color:#ef4444;">*</span></label>
                                 <select id="editRoleId" name="roleId" class="modal-select" required>
                                     <c:forEach var="role" items="${roles}">
-                                        <option value="${role.roleId}">
-                                            <c:choose>
-                                                <c:when test="${role.roleName eq 'Manager'}">Quản lý khách sạn (Manager)</c:when>
-                                                <c:when test="${role.roleName eq 'Receptionist'}">Lễ tân (Receptionist)</c:when>
-                                                <c:when test="${role.roleName eq 'Housekeeping'}">Nhân viên buồng phòng (Housekeeping)</c:when>
-                                                <c:when test="${role.roleName eq 'Admin'}">Quản trị viên hệ thống (Admin)</c:when>
-                                                <c:when test="${role.roleName eq 'Customer'}">Khách hàng (Customer)</c:when>
-                                                <c:otherwise>${role.roleName} - ${role.description}</c:otherwise>
-                                            </c:choose>
-                                        </option>
+                                        <c:if test="${role.roleName ne 'Customer'}">
+                                            <option value="${role.roleId}" data-role-name="${role.roleName}">
+                                                <c:choose>
+                                                    <c:when test="${role.roleName eq 'Manager'}">Quản lý khách sạn (Manager)</c:when>
+                                                    <c:when test="${role.roleName eq 'Receptionist'}">Lễ tân (Receptionist)</c:when>
+                                                    <c:when test="${role.roleName eq 'Housekeeping'}">Nhân viên buồng phòng (Housekeeping)</c:when>
+                                                    <c:when test="${role.roleName eq 'Admin'}">Quản trị viên hệ thống (Admin)</c:when>
+                                                    <c:otherwise>${role.roleName} - ${role.description}</c:otherwise>
+                                                </c:choose>
+                                            </option>
+                                        </c:if>
                                     </c:forEach>
                                 </select>
                             </div>
@@ -776,7 +780,7 @@
                     const modal = document.getElementById('addStaffModal');
                     if (modal) modal.style.display = 'none';
                 }
-                function openEditModal(id, email, name, phone, roleId) {
+                function openEditModal(id, email, name, phone, roleId, roleName) {
                     const modal = document.getElementById('editStaffModal');
                     if (!modal) return;
                     document.getElementById('editAccountId').value = id;
@@ -788,7 +792,36 @@
                         displayPhone = '';
                     }
                     document.getElementById('editPhone').value = displayPhone;
-                    document.getElementById('editRoleId').value = roleId;
+
+                    const roleSelect = document.getElementById('editRoleId');
+                    const roleHidden = document.getElementById('editRoleIdHidden');
+
+                    if (roleSelect) {
+                        const options = roleSelect.options;
+                        for (let i = 0; i < options.length; i++) {
+                            const opt = options[i];
+                            if (opt.getAttribute('data-role-name') === 'Admin') {
+                                opt.style.display = (roleName === 'Admin') ? '' : 'none';
+                            }
+                        }
+
+                        roleSelect.value = roleId;
+
+                        if (roleName === 'Admin') {
+                            roleSelect.disabled = true;
+                            if (roleHidden) {
+                                roleHidden.disabled = false;
+                                roleHidden.value = roleId;
+                            }
+                        } else {
+                            roleSelect.disabled = false;
+                            if (roleHidden) {
+                                roleHidden.disabled = true;
+                                roleHidden.value = '';
+                            }
+                        }
+                    }
+
                     document.getElementById('editPassword').value = '';
                     modal.style.display = 'flex';
                 }
