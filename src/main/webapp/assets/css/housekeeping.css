@@ -82,11 +82,21 @@
 }
 
 /* Đổ màu chuẩn xác dựa trên data-status (Thay thế hoàn toàn cấu hình cũ) */
-.btn-filter[data-status="ALL"]::before { background: #111827; }          /* Đen đậm */
-.btn-filter[data-status="OutOfService"]::before { background: #64748b; }     /* Xám Đậm */
-.btn-filter[data-status="Available"]::before { background: #22c55e; }    /* Xanh Lá */
-.btn-filter[data-status="Cleaning"]::before { background: #f59e0b; }     /* Vàng Cam */
-.btn-filter[data-status="Maintenance"]::before { background: #ef4444; }  /* Đỏ */
+.btn-filter[data-status="ALL"]::before {
+    background: #111827;
+}          /* Đen đậm */
+.btn-filter[data-status="OutOfService"]::before {
+    background: #64748b;
+}     /* Xám Đậm */
+.btn-filter[data-status="Available"]::before {
+    background: #22c55e;
+}    /* Xanh Lá */
+.btn-filter[data-status="Cleaning"]::before {
+    background: #f59e0b;
+}     /* Vàng Cam */
+.btn-filter[data-status="Maintenance"]::before {
+    background: #ef4444;
+}  /* Đỏ */
 
 .btn-filter:hover {
     background: #f8fafc;
@@ -125,11 +135,21 @@
 .btn-filter.active:hover {
     color: #ffffff !important;
 }
-.btn-filter.active[data-status="ALL"]:hover { background: #111827; }
-.btn-filter.active[data-status="OutOfService"]:hover { background: #64748b; }
-.btn-filter.active[data-status="Available"]:hover { background: #2563eb; }
-.btn-filter.active[data-status="Cleaning"]:hover { background: #f97316; }
-.btn-filter.active[data-status="Maintenance"]:hover { background: #ef4444; }
+.btn-filter.active[data-status="ALL"]:hover {
+    background: #111827;
+}
+.btn-filter.active[data-status="OutOfService"]:hover {
+    background: #64748b;
+}
+.btn-filter.active[data-status="Available"]:hover {
+    background: #2563eb;
+}
+.btn-filter.active[data-status="Cleaning"]:hover {
+    background: #f97316;
+}
+.btn-filter.active[data-status="Maintenance"]:hover {
+    background: #ef4444;
+}
 
 .btn-filter.active[data-status="ALL"] {
     background: #111827;
@@ -230,10 +250,10 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
     border: 1px solid #e2e8f0;
     overflow: hidden;
-    
-    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
-                box-shadow 0.3s cubic-bezier(0.25, 1, 0.5, 1),
-                opacity 0.3s ease, max-width 0.3s ease, visibility 0.3s;
+
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+        box-shadow 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+        opacity 0.3s ease, max-width 0.3s ease, visibility 0.3s;
     opacity: 1;
     visibility: visible;
     max-width: 220px;
@@ -282,8 +302,14 @@
 }
 
 @keyframes maintenanceBlink {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.3; transform: scale(1.25); }
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.3;
+        transform: scale(1.25);
+    }
 }
 .room-num {
     font-size: 26px;
@@ -304,28 +330,61 @@
 ========================= */
 
 /* OutOfService (Xám Đậm) */
-.status-outofservice { border-color: #cbd5e1; }
-.status-outofservice::after { background: #64748b; }
-.status-outofservice .room-num { color: #334155; }
+.status-outofservice {
+    border-color: #cbd5e1;
+}
+.status-outofservice::after {
+    background: #64748b;
+}
+.status-outofservice .room-num {
+    color: #334155;
+}
 
 /* VACANT CLEAN / AVAILABLE (Xanh Dương) */
-.status-available { border-color: #bbf7d0; }
-.status-available::after { background: #22c55e; }
-.status-available .room-num { color: #16a34a; }
+.status-available {
+    border-color: #bbf7d0;
+}
+.status-available::after {
+    background: #22c55e;
+}
+.status-available .room-num {
+    color: #16a34a;
+}
 
 /* CLEANING (Cam) */
-.status-cleaning { border-color: #fed7aa;}
-.status-cleaning::after { background: #f97316;}
-.status-cleaning .room-num { color: #ea580c;}
-.status-cleaning .dirty-dot { display: block;  border-color: #f97316; }
+.status-cleaning {
+    border-color: #fed7aa;
+}
+.status-cleaning::after {
+    background: #f97316;
+}
+.status-cleaning .room-num {
+    color: #ea580c;
+}
+.status-cleaning .dirty-dot {
+    display: block;
+    border-color: #f97316;
+}
 /* REFILLING (Vàng) */
-.status-refilling { border-color: #fde68a; }
-.status-refilling::after { background: #eab308; }
-.status-refilling .room-num { color: #ca8a04; }
+.status-refilling {
+    border-color: #fde68a;
+}
+.status-refilling::after {
+    background: #eab308;
+}
+.status-refilling .room-num {
+    color: #ca8a04;
+}
 /* MAINTENANCE (Đỏ) */
-.status-maintenance { border-color: #fecaca; }
-.status-maintenance::after { background: #ef4444; }
-.status-maintenance .room-num { color: #dc2626; }
+.status-maintenance {
+    border-color: #fecaca;
+}
+.status-maintenance::after {
+    background: #ef4444;
+}
+.status-maintenance .room-num {
+    color: #dc2626;
+}
 
 /* =========================
    WORKSPACE GLOBAL MODS
@@ -889,4 +948,207 @@
     color:#64748b;
     cursor:not-allowed;
     pointer-events:none;
+}
+/* =====================================================
+   CUSTOMER REQUEST TABLE - HOUSEKEEPING OVERVIEW
+===================================================== */
+
+.customer-request-wrapper {
+    margin-top: 32px;
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.customer-request-wrapper h2 {
+    margin-bottom: 20px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+/* TABLE */
+.customer-request-table {
+    width: 100%;
+    border-collapse: collapse;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.customer-request-table thead {
+    background: #f1f5f9;
+}
+
+.customer-request-table th {
+    padding: 14px 16px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.customer-request-table td {
+    padding: 14px 16px;
+    font-size: 14px;
+    color: #334155;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+}
+
+.customer-request-table tbody tr {
+    transition: background .2s ease;
+}
+
+.customer-request-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+/* =====================================================
+   PRIORITY BADGE
+===================================================== */
+
+.customer-request-table td:nth-child(4) {
+    font-weight: 600;
+}
+
+.customer-request-table td:nth-child(4):has(*) {
+    white-space: nowrap;
+}
+
+/* =====================================================
+   STATUS BADGE
+===================================================== */
+
+.customer-request-table td:nth-child(5) {
+    font-weight: 600;
+}
+/* InProgress */
+.customer-request-table td.status-inprogress {
+    color: #2563eb;
+}
+/* RequestCompleted */
+.customer-request-table td.status-requestcompleted {
+    color: #16a34a;
+}
+
+/* =====================================================
+   ACTION BUTTON
+===================================================== */
+
+.btn-complete-request {
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background .2s ease,
+        transform .2s ease;
+}
+
+.btn-complete-request:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+}
+/* Disabled button */
+.btn-request-completed {
+    background: #cbd5e1;
+    color: #475569;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: not-allowed;
+}
+/* Default disabled */
+.customer-request-table button:disabled {
+    opacity: .85;
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+/* =====================================================
+   CUSTOMER REQUEST PRIORITY BADGE
+===================================================== */
+
+.priority-badge,
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* ================= PRIORITY ================= */
+/* Low - Thấp */
+.priority-low {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+/* Medium - Trung bình */
+.priority-medium {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+/* High - Cao */
+.priority-high {
+    background: #fed7aa;
+    color: #c2410c;
+}
+
+/* Urgent - Khẩn cấp */
+.priority-urgent {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* =====================================================
+   CUSTOMER REQUEST STATUS BADGE
+===================================================== */
+
+/* Pending - nếu có */
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* InProgress - Đang thực hiện */
+.status-inprogress {
+    background: #fed7aa;
+    color: #9a3412;
+}
+
+/* Completed - Hoàn thành */
+.status-completed {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+/* Cancelled - Hủy */
+.status-cancelled {
+    background: #fee2e2;
+    color: #dc2626;
+}
+@media(max-width: 900px) {
+    .customer-request-wrapper {
+        overflow-x: auto;
+    }
+    .customer-request-table {
+        min-width: 850px;
+    }
 }

@@ -171,18 +171,41 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
             return;
         }
 
+        Booking booking = bookingDAO.getBookingById(bookingId);
+
+        int rootBookingId = booking.getGroupBookingId() != null
+                ? booking.getGroupBookingId()
+                : booking.getBookingId();
+
+        List<Booking> allBookings = new ArrayList<>();
+        allBookings.add(bookingDAO.getBookingById(rootBookingId));
+        allBookings.addAll(bookingDAO.getChildBookings(rootBookingId));
+
         try {
-            boolean success = checkInDAO.processCheckIn(
-                    bookingId,
-                    receptionistId,
-                    specialRequest,
-                    notes,
-                    customerUrl,
-                    extraFee,
-                    companions,
-                    companionUrls,
-                    ageRanges
-            );
+            boolean success = true;
+
+            for (Booking b : allBookings) {
+
+                boolean result = checkInDAO.processCheckIn(
+                        b.getBookingId(),
+                        receptionistId,
+                        specialRequest,
+                        notes,
+                        customerUrl,
+                        extraFee,
+                        companions,
+                        companionUrls,
+                        ageRanges
+                );
+
+                if (!result) {
+                    success = false;
+                    break;
+                }
+
+                new com.mycompany.hotelmanagement.dal.InvoiceDAO()
+                        .createInvoiceForBooking(b.getBookingId());
+            }
 
             if (!success) {
                 response.sendRedirect(request.getContextPath()
@@ -190,9 +213,7 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
                 return;
             }
 
-            bookingDAO.updateStatus(bookingId, "CheckedIn");
-            new com.mycompany.hotelmanagement.dal.InvoiceDAO().createInvoiceForBooking(bookingId);
-            Booking booking = bookingDAO.getBookingById(bookingId);
+            bookingDAO.updateGroupBookingStatus(rootBookingId, "CheckedIn");
 
             String customerName = (booking != null && booking.getCustomerName() != null)
                     ? booking.getCustomerName()

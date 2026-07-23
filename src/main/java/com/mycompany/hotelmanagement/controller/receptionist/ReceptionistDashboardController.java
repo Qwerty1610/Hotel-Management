@@ -68,7 +68,6 @@ public class ReceptionistDashboardController extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(ReceptionistDashboardController.class.getName());
     private static final int PAGE_SIZE = 8;
-    private static final int PAGE_SIZE_CHECKIN = 12;
 
     private static final Set<String> ALLOWED_TABS = Set.of("bookings", "changerequests", "checkin", "checkout", "servicerequests",
             "roommap", "walkin-bookings");
@@ -375,7 +374,7 @@ public class ReceptionistDashboardController extends HttpServlet {
 
         int totalItems = dao.countCheckInBookings(status, keyword);
 
-        int totalPages = (int) Math.ceil(totalItems / (double) PAGE_SIZE_CHECKIN);
+        int totalPages = (int) Math.ceil(totalItems / (double) PAGE_SIZE);
 
         if (totalPages < 1) {
             totalPages = 1;
@@ -385,10 +384,10 @@ public class ReceptionistDashboardController extends HttpServlet {
             page = totalPages;
         }
 
-        int offset = (page - 1) * PAGE_SIZE_CHECKIN;
+        int offset = (page - 1) * PAGE_SIZE;
 
         List<Booking> checkInList
-                = dao.getCheckInBookings(status, keyword, offset, PAGE_SIZE_CHECKIN);
+                = dao.getCheckInBookings(status, keyword, offset, PAGE_SIZE);
 
         request.setAttribute("checkInList", checkInList);
         request.setAttribute("keyword", keyword == null ? "" : keyword);
