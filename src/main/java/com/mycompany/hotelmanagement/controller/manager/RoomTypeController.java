@@ -67,8 +67,20 @@ public class RoomTypeController extends HttpServlet {
 
         if ("delete".equalsIgnoreCase(action) && roomTypeId != -1) {
             try {
-                roomTypeService.deleteRoomType(roomTypeId);
-                response.sendRedirect(request.getContextPath() + "/manager/roomtypes?success=deleted");
+                if (roomTypeService.hasOccupiedGuests(roomTypeId)) {
+                    response.sendRedirect(request.getContextPath() + "/manager/roomtypes?error=hasOccupiedGuests");
+                    return;
+                }
+                if (roomTypeService.hasRooms(roomTypeId)) {
+                    response.sendRedirect(request.getContextPath() + "/manager/roomtypes?error=hasRooms");
+                    return;
+                }
+                boolean success = roomTypeService.deleteRoomType(roomTypeId);
+                if (success) {
+                    response.sendRedirect(request.getContextPath() + "/manager/roomtypes?success=deleted");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/manager/roomtypes?error=deleteError");
+                }
             } catch (Exception e) {
                 response.sendRedirect(request.getContextPath() + "/manager/roomtypes?error=deleteError");
             }

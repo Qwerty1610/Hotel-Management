@@ -435,7 +435,7 @@
                                         });
                                         if (isDuplicate) {
                                             e.preventDefault();
-                                            nameInput.setCustomValidity("This service already exists.");
+                                            nameInput.setCustomValidity("Dịch vụ này đã tồn tại trong hệ thống. Vui lòng chọn tên khác.");
                                             nameInput.reportValidity();
                                             return;
                                         }
@@ -455,6 +455,25 @@
                                         return;
                                     }
                                 });
+
+                                // Unified Vietnamese HTML5 Validation Messages
+                                document.addEventListener('invalid', function (e) {
+                                    const el = e.target;
+                                    if (!el || !['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)) return;
+                                    if (el.validity.valueMissing) {
+                                        if (el.tagName === 'SELECT') {
+                                            el.setCustomValidity('Vui lòng chọn một tùy chọn trong danh sách.');
+                                        } else {
+                                            el.setCustomValidity('Vui lòng điền vào trường này.');
+                                        }
+                                    } else if (el.validity.rangeUnderflow) {
+                                        el.setCustomValidity('Giá trị phải lớn hơn hoặc bằng ' + el.min + '.');
+                                    } else if (el.validity.rangeOverflow) {
+                                        el.setCustomValidity('Giá trị không được vượt quá ' + el.max + '.');
+                                    } else if (el.validity.typeMismatch) {
+                                        el.setCustomValidity('Định dạng dữ liệu không hợp lệ.');
+                                    }
+                                }, true);
                             </script>
             </body>
 

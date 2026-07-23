@@ -299,15 +299,81 @@ public class RoomTypeDAO {
         }
     }
 
-    public void deleteRoomType(int typeId) {
+    public boolean hasOccupiedGuests(int typeId) {
+        String sql = """
+            SELECT COUNT(*) 
+            FROM Room r 
+            LEFT JOIN RoomAssignment ra ON r.room_id = ra.room_id 
+            LEFT JOIN Booking b ON ra.booking_id = b.booking_id 
+            WHERE r.type_id = ? AND r.is_deleted = 0 
+              AND (
+                UPPER(r.status) IN ('OCCUPIED', 'CHECKEDIN', 'CHECKED-IN', 'CONFIRMED')
+                OR UPPER(ISNULL(b.status, '')) IN ('CHECKEDIN', 'CHECKED-IN', 'CONFIRMED', 'IN-HOUSE')
+              )
+        """;
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            useDatabase(conn);
+            ps.setInt(1, typeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        String sqlBooking = """
+            SELECT COUNT(*) 
+            FROM Booking 
+            WHERE room_type_id = ? 
+              AND UPPER(status) IN ('CHECKEDIN', 'CHECKED-IN', 'CONFIRMED', 'IN-HOUSE')
+        """;
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sqlBooking)) {
+            useDatabase(conn);
+            ps.setInt(1, typeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public boolean hasRooms(int typeId) {
+        String sql = "SELECT COUNT(*) FROM Room WHERE type_id = ? AND is_deleted = 0";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            useDatabase(conn);
+            ps.setInt(1, typeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean deleteRoomType(int typeId) {
         String sql = "DELETE FROM RoomType WHERE type_id = ?";
         try (Connection conn = DBContext.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setInt(1, typeId);
-            ps.executeUpdate();
+            int affected = ps.executeUpdate();
+            return affected > 0;
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
     }
 }

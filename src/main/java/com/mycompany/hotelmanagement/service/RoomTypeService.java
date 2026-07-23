@@ -183,7 +183,15 @@ public class RoomTypeService {
         }
     }
 
-    public void deleteRoomType(int typeId) {
-        roomTypeRepository.deleteRoomType(typeId);
+    public boolean hasOccupiedGuests(int typeId) {
+        return roomTypeRepository.hasOccupiedGuests(typeId);
+    }
+
+    public boolean hasRooms(int typeId) {
+        return roomTypeRepository.hasRooms(typeId);
+    }
+
+    public boolean deleteRoomType(int typeId) {
+        return roomTypeRepository.deleteRoomType(typeId);
     }
 }
