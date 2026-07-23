@@ -32,7 +32,7 @@ public class DBContext {
             config.setJdbcUrl(
                     "jdbc:sqlserver://localhost:1433;databaseName=HotelManagementDB;encrypt=true;trustServerCertificate=true;");
             config.setUsername("sa");
-            config.setPassword("12345");
+            config.setPassword("123");
 
             // Connection Pool configurations
             config.setMaximumPoolSize(10);
