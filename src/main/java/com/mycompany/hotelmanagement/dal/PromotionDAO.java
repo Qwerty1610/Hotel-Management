@@ -280,32 +280,13 @@ public class PromotionDAO {
     }
 
     /**
-     * Xóa khuyến mãi. Chỉ cho phép xóa nếu UsedCount = 0.
+     * Xóa khuyến mãi. Cho phép xóa kể cả khi đã được sử dụng.
+     * Booking cũ đã áp mã vẫn giữ nguyên số tiền giảm.
      *
-     * @return true nếu xóa thành công, false nếu đã được sử dụng
+     * @return true nếu xóa thành công, false nếu có lỗi hoặc không tìm thấy
      */
     public boolean deletePromotion(int promotionId) {
-        // Kiểm tra UsedCount trước
-        String checkSql = "SELECT UsedCount FROM Promotion WHERE PromotionID = ?";
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement checkPs = conn.prepareStatement(checkSql)) {
-            useDatabase(conn);
-            checkPs.setInt(1, promotionId);
-            try (ResultSet rs = checkPs.executeQuery()) {
-                if (rs.next()) {
-                    int usedCount = rs.getInt("UsedCount");
-                    if (usedCount > 0) {
-                        return false; // Đã được sử dụng, không cho xóa
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-
-        // Thực hiện xóa
-        String deleteSql = "DELETE FROM Promotion WHERE PromotionID = ? AND UsedCount = 0";
+        String deleteSql = "DELETE FROM Promotion WHERE PromotionID = ?";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(deleteSql)) {
             useDatabase(conn);
