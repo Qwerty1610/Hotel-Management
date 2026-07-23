@@ -38,7 +38,7 @@
     </c:otherwise>
 </c:choose>
 
-<link rel="stylesheet" href="${ctx}/assets/css/profile.css?v=1" />
+<link rel="stylesheet" href="${ctx}/assets/css/profile.css?v=2" />
 <c:choose>
     <c:when test="${isCustomer}">
         <link rel="stylesheet" href="${ctx}/assets/css/customer_booking.css?v=21" />

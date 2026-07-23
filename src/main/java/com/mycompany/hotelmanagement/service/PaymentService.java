@@ -270,13 +270,16 @@ public class PaymentService {
         if (paymentDAO.getBookingIdIfExists(bookingId) == null) {
             return WebhookResult.INVOICE_NOT_PAYABLE;
         }
-        int invoiceId = invoiceDAO.createInvoiceForBooking(bookingId);
+        // Tạo sẵn hóa đơn cho booking (nếu chưa có). Cố tình KHÔNG gắn invoice_id
+        // vào giao dịch cọc: tiền cọc đã được phản ánh vào hóa đơn qua cột dẫn xuất
+        // deposit_amount (30% tiền phòng), nên nếu gắn thêm ở đây thì mọi phép
+        // SUM(amount) theo invoice_id sẽ trừ cọc lần thứ hai (số tiền còn phải
+        // trả bị hụt đúng bằng tiền cọc). Một giao dịch chỉ gắn với MỘT đối tượng:
+        // cọc -> booking_id, thanh toán hóa đơn -> invoice_id.
+        invoiceDAO.createInvoiceForBooking(bookingId);
 
         Payment p = new Payment();
         p.setBookingId(bookingId);
-        if (invoiceId > 0) {
-            p.setInvoiceId(invoiceId);
-        }
         p.setSepayTxId(sepayTxId);
         p.setAmount(amount);
         p.setGateway(gateway);

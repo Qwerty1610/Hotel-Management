@@ -5,9 +5,11 @@ import com.mycompany.hotelmanagement.dal.BookingRequestDAO;
 import com.mycompany.hotelmanagement.dal.RoomTypeDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.BookingRequest;
+import com.mycompany.hotelmanagement.entity.Room;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -103,14 +105,13 @@ public class BookingRequestService {
                     return "not_eligible";
                 }
 
-                // Re-check availability at approval time (the current booking's own
-                // rooms count back in when the type is unchanged)
+                // Re-check availability at approval time; chính booking này được
+                // loại khỏi phép đếm trong SQL (không cộng trả thủ công để tránh
+                // thổi phồng số trống khi khoảng ngày mới không giao khoảng cũ).
                 int available = bookingDAO.checkRoomAvailability(
-                        req.getNewRoomTypeId(), req.getNewCheckIn(), req.getNewCheckOut());
-                boolean sameType = booking.getRoomTypeId() != null
-                        && booking.getRoomTypeId().intValue() == req.getNewRoomTypeId().intValue();
-                int effectiveAvailable = available + (sameType ? booking.getRoomQuantity() : 0);
-                if (req.getNewRoomQuantity() > effectiveAvailable) {
+                        req.getNewRoomTypeId(), req.getNewCheckIn(), req.getNewCheckOut(),
+                        booking.getBookingId());
+                if (req.getNewRoomQuantity() > available) {
                     return "no_room";
                 }
 
@@ -140,8 +141,14 @@ public class BookingRequestService {
                 }
                 int qty = booking.getRoomQuantity() > 0 ? booking.getRoomQuantity() : 1;
                 int available = bookingDAO.checkRoomAvailability(
-                        booking.getRoomTypeId(), booking.getCheckOutDate(), req.getNewCheckOut());
+                        booking.getRoomTypeId(), booking.getCheckOutDate(), req.getNewCheckOut(),
+                        booking.getBookingId());
                 if (qty > available) {
+                    return "no_room";
+                }
+                // BR-41 — phòng vật lý đang ở đã bị đơn khác đặt cho các đêm gia hạn
+                if (hasRoomConflictForExtension(booking.getBookingId(),
+                        booking.getCheckOutDate(), req.getNewCheckOut())) {
                     return "no_room";
                 }
 
@@ -237,13 +244,12 @@ public class BookingRequestService {
                 return new Result("MSG55");
             }
 
-            // AF-2 — availability for the new selection. The current booking already
-            // reserves rooms of its own type, so add its quantity back when the type
-            // is unchanged to avoid a false "no room" on a same-type date tweak.
-            int available = bookingDAO.checkRoomAvailability(newRoomTypeId, newCheckIn, newCheckOut);
-            boolean sameType = booking.getRoomTypeId() != null && booking.getRoomTypeId() == newRoomTypeId;
-            int effectiveAvailable = available + (sameType ? booking.getRoomQuantity() : 0);
-            if (newRoomQuantity > effectiveAvailable) {
+            // AF-2 — availability for the new selection. Chính booking này (và các
+            // booking con trong nhóm) được loại khỏi phép đếm ngay trong SQL, để
+            // đơn của khách không tự chặn mình trên những ngày hai khoảng giao nhau
+            // nhưng cũng không thổi phồng số trống khi khoảng mới không giao khoảng cũ.
+            int available = bookingDAO.checkRoomAvailability(newRoomTypeId, newCheckIn, newCheckOut, bookingId);
+            if (newRoomQuantity > available) {
                 return new Result("MSG16");
             }
 
@@ -313,9 +319,16 @@ public class BookingRequestService {
             if (booking.getRoomTypeId() == null) {
                 return new Result("MSG55");
             }
-            int available = bookingDAO.checkRoomAvailability(booking.getRoomTypeId(), currentCheckOut, newCheckOut);
+            int available = bookingDAO.checkRoomAvailability(
+                    booking.getRoomTypeId(), currentCheckOut, newCheckOut, bookingId);
             if (qty > available) {
                 return new Result("MSG16");
+            }
+
+            // E2 / BR-41 — phòng cụ thể khách đang ở đã bị đơn khác đặt cho các
+            // đêm gia hạn (dù loại phòng vẫn còn phòng trống khác) -> chặn gửi.
+            if (hasRoomConflictForExtension(bookingId, currentCheckOut, newCheckOut)) {
+                return new Result("ROOM_TAKEN");
             }
 
             RoomTypeInfo rt = roomTypeRepository.getRoomTypeById(booking.getRoomTypeId());
@@ -347,6 +360,25 @@ public class BookingRequestService {
             LOGGER.log(Level.SEVERE, "Error in requestStayExtension", e);
             return new Result("MSG55");
         }
+    }
+
+    /**
+     * BR-41 — kiểm tra xung đột PHÒNG VẬT LÝ khi gia hạn: một trong các phòng
+     * đã gán (RoomAssignment) cho booking này có bị booking khác (Pending /
+     * Confirmed / CheckedIn) đặt trong khoảng [from, to) hay không. Kiểm tra
+     * theo loại phòng không phát hiện được trường hợp lễ tân đã gán đúng căn
+     * phòng khách đang ở cho một đơn khác ngay sau ngày trả hiện tại.
+     */
+    private boolean hasRoomConflictForExtension(int bookingId, Date from, Date to) {
+        List<Room> assigned = bookingDAO.getAssignedRoomsForBooking(bookingId, from, to);
+        if (assigned == null || assigned.isEmpty()) {
+            return false;
+        }
+        List<Integer> roomIds = new ArrayList<>();
+        for (Room r : assigned) {
+            roomIds.add(r.getRoomId());
+        }
+        return !bookingDAO.getConflictingRooms(roomIds, from, to, bookingId).isEmpty();
     }
 
     private boolean isBlank(String s) {
