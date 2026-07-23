@@ -44,8 +44,13 @@ public class Payment {
     public Integer getBookingId()            { return bookingId; }
     public void setBookingId(Integer v)      { this.bookingId = v; }
 
-    /** true nếu là giao dịch tiền cọc đặt phòng (hiển thị cột "Loại" trên JSP). */
-    public boolean isDeposit()               { return bookingId != null; }
+    /**
+     * true nếu là giao dịch tiền cọc đặt phòng (hiển thị cột "Loại" trên JSP).
+     * Cọc chỉ gắn booking_id; thanh toán hóa đơn online chỉ gắn invoice_id;
+     * thanh toán tại quầy lúc trả phòng gắn cả hai nên phải loại trừ bằng
+     * điều kiện invoice_id IS NULL, nếu không nó bị hiển thị nhầm thành cọc.
+     */
+    public boolean isDeposit()               { return bookingId != null && invoiceId == null; }
 
     public long getSepayTxId()               { return sepayTxId; }
     public void setSepayTxId(long v)         { this.sepayTxId = v; }

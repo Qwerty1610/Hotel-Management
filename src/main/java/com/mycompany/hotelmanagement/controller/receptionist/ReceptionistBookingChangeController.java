@@ -44,7 +44,9 @@ public class ReceptionistBookingChangeController extends HttpServlet {
             return;
         }
 
-        String base = request.getContextPath() + "/receptionist/bookingchange";
+        // Trang danh sách yêu cầu nằm ở tab changerequests của dashboard; URL đã có
+        // sẵn "?tab=..." nên các tham số kết quả phía dưới nối thêm bằng "&".
+        String base = request.getContextPath() + "/receptionist/dashboard?tab=changerequests";
         String action = request.getParameter("action");
         String requestIdStr = request.getParameter("requestId");
 
@@ -91,14 +93,9 @@ public class ReceptionistBookingChangeController extends HttpServlet {
             HttpServletResponse response)
             throws ServletException, IOException {
 
-        try {
-            request.getRequestDispatcher(
-                    "/WEB-INF/views/receptionist/booking-change-requests.jsp")
-                    .forward(request, response);
-
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Load booking change requests failed", e);
-            throw new ServletException(e);
-        }
+        // Servlet này chỉ xử lý POST duyệt/từ chối. Forward thẳng tới JSP ở đây
+        // sẽ ra trang trống vì requestList/KPI do ReceptionistDashboardController
+        // (tab changerequests) nạp — nên GET được chuyển hướng về đúng trang đó.
+        response.sendRedirect(request.getContextPath() + "/receptionist/dashboard?tab=changerequests");
     }
 }

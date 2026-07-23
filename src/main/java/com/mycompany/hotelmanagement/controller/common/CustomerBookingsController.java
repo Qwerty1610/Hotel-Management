@@ -62,6 +62,8 @@ public class CustomerBookingsController extends HttpServlet {
         ERROR_MESSAGES.put("MSG19", "Xin lỗi, loại phòng bạn chọn không còn đủ phòng trống trong thời gian này.");
         ERROR_MESSAGES.put("MSG20", "Số lượng khách vượt quá sức chứa tối đa của phòng.");
         ERROR_MESSAGES.put("NOT_ELIGIBLE", "Đơn đặt phòng này không đủ điều kiện để thực hiện yêu cầu.");
+        ERROR_MESSAGES.put("ROOM_TAKEN",
+                "Phòng bạn đang ở đã có khách khác đặt ngay sau ngày trả phòng hiện tại nên không thể gia hạn.");
         ERROR_MESSAGES.put("MSG55", "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.");
     }
 
