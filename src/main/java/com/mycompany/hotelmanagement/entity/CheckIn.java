@@ -14,6 +14,7 @@ public class CheckIn {
     private int receptionistId;
     private String specialRequest;
     private String notes;
+    private String imageUrl;
     private java.sql.Timestamp checkedInAt;
 
     public int getCheckInId() {
@@ -54,6 +55,14 @@ public class CheckIn {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public Timestamp getCheckedInAt() {

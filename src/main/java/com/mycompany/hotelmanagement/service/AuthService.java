@@ -20,6 +20,13 @@ public class AuthService {
     private final PasswordResetDAO passwordResetRepository = new PasswordResetDAO();
     private static final SecureRandom random = new SecureRandom();
 
+    /**
+     * Xác thực thông tin tài khoản và mật khẩu nhập vào qua mã hóa BCrypt.
+     * 
+     * @param username Tên đăng nhập / Email
+     * @param password Mật khẩu
+     * @return Đối tượng Account nếu hợp lệ, ngược lại trả về null
+     */
     public Account authenticate(String username, String password) {
         if (username == null || password == null) {
             return null;
@@ -35,6 +42,14 @@ public class AuthService {
         return null;
     }
 
+    /**
+     * Thực hiện logic đăng nhập hệ thống cho người dùng.
+     * Kiểm tra thông tin trong CSDL, kiểm tra trạng thái kích hoạt, xác định vai trò và URL điều hướng.
+     * 
+     * @param username Tên đăng nhập / Email
+     * @param password Mật khẩu
+     * @return Đối tượng LoginResult chứa kết quả đăng nhập, vai trò và đường dẫn điều hướng
+     */
     public LoginResult login(String username, String password) {
         if (username != null) {
             username = username.trim();
@@ -95,7 +110,7 @@ public class AuthService {
             if ("admin".equalsIgnoreCase(username) && "admin123".equals(password)) {
                 role = "ADMIN";
                 redirectUrl = "/admin/dashboard";
-                displayName = "Admin User";
+                displayName = "Quản trị viên";
                 Account mockAcc = accountRepository.getAccountByEmail("admin@hotel.com");
                 if (mockAcc != null) {
                     emailVal = mockAcc.getEmail();
@@ -107,7 +122,7 @@ public class AuthService {
             } else if ("customer".equalsIgnoreCase(username) && "customer123".equals(password)) {
                 role = "CUSTOMER";
                 redirectUrl = "/home";
-                displayName = "Customer User";
+                displayName = "Khách hàng";
                 Account mockAcc = accountRepository.getAccountByEmail("customer@hotel.com");
                 if (mockAcc != null) {
                     emailVal = mockAcc.getEmail();
@@ -126,6 +141,13 @@ public class AuthService {
         }
     }
 
+    /**
+     * Xử lý đăng nhập hoặc đăng ký tự động cho tài khoản xác thực qua Google OAuth2.
+     * 
+     * @param email Email nhận từ Google API
+     * @param name Họ tên nhận từ Google API
+     * @return Đối tượng LoginResult chứa thông tin phiên đăng nhập
+     */
     public LoginResult loginOrRegisterGoogle(String email, String name) {
         if (email != null) email = email.trim();
         if (name != null) name = name.trim();
@@ -201,6 +223,17 @@ public class AuthService {
         }
     }
 
+    /**
+     * Xử lý đăng ký tài khoản khách hàng mới.
+     * Validate định dạng email, sĐT, độ phức tạp mật khẩu, kiểm tra trùng lặp và lưu vào CSDL.
+     * 
+     * @param fullName Họ tên
+     * @param email Email
+     * @param phone Số điện thoại
+     * @param password Mật khẩu
+     * @param confirmPassword Mật khẩu nhập lại
+     * @return Chuỗi mã kết quả ("success", "invalid_email", "invalid_phone", "password_too_short",...)
+     */
     public String register(String fullName, String email, String phone, String password, String confirmPassword) {
         if (fullName != null) fullName = fullName.trim();
         if (email != null) email = email.trim();
@@ -260,6 +293,13 @@ public class AuthService {
         return success ? "success" : "server_error";
     }
 
+    /**
+     * Yêu cầu khôi phục mật khẩu qua Email.
+     * Sinh mã OTP 6 chữ số ngẫu nhiên, lưu thời gian hết hạn (10 phút) vào CSDL và gửi email cho người dùng.
+     * 
+     * @param email Email yêu cầu khôi phục mật khẩu
+     * @return Chuỗi mã kết quả ("success", "invalid_input", "email_not_found",...)
+     */
     public String requestPasswordReset(String email) {
         if (email != null) {
             email = email.trim();
@@ -312,6 +352,15 @@ public class AuthService {
         return "success";
     }
 
+    /**
+     * Xác thực mã OTP và tiến hành đặt lại mật khẩu mới cho người dùng.
+     * 
+     * @param email Email tài khoản
+     * @param otp Mã OTP nhập từ giao diện
+     * @param newPassword Mật khẩu mới
+     * @param confirmPassword Mật khẩu mới nhập lại
+     * @return Chuỗi mã kết quả ("success", "invalid_otp", "invalid_password",...)
+     */
     public String resetPassword(String email, String otp, String newPassword, String confirmPassword) {
         if (email != null) email = email.trim();
         if (otp != null) otp = otp.trim();

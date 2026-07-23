@@ -89,7 +89,7 @@ public class CheckOutDAO {
                 + "  b.total_amount AS booking_room_charge, "
                 + "  i.invoice_id, "
                 + "  ISNULL((SELECT SUM(amount) FROM dbo.InvoiceItem WHERE invoice_id = i.invoice_id AND item_type = N'Service'), 0) AS service_charge, "
-                + "  ISNULL((SELECT SUM(amount) FROM dbo.InvoiceItem WHERE invoice_id = i.invoice_id AND item_type = N'Surcharge'), 0) AS extra_charge, "
+                + "  ISNULL((SELECT TOP 1 extra_fee FROM dbo.CheckIn ci WHERE ci.booking_id = b.booking_id), 0) AS extra_charge, "
                 + "  (ISNULL((SELECT SUM(amount) FROM dbo.Payment WHERE invoice_id = i.invoice_id), 0) + ISNULL((SELECT SUM(amount) FROM dbo.Payment WHERE booking_id = b.booking_id), 0)) AS amount_paid "
                 + "FROM dbo.Booking b "
                 + "LEFT JOIN dbo.RoomType rt ON b.room_type_id = rt.type_id "

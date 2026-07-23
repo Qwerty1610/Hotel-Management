@@ -1678,3 +1678,26 @@ function beforeWalkInSubmit(mode, event) {
 
     return true;
 }
+function filterStatus(status, button) {
+console.log(document.querySelectorAll("tbody .checkin-row").length);
+    document.querySelectorAll(".status-tab")
+            .forEach(btn => btn.classList.remove("active"));
+
+    button.classList.add("active");
+
+    document.querySelectorAll(".checkin-row")
+            .forEach(row => {
+
+        if (status === "All"
+                || row.dataset.status === status) {
+
+            row.style.display = "";
+
+        } else {
+
+            row.style.display = "none";
+
+        }
+
+    });
+}

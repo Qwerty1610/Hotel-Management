@@ -217,12 +217,12 @@
                                        value="${configs['smtp.password']}" required />
                             </div>
                             <div class="form-group-settings">
-                                <label for="smtpHost">SMTP Host Address</label>
+                                <label for="smtpHost">Địa chỉ máy chủ SMTP (Host)</label>
                                 <input type="text" id="smtpHost" name="smtpHost" 
                                        value="${configs['smtp.host']}" required />
                             </div>
                             <div class="form-group-settings">
-                                <label for="smtpPort">SMTP Port</label>
+                                <label for="smtpPort">Cổng kết nối SMTP (Port)</label>
                                 <input type="text" id="smtpPort" name="smtpPort" 
                                        value="${configs['smtp.port']}" required />
                             </div>
