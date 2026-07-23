@@ -12,8 +12,8 @@ import com.mycompany.hotelmanagement.entity.Promotion;
  * Description:
  * Tầng nghiệp vụ quản lý khuyến mãi. Cung cấp các phương thức lấy toàn
  * bộ danh sách, lấy theo ID, kiểm tra trùng mã khuyến mãi, lưu (thêm mới
- * hoặc cập nhật), bật/tắt trạng thái và xóa khuyến mãi. Xóa chỉ cho phép
- * khi UsedCount = 0. Ủy quyền thao tác dữ liệu cho PromotionDAO.
+ * hoặc cập nhật), bật/tắt trạng thái và xóa khuyến mãi. Ủy quyền thao tác
+ * dữ liệu cho PromotionDAO.
  *
  * Related Use Cases:
  * - UC-46 View Promotions
@@ -75,9 +75,10 @@ public class PromotionService {
     }
 
     /**
-     * Xóa khuyến mãi. Chỉ cho phép nếu chưa được sử dụng (UsedCount = 0).
+     * Xóa khuyến mãi. Cho phép xóa kể cả khi đã được sử dụng.
+     * Booking cũ đã áp mã vẫn giữ nguyên số tiền giảm.
      *
-     * @return true nếu xóa thành công, false nếu đã được sử dụng
+     * @return true nếu xóa thành công, false nếu có lỗi
      */
     public boolean deletePromotion(int promotionId) {
         return promotionRepository.deletePromotion(promotionId);

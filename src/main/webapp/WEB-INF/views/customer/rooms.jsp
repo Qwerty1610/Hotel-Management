@@ -164,6 +164,7 @@
 
                     [minInput, maxInput].forEach(function (input) {
                         input.addEventListener('input', function () {
+                            this.setCustomValidity('');
                             if (this.value !== '' && parseFloat(this.value) < 0) {
                                 this.value = 0;
                             }
@@ -171,21 +172,32 @@
                     });
 
                     form.addEventListener('submit', function (e) {
-                        var min = parseFloat(minInput.value);
-                        var max = parseFloat(maxInput.value);
+                        minInput.setCustomValidity('');
+                        maxInput.setCustomValidity('');
 
-                        if (minInput.value !== '' && min < 0) {
+                        var minVal = minInput.value.trim();
+                        var maxVal = maxInput.value.trim();
+                        var min = parseFloat(minVal);
+                        var max = parseFloat(maxVal);
+
+                        if (minVal !== '' && min < 0) {
                             e.preventDefault();
                             minInput.value = 0;
-                            minInput.focus();
-                            alert('Giá tối thiểu phải lớn hơn hoặc bằng 0.');
+                            minInput.setCustomValidity('Giá tối thiểu phải lớn hơn hoặc bằng 0.');
+                            minInput.reportValidity();
                             return;
                         }
-                        if (maxInput.value !== '' && max < 0) {
+                        if (maxVal !== '' && max < 0) {
                             e.preventDefault();
                             maxInput.value = 0;
-                            maxInput.focus();
-                            alert('Giá tối đa phải lớn hơn hoặc bằng 0.');
+                            maxInput.setCustomValidity('Giá tối đa phải lớn hơn hoặc bằng 0.');
+                            maxInput.reportValidity();
+                            return;
+                        }
+                        if (minVal !== '' && maxVal !== '' && !isNaN(min) && !isNaN(max) && min > max) {
+                            e.preventDefault();
+                            minInput.setCustomValidity('Giá tối thiểu không được lớn hơn giá tối đa.');
+                            minInput.reportValidity();
                             return;
                         }
                     });
@@ -257,8 +269,16 @@
                     <%-- No Rooms Found --%>
                     <div class="no-results">
                         <i class="fa-solid fa-bed-pulse"></i>
-                        <h3>Không tìm thấy phòng phù hợp</h3>
-                        <p>Vui lòng thử lại với các bộ lọc giá hoặc số khách khác.</p>
+                        <c:choose>
+                            <c:when test="${not empty priceError}">
+                                <h3 style="color: #dc3545;">${priceError}</h3>
+                                <p>Vui lòng điều chỉnh lại bộ lọc để giá tối thiểu nhỏ hơn hoặc bằng giá tối đa.</p>
+                            </c:when>
+                            <c:otherwise>
+                                <h3>Không tìm thấy phòng phù hợp</h3>
+                                <p>Vui lòng thử lại với các bộ lọc giá hoặc số khách khác.</p>
+                            </c:otherwise>
+                        </c:choose>
                         <a href="${pageContext.request.contextPath}/rooms" class="btn-search" style="text-decoration: none; margin-top: 12px; display: inline-block;">
                             Xem tất cả phòng
                         </a>

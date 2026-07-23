@@ -75,7 +75,17 @@ public class RoomsController extends HttpServlet {
 
         // 2. Fetch data from Service
         List<RoomTypeInfo> allRoomTypes = roomTypeService.getAllRoomTypes();
-        List<RoomTypeInfo> filteredRoomTypes = roomTypeService.getFilteredRoomTypes(typeFilter, guestsFilter, minPriceFilter, maxPriceFilter);
+        
+        boolean hasMinPrice = minPriceParam != null && !minPriceParam.trim().isEmpty();
+        boolean hasMaxPrice = maxPriceParam != null && !maxPriceParam.trim().isEmpty() && !"Không giới hạn".equalsIgnoreCase(maxPriceParam);
+
+        List<RoomTypeInfo> filteredRoomTypes;
+        if (hasMinPrice && hasMaxPrice && minPriceFilter > maxPriceFilter) {
+            request.setAttribute("priceError", "Giá tối thiểu không được lớn hơn giá tối đa.");
+            filteredRoomTypes = java.util.Collections.emptyList();
+        } else {
+            filteredRoomTypes = roomTypeService.getFilteredRoomTypes(typeFilter, guestsFilter, minPriceFilter, maxPriceFilter);
+        }
 
         // Set attributes for view rendering
         request.setAttribute("roomTypes", filteredRoomTypes);

@@ -38,6 +38,11 @@ public class RoomInfo implements Serializable {
     private String bedType;
     private String area;
 
+    private String operationalStatus;
+    private String displayStatus;
+    private boolean currentlyOccupied;
+    private boolean hasActiveOrFutureBooking;
+
     public RoomInfo() {
     }
 
@@ -46,6 +51,7 @@ public class RoomInfo implements Serializable {
         this.roomNumber = roomNumber;
         this.typeId = typeId;
         this.status = status;
+        this.operationalStatus = status;
         this.floor = floor;
     }
 
@@ -74,11 +80,49 @@ public class RoomInfo implements Serializable {
     }
 
     public String getStatus() {
-        return status;
+        return status != null ? status : operationalStatus;
     }
 
     public void setStatus(String status) {
         this.status = status;
+        if (this.operationalStatus == null) {
+            this.operationalStatus = status;
+        }
+    }
+
+    public String getOperationalStatus() {
+        return operationalStatus != null ? operationalStatus : status;
+    }
+
+    public void setOperationalStatus(String operationalStatus) {
+        this.operationalStatus = operationalStatus;
+        if (this.status == null) {
+            this.status = operationalStatus;
+        }
+    }
+
+    public String getDisplayStatus() {
+        return displayStatus != null ? displayStatus : getOperationalStatus();
+    }
+
+    public void setDisplayStatus(String displayStatus) {
+        this.displayStatus = displayStatus;
+    }
+
+    public boolean isCurrentlyOccupied() {
+        return currentlyOccupied;
+    }
+
+    public void setCurrentlyOccupied(boolean currentlyOccupied) {
+        this.currentlyOccupied = currentlyOccupied;
+    }
+
+    public boolean isHasActiveOrFutureBooking() {
+        return hasActiveOrFutureBooking;
+    }
+
+    public void setHasActiveOrFutureBooking(boolean hasActiveOrFutureBooking) {
+        this.hasActiveOrFutureBooking = hasActiveOrFutureBooking;
     }
 
     public String getFloor() {

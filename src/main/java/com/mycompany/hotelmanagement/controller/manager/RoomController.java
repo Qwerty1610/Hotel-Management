@@ -1,6 +1,9 @@
 package com.mycompany.hotelmanagement.controller.manager;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -21,8 +24,8 @@ import com.mycompany.hotelmanagement.service.RoomTypeService;
  * Controller quản lý danh sách phòng cho Hotel Manager, xử lý hiển thị danh
  * sách phòng kèm loại phòng, thêm mới, chỉnh sửa, xóa và cập nhật trạng thái
  * phòng. Class kiểm tra dữ liệu đầu vào, xử lý kết quả trùng số phòng,
- * điều hướng về trang quản lý và ủy quyền nghiệp vụ cho RoomService và
- * RoomTypeService.
+ * tính trạng thái phòng theo ngày chọn (selectedDate), ngăn chặn sửa trạng thái
+ * khi phòng đang có khách thực sự và điều hướng về trang quản lý.
  *
  * Related Use Cases:
  * - UC-56 View Room List
@@ -44,6 +47,21 @@ public class RoomController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        String selectedDateParam = request.getParameter("selectedDate");
+        LocalDate selectedDate;
+        try {
+            if (selectedDateParam != null && !selectedDateParam.trim().isEmpty()) {
+                selectedDate = LocalDate.parse(selectedDateParam.trim());
+            } else {
+                selectedDate = LocalDate.now();
+            }
+        } catch (DateTimeParseException e) {
+            selectedDate = LocalDate.now();
+        }
+
+        String selectedDateStr = selectedDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
+        String selectedDateFormatted = selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
         String action = request.getParameter("action");
         String idParam = request.getParameter("id");
         int roomId = -1;
@@ -52,30 +70,42 @@ public class RoomController extends HttpServlet {
                 roomId = Integer.parseInt(idParam.trim());
             }
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/manager/rooms");
+            response.sendRedirect(request.getContextPath() + "/manager/rooms?selectedDate=" + selectedDateStr);
             return;
         }
 
         if ("delete".equalsIgnoreCase(action) && roomId != -1) {
-            boolean deleted = roomService.deleteRoom(roomId);
-            if (!deleted) {
-                response.sendRedirect(request.getContextPath() + "/manager/rooms?error=deleteError");
+            String delResult = roomService.deleteRoomResult(roomId);
+            if ("roomHasActiveOrFutureBooking".equals(delResult)) {
+                response.sendRedirect(request.getContextPath() + "/manager/rooms?selectedDate=" + selectedDateStr + "&error=roomHasActiveOrFutureBooking");
+                return;
+            } else if (!"success".equals(delResult)) {
+                response.sendRedirect(request.getContextPath() + "/manager/rooms?selectedDate=" + selectedDateStr + "&error=deleteError");
                 return;
             }
-            response.sendRedirect(request.getContextPath() + "/manager/rooms?success=deleted");
+            response.sendRedirect(request.getContextPath() + "/manager/rooms?selectedDate=" + selectedDateStr + "&success=deleted");
             return;
         } else if ("updateStatus".equalsIgnoreCase(action) && roomId != -1) {
             String status = request.getParameter("status");
             if (status != null && !status.trim().isEmpty()) {
-                roomService.updateRoomStatus(roomId, status.trim());
+                String result = roomService.updateRoomStatus(roomId, status.trim());
+                if ("roomCurrentlyOccupied".equals(result)) {
+                    response.sendRedirect(request.getContextPath() + "/manager/rooms?selectedDate=" + selectedDateStr + "&error=roomCurrentlyOccupied");
+                    return;
+                } else if ("invalidStatus".equals(result)) {
+                    response.sendRedirect(request.getContextPath() + "/manager/rooms?selectedDate=" + selectedDateStr + "&error=invalidStatus");
+                    return;
+                }
             }
-            response.sendRedirect(request.getContextPath() + "/manager/rooms?success=saved");
+            response.sendRedirect(request.getContextPath() + "/manager/rooms?selectedDate=" + selectedDateStr + "&success=saved");
             return;
         }
 
-        List<RoomInfo> roomsList = roomService.getAllRooms();
+        List<RoomInfo> roomsList = roomService.getRoomsByDate(selectedDate);
         List<RoomTypeInfo> roomTypesList = roomTypeService.getAllRoomTypes();
 
+        request.setAttribute("selectedDate", selectedDateStr);
+        request.setAttribute("selectedDateFormatted", selectedDateFormatted);
         request.setAttribute("roomsList", roomsList);
         request.setAttribute("roomTypesList", roomTypesList);
         request.getRequestDispatcher("/WEB-INF/views/manager/rooms-list.jsp").forward(request, response);
@@ -84,6 +114,11 @@ public class RoomController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
+        String selectedDateParam = request.getParameter("selectedDate");
+        String dateQuery = (selectedDateParam != null && !selectedDateParam.trim().isEmpty())
+                ? "?selectedDate=" + selectedDateParam.trim()
+                : "?selectedDate=" + LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
 
         String action = request.getParameter("action");
         if ("save".equalsIgnoreCase(action)) {
@@ -114,6 +149,7 @@ public class RoomController extends HttpServlet {
             room.setFloor(floor);
             room.setTypeId(typeId);
             room.setStatus(status);
+            room.setOperationalStatus(status);
 
             if (roomIdParam != null && !roomIdParam.trim().isEmpty()) {
                 try {
@@ -126,14 +162,20 @@ public class RoomController extends HttpServlet {
 
             String result = roomService.saveRoom(room);
             if ("duplicateNumber".equals(result)) {
-                response.sendRedirect(request.getContextPath() + "/manager/rooms?error=duplicateNumber");
+                response.sendRedirect(request.getContextPath() + "/manager/rooms" + dateQuery + "&error=duplicateNumber");
+                return;
+            } else if ("roomCurrentlyOccupied".equals(result)) {
+                response.sendRedirect(request.getContextPath() + "/manager/rooms" + dateQuery + "&error=roomCurrentlyOccupied");
+                return;
+            } else if ("invalidStatus".equals(result)) {
+                response.sendRedirect(request.getContextPath() + "/manager/rooms" + dateQuery + "&error=invalidStatus");
                 return;
             } else if ("error".equals(result)) {
-                response.sendRedirect(request.getContextPath() + "/manager/rooms?error=saveError");
+                response.sendRedirect(request.getContextPath() + "/manager/rooms" + dateQuery + "&error=saveError");
                 return;
             }
         }
 
-        response.sendRedirect(request.getContextPath() + "/manager/rooms?success=saved");
+        response.sendRedirect(request.getContextPath() + "/manager/rooms" + dateQuery + "&success=saved");
     }
 }
