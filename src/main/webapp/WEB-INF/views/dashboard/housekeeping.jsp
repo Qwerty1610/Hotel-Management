@@ -80,15 +80,140 @@
                 <c:if test="${param.tab == null || param.tab == 'overview'}">
                     <div class="content-header-row">
                         <div>
-                            <h1>Housekeeping Overview</h1>
-                            <p>Quản lý tình trạng phòng và công việc dọn dẹp hiện tại.</p>
+                            <h1>Tổng quan công việc</h1>
+                            <p>Danh sách yêu cầu khách hàng được phân công cho bạn.</p>
                         </div>
                     </div>
+                    <!-- ===== ROOM STATUS SUMMARY ===== -->
                     <div class="hk-stat-grid">
-                        <div class="hk-card"><h3>Cleaning / Refilling</h3><span>${cleaningCount}</span></div>
-                        <div class="hk-card"><h3>Maintenance</h3><span>${maintenanceCount}</span></div>
-                        <div class="hk-card"><h3>Available</h3><span>${availableCount}</span></div>
-                        <div class="hk-card"><h3>Out of Service</h3><span>${outOfServiceCount}</span></div>
+                        <div class="hk-card">
+                            <h3>Dọn phòng / Bổ sung vật dụng</h3>
+                            <span>${cleaningCount}</span>
+                        </div>
+                        <div class="hk-card">
+                            <h3>Bảo trì</h3>
+                            <span>${maintenanceCount}</span>
+                        </div>
+                        <div class="hk-card">
+                            <h3>Phòng trống</h3>
+                            <span>${availableCount}</span>
+                        </div>
+                        <div class="hk-card">
+                            <h3>Ngừng hoạt động</h3>
+                            <span>${outOfServiceCount}</span>
+                        </div>
+                    </div>
+                    <!-- ===== CUSTOMER REQUEST TABLE ===== -->
+                    <div class="customer-request-wrapper">
+                        <h2>Công việc được giao</h2>
+                        <table class="customer-request-table">
+                            <thead>
+                                <tr>
+                                    <th>Số phòng</th>
+                                    <th>Yêu cầu</th>
+                                    <th>Mô tả</th>
+                                    <th>Ưu tiên</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <c:choose>
+                                    <c:when test="${not empty customerRequests}">
+                                        <c:forEach var="req" items="${customerRequests}">
+                                            <tr>
+                                                <td>
+                                                    ${req.roomNumber}
+                                                </td>
+                                                <td>
+                                                    ${req.title}
+                                                </td>
+                                                <td>
+                                                    ${req.description}
+                                                </td>
+                                                <td>
+                                                    <span class="priority-badge priority-${fn:toLowerCase(req.priority)}">
+                                                        <c:choose>
+                                                            <c:when test="${req.priority == 'Low'}">
+                                                                Thấp
+                                                            </c:when>
+                                                            <c:when test="${req.priority == 'Medium'}">
+                                                                Trung bình
+                                                            </c:when>
+                                                            <c:when test="${req.priority == 'High'}">
+                                                                Cao
+                                                            </c:when>
+                                                            <c:when test="${req.priority == 'Urgent'}">
+                                                                Khẩn cấp
+                                                            </c:when>
+                                                        </c:choose>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="status-badge status-${fn:toLowerCase(req.status)}">
+                                                        <c:choose>
+                                                            <c:when test="${req.status == 'Pending'}">
+                                                                Chờ xử lý
+                                                            </c:when>
+                                                            <c:when test="${req.status == 'InProgress'}">
+                                                                Đang thực hiện
+                                                            </c:when>
+                                                            <c:when test="${req.status == 'Completed'}">
+                                                                Hoàn thành
+                                                            </c:when>
+                                                            <c:when test="${req.status == 'Cancelled'}">
+                                                                Đã hủy
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                ${req.status}
+                                                            </c:otherwise>
+                                                        </c:choose>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <c:choose>
+                                                        <c:when test="${req.status == 'InProgress'}">
+                                                            <form method="post"
+                                                                  action="${pageContext.request.contextPath}/housekeeping/dashboard">
+                                                                <input type="hidden"
+                                                                       name="action"
+                                                                       value="completeRequest">
+                                                                <input type="hidden"
+                                                                       name="requestId"
+                                                                       value="${req.requestId}">
+                                                                <button type="submit"
+                                                                        class="btn-complete-request">
+                                                                    Hoàn thành công việc
+                                                                </button>
+                                                            </form>
+                                                        </c:when>
+                                                        <c:when test="${req.status == 'Completed'}">
+                                                            <button class="btn-request-completed"
+                                                                    disabled>
+                                                                Đã hoàn thành
+                                                            </button>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <button disabled>
+                                                                ${req.status}
+                                                            </button>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </td>
+                                            </tr>
+                                        </c:forEach>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <tr>
+                                            <td colspan="6"
+                                                style="text-align:center;">
+                                                Không có công việc được giao
+                                            </td>
+                                        </tr>
+                                    </c:otherwise>
+                                </c:choose>
+                            </tbody>
+                        </table>
                     </div>
                 </c:if>
 
@@ -98,27 +223,27 @@
                         <span class="filter-title">BỘ LỌC NHANH:</span>
                         <button class="btn-filter active" data-status="ALL"
                                 onclick="applyStatusFilter('ALL', event)">
-                            ALL
+                            TẤT CẢ
                         </button>
 
                         <button class="btn-filter" data-status="OutOfService"
                                 onclick="applyStatusFilter('OutOfService', event)">
-                            OUT OF SERVICE
+                            NGỪNG HOẠT ĐỘNG
                         </button>
 
                         <button class="btn-filter" data-status="Available"
                                 onclick="applyStatusFilter('Available', event)">
-                            AVAILABLE
+                            TRỐNG
                         </button>
 
                         <button class="btn-filter" data-status="Cleaning"
                                 onclick="applyStatusFilter('Cleaning', event)">
-                            CLEANING / REFILLING
+                            DỌN PHÒNG / BỔ SUNG
                         </button>
 
                         <button class="btn-filter" data-status="Maintenance"
                                 onclick="applyStatusFilter('Maintenance', event)">
-                            MAINTENANCE
+                            BẢO TRÌ
                         </button>
                     </div>
 

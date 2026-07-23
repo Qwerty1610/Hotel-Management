@@ -567,159 +567,159 @@
 
                             <input type="hidden" name="tab" value="roommap" />
 
-                        <c:if test="${not empty dateWarning}">
-                            <div class="alert-banner alert-warning" style="margin-bottom: 16px; background-color: #fffbebf5; border: 1px solid #fde68a; color: #b45309; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-triangle-exclamation"></i> ${dateWarning}
-                            </div>
-                        </c:if>
-
-                        <div class="roommap-filter-row">
-
-                            <div class="form-group">
-                                <label>Từ ngày</label>
-                                <input type="date" name="fromDate"
-                                       value="${fromDate}" class="walkin-input">
-                            </div>
-
-                            <div class="form-group">
-                                <label>Đến ngày</label>
-                                <input type="date" name="toDate"
-                                       value="${toDate}" class="walkin-input">
-                            </div>
-
-                            <button type="submit" class="btn-roommap-search">
-                                <i class="fa-solid fa-magnifying-glass"></i>
-                                Kiểm tra phòng
-                            </button>
-
-                        </div>
-                    </form>
-                    <form method="get"
-                          action="${pageContext.request.contextPath}/receptionist/dashboard">
-
-                        <input type="hidden" name="tab" value="roommap" />
-
-                        <input type="hidden" name="fromDate"
-                               value="${fromDate}" />
-
-                        <input type="hidden" name="toDate" value="${toDate}" />
-
-                        <div class="status-tabs">
-
-                            <button type="submit" name="status" value="All"
-                                    class="status-tab ${currentStatus eq 'All' ? 'active' : ''}">
-                                Tất cả
-                            </button>
-
-                            <button type="submit" name="status"
-                                    value="Available"
-                                    class="status-tab ${currentStatus eq 'Available' ? 'active' : ''}">
-                                Trống
-                            </button>
-
-                            <button type="submit" name="status" value="Confirmed"
-                                    class="status-tab ${currentStatus eq 'Confirmed' ? 'active' : ''}">
-                                Đã đặt
-                            </button>
-
-                            <button type="submit" name="status" value="Occupied"
-                                    class="status-tab ${currentStatus eq 'Occupied' ? 'active' : ''}">
-                                Đang sử dụng
-                            </button>
-
-                            <button type="submit" name="status" value="Cleaning"
-                                    class="status-tab ${currentStatus eq 'Cleaning' ? 'active' : ''}">
-                                Đang dọn
-                            </button>
-
-                            <button type="submit" name="status" value="Refilling"
-                                    class="status-tab ${currentStatus eq 'Refilling' ? 'active' : ''}">
-                                Đang bổ sung vật dụng
-                            </button>
-
-                            <button type="submit" name="status"
-                                    value="Maintenance"
-                                    class="status-tab ${currentStatus eq 'Maintenance' ? 'active' : ''}">
-                                Bảo trì
-                            </button>
-
-                            <button type="submit" name="status" value="OutOfService"
-                                    class="status-tab ${currentStatus eq 'OutOfService' ? 'active' : ''}">
-                                Ngừng hoạt động
-                            </button>
-                        </div>
-                    </form>
-
-                    <!-- ROOM MAP -->
-                    <div class="roommap-container">
-
-                        <c:choose>
-
-                            <c:when test="${empty roomByFloor}">
-                                <div class="empty-state">
-                                    <i class="fa-solid fa-door-closed"></i>
-                                    <p>Không có phòng nào</p>
+                            <c:if test="${not empty dateWarning}">
+                                <div class="alert-banner alert-warning" style="margin-bottom: 16px; background-color: #fffbebf5; border: 1px solid #fde68a; color: #b45309; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> ${dateWarning}
                                 </div>
-                            </c:when>
+                            </c:if>
 
-                            <c:otherwise>
+                            <div class="roommap-filter-row">
 
-                                <c:forEach var="entry" items="${roomByFloor}">
+                                <div class="form-group">
+                                    <label>Từ ngày</label>
+                                    <input type="date" name="fromDate"
+                                           value="${fromDate}" class="walkin-input">
+                                </div>
 
-                                    <div class="floor-block">
+                                <div class="form-group">
+                                    <label>Đến ngày</label>
+                                    <input type="date" name="toDate"
+                                           value="${toDate}" class="walkin-input">
+                                </div>
 
-                                        <div class="floor-title">
-                                            <div class="floor-name">
-                                                ${entry.key}
+                                <button type="submit" class="btn-roommap-search">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                    Kiểm tra phòng
+                                </button>
+
+                            </div>
+                        </form>
+                        <form method="get"
+                              action="${pageContext.request.contextPath}/receptionist/dashboard">
+
+                            <input type="hidden" name="tab" value="roommap" />
+
+                            <input type="hidden" name="fromDate"
+                                   value="${fromDate}" />
+
+                            <input type="hidden" name="toDate" value="${toDate}" />
+
+                            <div class="status-tabs">
+
+                                <button type="submit" name="status" value="All"
+                                        class="status-tab ${currentStatus eq 'All' ? 'active' : ''}">
+                                    Tất cả
+                                </button>
+
+                                <button type="submit" name="status"
+                                        value="Available"
+                                        class="status-tab ${currentStatus eq 'Available' ? 'active' : ''}">
+                                    Trống
+                                </button>
+
+                                <button type="submit" name="status" value="Confirmed"
+                                        class="status-tab ${currentStatus eq 'Confirmed' ? 'active' : ''}">
+                                    Đã đặt
+                                </button>
+
+                                <button type="submit" name="status" value="Occupied"
+                                        class="status-tab ${currentStatus eq 'Occupied' ? 'active' : ''}">
+                                    Đang sử dụng
+                                </button>
+
+                                <button type="submit" name="status" value="Cleaning"
+                                        class="status-tab ${currentStatus eq 'Cleaning' ? 'active' : ''}">
+                                    Đang dọn
+                                </button>
+
+                                <button type="submit" name="status" value="Refilling"
+                                        class="status-tab ${currentStatus eq 'Refilling' ? 'active' : ''}">
+                                    Đang bổ sung vật dụng
+                                </button>
+
+                                <button type="submit" name="status"
+                                        value="Maintenance"
+                                        class="status-tab ${currentStatus eq 'Maintenance' ? 'active' : ''}">
+                                    Bảo trì
+                                </button>
+
+                                <button type="submit" name="status" value="OutOfService"
+                                        class="status-tab ${currentStatus eq 'OutOfService' ? 'active' : ''}">
+                                    Ngừng hoạt động
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- ROOM MAP -->
+                        <div class="roommap-container">
+
+                            <c:choose>
+
+                                <c:when test="${empty roomByFloor}">
+                                    <div class="empty-state">
+                                        <i class="fa-solid fa-door-closed"></i>
+                                        <p>Không có phòng nào</p>
+                                    </div>
+                                </c:when>
+
+                                <c:otherwise>
+
+                                    <c:forEach var="entry" items="${roomByFloor}">
+
+                                        <div class="floor-block">
+
+                                            <div class="floor-title">
+                                                <div class="floor-name">
+                                                    ${entry.key}
+                                                </div>
+                                                <div class="floor-room-count">
+                                                    ${fn:length(entry.value)} phòng
+                                                </div>
                                             </div>
-                                            <div class="floor-room-count">
-                                                ${fn:length(entry.value)} phòng
-                                            </div>
-                                        </div>
 
-                                        <div class="room-grid">
+                                            <div class="room-grid">
 
-                                            <c:forEach var="room"
-                                                       items="${entry.value}">
-
-                                                <div
-                                                    class="room-card status-${room.displayStatus}">
+                                                <c:forEach var="room"
+                                                           items="${entry.value}">
 
                                                     <div
-                                                        class="room-card-header">
+                                                        class="room-card status-${room.displayStatus}">
+
                                                         <div
-                                                            class="room-number">
-                                                            ${room.roomNumber}
+                                                            class="room-card-header">
+                                                            <div
+                                                                class="room-number">
+                                                                ${room.roomNumber}
+                                                            </div>
+                                                            <div class="room-floor">
+                                                                ${room.typeName}
+                                                            </div>
                                                         </div>
-                                                        <div class="room-floor">
-                                                            ${room.typeName}
+
+                                                        <div class="room-card-body">
+                                                            <span
+                                                                class="badge-status badge-${room.displayStatus}">
+                                                                <c:choose>
+                                                                    <c:when test="${room.displayStatus eq 'Available'}">Trống</c:when>
+                                                                    <c:when test="${room.displayStatus eq 'Confirmed'}">Đã đặt</c:when>
+                                                                    <c:when test="${room.displayStatus eq 'Occupied'}">Đang sử dụng</c:when>
+                                                                    <c:when test="${room.displayStatus eq 'Cleaning'}">Đang dọn</c:when>
+                                                                    <c:when test="${room.displayStatus eq 'Refilling'}">Đang bổ sung vật dụng</c:when>
+                                                                    <c:when test="${room.displayStatus eq 'Maintenance'}">Bảo trì</c:when>
+                                                                    <c:when test="${room.displayStatus eq 'OutOfService'}">Ngừng hoạt động</c:when>
+                                                                    <c:otherwise>${room.displayStatus}</c:otherwise>
+                                                                </c:choose>
+                                                            </span>
                                                         </div>
-                                                    </div>
 
-                                                    <div class="room-card-body">
-                                                        <span
-                                                            class="badge-status badge-${room.displayStatus}">
-                                                            <c:choose>
-                                                                <c:when test="${room.displayStatus eq 'Available'}">Trống</c:when>
-                                                                <c:when test="${room.displayStatus eq 'Confirmed'}">Đã đặt</c:when>
-                                                                <c:when test="${room.displayStatus eq 'Occupied'}">Đang sử dụng</c:when>
-                                                                <c:when test="${room.displayStatus eq 'Cleaning'}">Đang dọn</c:when>
-                                                                <c:when test="${room.displayStatus eq 'Refilling'}">Đang bổ sung vật dụng</c:when>
-                                                                <c:when test="${room.displayStatus eq 'Maintenance'}">Bảo trì</c:when>
-                                                                <c:when test="${room.displayStatus eq 'OutOfService'}">Ngừng hoạt động</c:when>
-                                                                <c:otherwise>${room.displayStatus}</c:otherwise>
-                                                            </c:choose>
-                                                        </span>
                                                     </div>
-
-                                                </div>
-                                            </c:forEach>
+                                                </c:forEach>
+                                            </div>
                                         </div>
-                                    </div>
-                                </c:forEach>
-                            </c:otherwise>
-                        </c:choose>
-                    </div>
+                                    </c:forEach>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
                     </c:if>
                     <%--=====CHECK-IN TAB (ITERATION 2/3)=====--%>
                     <c:if test="${currentTab eq 'checkin'}">
@@ -794,7 +794,6 @@
 
                             <input type="hidden" name="tab" value="checkin"/>
                             <input type="hidden" name="status" value="${currentStatus}"/>
-                            <input type="hidden" id="pageInput" name="page" value="${currentPage}"/>
 
                             <div class="table-filter-bar">
 
@@ -813,41 +812,9 @@
                                     Tìm kiếm
                                 </button>
 
-                                <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
-
-                                    <c:if test="${currentPage > 1}">
-                                        <button type="button"
-                                                class="btn-action-icon"
-                                                onclick="gotoPage(${currentPage-1})">
-                                            <i class="fa-solid fa-chevron-left"></i>
-                                        </button>
-                                    </c:if>
-
-                                    <span style="font-weight:600;">
-                                        ${currentPage}/${totalPages}
-                                    </span>
-
-                                    <c:if test="${currentPage < totalPages}">
-                                        <button type="button"
-                                                class="btn-action-icon"
-                                                onclick="gotoPage(${currentPage+1})">
-                                            <i class="fa-solid fa-chevron-right"></i>
-                                        </button>
-                                    </c:if>
-
-                                </div>
-
-
                             </div>
 
                         </form>
-
-                        <script>
-                            function gotoPage(page) {
-                                document.getElementById("pageInput").value = page;
-                                document.getElementById("searchForm").submit();
-                            }
-                        </script>
 
                         <div class="table-card">
 
@@ -958,6 +925,45 @@
                                     </c:forEach>
                                 </tbody>
                             </table>
+                            <%-- Pagination Footer --%>
+                            <div class="table-pagination-bar">
+                                <div class="pagination-info">
+                                    <c:choose>
+                                        <c:when test="${totalItems == 0}">
+                                            Không có khách chờ check-in
+                                        </c:when>
+                                        <c:otherwise>
+                                            Hiển thị ${(currentPage-1)*10+1}–${(currentPage-1)*10+fn:length(checkInList)}
+                                            trong số ${totalItems} khách
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+
+                                <div class="pagination-controls">
+
+                                    <c:if test="${currentPage > 1}">
+                                        <a class="btn-page"
+                                           href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin&page=${currentPage-1}&status=${currentStatus}&keyword=${keyword}">
+                                            <i class="fa-solid fa-chevron-left"></i>
+                                        </a>
+                                    </c:if>
+
+                                    <c:forEach begin="1" end="${totalPages}" var="p">
+                                        <a class="btn-page ${p eq currentPage ? 'active' : ''}"
+                                           href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin&page=${p}&status=${currentStatus}&keyword=${keyword}">
+                                            ${p}
+                                        </a>
+                                    </c:forEach>
+
+                                    <c:if test="${currentPage < totalPages}">
+                                        <a class="btn-page"
+                                           href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin&page=${currentPage+1}&status=${currentStatus}&keyword=${keyword}">
+                                            <i class="fa-solid fa-chevron-right"></i>
+                                        </a>
+                                    </c:if>
+
+                                </div>
+                            </div>
                         </div>
                     </c:if>
                     <%--=====WALK-IN BOOKING TAB=====--%>
