@@ -84,4 +84,8 @@ public class RequestManagementService {
     public boolean updateStatus(int requestId, String newStatus) {
         return requestDAO.updateStatus(requestId, newStatus);
     }
+
+    public boolean updatePriority(int requestId, String priority) {
+        return requestDAO.updatePriority(requestId, priority);
+    }
 }

@@ -572,6 +572,31 @@ public class MaintenanceRequestDAO {
         return false;
     }
 
+    /**
+     * Đổi mức ưu tiên yêu cầu (Manager). Không cho đổi khi yêu cầu đã Resolved.
+     */
+    public boolean updatePriority(int requestId, String priority) {
+
+        String sql = """
+        UPDATE MaintenanceRequest
+        SET priority = ?, updated_at = SYSDATETIME()
+        WHERE request_id = ? AND status <> N'Resolved'
+        """;
+
+        try (Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, priority);
+            ps.setInt(2, requestId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
     /** Cập nhật trạng thái yêu cầu (dùng cho thao tác Huỷ của Manager). */
     public boolean updateStatus(int requestId, String newStatus) {
 

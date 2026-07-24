@@ -27,6 +27,7 @@ public class Room {
     private String status;
     private String floor;
     private String imageUrl;
+    private boolean hasGuest;
 
     public Room() {
     }
@@ -92,5 +93,13 @@ public class Room {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public boolean isHasGuest() {
+        return hasGuest;
+    }
+
+    public void setHasGuest(boolean hasGuest) {
+        this.hasGuest = hasGuest;
     }
 }

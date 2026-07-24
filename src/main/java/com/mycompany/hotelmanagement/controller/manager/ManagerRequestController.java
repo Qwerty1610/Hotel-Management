@@ -92,6 +92,12 @@ public class ManagerRequestController extends HttpServlet {
                 if (isValidStatus(status)) {
                     service.updateStatus(requestId, status);
                 }
+            } else if ("priority".equalsIgnoreCase(action)) {
+                int requestId = Integer.parseInt(request.getParameter("requestId"));
+                String priority = request.getParameter("priority");
+                if (isValidPriority(priority)) {
+                    service.updatePriority(requestId, priority);
+                }
             }
         } catch (NumberFormatException e) {
             // Tham số không hợp lệ -> bỏ qua, quay lại danh sách
@@ -104,5 +110,10 @@ public class ManagerRequestController extends HttpServlet {
         return "Pending".equals(status) || "InProgress".equals(status)
                 || "Resolved".equals(status) || "Unresolvable".equals(status)
                 || "Cancelled".equals(status);
+    }
+
+    private boolean isValidPriority(String priority) {
+        return "Low".equals(priority) || "Medium".equals(priority)
+                || "High".equals(priority) || "Urgent".equals(priority);
     }
 }

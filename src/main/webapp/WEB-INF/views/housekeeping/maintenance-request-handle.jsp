@@ -227,7 +227,13 @@
                             <div class="detail-row">
                                 <label>Mức ưu tiên</label>
                                 <span class="priority-badge priority-${fn:toLowerCase(maintenance.priority)}">
-                                    ${maintenance.priority}
+                                    <c:choose>
+                                        <c:when test="${maintenance.priority == 'Urgent'}">Khẩn cấp</c:when>
+                                        <c:when test="${maintenance.priority == 'High'}">Cao</c:when>
+                                        <c:when test="${maintenance.priority == 'Medium'}">Trung bình</c:when>
+                                        <c:when test="${maintenance.priority == 'Low'}">Thấp</c:when>
+                                        <c:otherwise>${maintenance.priority}</c:otherwise>
+                                    </c:choose>
                                 </span>
                             </div>
                             <div class="detail-row">
@@ -248,7 +254,14 @@
                             </h3>
 
                             <span class="status-badge status-${fn:toLowerCase(maintenance.status)}">
-                                ${maintenance.status}
+                                <c:choose>
+                                    <c:when test="${maintenance.status == 'Pending'}">Chờ xử lý</c:when>
+                                    <c:when test="${maintenance.status == 'InProgress'}">Đang xử lý</c:when>
+                                    <c:when test="${maintenance.status == 'Resolved'}">Đã xử lý</c:when>
+                                    <c:when test="${maintenance.status == 'Unresolvable'}">Không thể xử lý</c:when>
+                                    <c:when test="${maintenance.status == 'Cancelled'}">Đã huỷ</c:when>
+                                    <c:otherwise>${maintenance.status}</c:otherwise>
+                                </c:choose>
                             </span>
                         </div>
                         <div class="detail-row">

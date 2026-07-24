@@ -32,93 +32,44 @@
                 font-weight:700;
             }
 
-            .change-room-type{
-                margin-bottom:20px;
-            }
-
-            .change-room-type:last-child{
-                margin-bottom:0;
-            }
-
-            .change-room-type-name{
-                font-size:15px;
-                font-weight:700;
-                color:#2563eb;
-                margin-bottom:10px;
-            }
-
-            .change-room-grid{
-                display:flex;
-                flex-wrap:wrap;
-                gap:12px;
-            }
-
-            .change-room-item{
-                flex:0 0 auto;
-            }
-
-            .change-room-item input{
-                display:none;
-            }
-
-            .change-room-card{
-
-                width:110px;
-                height:68px;
-
-                border:2px solid #dbe3ee;
-                border-radius:10px;
-
-                display:flex;
-                flex-direction:column;
-                justify-content:center;
-                align-items:center;
-
-                background:#fff;
-
-                transition:.2s;
-            }
-
-            .change-room-card:hover{
-                border-color:#3b82f6;
-            }
-
-            .change-room-item input:checked + .change-room-card{
-                border-color:#2563eb;
-                background:#eff6ff;
-                box-shadow:0 0 0 3px rgba(37,99,235,.15);
-            }
-
-            .change-room-no{
-                font-size:19px;
-                font-weight:700;
-                color:#111827;
-                line-height:1;
-            }
-
-            .change-room-roomtype{
-                margin-top:6px;
-                font-size:12px;
-                color:#64748b;
-            }
-            .room-error-msg{
-                display:inline-block;
+            .change-room-table{
+                width:100%;
+                border-collapse:collapse;
                 font-size:13px;
-                color:#dc2626;
-                background:#fef2f2;
-                border:1px solid #fecaca;
-                padding:4px 10px;
-                border-radius:20px;
-
-                opacity:0;
-                visibility:hidden;
-
-                transition:.3s;
             }
 
-            .room-error-msg.show{
-                opacity:1;
-                visibility:visible;
+            .change-room-table th{
+                text-align:left;
+                padding:8px 12px;
+                background:#f8fafc;
+                border-bottom:2px solid var(--border-color);
+                font-weight:700;
+                color:var(--text-navy);
+            }
+
+            .change-room-table td{
+                padding:10px 12px;
+                border-bottom:1px solid #f1f5f9;
+            }
+
+            .change-room-table .room-row{
+                cursor:pointer;
+                transition:background .15s;
+            }
+
+            .change-room-table .room-row:hover{
+                background:#f8fafc;
+            }
+
+            .change-room-table .room-row.selected{
+                background:#eff6ff;
+                box-shadow:inset 3px 0 0 #2563eb;
+            }
+
+            #targetRoomContext{
+                font-weight:400;
+                color:#64748b;
+                font-size:13px;
             }
         </style>
     </head>
@@ -465,116 +416,99 @@
                                     <h3 style="display:flex;align-items:center;gap:10px;">
                                         <i class="fa-solid fa-right-left"></i>
                                         Đổi phòng
-
-                                        <span id="roomTypeError" class="room-error-msg">
-                                            Không thể đổi sang phòng khác loại.
-                                        </span>
                                     </h3>
                                 </div>
                                 <div class="card-body">
-                                    <form method="post"
-                                          action="${pageContext.request.contextPath}/receptionist/change-room">
-                                        <input type="hidden"
-                                               name="bookingId"
-                                               value="${booking.bookingId}">
-                                        <!-- Phòng hiện tại -->
-                                        <div class="change-room-box">
-                                            <h4>
-                                                <i class="fa-solid fa-bed"></i>
-                                                Phòng hiện tại
-                                            </h4>
-                                            <c:forEach var="entry" items="${assignedRoomMap}">
-                                                <div class="change-room-type">
-                                                    <div class="change-room-type-name">
-                                                        ${entry.value[0].typeName}
-                                                    </div>
-                                                    <div class="change-room-grid">
-                                                        <c:forEach var="room" items="${entry.value}">
-                                                            <div class="change-room-item">
-                                                                <input
-                                                                    type="hidden"
-                                                                    name="oldRoomIds"
-                                                                    value="${room.roomId}">
-                                                                <div class="change-room-card">
-                                                                    <div class="change-room-no">
-                                                                        ${room.roomNumber}
-                                                                    </div>
-                                                                    <div class="change-room-roomtype">
-                                                                        ${room.typeName}
-                                                                    </div>
-                                                                </div>
-                                                                <div
-                                                                    style="
-                                                                    margin:10px 0;
-                                                                    font-size:14px;
-                                                                    font-weight:bold;
-                                                                    color:#2563eb;">
-                                                                    ↓
-                                                                    Chọn phòng mới
-                                                                </div>
-                                                                <div class="change-room-grid"
-                                                                     style="margin-top:12px;">
-                                                                    <c:forEach
-                                                                        var="newRoom"
-                                                                        items="${availableRoomMap[room.typeName]}">
-                                                                        <label class="change-room-item">
-                                                                            <input
-                                                                                type="radio"
-                                                                                name="newRoom_${room.roomId}"
-                                                                                value="${newRoom.roomId}">
-                                                                            <div class="change-room-card">
-                                                                                <div class="change-room-no">
-                                                                                    ${newRoom.roomNumber}
-                                                                                </div>
-                                                                                <div class="change-room-roomtype">
-                                                                                    ${newRoom.typeName}
-                                                                                </div>
-                                                                            </div>
-                                                                        </label>
-                                                                    </c:forEach>
-                                                                </div>
-                                                            </div>
-                                                        </c:forEach>
-                                                    </div>
-                                                </div>
-                                            </c:forEach>
+
+                                    <c:if test="${not empty success}">
+                                        <div class="toast-notify toast-success">
+                                            <i class="fa-solid fa-circle-check"></i>
+                                            Đổi phòng thành công!
                                         </div>
-                                        <!-- Form đổi phòng -->
-                                        <!-- LÝ DO -->
-                                        <div style="margin-top:20px">
-                                            <label style="
-                                                   font-weight:700;
-                                                   display:block;
-                                                   margin-bottom:8px">
-                                                Lý do đổi phòng
-                                            </label>
-                                            <textarea 
-                                                name="reason"
-                                                id="changeReason"
-                                                placeholder="Nhập lý do đổi phòng..."
-                                                required
-                                                style="
-                                                width:100%;
-                                                height:120px;
-                                                padding:12px;
-                                                border-radius:8px;
-                                                border:1px solid var(--border-color);
-                                                resize:none"></textarea>
+                                    </c:if>
+                                    <c:if test="${not empty error}">
+                                        <div class="toast-notify toast-error">
+                                            <i class="fa-solid fa-circle-xmark"></i>
+                                            <c:choose>
+                                                <c:when test="${error eq 'noroom'}">Vui lòng chọn phòng hiện tại và phòng muốn đổi sang.</c:when>
+                                                <c:when test="${error eq 'reason'}">Vui lòng nhập lý do đổi phòng.</c:when>
+                                                <c:when test="${error eq 'sameroom'}">Không thể đổi sang chính phòng hiện tại.</c:when>
+                                                <c:when test="${error eq 'failed'}">Đổi phòng thất bại. Vui lòng thử lại.</c:when>
+                                                <c:otherwise>Đã xảy ra lỗi. Vui lòng thử lại.</c:otherwise>
+                                            </c:choose>
                                         </div>
-                                        <button type="submit"
-                                                id="btnChangeRoom"
-                                                class="btn-modal-confirm"
-                                                disabled
-                                                style="
-                                                width:100%;
-                                                margin-top:20px;
-                                                height:42px;
-                                                opacity:0.5;
-                                                cursor:not-allowed">
+                                    </c:if>
+
+                                    <!-- BẢNG 1: PHÒNG HIỆN TẠI -->
+                                    <div class="change-room-box">
+                                        <h4>
+                                            <i class="fa-solid fa-bed"></i>
+                                            Phòng hiện tại
+                                        </h4>
+                                        <table class="change-room-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Số phòng</th>
+                                                    <th>Loại phòng</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <c:forEach var="room" items="${assignedRooms}">
+                                                    <tr class="room-row"
+                                                        data-room-id="${room.roomId}"
+                                                        data-room-type="${room.typeName}"
+                                                        data-room-number="${room.roomNumber}"
+                                                        onclick="selectOldRoom(this)">
+                                                        <td>${room.roomNumber}</td>
+                                                        <td>${room.typeName}</td>
+                                                    </tr>
+                                                </c:forEach>
+                                                <c:if test="${empty assignedRooms}">
+                                                    <tr>
+                                                        <td colspan="2" style="text-align:center;color:var(--text-muted);">
+                                                            Không có phòng nào.
+                                                        </td>
+                                                    </tr>
+                                                </c:if>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <!-- BẢNG 2: PHÒNG MUỐN ĐỔI SANG (ẩn cho tới khi chọn phòng ở bảng 1) -->
+                                    <div class="change-room-box" id="targetRoomSection" style="display:none; margin-top:20px;">
+                                        <h4>
                                             <i class="fa-solid fa-right-left"></i>
-                                            Xác nhận đổi phòng
-                                        </button>
-                                    </form>
+                                            Phòng muốn đổi sang
+                                            <span id="targetRoomContext"></span>
+                                        </h4>
+
+                                        <c:forEach var="entry" items="${availableRoomMap}">
+                                            <table class="change-room-table target-room-group"
+                                                   data-type="${entry.key}"
+                                                   style="display:none;">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Số phòng</th>
+                                                        <th>Loại phòng</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <c:forEach var="room" items="${entry.value}">
+                                                        <tr class="room-row"
+                                                            data-room-id="${room.roomId}"
+                                                            data-room-number="${room.roomNumber}"
+                                                            onclick="selectNewRoom(this)">
+                                                            <td>${room.roomNumber}</td>
+                                                            <td>${room.typeName}</td>
+                                                        </tr>
+                                                    </c:forEach>
+                                                </tbody>
+                                            </table>
+                                        </c:forEach>
+                                        <p id="noAvailableRoomMsg" style="display:none;color:var(--text-muted);font-style:italic;">
+                                            Không còn phòng trống cùng loại trong thời gian khách ở.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -587,62 +521,90 @@
             </div>
         </div>
 
+        <!-- MODAL: XÁC NHẬN ĐỔI PHÒNG (lý do bắt buộc) -->
+        <div class="modal-overlay" id="reasonModal">
+            <div class="modal-container">
+                <div class="modal-header">
+                    <h3>Xác nhận đổi phòng</h3>
+                    <button class="btn-close-modal" onclick="closeModal('reasonModal')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <p id="reasonContext" style="color:var(--text-muted); font-size:14px; margin-top:0;"></p>
+                    <form id="changeRoomForm" method="post"
+                          action="${pageContext.request.contextPath}/receptionist/change-room">
+                        <input type="hidden" name="bookingId" value="${booking.bookingId}">
+                        <input type="hidden" id="oldRoomIdInput" name="oldRoomId" value="">
+                        <input type="hidden" id="newRoomIdInput" name="newRoomId" value="">
+                        <div class="modal-form-group">
+                            <label for="reasonInput">Lý do đổi phòng</label>
+                            <textarea id="reasonInput" name="reason" class="modal-textarea" required
+                                      placeholder="Nhập lý do đổi phòng..."></textarea>
+                            <small id="reasonRequiredHint"
+                                   style="display:none; color:#dc2626; font-weight:600;">Vui lòng nhập lý do đổi phòng.</small>
+                        </div>
+                        <div class="modal-footer-row">
+                            <button type="button" class="btn-modal-cancel" onclick="closeModal('reasonModal')">Hủy bỏ</button>
+                            <button type="submit" class="btn-modal-confirm">Xác nhận đổi phòng</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </body>
+    <script src="${pageContext.request.contextPath}/assets/js/receptionist.js?v=5" charset="UTF-8"></script>
     <script>
-        const errorMsg = document.getElementById("roomTypeError");
-        let errorTimeout = null;
+        let selectedOldRoomId = null;
+        let selectedOldRoomType = null;
 
-        document.addEventListener("DOMContentLoaded", function () {
+        function selectOldRoom(tr) {
 
-            const reasonInput = document.getElementById("changeReason");
-            const roomRadios =
-                    document.querySelectorAll(
-                            "input[type='radio']"
-                            );
-            const submitBtn = document.getElementById("btnChangeRoom");
+            document.querySelectorAll(".change-room-table .room-row.selected")
+                    .forEach(r => r.classList.remove("selected"));
+            tr.classList.add("selected");
 
+            selectedOldRoomId = tr.dataset.roomId;
+            selectedOldRoomType = tr.dataset.roomType;
+            const roomNumber = tr.dataset.roomNumber;
 
-            function validateChangeRoom() {
-                const reason = reasonInput.value.trim();
-                let valid = true;
-                // lấy tất cả group radio
-                const groups = {};
-                roomRadios.forEach(radio => {
-                    groups[radio.name] = true;
-                });
-                // mỗi group phải chọn đúng 1 phòng
-                for (const name in groups) {
-                    const checked =
-                            document.querySelector(
-                                    "input[name='" + name + "']:checked"
-                                    );
-                    if (!checked) {
-                        valid = false;
-                        break;
-                    }
+            document.getElementById("targetRoomContext").innerText = "— cho phòng " + roomNumber;
+
+            let hasAvailable = false;
+            document.querySelectorAll(".target-room-group").forEach(group => {
+                const match = group.dataset.type === selectedOldRoomType;
+                group.style.display = match ? "table" : "none";
+                if (match && group.querySelector("tbody tr")) {
+                    hasAvailable = true;
                 }
-                if (reason === "") {
-                    valid = false;
-                }
-                submitBtn.disabled = !valid;
-                submitBtn.style.opacity = valid ? "1" : "0.5";
-                submitBtn.style.cursor = valid ? "pointer" : "not-allowed";
-            }
-
-            // nhập lý do
-            reasonInput.addEventListener(
-                    "input",
-                    validateChangeRoom
-                    );
-            // chọn phòng
-            roomRadios.forEach(radio => {
-                radio.addEventListener(
-                        "change",
-                        validateChangeRoom
-                        );
             });
-            // chạy lần đầu khi load trang
-            validateChangeRoom();
+
+            document.getElementById("noAvailableRoomMsg").style.display = hasAvailable ? "none" : "block";
+            document.getElementById("targetRoomSection").style.display = "block";
+        }
+
+        function selectNewRoom(tr) {
+
+            const newRoomId = tr.dataset.roomId;
+            const newRoomNumber = tr.dataset.roomNumber;
+
+            document.getElementById("oldRoomIdInput").value = selectedOldRoomId;
+            document.getElementById("newRoomIdInput").value = newRoomId;
+            document.getElementById("reasonContext").innerText =
+                    "Đổi sang phòng " + newRoomNumber + ".";
+
+            const reasonInput = document.getElementById("reasonInput");
+            reasonInput.value = "";
+            document.getElementById("reasonRequiredHint").style.display = "none";
+
+            openModal("reasonModal");
+        }
+
+        document.getElementById("changeRoomForm").addEventListener("submit", function (e) {
+            const reason = document.getElementById("reasonInput").value.trim();
+            if (reason === "") {
+                e.preventDefault();
+                document.getElementById("reasonRequiredHint").style.display = "inline";
+            }
         });
     </script>
 </html>

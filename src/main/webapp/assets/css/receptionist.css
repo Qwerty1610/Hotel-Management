@@ -1185,12 +1185,20 @@ ROOM STATUS COLORS
     border-left:4px solid #10b981;
 }
 
-.status-Reserved{
+.status-Confirmed{
     border-left:4px solid #2563eb;
 }
 
 .status-Occupied{
     border-left:4px solid #64748b;
+}
+
+.status-Cleaning{
+    border-left:4px solid #f59e0b;
+}
+
+.status-Refilling{
+    border-left:4px solid #ca8a04;
 }
 
 .status-Maintenance{
@@ -1202,7 +1210,7 @@ ROOM STATUS COLORS
     color:#16a34a;
 }
 
-.badge-Reserved{
+.badge-Confirmed{
     background:#eff6ff;
     color:#2563eb;
 }
@@ -1210,6 +1218,16 @@ ROOM STATUS COLORS
 .badge-Occupied{
     background:#f1f5f9;
     color:#475569;
+}
+
+.badge-Cleaning{
+    background:#fffbeb;
+    color:#d97706;
+}
+
+.badge-Refilling{
+    background:#fef9c3;
+    color:#ca8a04;
 }
 
 .badge-Maintenance{

@@ -209,6 +209,11 @@
                                     </td>
                                     <td>
                                         <div class="table-actions" style="display:flex; gap:8px;">
+                                            <c:if test="${r.status ne 'Resolved'}">
+                                                <button class="btn-action edit" title="Đổi mức ưu tiên"
+                                                        onclick="openPriorityModal('${r.requestId}', '${r.priority}')"><i
+                                                        class="fa-solid fa-flag"></i></button>
+                                            </c:if>
                                             <c:choose>
                                                 <c:when
                                                     test="${r.status eq 'Pending' or r.status eq 'InProgress'}">
@@ -222,8 +227,10 @@
                                                             onclick="changeStatus('${r.requestId}', 'Cancelled')"><i
                                                             class="fa-solid fa-xmark"></i></button>
                                                     </c:when>
-                                                    <c:otherwise><span
-                                                        style="color:var(--text-muted); font-size:12px;">—</span>
+                                                    <c:otherwise>
+                                                        <c:if test="${r.status eq 'Resolved'}">
+                                                            <span style="color:var(--text-muted); font-size:12px;">—</span>
+                                                        </c:if>
                                                 </c:otherwise>
                                             </c:choose>
                                         </div>
@@ -426,6 +433,38 @@
         <input type="hidden" id="statusValue" name="status" value="" />
     </form>
 
+    <!-- PRIORITY MODAL -->
+    <div class="modal-overlay" id="priorityModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>Đổi mức ưu tiên</h3>
+                <button class="btn-close-modal" onclick="closePriorityModal()"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="priorityForm" action="${pageContext.request.contextPath}/manager/requests"
+                      method="post">
+                    <input type="hidden" name="action" value="priority" />
+                    <input type="hidden" id="priorityRequestId" name="requestId" value="" />
+                    <div class="modal-form-group">
+                        <label for="priorityValue">Mức độ ưu tiên</label>
+                        <select id="priorityValue" name="priority" class="modal-select" required>
+                            <option value="Urgent">Khẩn cấp</option>
+                            <option value="High">Cao</option>
+                            <option value="Medium">Trung bình</option>
+                            <option value="Low">Thấp</option>
+                        </select>
+                    </div>
+                    <div class="modal-footer-row">
+                        <button type="button" class="btn-modal-cancel" onclick="closePriorityModal()">Hủy
+                            bỏ</button>
+                        <button type="submit" class="btn-modal-submit">Lưu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         function openAssignModal(requestId, btn) {
             document.getElementById("assignRequestId").value = requestId;
@@ -442,6 +481,15 @@
         }
         function closeAssignModal() {
             document.getElementById("assignModal").style.display = "none";
+        }
+
+        function openPriorityModal(requestId, currentPriority) {
+            document.getElementById("priorityRequestId").value = requestId;
+            document.getElementById("priorityValue").value = currentPriority;
+            document.getElementById("priorityModal").style.display = "flex";
+        }
+        function closePriorityModal() {
+            document.getElementById("priorityModal").style.display = "none";
         }
 
         function changeStatus(requestId, status) {

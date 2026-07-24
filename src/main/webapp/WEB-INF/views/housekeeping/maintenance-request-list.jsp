@@ -228,7 +228,14 @@
                                         </td>
                                         <td>
                                             <span class="status-badge status-${fn:toLowerCase(m.status)}">
-                                                ${m.status}
+                                                <c:choose>
+                                                    <c:when test="${m.status == 'Pending'}">Chờ xử lý</c:when>
+                                                    <c:when test="${m.status == 'InProgress'}">Đang xử lý</c:when>
+                                                    <c:when test="${m.status == 'Resolved'}">Đã xử lý</c:when>
+                                                    <c:when test="${m.status == 'Unresolvable'}">Không thể xử lý</c:when>
+                                                    <c:when test="${m.status == 'Cancelled'}">Đã huỷ</c:when>
+                                                    <c:otherwise>${m.status}</c:otherwise>
+                                                </c:choose>
                                             </span>
                                         </td>
                                         <td>

@@ -19,45 +19,6 @@ import java.util.List;
  */
 public class ChangeCheckedInRoomDAO {
 
-    private int getRoomAssignmentBookingId(
-            Connection con,
-            int bookingId
-    ) throws Exception {
-
-        String sql = """
-        SELECT TOP 1
-            ra.booking_id
-
-        FROM RoomAssignment ra
-
-        WHERE ra.booking_id = ?
-
-        OR ra.booking_id IN
-        (
-            SELECT booking_id
-            FROM Booking
-            WHERE group_booking_id = ?
-        )
-    """;
-
-        PreparedStatement ps
-                = con.prepareStatement(sql);
-
-        ps.setInt(1, bookingId);
-        ps.setInt(2, bookingId);
-
-        ResultSet rs
-                = ps.executeQuery();
-
-        if (rs.next()) {
-
-            return rs.getInt("booking_id");
-
-        }
-
-        return bookingId;
-    }
-
     public List<RoomInfo> getCurrentAssignedRooms(int bookingId) {
 
         List<RoomInfo> list = new ArrayList<>();
@@ -427,11 +388,17 @@ public class ChangeCheckedInRoomDAO {
         return -1;
     }
 
-    public boolean changeRooms(
-            int bookingId,
-            String[] oldRoomIds,
-            String[] newRoomIds,
-            String reason
+    /**
+     * Đổi 1 phòng đang ở (oldRoomId) sang 1 phòng khác (newRoomId).
+     * Tự resolve đúng booking_id (cha hoặc con) đang sở hữu oldRoomId để
+     * gán lại đúng chủ sở hữu đó cho phòng mới — không gộp chung một
+     * booking_id cho cả nhóm như trước.
+     */
+    public boolean changeRoom(
+            int oldRoomId,
+            int newRoomId,
+            String reason,
+            int accountId
     ) {
 
         Connection con = null;
@@ -440,19 +407,22 @@ public class ChangeCheckedInRoomDAO {
 
             con = DBContext.getConnection();
             con.setAutoCommit(false);
-            int assignmentBookingId
-                    = getRoomAssignmentBookingId(
-                            con,
-                            bookingId
-                    );
-            System.out.println(
-                    "CHANGE ROOM ASSIGNMENT BOOKING = "
-                    + assignmentBookingId
-            );
-            if (oldRoomIds == null
-                    || newRoomIds == null
-                    || oldRoomIds.length != newRoomIds.length) {
 
+            int realBookingId
+                    = getBookingIdByRoom(
+                            con,
+                            oldRoomId
+                    );
+
+            if (realBookingId == -1) {
+                throw new SQLException(
+                        "Room "
+                        + oldRoomId
+                        + " does not belong to any booking"
+                );
+            }
+
+            if (oldRoomId == newRoomId) {
                 return false;
             }
 
@@ -481,62 +451,19 @@ public class ChangeCheckedInRoomDAO {
             )
             """;
 
-            PreparedStatement deletePs
-                    = con.prepareStatement(deleteSql);
-
-            PreparedStatement insertPs
-                    = con.prepareStatement(insertSql);
-
-            for (int i = 0; i < oldRoomIds.length; i++) {
-
-                if (oldRoomIds[i] == null
-                        || newRoomIds[i] == null
-                        || oldRoomIds[i].isBlank()
-                        || newRoomIds[i].isBlank()) {
-                    continue;
-                }
-
-                int oldRoomId = Integer.parseInt(oldRoomIds[i]);
-                int newRoomId = Integer.parseInt(newRoomIds[i]);
-                int realBookingId
-                        = getBookingIdByRoom(
-                                con,
-                                oldRoomId
-                        );
-                if (realBookingId == -1) {
-                    throw new SQLException(
-                            "Room "
-                            + oldRoomId
-                            + " does not belong to any booking"
-                    );
-                }
-                System.out.println(
-                        "OLD ROOM = "
-                        + oldRoomId
-                        + " BELONGS BOOKING = "
-                        + realBookingId
-                );
-                // Không đổi thì bỏ qua
-                if (oldRoomId == newRoomId) {
-                    continue;
-                }
-
-                // Xóa phòng cũ
-                deletePs.setInt(1, assignmentBookingId);
+            try (PreparedStatement deletePs = con.prepareStatement(deleteSql)) {
+                deletePs.setInt(1, realBookingId);
                 deletePs.setInt(2, oldRoomId);
                 deletePs.executeUpdate();
-
-                // Gán phòng mới
-                insertPs.setInt(1, assignmentBookingId);
-                insertPs.setInt(2, newRoomId);
-                insertPs.setInt(3, 1); // TODO: thay bằng account đang đăng nhập
-                insertPs.setString(4, reason);
-
-                insertPs.executeUpdate();
             }
 
-            deletePs.close();
-            insertPs.close();
+            try (PreparedStatement insertPs = con.prepareStatement(insertSql)) {
+                insertPs.setInt(1, realBookingId);
+                insertPs.setInt(2, newRoomId);
+                insertPs.setInt(3, accountId);
+                insertPs.setString(4, reason);
+                insertPs.executeUpdate();
+            }
 
             con.commit();
 
