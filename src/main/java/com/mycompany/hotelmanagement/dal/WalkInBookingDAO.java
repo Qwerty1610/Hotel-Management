@@ -253,8 +253,33 @@ public class WalkInBookingDAO {
         return 0;
     }
 
+    private Integer findCustomerAccountIdByEmail(String email, Connection con) throws SQLException {
+        if (email == null || email.trim().isEmpty()) {
+            return null;
+        }
+        String cleanEmail = email.trim();
+        String sql = """
+        SELECT TOP 1 a.account_id
+        FROM dbo.Account a
+        JOIN dbo.Role r ON a.role_id = r.role_id
+        WHERE LOWER(RTRIM(LTRIM(a.email))) = LOWER(?)
+          AND a.is_active = 1
+          AND LOWER(r.role_name) = 'customer'
+        """;
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, cleanEmail);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("account_id");
+                }
+            }
+        }
+        return null;
+    }
+
     private int createChildBooking(
             Integer parentId,
+            Integer accountId,
             String customerName,
             String phone,
             String email,
@@ -271,6 +296,7 @@ public class WalkInBookingDAO {
         String sql = """
         INSERT INTO Booking
         (
+            account_id,
             customer_name,
             phone,
             email,
@@ -286,6 +312,7 @@ public class WalkInBookingDAO {
         OUTPUT INSERTED.booking_id
         VALUES
         (
+            ?,
             ?,?,?,?,?,?,
             ?,?,
             ?,
@@ -294,26 +321,30 @@ public class WalkInBookingDAO {
         )
         """;
 
-        try (PreparedStatement ps
-                = con.prepareStatement(sql)) {
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setString(1, customerName);
-            ps.setString(2, phone);
-            ps.setString(3, email);
-
-            ps.setInt(4, roomTypeId);
-            ps.setInt(5, quantity);
-
-            ps.setDate(6, checkIn);
-            ps.setDate(7, checkOut);
-
-            ps.setDouble(8, amount);
-            ps.setString(9, status);
-            ps.setString(10, note);
-            if (parentId == null) {
-                ps.setNull(11, Types.INTEGER);
+            if (accountId == null) {
+                ps.setNull(1, Types.INTEGER);
             } else {
-                ps.setInt(11, parentId);
+                ps.setInt(1, accountId);
+            }
+            ps.setString(2, customerName);
+            ps.setString(3, phone);
+            ps.setString(4, email);
+
+            ps.setInt(5, roomTypeId);
+            ps.setInt(6, quantity);
+
+            ps.setDate(7, checkIn);
+            ps.setDate(8, checkOut);
+
+            ps.setDouble(9, amount);
+            ps.setString(10, status);
+            ps.setString(11, note);
+            if (parentId == null) {
+                ps.setNull(12, Types.INTEGER);
+            } else {
+                ps.setInt(12, parentId);
             }
 
             ResultSet rs = ps.executeQuery();
@@ -415,6 +446,9 @@ public class WalkInBookingDAO {
 
             con.setAutoCommit(false);
 
+            String normalizedEmail = email != null ? email.trim() : null;
+            Integer customerAccountId = findCustomerAccountIdByEmail(normalizedEmail, con);
+
             long nights
                     = (checkOut.getTime()
                     - checkIn.getTime())
@@ -484,9 +518,10 @@ public class WalkInBookingDAO {
                 int childId
                         = createChildBooking(
                                 groupId,
+                                customerAccountId,
                                 customerName,
                                 phone,
-                                email,
+                                normalizedEmail,
                                 typeId,
                                 qty,
                                 checkIn,
@@ -1006,15 +1041,22 @@ public class WalkInBookingDAO {
     }
 
     public Account findAccountByEmailOrPhone(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return null;
+        }
 
         String sql = """
-        SELECT
-            full_name,
-            phone,
-            email
-        FROM Account
-        WHERE phone = ?
-           OR email = ?
+        SELECT TOP 1
+            a.account_id,
+            a.full_name,
+            a.phone,
+            a.email,
+            r.role_name,
+            a.is_active
+        FROM Account a
+        JOIN Role r ON a.role_id = r.role_id
+        WHERE LOWER(RTRIM(LTRIM(a.phone))) = LOWER(RTRIM(LTRIM(?)))
+           OR LOWER(RTRIM(LTRIM(a.email))) = LOWER(RTRIM(LTRIM(?)))
         """;
 
         try (
@@ -1031,9 +1073,12 @@ public class WalkInBookingDAO {
 
                 Account a = new Account();
 
+                a.setAccountId(rs.getInt("account_id"));
                 a.setFullName(rs.getString("full_name"));
                 a.setPhone(rs.getString("phone"));
                 a.setEmail(rs.getString("email"));
+                a.setRoleName(rs.getString("role_name"));
+                a.setActive(rs.getBoolean("is_active"));
 
                 return a;
             }
