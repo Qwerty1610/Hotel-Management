@@ -237,9 +237,7 @@
                         </div>
                         <div class="detail-card">
                             <h3>Mô tả của khách</h3>
-                            <div class="description-box">
-                                ${maintenance.description}
-                            </div>
+                            <div class="description-box">${maintenance.description}</div>
                         </div>
                     </div>
                     <!-- Người xử lý -->
@@ -286,16 +284,6 @@
                                 class="form-control"
                                 placeholder="Nhập kết quả xử lý...">${maintenance.resolutionNote}</textarea>
                             <div class="action-buttons">
-                                <c:if test="${maintenance.status=='Pending'}">
-                                    <button
-                                        class="btn-primary"
-                                        type="submit"
-                                        name="action"
-                                        value="start">
-                                        <i class="fa-solid fa-play"></i>
-                                        Bắt đầu xử lý
-                                    </button>
-                                </c:if>
                                 <c:if test="${maintenance.status=='InProgress' || maintenance.status=='Unresolvable'}">
 
                                     <button

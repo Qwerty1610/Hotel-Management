@@ -417,56 +417,312 @@ public class MaintenanceRequestDAO {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
+                list.add(mapRow(rs));
+            }
 
-                MaintenanceRequest request = new MaintenanceRequest();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
-                request.setRequestId(rs.getInt("request_id"));
-                request.setBookingId(rs.getInt("booking_id"));
-                request.setCustomerId(rs.getInt("customer_id"));
+        return list;
+    }
 
-                request.setDescription(rs.getString("description"));
-                request.setPriority(rs.getString("priority"));
-                request.setStatus(rs.getString("status"));
-                request.setResolutionNote(rs.getString("resolution_note"));
+    /**
+     * Danh sách yêu cầu bảo trì có lọc (phòng / ưu tiên / nhân viên / trạng thái)
+     * và phân trang — dùng cho Manager giao việc Housekeeping.
+     */
+    public List<MaintenanceRequest> getMaintenanceRequests(String roomKw, String priority,
+            String staffFilter, String status, int offset, int pageSize) {
 
-                // Customer
-                Account customer = new Account();
-                customer.setAccountId(rs.getInt("customer_id"));
-                customer.setFullName(rs.getString("customer_name"));
-                request.setCustomer(customer);
+        List<MaintenanceRequest> list = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
 
-                // Assigned Staff
-                int staffId = rs.getInt("assigned_staff_id");
+        String sql = BASE_SELECT
+                + " WHERE 1 = 1 "
+                + buildFilter(roomKw, priority, staffFilter, status, params)
+                + " ORDER BY mr.created_at DESC, mr.request_id DESC "
+                + " OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+        params.add(offset);
+        params.add(pageSize);
 
-                if (!rs.wasNull()) {
-                    request.setAssignedStaffId(staffId);
+        try (Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
 
-                    Account staff = new Account();
-                    staff.setAccountId(staffId);
-                    staff.setFullName(rs.getString("staff_name"));
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
 
-                    request.setAssignedStaff(staff);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
                 }
+            }
 
-                Timestamp created = rs.getTimestamp("created_at");
-                if (created != null) {
-                    request.setCreatedAt(created.toLocalDateTime());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    /** Tổng số yêu cầu bảo trì khớp bộ lọc (phân trang cho Manager). */
+    public int countMaintenanceRequests(String roomKw, String priority,
+            String staffFilter, String status) {
+
+        List<Object> params = new ArrayList<>();
+        String sql = "SELECT COUNT(*) FROM MaintenanceRequest mr WHERE 1 = 1 "
+                + buildFilter(roomKw, priority, staffFilter, status, params);
+
+        try (Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
                 }
+            }
 
-                Timestamp updated = rs.getTimestamp("updated_at");
-                if (updated != null) {
-                    request.setUpdatedAt(updated.toLocalDateTime());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    /** Số yêu cầu đang chờ xử lý (Pending + InProgress) — KPI cho Manager. */
+    public int countPendingIncludingInProgress() {
+
+        String sql = "SELECT COUNT(*) FROM MaintenanceRequest WHERE status IN (N'Pending', N'InProgress')";
+
+        try (Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    /** Xây điều kiện AND lọc theo phòng / ưu tiên / nhân viên / trạng thái. */
+    private String buildFilter(String roomKw, String priority, String staffFilter,
+            String status, List<Object> params) {
+
+        StringBuilder w = new StringBuilder();
+
+        if (roomKw != null && !roomKw.trim().isEmpty()) {
+            w.append(" AND EXISTS (SELECT 1 FROM MaintenanceRequestDetail d "
+                    + "JOIN Room r ON d.room_id = r.room_id "
+                    + "WHERE d.request_id = mr.request_id AND r.room_number LIKE ?) ");
+            params.add("%" + roomKw.trim() + "%");
+        }
+        if (priority != null && !priority.trim().isEmpty() && !"all".equalsIgnoreCase(priority)) {
+            w.append(" AND mr.priority = ? ");
+            params.add(priority);
+        }
+        if (status != null && !status.trim().isEmpty() && !"all".equalsIgnoreCase(status)) {
+            w.append(" AND mr.status = ? ");
+            params.add(status);
+        }
+        if (staffFilter != null && !staffFilter.trim().isEmpty() && !"all".equalsIgnoreCase(staffFilter)) {
+            if ("unassigned".equalsIgnoreCase(staffFilter)) {
+                w.append(" AND mr.assigned_staff_id IS NULL ");
+            } else {
+                try {
+                    int sid = Integer.parseInt(staffFilter.trim());
+                    w.append(" AND mr.assigned_staff_id = ? ");
+                    params.add(sid);
+                } catch (NumberFormatException ignored) {
                 }
+            }
+        }
 
-                Timestamp completed = rs.getTimestamp("completed_at");
-                if (completed != null) {
-                    request.setCompletedAt(completed.toLocalDateTime());
+        return w.toString();
+    }
+
+    /**
+     * Gán yêu cầu cho một nhân viên. Nếu yêu cầu đang Pending thì chuyển sang InProgress.
+     */
+    public boolean assignRequest(int requestId, int staffId) {
+
+        String sql = """
+        UPDATE MaintenanceRequest
+        SET assigned_staff_id = ?,
+            status = CASE WHEN status = N'Pending' THEN N'InProgress' ELSE status END,
+            updated_at = SYSDATETIME()
+        WHERE request_id = ? AND status IN (N'Pending', N'InProgress')
+        """;
+
+        try (Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, staffId);
+            ps.setInt(2, requestId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    /** Cập nhật trạng thái yêu cầu (dùng cho thao tác Huỷ của Manager). */
+    public boolean updateStatus(int requestId, String newStatus) {
+
+        String sql = """
+        UPDATE MaintenanceRequest
+        SET status = ?, updated_at = SYSDATETIME()
+        WHERE request_id = ?
+        """;
+
+        try (Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, newStatus);
+            ps.setInt(2, requestId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    /** Một trang công việc đã nhận / được gán của một nhân viên (mọi trạng thái). */
+    public List<MaintenanceRequest> getRequestsByStaff(int staffId, int offset, int pageSize) {
+
+        List<MaintenanceRequest> list = new ArrayList<>();
+
+        String sql = BASE_SELECT + " WHERE mr.assigned_staff_id = ? "
+                + " ORDER BY mr.created_at DESC, mr.request_id DESC "
+                + " OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+
+        try (Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, staffId);
+            ps.setInt(2, offset);
+            ps.setInt(3, pageSize);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
                 }
+            }
 
-                request.setRoomNumbers(rs.getString("room_numbers"));
-                request.setIssueNames(rs.getString("issue_names"));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
-                list.add(request);
+        return list;
+    }
+
+    /** Tổng số công việc đã nhận của một nhân viên. */
+    public int countRequestsByStaff(int staffId) {
+
+        String sql = "SELECT COUNT(*) FROM MaintenanceRequest WHERE assigned_staff_id = ?";
+
+        try (Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, staffId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    /** Một trang công việc đã nhận của một nhân viên, có lọc theo trạng thái (null/"all" = mọi trạng thái). */
+    public List<MaintenanceRequest> getRequestsByStaff(int staffId, String status, int offset, int pageSize) {
+
+        List<MaintenanceRequest> list = new ArrayList<>();
+        boolean hasStatus = status != null && !status.trim().isEmpty() && !"all".equalsIgnoreCase(status);
+
+        String sql = BASE_SELECT + " WHERE mr.assigned_staff_id = ? "
+                + (hasStatus ? " AND mr.status = ? " : "")
+                + " ORDER BY mr.created_at DESC, mr.request_id DESC "
+                + " OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+
+        try (Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            int idx = 1;
+            ps.setInt(idx++, staffId);
+            if (hasStatus) {
+                ps.setString(idx++, status);
+            }
+            ps.setInt(idx++, offset);
+            ps.setInt(idx, pageSize);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    /** Tổng số công việc đã nhận của một nhân viên, có lọc theo trạng thái (null/"all" = mọi trạng thái). */
+    public int countRequestsByStaff(int staffId, String status) {
+
+        boolean hasStatus = status != null && !status.trim().isEmpty() && !"all".equalsIgnoreCase(status);
+
+        String sql = "SELECT COUNT(*) FROM MaintenanceRequest WHERE assigned_staff_id = ? "
+                + (hasStatus ? " AND status = ? " : "");
+
+        try (Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, staffId);
+            if (hasStatus) {
+                ps.setString(2, status);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    /** Các công việc đang thực hiện (InProgress) của một nhân viên. */
+    public List<MaintenanceRequest> getInProgressByStaff(int staffId) {
+
+        List<MaintenanceRequest> list = new ArrayList<>();
+
+        String sql = BASE_SELECT + " WHERE mr.assigned_staff_id = ? AND mr.status = N'InProgress' "
+                + " ORDER BY mr.created_at DESC, mr.request_id DESC";
+
+        try (Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, staffId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
             }
 
         } catch (SQLException e) {
@@ -539,52 +795,7 @@ public class MaintenanceRequestDAO {
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-
-                MaintenanceRequest request = new MaintenanceRequest();
-
-                request.setRequestId(rs.getInt("request_id"));
-                request.setBookingId(rs.getInt("booking_id"));
-                request.setCustomerId(rs.getInt("customer_id"));
-
-                request.setDescription(rs.getString("description"));
-                request.setPriority(rs.getString("priority"));
-                request.setStatus(rs.getString("status"));
-                request.setResolutionNote(rs.getString("resolution_note"));
-
-                Account customer = new Account();
-                customer.setAccountId(rs.getInt("customer_id"));
-                customer.setFullName(rs.getString("customer_name"));
-                request.setCustomer(customer);
-
-                int staffId = rs.getInt("assigned_staff_id");
-                if (!rs.wasNull()) {
-                    request.setAssignedStaffId(staffId);
-
-                    Account staff = new Account();
-                    staff.setAccountId(staffId);
-                    staff.setFullName(rs.getString("staff_name"));
-                    request.setAssignedStaff(staff);
-                }
-
-                Timestamp created = rs.getTimestamp("created_at");
-                if (created != null) {
-                    request.setCreatedAt(created.toLocalDateTime());
-                }
-
-                Timestamp updated = rs.getTimestamp("updated_at");
-                if (updated != null) {
-                    request.setUpdatedAt(updated.toLocalDateTime());
-                }
-
-                Timestamp completed = rs.getTimestamp("completed_at");
-                if (completed != null) {
-                    request.setCompletedAt(completed.toLocalDateTime());
-                }
-
-                request.setRoomNumbers(rs.getString("room_numbers"));
-                request.setIssueNames(rs.getString("issue_names"));
-
-                return request;
+                return mapRow(rs);
             }
 
         } catch (SQLException e) {
@@ -594,31 +805,54 @@ public class MaintenanceRequestDAO {
         return null;
     }
 
-    public boolean startProcessing(int requestId, int staffId) {
+    /** Map một dòng ResultSet (từ BASE_SELECT) sang MaintenanceRequest. */
+    private MaintenanceRequest mapRow(ResultSet rs) throws SQLException {
 
-        String sql = """
-        UPDATE MaintenanceRequest
-        SET
-            status = 'InProgress',
-            assigned_staff_id = ?,
-            updated_at = SYSDATETIME()
-        WHERE request_id = ?
-          AND status = 'Pending'
-        """;
+        MaintenanceRequest request = new MaintenanceRequest();
 
-        try (
-                Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+        request.setRequestId(rs.getInt("request_id"));
+        request.setBookingId(rs.getInt("booking_id"));
+        request.setCustomerId(rs.getInt("customer_id"));
 
-            ps.setInt(1, staffId);
-            ps.setInt(2, requestId);
+        request.setDescription(rs.getString("description"));
+        request.setPriority(rs.getString("priority"));
+        request.setStatus(rs.getString("status"));
+        request.setResolutionNote(rs.getString("resolution_note"));
 
-            return ps.executeUpdate() > 0;
+        Account customer = new Account();
+        customer.setAccountId(rs.getInt("customer_id"));
+        customer.setFullName(rs.getString("customer_name"));
+        request.setCustomer(customer);
 
-        } catch (SQLException e) {
-            e.printStackTrace();
+        int staffId = rs.getInt("assigned_staff_id");
+        if (!rs.wasNull()) {
+            request.setAssignedStaffId(staffId);
+
+            Account staff = new Account();
+            staff.setAccountId(staffId);
+            staff.setFullName(rs.getString("staff_name"));
+            request.setAssignedStaff(staff);
         }
 
-        return false;
+        Timestamp created = rs.getTimestamp("created_at");
+        if (created != null) {
+            request.setCreatedAt(created.toLocalDateTime());
+        }
+
+        Timestamp updated = rs.getTimestamp("updated_at");
+        if (updated != null) {
+            request.setUpdatedAt(updated.toLocalDateTime());
+        }
+
+        Timestamp completed = rs.getTimestamp("completed_at");
+        if (completed != null) {
+            request.setCompletedAt(completed.toLocalDateTime());
+        }
+
+        request.setRoomNumbers(rs.getString("room_numbers"));
+        request.setIssueNames(rs.getString("issue_names"));
+
+        return request;
     }
 
     public boolean resolveRequest(int requestId,

@@ -1139,6 +1139,18 @@
     color: #15803d;
 }
 
+/* Resolved - Đã xử lý */
+.status-resolved {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+/* Unresolvable - Không thể xử lý */
+.status-unresolvable {
+    background: #e5e7eb;
+    color: #374151;
+}
+
 /* Cancelled - Hủy */
 .status-cancelled {
     background: #fee2e2;

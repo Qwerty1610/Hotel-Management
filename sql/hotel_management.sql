@@ -749,36 +749,6 @@ IF COL_LENGTH(N'dbo.Account', N'work_status') IS NULL
     ALTER TABLE dbo.Account ADD work_status NVARCHAR(30) NOT NULL CONSTRAINT DF_Account_WorkStatus DEFAULT N'Offline';
 GO
 
-/* 5.2 Bảng yêu cầu của khách hàng.
-   - room_id        : phòng phát sinh yêu cầu
-   - title          : nội dung yêu cầu (vd: Thêm khăn tắm)
-   - priority       : Low / Medium / High / Urgent
-   - status         : Pending / InProgress / Completed / Cancelled
-   - assigned_staff_id : nhân viên Housekeeping được giao (NULL = chưa gán)
-   - created_at     : thời gian yêu cầu (dùng để sắp xếp mặc định)
-   - completed_at   : thời điểm hoàn thành (dùng đếm công việc theo ngày/tháng) */
-IF OBJECT_ID(N'dbo.CustomerRequest', N'U') IS NULL
-BEGIN
-    CREATE TABLE dbo.CustomerRequest (
-        request_id INT IDENTITY(1,1) PRIMARY KEY,
-        room_id INT NULL,
-        title NVARCHAR(200) NOT NULL,
-        description NVARCHAR(500) NULL,
-        priority NVARCHAR(20) NOT NULL DEFAULT N'Medium',
-        status NVARCHAR(20) NOT NULL DEFAULT N'Pending',
-        assigned_staff_id INT NULL,
-        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
-        updated_at DATETIME2 NULL,
-        completed_at DATETIME2 NULL,
-        cancel_reason NVARCHAR(500) NULL,
-        CONSTRAINT FK_CustomerRequest_Room FOREIGN KEY (room_id) REFERENCES dbo.Room(room_id),
-        CONSTRAINT FK_CustomerRequest_Staff FOREIGN KEY (assigned_staff_id) REFERENCES dbo.Account(account_id),
-        CONSTRAINT CK_CustomerRequest_Priority CHECK (priority IN (N'Low', N'Medium', N'High', N'Urgent')),
-        CONSTRAINT CK_CustomerRequest_Status CHECK (status IN (N'Pending', N'InProgress', N'Completed', N'Cancelled'))
-    );
-END
-GO
-
 /* 5.3 Bảng yêu cầu dịch vụ của khách hàng (BookingServiceRequest) */
 IF OBJECT_ID(N'dbo.BookingServiceRequest', N'U') IS NULL
 BEGIN
@@ -1576,7 +1546,7 @@ BEGIN
 
         description NVARCHAR(500) NULL,
 
-        priority NVARCHAR(20) NOT NULL DEFAULT N'Low',
+        priority NVARCHAR(20) NOT NULL,
 
         status NVARCHAR(20) NOT NULL DEFAULT N'Pending',
 

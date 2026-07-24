@@ -387,31 +387,4 @@ WHERE r.room_id = ? AND r.is_deleted = 0
 
         return false;
     }
-
-// HOUSEKEEPING SEND REQUEST COMPLETED
-    public boolean requestCompleteCustomerRequest(int requestId, int staffId) {
-
-        String sql = """
-    UPDATE CustomerRequest
-    SET status = N'Completed',
-        updated_at = SYSDATETIME()
-    WHERE request_id = ?
-      AND assigned_staff_id = ?
-      AND status = N'InProgress'
-""";
-
-        try (
-                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, requestId);
-            ps.setInt(2, staffId);
-
-            return ps.executeUpdate() > 0;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return false;
-    }
 }
