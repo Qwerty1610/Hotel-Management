@@ -223,12 +223,25 @@
                                         <td>${m.issueNames}</td>
                                         <td>
                                             <span class="priority-badge priority-${fn:toLowerCase(m.priority)}">
-                                                ${m.priority}
+                                                <c:choose>
+                                                    <c:when test="${m.priority == 'Urgent'}">Khẩn cấp</c:when>
+                                                    <c:when test="${m.priority == 'High'}">Cao</c:when>
+                                                    <c:when test="${m.priority == 'Medium'}">Trung bình</c:when>
+                                                    <c:when test="${m.priority == 'Low'}">Thấp</c:when>
+                                                    <c:otherwise>${m.priority}</c:otherwise>
+                                                </c:choose>
                                             </span>
                                         </td>
                                         <td>
                                             <span class="status-badge status-${fn:toLowerCase(m.status)}">
-                                                ${m.status}
+                                                <c:choose>
+                                                    <c:when test="${m.status == 'Pending'}">Chờ xử lý</c:when>
+                                                    <c:when test="${m.status == 'InProgress'}">Đang xử lý</c:when>
+                                                    <c:when test="${m.status == 'Resolved'}">Đã xử lý</c:when>
+                                                    <c:when test="${m.status == 'Unresolvable'}">Không thể xử lý</c:when>
+                                                    <c:when test="${m.status == 'Cancelled'}">Đã huỷ</c:when>
+                                                    <c:otherwise>${m.status}</c:otherwise>
+                                                </c:choose>
                                             </span>
                                         </td>
                                         <td>
@@ -244,22 +257,17 @@
                                                         Đã hủy
                                                     </span>
                                                 </c:when>
-                                                <c:when test="${m.status == 'Pending' && empty m.assignedStaffId}">
-                                                    <a class="btn-task"
+                                                <c:when test="${m.status == 'Unresolvable'}">
+                                                    <a class="btn-task continue"
                                                        href="${pageContext.request.contextPath}/housekeeping/handlemaintenance?action=detail&id=${m.requestId}">
-                                                        Xử lý
-                                                    </a>
-                                                </c:when>
-                                                <c:when test="${m.assignedStaffId == currentAccountId}">
-                                                    <a class="btn-task"
-                                                       href="${pageContext.request.contextPath}/housekeeping/handlemaintenance?action=detail&id=${m.requestId}">
-                                                        Tiếp tục
+                                                        Xử lý tiếp
                                                     </a>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <span class="btn-task disabled">
-                                                        Đã có người nhận
-                                                    </span>
+                                                    <a class="btn-task process"
+                                                       href="${pageContext.request.contextPath}/housekeeping/handlemaintenance?action=detail&id=${m.requestId}">
+                                                        Bắt đầu xử lý
+                                                    </a>
                                                 </c:otherwise>
                                             </c:choose>
                                         </td>
@@ -267,6 +275,44 @@
                                 </c:forEach>
                             </tbody>
                         </table>
+
+                        <div class="table-pagination-bar">
+                            <div class="pagination-info">
+                                <c:choose>
+                                    <c:when test="${totalItems == 0}">Hiển thị 0 việc</c:when>
+                                    <c:otherwise>Hiển thị ${(page-1)*pageSize + 1}-${page*pageSize gt totalItems ? totalItems : page*pageSize} trong số ${totalItems} việc</c:otherwise>
+                                </c:choose>
+                            </div>
+                            <div class="pagination-controls">
+                                <c:choose>
+                                    <c:when test="${page > 1}">
+                                        <c:url var="prevUrl" value="/housekeeping/handlemaintenance">
+                                            <c:param name="status" value="${currentStatus}" />
+                                            <c:param name="page" value="${page-1}" />
+                                        </c:url>
+                                        <a class="btn-page" href="${prevUrl}"><i class="fa-solid fa-chevron-left"></i></a>
+                                    </c:when>
+                                    <c:otherwise><span class="btn-page disabled"><i class="fa-solid fa-chevron-left"></i></span></c:otherwise>
+                                </c:choose>
+                                <c:forEach var="p" begin="1" end="${totalPages}">
+                                    <c:url var="pUrl" value="/housekeeping/handlemaintenance">
+                                        <c:param name="status" value="${currentStatus}" />
+                                        <c:param name="page" value="${p}" />
+                                    </c:url>
+                                    <a class="btn-page ${p == page ? 'active' : ''}" href="${pUrl}">${p}</a>
+                                </c:forEach>
+                                <c:choose>
+                                    <c:when test="${page < totalPages}">
+                                        <c:url var="nextUrl" value="/housekeeping/handlemaintenance">
+                                            <c:param name="status" value="${currentStatus}" />
+                                            <c:param name="page" value="${page+1}" />
+                                        </c:url>
+                                        <a class="btn-page" href="${nextUrl}"><i class="fa-solid fa-chevron-right"></i></a>
+                                    </c:when>
+                                    <c:otherwise><span class="btn-page disabled"><i class="fa-solid fa-chevron-right"></i></span></c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>

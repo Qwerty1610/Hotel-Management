@@ -121,6 +121,9 @@
     margin: 0 0 6px;
     font-size: 22px;
     font-weight: 700;
+    /* home.css có rule toàn cục "h2 { color: var(--primary-color) }" đè lên màu
+       kế thừa từ .profile-card-header, làm tên bị sẫm trên nền navy. */
+    color: #fff;
 }
 
 .profile-role-badge {

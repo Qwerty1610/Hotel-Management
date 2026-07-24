@@ -264,15 +264,16 @@ public class RoomDAO {
         }
     }
 
-    public void updateRoomStatus(int roomId, String status) {
+    public boolean updateRoomStatus(int roomId, String status) {
         String sql = "UPDATE Room SET status = ? WHERE room_id = ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setString(1, status);
             ps.setInt(2, roomId);
-            ps.executeUpdate();
+            return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error updating room status for room " + roomId, e);
+            return false;
         }
     }
 

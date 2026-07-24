@@ -29,7 +29,7 @@ public class BookingServiceRequestDAO {
     }
 
     /**
-     * UC-64: View Service Request History Lấy danh sách lịch sử yêu cầu dịch vụ
+     * UC-62: View Service Request History Lấy danh sách lịch sử yêu cầu dịch vụ
      * của khách hàng theo accountId và trạng thái lọc.
      *
      * @param accountId ID tài khoản của khách hàng
@@ -75,7 +75,7 @@ public class BookingServiceRequestDAO {
     }
 
     /**
-     * UC-10: Submit Service Request Thêm mới một yêu cầu dịch vụ phòng của
+     * UC-09: Submit Service Request Thêm mới một yêu cầu dịch vụ phòng của
      * khách hàng vào cơ sở dữ liệu.
      *
      * @param r đối tượng BookingServiceRequest chứa thông tin yêu cầu
@@ -112,7 +112,7 @@ public class BookingServiceRequestDAO {
     }
 
     /**
-     * UC-64: View Service Request History (Action Cancel) Khách hàng thực hiện
+     * UC-62: View Service Request History (Action Cancel) Khách hàng thực hiện
      * hủy yêu cầu dịch vụ của họ (chỉ cho phép khi trạng thái là Pending).
      *
      * @param requestId ID yêu cầu dịch vụ cần hủy
@@ -165,7 +165,7 @@ public class BookingServiceRequestDAO {
     }
 
     /**
-     * UC-35: View Service Requests Lễ tân lấy danh sách các yêu cầu dịch vụ của
+     * UC-34: View Service Requests Lễ tân lấy danh sách các yêu cầu dịch vụ của
      * khách hàng kèm theo phân trang và lọc từ khóa.
      *
      * @param statusFilter trạng thái yêu cầu lọc
@@ -180,20 +180,19 @@ public class BookingServiceRequestDAO {
         String sql = "SELECT bsr.service_request_id AS request_id, bsr.booking_id, bsr.room_id, bsr.service_id, "
                 + "       hs.service_name AS title, bsr.notes AS description, bsr.quantity, bsr.status, "
                 + "       bsr.processed_by_staff_id, bsr.created_at, bsr.updated_at, bsr.completed_at, bsr.cancel_reason, "
-                + "       r.room_number, a.full_name AS staff_name, c.full_name AS customer_name, hs.unit AS unit, hs.price AS unit_price "
+                + "       r.room_number, a.full_name AS staff_name, b.customer_name AS customer_name, hs.unit AS unit, hs.price AS unit_price "
                 + "FROM dbo.BookingServiceRequest bsr "
                 + "JOIN dbo.Booking b ON bsr.booking_id = b.booking_id "
                 + "JOIN dbo.HotelService hs ON bsr.service_id = hs.service_id "
                 + "LEFT JOIN dbo.Room r ON bsr.room_id = r.room_id "
                 + "LEFT JOIN dbo.Account a ON bsr.processed_by_staff_id = a.account_id "
-                + "LEFT JOIN dbo.Account c ON b.account_id = c.account_id "
                 + "WHERE 1=1 ";
 
         if (!"All".equalsIgnoreCase(statusFilter)) {
             sql += "  AND bsr.status = ? ";
         }
         if (keyword != null && !keyword.trim().isEmpty()) {
-            sql += "  AND (hs.service_name LIKE ? OR r.room_number LIKE ? OR c.full_name LIKE ?) ";
+            sql += "  AND (hs.service_name LIKE ? OR r.room_number LIKE ? OR b.customer_name LIKE ?) ";
         }
         sql += "ORDER BY bsr.created_at DESC "
                 + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
@@ -232,7 +231,7 @@ public class BookingServiceRequestDAO {
     }
 
     /**
-     * UC-35: View Service Requests Đếm tổng số lượng yêu cầu dịch vụ thỏa mãn
+     * UC-34: View Service Requests Đếm tổng số lượng yêu cầu dịch vụ thỏa mãn
      * bộ lọc để tính toán phân trang phía Lễ tân.
      *
      * @param statusFilter trạng thái lọc
@@ -244,14 +243,13 @@ public class BookingServiceRequestDAO {
                 + "JOIN dbo.Booking b ON bsr.booking_id = b.booking_id "
                 + "JOIN dbo.HotelService hs ON bsr.service_id = hs.service_id "
                 + "LEFT JOIN dbo.Room r ON bsr.room_id = r.room_id "
-                + "LEFT JOIN dbo.Account c ON b.account_id = c.account_id "
                 + "WHERE 1=1 ";
 
         if (!"All".equalsIgnoreCase(statusFilter)) {
             sql += "  AND bsr.status = ? ";
         }
         if (keyword != null && !keyword.trim().isEmpty()) {
-            sql += "  AND (hs.service_name LIKE ? OR r.room_number LIKE ? OR c.full_name LIKE ?) ";
+            sql += "  AND (hs.service_name LIKE ? OR r.room_number LIKE ? OR b.customer_name LIKE ?) ";
         }
 
         try (Connection conn = DBContext.getConnection()) {
@@ -506,61 +504,6 @@ public class BookingServiceRequestDAO {
         return list;
     }
 
-    public boolean isBookingCheckedIn(int bookingId) {
-
-        String sql = """
-        SELECT COUNT(*)
-        FROM dbo.Booking
-        WHERE booking_id=?
-        AND status=N'CheckedIn'
-    """;
-        try (Connection conn
-                = DBContext.getConnection()) {
-            useDatabase(conn);
-            try (PreparedStatement ps
-                    = conn.prepareStatement(sql)) {
-                ps.setInt(1, bookingId);
-                ResultSet rs
-                        = ps.executeQuery();
-                rs.next();
-                return rs.getInt(1) > 0;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    public boolean checkRoomBelongBooking(
-            int bookingId,
-            int roomId) {
-
-        String sql = """
-        SELECT COUNT(*)
-
-        FROM dbo.RoomAssignment
-
-        WHERE booking_id=?
-
-        AND room_id=?
-    """;
-        try (Connection conn
-                = DBContext.getConnection()) {
-            useDatabase(conn);
-            try (PreparedStatement ps
-                    = conn.prepareStatement(sql)) {
-                ps.setInt(1, bookingId);
-                ps.setInt(2, roomId);
-                ResultSet rs
-                        = ps.executeQuery();
-                rs.next();
-                return rs.getInt(1) > 0;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
 
     public boolean insertRequestByReceptionist(BookingServiceRequest r) {
 

@@ -749,36 +749,6 @@ IF COL_LENGTH(N'dbo.Account', N'work_status') IS NULL
     ALTER TABLE dbo.Account ADD work_status NVARCHAR(30) NOT NULL CONSTRAINT DF_Account_WorkStatus DEFAULT N'Offline';
 GO
 
-/* 5.2 Bảng yêu cầu của khách hàng.
-   - room_id        : phòng phát sinh yêu cầu
-   - title          : nội dung yêu cầu (vd: Thêm khăn tắm)
-   - priority       : Low / Medium / High / Urgent
-   - status         : Pending / InProgress / Completed / Cancelled
-   - assigned_staff_id : nhân viên Housekeeping được giao (NULL = chưa gán)
-   - created_at     : thời gian yêu cầu (dùng để sắp xếp mặc định)
-   - completed_at   : thời điểm hoàn thành (dùng đếm công việc theo ngày/tháng) */
-IF OBJECT_ID(N'dbo.CustomerRequest', N'U') IS NULL
-BEGIN
-    CREATE TABLE dbo.CustomerRequest (
-        request_id INT IDENTITY(1,1) PRIMARY KEY,
-        room_id INT NULL,
-        title NVARCHAR(200) NOT NULL,
-        description NVARCHAR(500) NULL,
-        priority NVARCHAR(20) NOT NULL DEFAULT N'Medium',
-        status NVARCHAR(20) NOT NULL DEFAULT N'Pending',
-        assigned_staff_id INT NULL,
-        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
-        updated_at DATETIME2 NULL,
-        completed_at DATETIME2 NULL,
-        cancel_reason NVARCHAR(500) NULL,
-        CONSTRAINT FK_CustomerRequest_Room FOREIGN KEY (room_id) REFERENCES dbo.Room(room_id),
-        CONSTRAINT FK_CustomerRequest_Staff FOREIGN KEY (assigned_staff_id) REFERENCES dbo.Account(account_id),
-        CONSTRAINT CK_CustomerRequest_Priority CHECK (priority IN (N'Low', N'Medium', N'High', N'Urgent')),
-        CONSTRAINT CK_CustomerRequest_Status CHECK (status IN (N'Pending', N'InProgress', N'Completed', N'Cancelled'))
-    );
-END
-GO
-
 /* 5.3 Bảng yêu cầu dịch vụ của khách hàng (BookingServiceRequest) */
 IF OBJECT_ID(N'dbo.BookingServiceRequest', N'U') IS NULL
 BEGIN
@@ -829,63 +799,6 @@ GO
 /* Đảm bảo tài khoản housekeeping gốc cũng ở trạng thái Active để demo */
 UPDATE dbo.Account SET work_status = N'Active'
 WHERE email = N'housekeeping@hotel.com' AND work_status = N'Offline';
-GO
-
-/* 5.4 Seed yêu cầu khách hàng mẫu (chỉ thêm nếu bảng đang rỗng) */
-IF NOT EXISTS (SELECT 1 FROM dbo.CustomerRequest)
-BEGIN
-    INSERT INTO dbo.CustomerRequest (room_id, title, description, priority, status, assigned_staff_id, created_at, completed_at)
-    VALUES
-    -- Đang chờ xử lý (chưa gán)
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'204'), N'Yêu cầu thêm khăn tắm',
-        N'Khách yêu cầu thêm 2 khăn tắm lớn.', N'Medium', N'Pending', NULL,
-        DATEADD(MINUTE, -25, SYSDATETIME()), NULL),
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'301'), N'Điều hòa không mát',
-        N'Khách phản ánh điều hòa chạy nhưng không mát.', N'High', N'Pending', NULL,
-        DATEADD(MINUTE, -50, SYSDATETIME()), NULL),
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'101'), N'Nước nóng yếu',
-        N'Vòi sen ra nước nóng rất yếu vào buổi sáng.', N'Urgent', N'Pending', NULL,
-        DATEADD(HOUR, -2, SYSDATETIME()), NULL),
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'202'), N'Yêu cầu dọn phòng sớm',
-        N'Khách muốn được dọn phòng trước 11h.', N'Low', N'Pending', NULL,
-        DATEADD(HOUR, -3, SYSDATETIME()), NULL),
-    -- Đang thực hiện (đã gán)
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'102'), N'Thay ga giường',
-        N'Khách yêu cầu thay ga và vỏ gối mới.', N'Medium', N'InProgress',
-        (SELECT account_id FROM dbo.Account WHERE email = N'hk1@hotel.com'),
-        DATEADD(HOUR, -4, SYSDATETIME()), NULL),
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'305'), N'Bổ sung nước uống',
-        N'Bổ sung 4 chai nước suối trong minibar.', N'Low', N'InProgress',
-        (SELECT account_id FROM dbo.Account WHERE email = N'hk3@hotel.com'),
-        DATEADD(HOUR, -5, SYSDATETIME()), NULL),
-    -- Đã hoàn thành hôm nay (đếm theo ngày)
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'201'), N'Vệ sinh nhà tắm',
-        N'Khách yêu cầu vệ sinh lại nhà tắm.', N'Medium', N'Completed',
-        (SELECT account_id FROM dbo.Account WHERE email = N'hk1@hotel.com'),
-        DATEADD(HOUR, -8, SYSDATETIME()), DATEADD(HOUR, -6, SYSDATETIME())),
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'401'), N'Thay bóng đèn',
-        N'Bóng đèn phòng ngủ bị cháy.', N'High', N'Completed',
-        (SELECT account_id FROM dbo.Account WHERE email = N'hk3@hotel.com'),
-        DATEADD(HOUR, -10, SYSDATETIME()), DATEADD(HOUR, -9, SYSDATETIME())),
-    -- Đã hoàn thành trước đó trong tháng (đếm theo tháng)
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'101'), N'Giặt nhanh quần áo',
-        N'Khách gửi giặt nhanh 1 bộ vest.', N'Medium', N'Completed',
-        (SELECT account_id FROM dbo.Account WHERE email = N'hk1@hotel.com'),
-        DATEADD(DAY, -6, SYSDATETIME()), DATEADD(DAY, -6, SYSDATETIME())),
-    -- Đã huỷ
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'202'), N'Đặt thêm giường phụ',
-        N'Khách đổi ý, không cần giường phụ nữa.', N'Low', N'Cancelled', NULL,
-        DATEADD(DAY, -1, SYSDATETIME()), NULL);
-END
-GO
-
-/* Test query: danh sách yêu cầu kèm phòng và nhân viên được giao */
-SELECT cr.request_id, rm.room_number, cr.title, cr.priority, cr.status,
-       acc.full_name AS staff_name, cr.created_at, cr.completed_at
-FROM dbo.CustomerRequest cr
-LEFT JOIN dbo.Room rm ON cr.room_id = rm.room_id
-LEFT JOIN dbo.Account acc ON cr.assigned_staff_id = acc.account_id
-ORDER BY cr.created_at DESC;
 GO
 
 /* ============================================================
@@ -1303,21 +1216,6 @@ WHERE rf.status = N'Pending'
 GO
 
 /* ============================================================
-   11. ADD BOOKING_ID TO CUSTOMERREQUEST TABLE
-   ============================================================ */
-IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.columns 
-    WHERE object_id = OBJECT_ID(N'dbo.CustomerRequest') 
-      AND name = N'booking_id'
-)
-BEGIN
-    ALTER TABLE dbo.CustomerRequest ADD booking_id INT NULL;
-    ALTER TABLE dbo.CustomerRequest ADD CONSTRAINT FK_CustomerRequest_Booking
-        FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id);
-END
-GO
-/* ============================================================
    11. CREATE 2 TABLE FOR STORE CHECK IN HISTORY
    ============================================================ */
 
@@ -1443,24 +1341,6 @@ GO
    Service requests (Receptionist duyet -> InvoiceItem): booking_id IS NOT NULL
    ============================================================ */
 
-/* Dam bao cac seed maintenance request khong bi gan booking_id nham (idempotent). */
-UPDATE dbo.CustomerRequest
-SET booking_id = NULL
-WHERE booking_id IS NOT NULL
-  AND title IN (
-      N'Yeu cau them khan tam',
-      N'Dieu hoa khong mat',
-      N'Nuoc nong yeu',
-      N'Yeu cau don phong som',
-      N'Thay ga giuong',
-      N'Bo sung nuoc uong',
-      N'Ve sinh nha tam',
-      N'Thay bong den',
-      N'Dat them giuong phu',
-      N'Giat nhanh quan ao'
-  );
-GO
-
 /* Seed mau: Service requests tu Customer de test Receptionist duyet -> Invoice.
    Chi chen khi chua co service request nao. */
 IF NOT EXISTS (SELECT 1 FROM dbo.BookingServiceRequest)
@@ -1576,7 +1456,7 @@ BEGIN
 
         description NVARCHAR(500) NULL,
 
-        priority NVARCHAR(20) NOT NULL DEFAULT N'Low',
+        priority NVARCHAR(20) NOT NULL,
 
         status NVARCHAR(20) NOT NULL DEFAULT N'Pending',
 

@@ -447,7 +447,11 @@
                                                     \${toggleIcon}
                                                  </button>`;
 
-                                            const deleteBtn = `<button class="btn-action delete" onclick="deletePromotion(\${promo.id})" title="Xóa">
+                                            const deleteBtn = (promo && promo.usedCount > 0)
+                                                ? `<button class="btn-action delete" style="opacity: 0.35; cursor: not-allowed;" title="Không thể xóa khuyến mãi đã được sử dụng">
+                                                       <i class="fa-solid fa-trash-can"></i>
+                                                   </button>`
+                                                : `<button class="btn-action delete" onclick="deletePromotion(\${promo ? promo.id : ''})" title="Xóa">
                                                        <i class="fa-solid fa-trash-can"></i>
                                                    </button>`;
 
@@ -526,6 +530,21 @@
                                     const label = newStatus === 'Active' ? 'kích hoạt' : 'tạm khóa';
                                     if (confirm(`Bạn có chắc muốn \${label} khuyến mãi này không?`)) {
                                         window.location.href = CTX + '/manager/promotions?action=toggle&id=' + id + '&status=' + newStatus;
+                                    }
+                                }
+
+                                // Delete Promotion
+                                function deletePromotion(id) {
+                                    if (!id) return;
+                                    const table = ManagerTable.tables.promotionsTable;
+                                    if (table && table.items) {
+                                        const item = table.items.find(p => p.id === id);
+                                        if (item && item.usedCount > 0) {
+                                            return;
+                                        }
+                                    }
+                                    if (confirm("Bạn có chắc chắn muốn xóa khuyến mãi này không?")) {
+                                        window.location.href = CTX + '/manager/promotions?action=delete&id=' + id;
                                     }
                                 }
 

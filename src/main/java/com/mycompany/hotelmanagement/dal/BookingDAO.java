@@ -888,6 +888,17 @@ public class BookingDAO {
     }
 
     public int checkRoomAvailability(int roomTypeId, Date checkIn, Date checkOut) {
+        return checkRoomAvailability(roomTypeId, checkIn, checkOut, null);
+    }
+
+    /**
+     * Số phòng trống của một loại phòng trong khoảng [checkIn, checkOut), tính
+     * theo ngày cao điểm. {@code excludeBookingId} (nullable) loại chính booking
+     * đó và các booking con trong nhóm của nó khỏi phép đếm — dùng khi kiểm tra
+     * yêu cầu thay đổi ngày của một booking hiện hữu, để đơn của chính khách
+     * không tự chặn mình trên những ngày hai khoảng giao nhau.
+     */
+    public int checkRoomAvailability(int roomTypeId, Date checkIn, Date checkOut, Integer excludeBookingId) {
         int totalRooms = 0;
         String countSql = "SELECT COUNT(*) FROM dbo.Room WHERE type_id = ? AND status <> N'Maintenance' AND is_deleted = 0";
         try (Connection conn = DBContext.getConnection()) {
@@ -907,7 +918,10 @@ public class BookingDAO {
 
         String overlapSql = "SELECT check_in_date, check_out_date, room_quantity FROM dbo.Booking "
                 + "WHERE room_type_id = ? AND status IN (N'Pending', N'Confirmed', N'CheckedIn') "
-                + "AND check_in_date < ? AND check_out_date > ?";
+                + "AND check_in_date < ? AND check_out_date > ?"
+                + (excludeBookingId != null
+                        ? " AND booking_id <> ? AND (group_booking_id IS NULL OR group_booking_id <> ?)"
+                        : "");
 
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
@@ -915,6 +929,10 @@ public class BookingDAO {
                 ps.setInt(1, roomTypeId);
                 ps.setDate(2, checkOut);
                 ps.setDate(3, checkIn);
+                if (excludeBookingId != null) {
+                    ps.setInt(4, excludeBookingId);
+                    ps.setInt(5, excludeBookingId);
+                }
 
                 List<BookingOverlap> overlaps = new ArrayList<>();
                 try (ResultSet rs = ps.executeQuery()) {

@@ -30,6 +30,8 @@ public class HotelService implements Serializable {
     private String unit;
     private boolean isActive;
 
+    private boolean hasUsage;
+
     public HotelService() {
     }
 
@@ -40,6 +42,14 @@ public class HotelService implements Serializable {
         this.price = price;
         this.unit = unit;
         this.isActive = isActive;
+    }
+
+    public boolean isHasUsage() {
+        return hasUsage;
+    }
+
+    public void setHasUsage(boolean hasUsage) {
+        this.hasUsage = hasUsage;
     }
 
     public int getServiceId() {

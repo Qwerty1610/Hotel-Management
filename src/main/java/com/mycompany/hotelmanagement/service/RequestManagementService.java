@@ -1,8 +1,10 @@
 package com.mycompany.hotelmanagement.service;
 
-import com.mycompany.hotelmanagement.dal.CustomerRequestDAO;
+import com.mycompany.hotelmanagement.dal.MaintenanceRequestDAO;
+import com.mycompany.hotelmanagement.dal.RoomIssueDAO;
 import com.mycompany.hotelmanagement.dal.StaffDAO;
-import com.mycompany.hotelmanagement.entity.CustomerRequest;
+import com.mycompany.hotelmanagement.entity.MaintenanceRequest;
+import com.mycompany.hotelmanagement.entity.RoomIssue;
 import com.mycompany.hotelmanagement.entity.StaffInfo;
 
 import java.util.List;
@@ -16,7 +18,7 @@ import java.util.List;
  * theo dõi công việc nhân viên Housekeeping. Cung cấp các phương thức lấy
  * danh sách Maintenance requests có lọc/phân trang, đếm tổng, tra cứu thông
  * tin nhân viên, lấy công việc theo nhân viên, gán nhân viên xử lý và cập
- * nhật trạng thái yêu cầu. Ủy quyền thao tác dữ liệu cho CustomerRequestDAO
+ * nhật trạng thái yêu cầu. Ủy quyền thao tác dữ liệu cho MaintenanceRequestDAO
  * và StaffDAO.
  *
  * Related Use Cases:
@@ -25,22 +27,16 @@ import java.util.List;
  * Date: 02-06-2026
  *
  * @author Pham Quoc Quy, KhanhTD
- * @version 1.0
+ * @version 1.1
  */
 public class RequestManagementService {
 
-    private final CustomerRequestDAO requestDAO = new CustomerRequestDAO();
+    private final MaintenanceRequestDAO requestDAO = new MaintenanceRequestDAO();
     private final StaffDAO staffDAO = new StaffDAO();
+    private final RoomIssueDAO roomIssueDAO = new RoomIssueDAO();
 
-    public List<CustomerRequest> getAllRequests() {
-        return requestDAO.getAllRequests();
-    }
-
-    /* ---------- Danh sách yêu cầu Maintenance (booking_id IS NULL): lọc + phân trang ----------
-     * Manager chỉ quản lý Maintenance requests (bảo trì phòng, giao Housekeeping).
-     * Service requests (booking_id IS NOT NULL) do Receptionist xử lý riêng.
-     */
-    public List<CustomerRequest> getRequests(String roomKw, String priority, String staffFilter,
+    /* ---------- Danh sách yêu cầu bảo trì: lọc + phân trang ---------- */
+    public List<MaintenanceRequest> getRequests(String roomKw, String priority, String staffFilter,
                                              String status, int offset, int pageSize) {
         return requestDAO.getMaintenanceRequests(roomKw, priority, staffFilter, status, offset, pageSize);
     }
@@ -50,11 +46,11 @@ public class RequestManagementService {
     }
 
     /* ---------- Trang chi tiết nhân viên ---------- */
-    public com.mycompany.hotelmanagement.entity.StaffInfo getStaffById(int accountId) {
+    public StaffInfo getStaffById(int accountId) {
         return staffDAO.getStaffById(accountId);
     }
 
-    public List<CustomerRequest> getRequestsByStaff(int staffId, int offset, int pageSize) {
+    public List<MaintenanceRequest> getRequestsByStaff(int staffId, int offset, int pageSize) {
         return requestDAO.getRequestsByStaff(staffId, offset, pageSize);
     }
 
@@ -62,7 +58,7 @@ public class RequestManagementService {
         return requestDAO.countRequestsByStaff(staffId);
     }
 
-    public List<CustomerRequest> getInProgressByStaff(int staffId) {
+    public List<MaintenanceRequest> getInProgressByStaff(int staffId) {
         return requestDAO.getInProgressByStaff(staffId);
     }
 
@@ -70,14 +66,14 @@ public class RequestManagementService {
         return staffDAO.getHousekeepingStaff();
     }
 
-    /** Số Maintenance requests đang chờ (Pending + InProgress) — KPI cho Manager. */
+    /** Số yêu cầu đang chờ (Pending + InProgress) — KPI cho Manager. */
     public int countPending() {
-        return requestDAO.countMaintenanceByStatus("Pending");
+        return requestDAO.countPendingIncludingInProgress();
     }
 
-    /** Số Maintenance requests đang thực hiện — KPI cho Manager. */
+    /** Số yêu cầu đang thực hiện — KPI cho Manager. */
     public int countInProgress() {
-        return requestDAO.countMaintenanceByStatus("InProgress");
+        return requestDAO.countByStatus("InProgress");
     }
 
     public int countActiveStaff() {
@@ -90,5 +86,14 @@ public class RequestManagementService {
 
     public boolean updateStatus(int requestId, String newStatus) {
         return requestDAO.updateStatus(requestId, newStatus);
+    }
+
+    public boolean updatePriority(int requestId, String priority) {
+        return requestDAO.updatePriority(requestId, priority);
+    }
+
+    /** Báo cáo sự cố phòng do nhân viên gửi (bảng RoomIssue) — cho Manager xem. */
+    public List<RoomIssue> getAllRoomIssues() {
+        return roomIssueDAO.getAllForManager();
     }
 }

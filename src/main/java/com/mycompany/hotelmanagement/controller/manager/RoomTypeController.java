@@ -1,13 +1,7 @@
 package com.mycompany.hotelmanagement.controller.manager;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.UUID;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
@@ -17,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
+import com.mycompany.hotelmanagement.service.CloudinaryService;
 import com.mycompany.hotelmanagement.service.RoomTypeService;
 
 /**
@@ -48,6 +43,7 @@ import com.mycompany.hotelmanagement.service.RoomTypeService;
 public class RoomTypeController extends HttpServlet {
 
     private final RoomTypeService roomTypeService = new RoomTypeService();
+    private final CloudinaryService cloudinaryService = new CloudinaryService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -109,30 +105,18 @@ public class RoomTypeController extends HttpServlet {
             String imageUrl = request.getParameter("imageUrl");
             String description = request.getParameter("description");
 
-            // --- Handle file upload (if provided, it overrides the URL field) ---
+            // --- Handle file upload via Cloudinary (overrides the URL field if provided) ---
             try {
                 Part filePart = request.getPart("imageFile");
                 if (filePart != null && filePart.getSize() > 0) {
-                    String submittedFileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
-                    String ext = "";
-                    int dotIdx = submittedFileName.lastIndexOf('.');
-                    if (dotIdx >= 0) {
-                        ext = submittedFileName.substring(dotIdx).toLowerCase();
+                    String cloudinaryUrl = cloudinaryService.uploadImage(filePart);
+                    if (cloudinaryUrl != null) {
+                        imageUrl = cloudinaryUrl;
+                        System.out.println("[RoomTypeController] Image uploaded to Cloudinary: " + imageUrl);
                     }
-                    String uniqueName = UUID.randomUUID().toString() + ext;
-                    String uploadDir = getServletContext().getRealPath("/assets/uploads/room-types");
-                    File dir = new File(uploadDir);
-                    if (!dir.exists()) {
-                        dir.mkdirs();
-                    }
-                    try (InputStream is = filePart.getInputStream()) {
-                        Files.copy(is, new File(dir, uniqueName).toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    }
-                    imageUrl = request.getContextPath() + "/assets/uploads/room-types/" + uniqueName;
-                    System.out.println("[RoomTypeController] File uploaded: " + uniqueName);
                 }
             } catch (Exception ex) {
-                System.out.println("[RoomTypeController] File upload skipped/error: " + ex.getMessage());
+                System.out.println("[RoomTypeController] Cloudinary upload skipped/error: " + ex.getMessage());
             }
 
             System.out.println("[RoomTypeController] Form values: name=" + name +
@@ -217,9 +201,13 @@ public class RoomTypeController extends HttpServlet {
                 }
             }
 
-            roomTypeService.saveRoomType(rt, imageUrl);
+            boolean saved = roomTypeService.saveRoomType(rt, imageUrl);
+            if (saved) {
+                response.sendRedirect(request.getContextPath() + "/manager/roomtypes?success=saved");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/manager/roomtypes?error=saveError");
+            }
+            return;
         }
-
-        response.sendRedirect(request.getContextPath() + "/manager/roomtypes?success=saved");
     }
 }

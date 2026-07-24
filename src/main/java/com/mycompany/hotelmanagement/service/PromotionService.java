@@ -37,13 +37,6 @@ public class PromotionService {
     }
 
     /**
-     * Lấy một khuyến mãi theo ID.
-     */
-    public Promotion getPromotionById(int promotionId) {
-        return promotionRepository.getPromotionById(promotionId);
-    }
-
-    /**
      * Kiểm tra mã khuyến mãi có bị trùng không.
      *
      * @param code      Mã cần kiểm tra
@@ -56,11 +49,11 @@ public class PromotionService {
     /**
      * Lưu khuyến mãi: thêm mới nếu promotionId <= 0, cập nhật nếu > 0.
      */
-    public void savePromotion(Promotion promotion) {
+    public boolean savePromotion(Promotion promotion) {
         if (promotion.getPromotionId() <= 0) {
-            promotionRepository.insertPromotion(promotion);
+            return promotionRepository.insertPromotion(promotion);
         } else {
-            promotionRepository.updatePromotion(promotion);
+            return promotionRepository.updatePromotion(promotion);
         }
     }
 
@@ -70,15 +63,14 @@ public class PromotionService {
      * @param promotionId ID khuyến mãi
      * @param newStatus   "Active" hoặc "Inactive"
      */
-    public void togglePromotionStatus(int promotionId, String newStatus) {
-        promotionRepository.togglePromotionStatus(promotionId, newStatus);
+    public boolean togglePromotionStatus(int promotionId, String newStatus) {
+        return promotionRepository.togglePromotionStatus(promotionId, newStatus);
     }
 
     /**
-     * Xóa khuyến mãi. Cho phép xóa kể cả khi đã được sử dụng.
-     * Booking cũ đã áp mã vẫn giữ nguyên số tiền giảm.
+     * Xóa khuyến mãi. Chỉ cho phép xóa khi UsedCount = 0.
      *
-     * @return true nếu xóa thành công, false nếu có lỗi
+     * @return true nếu xóa thành công, false nếu UsedCount > 0 hoặc lỗi
      */
     public boolean deletePromotion(int promotionId) {
         return promotionRepository.deletePromotion(promotionId);
@@ -94,8 +86,8 @@ public class PromotionService {
     /**
      * Tăng số lượng đã sử dụng của khuyến mãi lên 1.
      */
-    public void incrementUsedCount(int promotionId) {
-        promotionRepository.incrementUsedCount(promotionId);
+    public boolean incrementUsedCount(int promotionId) {
+        return promotionRepository.incrementUsedCount(promotionId);
     }
 
     public static class PromotionResult {

@@ -81,10 +81,6 @@ public class HousekeepingHandleMaintenanceController extends HttpServlet {
 
         switch (action) {
 
-            case "start":
-                startProcessing(request, response);
-                break;
-
             case "resolve":
                 resolveRequest(request, response);
                 break;
@@ -111,40 +107,71 @@ public class HousekeepingHandleMaintenanceController extends HttpServlet {
             status = "all";
         }
 
+        Integer staffId
+                = (Integer) request.getSession().getAttribute("accountId");
+
+        if (staffId == null) {
+            response.sendRedirect(request.getContextPath() + "/home/login");
+            return;
+        }
+
+        final int pageSize = 10;
+        int page = parseIntOr(request.getParameter("page"), 1);
+        if (page < 1) {
+            page = 1;
+        }
+
+        int totalItems = maintenanceDAO.countRequestsByStaff(staffId, status);
+        int totalPages = (int) Math.ceil(totalItems / (double) pageSize);
+        if (totalPages < 1) {
+            totalPages = 1;
+        }
+        if (page > totalPages) {
+            page = totalPages;
+        }
+        int offset = (page - 1) * pageSize;
+
         List<MaintenanceRequest> list
-                = maintenanceDAO.getMaintenanceRequests(status);
+                = maintenanceDAO.getRequestsByStaff(staffId, status, offset, pageSize);
 
         request.setAttribute("maintenanceRequests", list);
         request.setAttribute("currentStatus", status);
+        request.setAttribute("page", page);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("totalItems", totalItems);
+        request.setAttribute("pageSize", pageSize);
 
-        // Bộ đếm
+        // Bộ đếm theo từng tab, chỉ tính việc được gán cho nhân viên đang đăng nhập
         request.setAttribute("countAll",
-                maintenanceDAO.countAll());
+                maintenanceDAO.countRequestsByStaff(staffId, "all"));
 
         request.setAttribute("countPending",
-                maintenanceDAO.countByStatus("Pending"));
+                maintenanceDAO.countRequestsByStaff(staffId, "Pending"));
 
         request.setAttribute("countInProgress",
-                maintenanceDAO.countByStatus("InProgress"));
+                maintenanceDAO.countRequestsByStaff(staffId, "InProgress"));
 
         request.setAttribute("countResolved",
-                maintenanceDAO.countByStatus("Resolved"));
+                maintenanceDAO.countRequestsByStaff(staffId, "Resolved"));
 
         request.setAttribute("countUnresolvable",
-                maintenanceDAO.countByStatus("Unresolvable"));
-        
+                maintenanceDAO.countRequestsByStaff(staffId, "Unresolvable"));
+
         request.setAttribute(
                 "countCancelled",
-                maintenanceDAO.countByStatus("Cancelled"));
-        
-        Integer accountId
-                = (Integer) request.getSession().getAttribute("accountId");
-
-        request.setAttribute("currentAccountId", accountId);
+                maintenanceDAO.countRequestsByStaff(staffId, "Cancelled"));
 
         request.getRequestDispatcher(
                 "/WEB-INF/views/housekeeping/maintenance-request-list.jsp")
                 .forward(request, response);
+    }
+
+    private int parseIntOr(String v, int fallback) {
+        try {
+            return Integer.parseInt(v.trim());
+        } catch (Exception e) {
+            return fallback;
+        }
     }
 
     private void showDetail(HttpServletRequest request,
@@ -170,41 +197,6 @@ public class HousekeepingHandleMaintenanceController extends HttpServlet {
         request.getRequestDispatcher(
                 "/WEB-INF/views/housekeeping/maintenance-request-handle.jsp")
                 .forward(request, response);
-    }
-
-    private void startProcessing(HttpServletRequest request,
-            HttpServletResponse response)
-            throws ServletException, IOException {
-
-        Integer staffId = (Integer) request.getSession().getAttribute("accountId");
-
-        if (staffId == null) {
-            response.sendRedirect(request.getContextPath() + "/home/login");
-            return;
-        }
-
-        int requestId = Integer.parseInt(request.getParameter("requestId"));
-
-        boolean success = maintenanceDAO.startProcessing(requestId, staffId);
-
-        if (success) {
-
-            response.sendRedirect(
-                    request.getContextPath()
-                    + "/housekeeping/handlemaintenance?action=detail&id="
-                    + requestId);
-
-        } else {
-
-            request.getSession().setAttribute(
-                    "error",
-                    "This request has already been processed.");
-
-            response.sendRedirect(
-                    request.getContextPath()
-                    + "/housekeeping/handlemaintenance?action=detail&id="
-                    + requestId);
-        }
     }
 
     private void resolveRequest(HttpServletRequest request,

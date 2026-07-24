@@ -103,16 +103,16 @@
             <form action="${pageContext.request.contextPath}/rooms" method="GET">
                 <div class="search-grid">
                     
-                    <!-- Room Type Dropdown -->
+                    <!-- Check-in Date -->
                     <div class="form-group">
-                        <label for="typeId">Loại phòng</label>
-                        <select name="typeId" id="typeId">
-                            <option value="all" ${selectedTypeId == 'all' ? 'selected' : ''}>Tất cả loại phòng</option>
-                            <option value="Standard" ${selectedTypeId == 'Standard' ? 'selected' : ''}>Phòng Standard</option>
-                            <option value="Deluxe" ${selectedTypeId == 'Deluxe' ? 'selected' : ''}>Phòng Deluxe</option>
-                            <option value="Family" ${selectedTypeId == 'Family' ? 'selected' : ''}>Phòng Family</option>
-                            <option value="Suite" ${selectedTypeId == 'Suite' ? 'selected' : ''}>Phòng Suite</option>
-                        </select>
+                        <label for="checkIn">Ngày nhận phòng</label>
+                        <input type="date" name="checkIn" id="checkIn" value="${selectedCheckIn}" min="${todayDate}" required />
+                    </div>
+
+                    <!-- Check-out Date -->
+                    <div class="form-group">
+                        <label for="checkOut">Ngày trả phòng</label>
+                        <input type="date" name="checkOut" id="checkOut" value="${selectedCheckOut}" min="${not empty selectedCheckIn ? selectedCheckIn : todayDate}" required />
                     </div>
 
                     <!-- Min Price Input -->
@@ -155,23 +155,87 @@
             <script>
                 (function () {
                     var form = document.querySelector('.search-card form');
+                    var checkInInput = document.getElementById('checkIn');
+                    var checkOutInput = document.getElementById('checkOut');
                     var minInput = document.getElementById('minPrice');
                     var maxInput = document.getElementById('maxPrice');
 
-                    // Real-time: clear custom validity on input
-                    [minInput, maxInput].forEach(function (input) {
-                        input.addEventListener('input', function () {
+                    // Set min date to today (local timezone formatted YYYY-MM-DD)
+                    var d = new Date();
+                    var month = '' + (d.getMonth() + 1);
+                    var day = '' + d.getDate();
+                    var year = d.getFullYear();
+                    if (month.length < 2) month = '0' + month;
+                    if (day.length < 2) day = '0' + day;
+                    var todayStr = [year, month, day].join('-');
+
+                    if (checkInInput) {
+                        checkInInput.min = todayStr;
+                        checkInInput.addEventListener('input', function () {
                             this.setCustomValidity('');
-                            if (this.value !== '' && parseFloat(this.value) < 0) {
-                                this.value = 0;
+                            if (checkOutInput) {
+                                checkOutInput.min = this.value || todayStr;
+                                if (checkOutInput.value && checkOutInput.value <= this.value) {
+                                    checkOutInput.value = '';
+                                }
                             }
                         });
+                    }
+
+                    if (checkOutInput) {
+                        checkOutInput.min = (checkInInput && checkInInput.value) ? checkInInput.value : todayStr;
+                        checkOutInput.addEventListener('input', function () {
+                            this.setCustomValidity('');
+                        });
+                    }
+
+                    // Real-time: clear custom validity on input for price fields
+                    [minInput, maxInput].forEach(function (input) {
+                        if (input) {
+                            input.addEventListener('input', function () {
+                                this.setCustomValidity('');
+                                if (this.value !== '' && parseFloat(this.value) < 0) {
+                                    this.value = 0;
+                                }
+                            });
+                        }
                     });
 
                     // On submit: validate inputs with native HTML5 tooltip
                     form.addEventListener('submit', function (e) {
+                        if (checkInInput) checkInInput.setCustomValidity('');
+                        if (checkOutInput) checkOutInput.setCustomValidity('');
                         minInput.setCustomValidity('');
                         maxInput.setCustomValidity('');
+
+                        if (checkInInput && checkOutInput) {
+                            var inVal = checkInInput.value.trim();
+                            var outVal = checkOutInput.value.trim();
+                            if (!inVal) {
+                                e.preventDefault();
+                                checkInInput.setCustomValidity('Vui lòng chọn ngày nhận phòng.');
+                                checkInInput.reportValidity();
+                                return;
+                            }
+                            if (!outVal) {
+                                e.preventDefault();
+                                checkOutInput.setCustomValidity('Vui lòng chọn ngày trả phòng.');
+                                checkOutInput.reportValidity();
+                                return;
+                            }
+                            if (inVal < todayStr) {
+                                e.preventDefault();
+                                checkInInput.setCustomValidity('Ngày nhận phòng không được ở trong quá khứ.');
+                                checkInInput.reportValidity();
+                                return;
+                            }
+                            if (inVal >= outVal) {
+                                e.preventDefault();
+                                checkOutInput.setCustomValidity('Ngày trả phòng phải sau ngày nhận phòng.');
+                                checkOutInput.reportValidity();
+                                return;
+                            }
+                        }
 
                         var minVal = minInput.value.trim();
                         var maxVal = maxInput.value.trim();
@@ -199,6 +263,29 @@
                             return;
                         }
                     });
+
+                    // Unified Vietnamese HTML5 Validation Messages
+                    document.addEventListener('invalid', function (e) {
+                        var el = e.target;
+                        if (!el || !['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)) return;
+                        if (el.validity.valueMissing) {
+                            if (el.id === 'checkIn') {
+                                el.setCustomValidity('Vui lòng chọn ngày nhận phòng.');
+                            } else if (el.id === 'checkOut') {
+                                el.setCustomValidity('Vui lòng chọn ngày trả phòng.');
+                            } else if (el.tagName === 'SELECT') {
+                                el.setCustomValidity('Vui lòng chọn một tùy chọn trong danh sách.');
+                            } else {
+                                el.setCustomValidity('Vui lòng điền vào trường này.');
+                            }
+                        } else if (el.validity.rangeUnderflow) {
+                            el.setCustomValidity('Giá trị phải lớn hơn hoặc bằng ' + el.min + '.');
+                        } else if (el.validity.rangeOverflow) {
+                            el.setCustomValidity('Giá trị không được vượt quá ' + el.max + '.');
+                        } else if (el.validity.typeMismatch || el.validity.badInput) {
+                            el.setCustomValidity('Định dạng dữ liệu không hợp lệ.');
+                        }
+                    }, true);
                 })();
             </script>
         </div>
@@ -208,8 +295,14 @@
     <main class="results-section">
         <div class="container">
             
+            <c:if test="${not empty dateError}">
+                <div class="alert-banner alert-danger" style="margin-bottom: 20px; background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; padding:12px 16px; border-radius:8px; display:flex; align-items:center; gap:8px; font-weight:600;">
+                    <i class="fa-solid fa-circle-exclamation"></i> ${dateError}
+                </div>
+            </c:if>
+
             <div class="results-header">
-                Tìm thấy <strong>${resultsCount}</strong> loại phòng
+                Tìm thấy <strong>${resultsCount}</strong> loại phòng trống (${selectedCheckIn} → ${selectedCheckOut})
             </div>
 
             <!-- Room Cards Grid -->
@@ -219,9 +312,12 @@
                         <c:forEach var="rt" items="${roomTypes}">
                             <!-- Border highlight for Room Deluxe (typeId = 2) -->
                             <div class="room-card">
-                                <div class="card-badges">
+                                <div class="card-badges" style="display:flex; justify-content:space-between; align-items:center;">
                                     <div class="badge-guests">
                                         <i class="fa-solid fa-user-group"></i> ${rt.capacity} khách
+                                    </div>
+                                    <div class="badge-avail" style="font-size:12px; font-weight:700; color:#15803d; background:#dcfce7; padding:3px 10px; border-radius:12px;">
+                                        <i class="fa-solid fa-check"></i> Còn ${rt.availableCount} phòng
                                     </div>
                                 </div>
 
@@ -252,7 +348,7 @@
                                             </span>
                                         </div>
 
-                                        <a href="${pageContext.request.contextPath}/rooms/detail?id=${rt.typeId}" class="btn-detail">
+                                        <a href="${pageContext.request.contextPath}/rooms/detail?id=${rt.typeId}&checkIn=${selectedCheckIn}&checkOut=${selectedCheckOut}" class="btn-detail">
                                             Chi tiết <i class="fa-solid fa-arrow-right"></i>
                                         </a>
                                     </div>

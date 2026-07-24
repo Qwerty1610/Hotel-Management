@@ -19,7 +19,6 @@ public class BookingServiceRequest implements Serializable {
     private Timestamp updatedAt;
     private Timestamp completedAt;
     private String cancelReason;
-    private String priority;
 
     // Derived/Display fields for UI compatibility
     private String roomNumber;
@@ -159,13 +158,6 @@ public class BookingServiceRequest implements Serializable {
         this.assignedStaffName = assignedStaffName;
     }
 
-    public String getPriority() {
-        return priority;
-    }
-
-    public void setPriority(String priority) {
-        this.priority = priority;
-    }
     public String getUnit() {
         return unit;
     }

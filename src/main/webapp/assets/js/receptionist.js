@@ -537,8 +537,22 @@ async function restoreWalkInState() {
     });
 
     const companionContainer =
-            document.getElementById("companionContainer");
+        document.getElementById("companionContainer");
+
+if (companionContainer) {
     companionContainer.innerHTML = "";
+
+    if (state.companions) {
+        state.companions.forEach(name => {
+            addCompanionRow();
+
+            companionContainer
+                .lastElementChild
+                .querySelector("input")
+                .value = name;
+        });
+    }
+}
     if (state.companions) {
         state.companions.forEach(name => {
             addCompanionRow();
@@ -1662,6 +1676,19 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+});
+document.addEventListener("DOMContentLoaded", function () {
+    const checkIn = document.getElementById("checkInDate");
+
+    if (checkIn) {
+        const today = new Date();
+
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, "0");
+        const dd = String(today.getDate()).padStart(2, "0");
+
+        checkIn.min = `${yyyy}-${mm}-${dd}`;
+    }
 });
 function beforeWalkInSubmit(mode, event) {
     document.getElementById("bookingMode").value = mode;

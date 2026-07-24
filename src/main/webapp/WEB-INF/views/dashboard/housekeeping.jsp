@@ -119,14 +119,14 @@
                             </thead>
                             <tbody>
                                 <c:choose>
-                                    <c:when test="${not empty customerRequests}">
-                                        <c:forEach var="req" items="${customerRequests}">
+                                    <c:when test="${not empty assignedRequests}">
+                                        <c:forEach var="req" items="${assignedRequests}">
                                             <tr>
                                                 <td>
-                                                    ${req.roomNumber}
+                                                    ${req.roomNumbers}
                                                 </td>
                                                 <td>
-                                                    ${req.title}
+                                                    ${req.issueNames}
                                                 </td>
                                                 <td>
                                                     ${req.description}
@@ -158,8 +158,11 @@
                                                             <c:when test="${req.status == 'InProgress'}">
                                                                 Đang thực hiện
                                                             </c:when>
-                                                            <c:when test="${req.status == 'Completed'}">
-                                                                Hoàn thành
+                                                            <c:when test="${req.status == 'Resolved'}">
+                                                                Đã xử lý
+                                                            </c:when>
+                                                            <c:when test="${req.status == 'Unresolvable'}">
+                                                                Không thể xử lý
                                                             </c:when>
                                                             <c:when test="${req.status == 'Cancelled'}">
                                                                 Đã hủy
@@ -173,21 +176,18 @@
                                                 <td>
                                                     <c:choose>
                                                         <c:when test="${req.status == 'InProgress'}">
-                                                            <form method="post"
-                                                                  action="${pageContext.request.contextPath}/housekeeping/dashboard">
-                                                                <input type="hidden"
-                                                                       name="action"
-                                                                       value="completeRequest">
-                                                                <input type="hidden"
-                                                                       name="requestId"
-                                                                       value="${req.requestId}">
-                                                                <button type="submit"
-                                                                        class="btn-complete-request">
-                                                                    Hoàn thành công việc
-                                                                </button>
-                                                            </form>
+                                                            <a class="btn-complete-request"
+                                                               href="${pageContext.request.contextPath}/housekeeping/handlemaintenance?action=detail&id=${req.requestId}">
+                                                                Bắt đầu xử lý
+                                                            </a>
                                                         </c:when>
-                                                        <c:when test="${req.status == 'Completed'}">
+                                                        <c:when test="${req.status == 'Unresolvable'}">
+                                                            <a class="btn-complete-request"
+                                                               href="${pageContext.request.contextPath}/housekeeping/handlemaintenance?action=detail&id=${req.requestId}">
+                                                                Xử lý tiếp
+                                                            </a>
+                                                        </c:when>
+                                                        <c:when test="${req.status == 'Resolved'}">
                                                             <button class="btn-request-completed"
                                                                     disabled>
                                                                 Đã hoàn thành
@@ -245,6 +245,11 @@
                                 onclick="applyStatusFilter('Maintenance', event)">
                             BẢO TRÌ
                         </button>
+
+                        <button class="btn-filter" data-status="HasGuest"
+                                onclick="applyStatusFilter('HasGuest', event)">
+                            CÓ KHÁCH
+                        </button>
                     </div>
 
                     <div class="floor-container">
@@ -278,10 +283,14 @@
 
                                             <div class="room-item ${colorClass}"
                                                  data-room-status="${fn:toLowerCase(room.status)}"
+                                                 data-has-guest="${room.hasGuest}"
                                                  data-room-id="${room.roomId}"
                                                  onclick="goTaskDetail('${room.roomId}')">
 
                                                 <div class="maintenance-dot"></div>
+                                                <c:if test="${room.hasGuest}">
+                                                    <span class="guest-badge">Có khách</span>
+                                                </c:if>
                                                 <span class="room-num">${room.roomNumber}</span>
                                                 <span class="room-type">${room.typeName}</span>
                                             </div>

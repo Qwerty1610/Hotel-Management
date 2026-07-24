@@ -15,7 +15,9 @@ public class ReceptionistWalkInBookingController extends HttpServlet {
     protected void doGet(HttpServletRequest request,
             HttpServletResponse response)
             throws IOException {
-
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("text/html;charset=UTF-8");
         HttpSession session = request.getSession(false);
 
         if (session == null
@@ -38,7 +40,9 @@ public class ReceptionistWalkInBookingController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("text/html;charset=UTF-8");
         HttpSession session = request.getSession(false);
 
         if (session == null || !"RECEPTIONIST".equals(session.getAttribute("role"))) {

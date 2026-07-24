@@ -36,22 +36,27 @@
                                                 <div id="serviceDataStorage" style="display: none;">
                                                     <c:forEach var="service" items="${servicesList}">
                                                         <div class="service-data-item" data-id="${service.serviceId}"
-                                                            data-name="<c:out value=" ${service.serviceName}" />"
-                                                        data-description="
-                                                        <c:out value="${service.description}" />"
-                                                        data-price="${service.price}"
-                                                        data-unit="
-                                                        <c:out value="${service.unit}" />"
-                                                        data-active="${service.isActive}">
+                                                            data-name="<c:out value="${service.serviceName}" />"
+                                                            data-description="<c:out value="${service.description}" />"
+                                                            data-price="${service.price}"
+                                                            data-unit="<c:out value="${service.unit}" />"
+                                                            data-active="${service.isActive}"
+                                                            data-has-usage="${service.hasUsage}">
+                                                        </div>
+                                                    </c:forEach>
                                                 </div>
-                                                </c:forEach>
-                            </div>
 
                             <%-- Alert messages --%>
                                 <c:if test="${param.error eq 'duplicateName'}">
                                     <div class="alert-banner alert-danger">
                                         <i class="fa-solid fa-circle-exclamation"></i>
                                         Tên dịch vụ này đã tồn tại trong hệ thống. Vui lòng chọn tên khác.
+                                    </div>
+                                </c:if>
+                                <c:if test="${param.error eq 'hasUsage'}">
+                                    <div class="alert-banner alert-danger">
+                                        <i class="fa-solid fa-circle-exclamation"></i>
+                                        Không thể xóa dịch vụ này vì đã có khách hàng đăng ký hoặc sử dụng.
                                     </div>
                                 </c:if>
                                 <c:if test="${param.success eq 'saved'}">
@@ -256,11 +261,20 @@
                                                 description: (item.getAttribute("data-description") || "").trim(),
                                                 price: parseFloat(item.getAttribute("data-price")),
                                                 unit: (item.getAttribute("data-unit") || "").trim(),
-                                                isActive: item.getAttribute("data-active") === "true"
+                                                isActive: item.getAttribute("data-active") === "true",
+                                                hasUsage: item.getAttribute("data-has-usage") === "true"
                                             };
                                         },
                                         renderRow: function (service) {
                                             const priceFormatted = new Intl.NumberFormat('vi-VN').format(service.price);
+
+                                            const deleteBtnHtml = service.hasUsage
+                                                ? `<button class="btn-action delete" style="opacity: 0.35; cursor: not-allowed;" title="Không thể xóa dịch vụ đã có khách hàng đăng ký hoặc sử dụng">
+                                                       <i class="fa-solid fa-trash-can"></i>
+                                                   </button>`
+                                                : `<button class="btn-action delete" onclick="deleteService(\${service.id})" title="Xóa">
+                                                       <i class="fa-solid fa-trash-can"></i>
+                                                   </button>`;
 
                                             return `
                         <td>
@@ -287,9 +301,7 @@
                                 <button class="btn-action edit" onclick="openEditModal(\${service.id})" title="Chỉnh sửa">
                                     <i class="fa-solid fa-pencil"></i>
                                 </button>
-                                <button class="btn-action delete" onclick="deleteService(\${service.id})" title="Xóa">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
+                                \${deleteBtnHtml}
                             </div>
                         </td>
                     `;
@@ -395,6 +407,13 @@
 
                                 // Delete Service
                                 function deleteService(id) {
+                                    const table = ManagerTable.tables.servicesTable;
+                                    if (table && table.items) {
+                                        const service = table.items.find(s => s.id === id);
+                                        if (service && service.hasUsage) {
+                                            return;
+                                        }
+                                    }
                                     if (confirm("Bạn có chắc chắn muốn xóa dịch vụ này không?")) {
                                         window.location.href = `${pageContext.request.contextPath}/manager/services?action=delete&id=` + id;
                                     }

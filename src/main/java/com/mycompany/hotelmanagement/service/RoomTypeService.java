@@ -5,6 +5,7 @@ import com.mycompany.hotelmanagement.dal.RoomTypeDAO;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import com.mycompany.hotelmanagement.entity.AmenityInfo;
 import java.sql.Connection;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,30 @@ import java.util.Map;
  */
 public class RoomTypeService {
     private final RoomTypeDAO roomTypeRepository = new RoomTypeDAO();
+    private final RoomService roomService = new RoomService();
+
+    /**
+     * Lấy toàn bộ danh sách loại phòng với số phòng khả dụng được tính theo khoảng ngày checkIn / checkOut.
+     */
+    public List<RoomTypeInfo> getAllRoomTypes(LocalDate checkIn, LocalDate checkOut) {
+        List<RoomTypeInfo> allRoomTypes = getAllRoomTypes();
+        if (checkIn != null && checkOut != null && checkOut.isAfter(checkIn)) {
+            Map<Integer, Integer> counts = roomService.getAvailableRoomCountsPerType(checkIn, checkOut);
+            for (RoomTypeInfo info : allRoomTypes) {
+                info.setAvailableCount(counts.getOrDefault(info.getTypeId(), 0));
+            }
+        }
+        return allRoomTypes;
+    }
+
+    public RoomTypeInfo getRoomTypeDetail(int typeId, LocalDate checkIn, LocalDate checkOut) {
+        RoomTypeInfo detail = getRoomTypeDetail(typeId);
+        if (detail != null && checkIn != null && checkOut != null && checkOut.isAfter(checkIn)) {
+            Map<Integer, Integer> counts = roomService.getAvailableRoomCountsPerType(checkIn, checkOut);
+            detail.setAvailableCount(counts.getOrDefault(typeId, 0));
+        }
+        return detail;
+    }
 
     /**
      * UC-30: View Room Types
@@ -46,6 +71,7 @@ public class RoomTypeService {
         List<RoomTypeInfo> allRoomTypes = roomTypeRepository.getAllRoomTypes();
         Map<Integer, List<String>> typeImages = roomTypeRepository.getAllRoomImages();
         Map<Integer, List<String>> typeAmenities = roomTypeRepository.getAllRoomAmenities();
+        java.util.Set<Integer> occupiedTypeIds = roomTypeRepository.getOccupiedTypeIds();
 
         for (RoomTypeInfo info : allRoomTypes) {
             int tId = info.getTypeId();
@@ -66,6 +92,9 @@ public class RoomTypeService {
             } else {
                 info.setAmenities(new ArrayList<>());
             }
+
+            // Set occupied guard flag
+            info.setHasOccupiedGuests(occupiedTypeIds.contains(tId));
         }
         return allRoomTypes;
     }
@@ -153,33 +182,45 @@ public class RoomTypeService {
         return roomDetail;
     }
 
-    public void saveRoomType(RoomTypeInfo rt, String imageUrl) {
+    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(RoomTypeService.class.getName());
+
+    public boolean saveRoomType(RoomTypeInfo rt, String imageUrl) {
         try (Connection conn = DBContext.getConnection()) {
             conn.setAutoCommit(false);
             try {
                 int typeId = rt.getTypeId();
                 if (typeId <= 0) {
                     typeId = roomTypeRepository.insertRoomType(rt, conn);
+                    if (typeId <= 0) {
+                        conn.rollback();
+                        return false;
+                    }
+                    if (imageUrl != null && !imageUrl.trim().isEmpty()) {
+                        roomTypeRepository.insertRoomImage(typeId, imageUrl.trim(), conn);
+                    }
                 } else {
-                    roomTypeRepository.updateRoomType(rt, conn);
-                }
-
-                if (typeId != -1) {
-                    // Save images
-                    roomTypeRepository.deleteRoomImages(typeId, conn);
-                    if (imageUrl != null && !imageUrl.isEmpty()) {
-                        roomTypeRepository.insertRoomImage(typeId, imageUrl, conn);
+                    boolean updated = roomTypeRepository.updateRoomType(rt, conn);
+                    if (!updated) {
+                        conn.rollback();
+                        return false;
+                    }
+                    if (imageUrl != null && !imageUrl.trim().isEmpty()) {
+                        roomTypeRepository.deleteRoomImages(typeId, conn);
+                        roomTypeRepository.insertRoomImage(typeId, imageUrl.trim(), conn);
                     }
                 }
                 conn.commit();
+                return true;
             } catch (Exception e) {
                 conn.rollback();
-                throw e;
+                LOGGER.log(java.util.logging.Level.SEVERE, "Transaction error in saveRoomType", e);
+                return false;
             } finally {
                 conn.setAutoCommit(true);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Database connection error in saveRoomType", e);
+            return false;
         }
     }
 
