@@ -220,7 +220,16 @@ public class PromotionController extends HttpServlet {
             }
         }
 
-        // 8. Duplicate code check
+        // 8. Usage limit check on edit: usageLimit must not be less than usedCount
+        if (promotionId > 0 && usageLimit != null) {
+            Promotion existing = promotionService.getPromotionById(promotionId);
+            if (existing != null && usageLimit < existing.getUsedCount()) {
+                response.sendRedirect(request.getContextPath() + "/manager/promotions?error=limitLessThanUsed");
+                return;
+            }
+        }
+
+        // 9. Duplicate code check
         if (promotionService.isCodeDuplicate(code, promotionId)) {
             response.sendRedirect(request.getContextPath() + "/manager/promotions?error=duplicateCode");
             return;
