@@ -388,12 +388,47 @@
                                     </tr>
                                 </c:if>
                                 <tr>
-                                    <td>Phụ phí quá số người ở</td>
+                                    <td>Phụ phí</td>
                                     <td class="amount-col">
                                         <fmt:formatNumber value="${summary.extraCharge}" type="number"
                                                           groupingUsed="true" /> đ
                                     </td>
                                 </tr>
+                                <c:if test="${summary.extraCharge > 0}">
+                                    <tr>
+                                        <td colspan="2"
+                                            style="padding: 0; background-color: #fef9ec; border-bottom: 1px solid #e2e8f0;">
+                                            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                                <tbody>
+                                                    <%-- Phụ phí quá người ở từ CheckIn --%>
+                                                    <c:if test="${summary.checkInExtraFee > 0}">
+                                                        <tr>
+                                                            <td style="padding: 8px 16px; border-bottom: 1px dashed #cbd5e1; color: #92400e;">
+                                                                <i class="fa-solid fa-triangle-exclamation" style="margin-right: 8px;"></i>
+                                                                Phụ phí quá người ở (x1)
+                                                            </td>
+                                                            <td style="padding: 8px 16px; border-bottom: 1px dashed #cbd5e1; text-align: right; color: #92400e;">
+                                                                <fmt:formatNumber value="${summary.checkInExtraFee}" type="number" groupingUsed="true" /> đ
+                                                            </td>
+                                                        </tr>
+                                                    </c:if>
+                                                    <%-- Các phụ phí Manager thêm thủ công --%>
+                                                    <c:forEach var="item" items="${summary.surchargeItems}">
+                                                        <tr>
+                                                            <td style="padding: 8px 16px; border-bottom: 1px dashed #cbd5e1; color: #92400e;">
+                                                                <i class="fa-solid fa-triangle-exclamation" style="margin-right: 8px;"></i>
+                                                                <c:out value="${item.description}" /> (x${item.quantity})
+                                                            </td>
+                                                            <td style="padding: 8px 16px; border-bottom: 1px dashed #cbd5e1; text-align: right; color: #92400e;">
+                                                                <fmt:formatNumber value="${item.amount}" type="number" groupingUsed="true" /> đ
+                                                            </td>
+                                                        </tr>
+                                                    </c:forEach>
+                                                </tbody>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </c:if>
                             </tbody>
                         </table>
 
