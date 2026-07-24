@@ -166,7 +166,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="checkInDate">Ngày nhận phòng *</label>
-                                    <input type="date" name="checkInDate" id="checkInDate" required value="${checkInDate}" onchange="calculatePricing()" />
+                                    <input type="date" name="checkInDate" id="checkInDate" required value="${checkInDate}" onchange="calculatePricing()" min="<%= new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()) %>" />
                                 </div>
                                 <div class="form-group">
                                     <label for="checkOutDate">Ngày trả phòng *</label>
@@ -334,20 +334,20 @@
 
 
     <script>
-        // Set default dates if empty
         window.addEventListener('DOMContentLoaded', (event) => {
             const checkInInput = document.getElementById('checkInDate');
             const checkOutInput = document.getElementById('checkOutDate');
 
             if (!checkInInput.value) {
-                const today = new Date();
-                today.setDate(today.getDate() + 1); // tomorrow
-                checkInInput.value = today.toISOString().split('T')[0];
+                checkInInput.value = checkInInput.min;
             }
             if (!checkOutInput.value) {
                 const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 2); // day after tomorrow
-                checkOutInput.value = tomorrow.toISOString().split('T')[0];
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const tYear = tomorrow.getFullYear();
+                const tMonth = String(tomorrow.getMonth() + 1).padStart(2, '0');
+                const tDay = String(tomorrow.getDate()).padStart(2, '0');
+                checkOutInput.value = `${tYear}-${tMonth}-${tDay}`;
             }
 
             // If we are in multi mode initially, initialize rows
@@ -636,6 +636,19 @@
             
             let isValid = true;
             let errorMsg = '';
+            
+            const checkInInput = document.getElementById('checkInDate');
+            if (checkInInput && checkInInput.value) {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const todayStr = `${year}-${month}-${day}`;
+                if (checkInInput.value < todayStr) {
+                    isValid = false;
+                    errorMsg = 'Ngày nhận phòng không được ở trong quá khứ so với ngày hiện tại.';
+                }
+            }
             
             const bookingType = document.querySelector('input[name="bookingType"]:checked').value;
             

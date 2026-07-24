@@ -2,7 +2,7 @@
 <%@ include file="../../includes/taglibs.jsp" %>
 <%@ include file="../../includes/header.jsp" %>
 
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/manager.css?v=3" />
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/manager.css?v=4" />
 <fmt:setLocale value="vi_VN" />
 
 <body class="dashboard-body">
@@ -39,6 +39,10 @@
                             data-number="<c:out value="${r.roomNumber}" />"
                             data-type-id="${r.typeId}"
                             data-status="<c:out value="${r.status}" />"
+                            data-operational-status="<c:out value="${r.operationalStatus}" />"
+                            data-display-status="<c:out value="${r.displayStatus}" />"
+                            data-currently-occupied="${r.currentlyOccupied}"
+                            data-has-future-booking="${r.hasActiveOrFutureBooking}"
                             data-floor="<c:out value="${r.floor}" />"
                             data-type-name="<c:out value="${r.typeName}" />"
                             data-base-price="${r.basePrice}"
@@ -55,10 +59,28 @@
                         Số phòng này đã tồn tại trong hệ thống. Vui lòng chọn số khác.
                     </div>
                 </c:if>
+                <c:if test="${param.error eq 'roomHasActiveOrFutureBooking'}">
+                    <div class="alert-banner alert-danger">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        Không thể xóa phòng vì phòng đang được sử dụng hoặc đã được phân cho một đơn đặt phòng trong tương lai.
+                    </div>
+                </c:if>
                 <c:if test="${param.error eq 'deleteError'}">
                     <div class="alert-banner alert-danger">
                         <i class="fa-solid fa-circle-exclamation"></i>
-                        Không thể xóa phòng này vì nó đang được liên kết với dữ liệu khác trong hệ thống (ví dụ: booking, hóa đơn).
+                        Không thể xóa phòng này vì phòng đang được sử dụng, có lịch đặt trong tương lai, hoặc ở trạng thái không khả dụng.
+                    </div>
+                </c:if>
+                <c:if test="${param.error eq 'roomCurrentlyOccupied'}">
+                    <div class="alert-banner alert-danger">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        Không thể thay đổi trạng thái phòng vì phòng hiện đang có khách lưu trú.
+                    </div>
+                </c:if>
+                <c:if test="${param.error eq 'invalidStatus'}">
+                    <div class="alert-banner alert-danger">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        Trạng thái phòng không hợp lệ.
                     </div>
                 </c:if>
                 <c:if test="${param.error eq 'saveError'}">
@@ -71,6 +93,12 @@
                     <div class="alert-banner alert-success">
                         <i class="fa-solid fa-circle-check"></i>
                         Lưu thông tin phòng thành công.
+                    </div>
+                </c:if>
+                <c:if test="${param.success eq 'deleted'}">
+                    <div class="alert-banner alert-success">
+                        <i class="fa-solid fa-circle-check"></i>
+                        Xóa phòng thành công.
                     </div>
                 </c:if>
 
@@ -88,7 +116,7 @@
                 <div class="table-card">
 
                     <%-- Search & Dropdown Filters Bar --%>
-                    <div class="table-filter-bar" style="display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 16px; align-items: end;">
+                    <div class="table-filter-bar" style="display: grid; grid-template-columns: 1.2fr 0.9fr 1fr 1fr 1fr; gap: 12px; align-items: end;">
                         <div class="modal-form-group" style="margin-bottom: 0;">
                             <label>Tìm kiếm phòng</label>
                             <div class="search-wrapper" style="max-width: 100%;">
@@ -121,13 +149,21 @@
                         </div>
 
                         <div class="modal-form-group" style="margin-bottom: 0;">
+                            <label>Ngày kiểm tra</label>
+                            <input type="date" id="selectedDateInput" class="date-filter-input" value="${selectedDate}" onchange="changeSelectedDate(this.value)" style="width: 100%;" />
+                        </div>
+
+                        <div class="modal-form-group" style="margin-bottom: 0;">
                             <label>Trạng thái</label>
                             <select id="statusFilter" class="status-select" onchange="filterRooms()" style="width: 100%;">
                                 <option value="all">Tất cả trạng thái</option>
                                 <option value="Available">Trống</option>
+                                <option value="Confirmed">Đã đặt</option>
                                 <option value="Occupied">Có khách</option>
                                 <option value="Cleaning">Đang dọn</option>
+                                <option value="Refilling">Đang bổ sung vật dụng</option>
                                 <option value="Maintenance">Bảo trì</option>
+                                <option value="OutOfService">Ngừng hoạt động</option>
                             </select>
                         </div>
                     </div>
@@ -139,9 +175,14 @@
                                 <th style="width: 15%">Phòng</th>
                                 <th style="width: 15%">Tầng</th>
                                 <th style="width: 25%">Loại phòng</th>
-                                <th style="width: 15%">Trạng thái</th>
-                                <th style="width: 15%">Giá niêm yết</th>
-                                <th style="width: 15%">Thao tác</th>
+                                <th style="width: 20%">
+                                    Trạng thái
+                                    <span style="display: block; font-size: 10px; text-transform: none; font-weight: 500; color: #64748b; margin-top: 2px;">
+                                        Trạng thái vào ngày ${selectedDateFormatted}
+                                    </span>
+                                </th>
+                                <th style="width: 13%">Giá niêm yết</th>
+                                <th style="width: 12%">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody id="roomsTableBody">
@@ -185,6 +226,7 @@
             <div class="modal-body">
                 <form id="roomForm" action="${pageContext.request.contextPath}/manager/rooms?action=save" method="post">
                     <input type="hidden" id="modalRoomId" name="roomId" value="" />
+                    <input type="hidden" id="modalSelectedDate" name="selectedDate" value="${selectedDate}" />
 
                     <div class="modal-form-group">
                         <label for="modalRoomNumber">Số phòng</label>
@@ -214,13 +256,18 @@
                     </div>
 
                     <div class="modal-form-group">
-                        <label for="modalRoomStatus">Trạng thái</label>
+                        <label for="modalRoomStatus">Trạng thái vận hành</label>
                         <select id="modalRoomStatus" name="status" class="modal-select" required>
                             <option value="Available">Trống (Available)</option>
-                            <option value="Occupied">Có khách (Occupied)</option>
                             <option value="Cleaning">Đang dọn (Cleaning)</option>
                             <option value="Maintenance">Bảo trì (Maintenance)</option>
+                            <option value="OutOfService">Ngừng hoạt động (OutOfService)</option>
                         </select>
+                        <div id="occupiedWarning" class="occupied-warning-note" style="display: none;">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            Không thể thay đổi trạng thái vì phòng hiện đang có khách lưu trú.
+                        </div>
+                        <input type="hidden" id="modalRoomStatusHidden" name="status" value="" disabled />
                     </div>
 
                     <div class="modal-footer-row">
@@ -252,7 +299,11 @@
                         id: parseInt(item.getAttribute("data-id")),
                         number: (item.getAttribute("data-number") || "").trim(),
                         typeId: parseInt(item.getAttribute("data-type-id")),
-                        status: (item.getAttribute("data-status") || "").trim(),
+                        status: (item.getAttribute("data-display-status") || item.getAttribute("data-status") || "").trim(),
+                        operationalStatus: (item.getAttribute("data-operational-status") || "").trim(),
+                        displayStatus: (item.getAttribute("data-display-status") || "").trim(),
+                        currentlyOccupied: item.getAttribute("data-currently-occupied") === "true",
+                        hasFutureBooking: item.getAttribute("data-has-future-booking") === "true",
                         floor: (item.getAttribute("data-floor") || "").trim(),
                         typeName: (item.getAttribute("data-type-name") || "").trim(),
                         basePrice: parseFloat(item.getAttribute("data-base-price")),
@@ -264,10 +315,23 @@
                     const priceFormatted = new Intl.NumberFormat('vi-VN').format(room.basePrice);
 
                     let statusClass = "", statusText = "";
-                    if (room.status === "Available") { statusClass = "status-available"; statusText = "TRỐNG"; }
-                    else if (room.status === "Occupied") { statusClass = "status-occupied"; statusText = "CÓ KHÁCH"; }
-                    else if (room.status === "Cleaning") { statusClass = "status-cleaning"; statusText = "ĐANG DỌN"; }
-                    else if (room.status === "Maintenance") { statusClass = "status-maintenance"; statusText = "BẢO TRÌ"; }
+                    const s = room.displayStatus || room.status;
+                    if (s === "Available") { statusClass = "status-available"; statusText = "TRỐNG"; }
+                    else if (s === "Confirmed") { statusClass = "status-confirmed"; statusText = "ĐÃ ĐẶT"; }
+                    else if (s === "Occupied") { statusClass = "status-occupied"; statusText = "CÓ KHÁCH"; }
+                    else if (s === "Cleaning") { statusClass = "status-cleaning"; statusText = "ĐANG DỌN"; }
+                    else if (s === "Refilling") { statusClass = "status-refilling"; statusText = "BỔ SUNG VẬT DỤNG"; }
+                    else if (s === "Maintenance") { statusClass = "status-maintenance"; statusText = "BẢO TRÌ"; }
+                    else if (s === "OutOfService") { statusClass = "status-outofservice"; statusText = "NGỪNG HOẠT ĐỘNG"; }
+
+                    const canDelete = !room.hasFutureBooking && !room.currentlyOccupied && (room.operationalStatus === "Available") && (s === "Available");
+                    const deleteBtnHtml = canDelete
+                        ? `<button class="btn-action delete" onclick="deleteRoom(\${room.id})" title="Xóa">
+                            <i class="fa-solid fa-trash-can"></i>
+                           </button>`
+                        : `<button class="btn-action delete" style="opacity: 0.35; cursor: not-allowed;" onclick="deleteRoom(\${room.id})" title="Không thể xóa phòng đang có khách, có đơn đặt trong tương lai, đang dọn dẹp hoặc bảo trì">
+                            <i class="fa-solid fa-trash-can"></i>
+                           </button>`;
 
                     return `
                         <td>
@@ -293,9 +357,7 @@
                                 <button class="btn-action edit" onclick="openEditRoomModal(\${room.id})" title="Chỉnh sửa">
                                     <i class="fa-solid fa-pencil"></i>
                                 </button>
-                                <button class="btn-action delete" onclick="deleteRoom(\${room.id})" title="Xóa">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
+                                \${deleteBtnHtml}
                             </div>
                         </td>
                     `;
@@ -309,7 +371,7 @@
                     const matchQuery = room.number.toLowerCase().includes(query);
                     const matchFloor = (floor === "all") || (room.floor === floor);
                     const matchType = (typeId === "all") || (room.typeId === parseInt(typeId));
-                    const matchStatus = (status === "all") || (room.status === status);
+                    const matchStatus = (status === "all") || ((room.displayStatus || room.status) === status);
                     return matchQuery && matchFloor && matchType && matchStatus;
                 }
             });
@@ -320,10 +382,29 @@
             ManagerTable.filter("roomsTable");
         }
 
+        // Change selected date
+        function changeSelectedDate(dateVal) {
+            if (!dateVal) return;
+            window.location.href = `${pageContext.request.contextPath}/manager/rooms?selectedDate=` + encodeURIComponent(dateVal);
+        }
+
         // Delete Room
         function deleteRoom(id) {
+            const table = ManagerTable.tables.roomsTable;
+            if (table && table.items) {
+                const room = table.items.find(r => r.id === id);
+                if (room) {
+                    const opStatus = room.operationalStatus || room.status;
+                    const dispStatus = room.displayStatus || room.status;
+                    if (room.hasFutureBooking || room.currentlyOccupied || opStatus !== "Available" || dispStatus !== "Available") {
+                        alert("Không thể xóa phòng vì phòng đang được sử dụng hoặc đã được phân cho một đơn đặt phòng trong tương lai.");
+                        return;
+                    }
+                }
+            }
             if (confirm("Bạn có chắc chắn muốn xóa phòng này không?")) {
-                window.location.href = `${pageContext.request.contextPath}/manager/rooms?action=delete&id=` + id;
+                const selDate = document.getElementById("selectedDateInput").value;
+                window.location.href = `${pageContext.request.contextPath}/manager/rooms?action=delete&id=` + id + "&selectedDate=" + encodeURIComponent(selDate);
             }
         }
 
@@ -332,6 +413,16 @@
             document.getElementById("roomModalTitle").innerText = "Thêm phòng mới";
             document.getElementById("modalRoomId").value = "";
             document.getElementById("roomForm").reset();
+
+            const statusSelect = document.getElementById("modalRoomStatus");
+            const warningNote = document.getElementById("occupiedWarning");
+            const hiddenStatus = document.getElementById("modalRoomStatusHidden");
+
+            statusSelect.disabled = false;
+            statusSelect.value = "Available";
+            warningNote.style.display = "none";
+            hiddenStatus.disabled = true;
+
             document.getElementById("roomModal").style.display = "flex";
         }
 
@@ -346,7 +437,26 @@
                 document.getElementById("modalRoomNumber").value = room.number;
                 document.getElementById("modalRoomFloor").value = room.floor;
                 document.getElementById("modalRoomType").value = room.typeId;
-                document.getElementById("modalRoomStatus").value = room.status;
+
+                const statusSelect = document.getElementById("modalRoomStatus");
+                const warningNote = document.getElementById("occupiedWarning");
+                const hiddenStatus = document.getElementById("modalRoomStatusHidden");
+
+                const currentOpStatus = room.operationalStatus || room.status;
+
+                if (room.currentlyOccupied) {
+                    statusSelect.value = currentOpStatus;
+                    statusSelect.disabled = true;
+                    warningNote.style.display = "flex";
+                    hiddenStatus.value = currentOpStatus;
+                    hiddenStatus.disabled = false;
+                } else {
+                    statusSelect.value = currentOpStatus;
+                    statusSelect.disabled = false;
+                    warningNote.style.display = "none";
+                    hiddenStatus.disabled = true;
+                }
+
                 document.getElementById("roomModal").style.display = "flex";
             }
         }
@@ -405,6 +515,25 @@
         document.getElementById("modalRoomNumber").addEventListener('input', function () {
             this.setCustomValidity("");
         });
+
+        // Unified Vietnamese HTML5 Validation Messages
+        document.addEventListener('invalid', function (e) {
+            const el = e.target;
+            if (!el || !['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)) return;
+            if (el.validity.valueMissing) {
+                if (el.tagName === 'SELECT') {
+                    el.setCustomValidity('Vui lòng chọn một tùy chọn trong danh sách.');
+                } else {
+                    el.setCustomValidity('Vui lòng điền vào trường này.');
+                }
+            } else if (el.validity.rangeUnderflow) {
+                el.setCustomValidity('Giá trị phải lớn hơn hoặc bằng ' + el.min + '.');
+            } else if (el.validity.rangeOverflow) {
+                el.setCustomValidity('Giá trị không được vượt quá ' + el.max + '.');
+            } else if (el.validity.typeMismatch) {
+                el.setCustomValidity('Định dạng dữ liệu không hợp lệ.');
+            }
+        }, true);
     </script>
 </body>
 </html>

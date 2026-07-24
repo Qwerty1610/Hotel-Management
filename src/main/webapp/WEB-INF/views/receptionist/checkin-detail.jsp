@@ -479,6 +479,16 @@
             .upload-small input[type=file]{
                 display:none;
             }
+            .btn-confirm:disabled{
+                background:#94a3b8;
+                cursor:not-allowed;
+                box-shadow:none;
+                transform:none;
+            }
+            .btn-confirm:disabled:hover{
+                background:#94a3b8;
+                transform:none;
+            }
         </style>
     </head>
 
@@ -640,7 +650,9 @@
                                                         name="customerImage"
                                                         accept="image/*"
                                                         required
-                                                        onchange="previewCustomerImage(this)">
+                                                        onchange="
+                                                                previewCustomerImage(this);
+                                                                validateCheckIn();">
 
                                                     <div class="upload-content">
                                                         <i class="fa-solid fa-cloud-arrow-up"></i>
@@ -833,7 +845,8 @@
                                             <button
                                                 id="checkinBtn"
                                                 type="submit"
-                                                class="btn-confirm">
+                                                class="btn-confirm"
+                                                disabled>
                                                 Xác nhận check in
                                             </button>
                                         </c:otherwise>
@@ -936,8 +949,9 @@
                         <input
                             type="text"
                             name="companions"
+                            class="companion-name"
                             placeholder="Nhập họ và tên"
-                            required>
+                            oninput="validateCheckIn()">
                     </td>
                     <td>
                         <div class="upload-small">
@@ -945,8 +959,11 @@
                                 <input
                                     type="file"
                                     name="companionImage"
+                                    class="companion-image"
                                     accept="image/*"
-                                    onchange="previewCompanion(this)">
+                                    onchange="
+                                        previewCompanion(this);
+                                        validateCheckIn();">
                                 <div class="upload-mini">
                                     <i class="fa-solid fa-image"></i>
                                     Chọn ảnh
@@ -959,7 +976,9 @@
                         <select
                             name="ageRanges"
                             class="age-select"
-                            onchange="calculateExtraFee()">
+                            onchange="
+                                calculateExtraFee();
+                                validateCheckIn();">
 
                             <option value="">-- Chọn --</option>
                             <option value="Baby">Dưới 6 tuổi</option>
@@ -975,6 +994,7 @@
                             onclick="
                                 this.closest('tr').remove();
                                 calculateExtraFee();
+                                validateCheckIn();
                             ">
                             Xóa
                         </button>
@@ -983,6 +1003,7 @@
 
                 body.appendChild(row);
                 calculateExtraFee();
+                validateCheckIn();
             }
 
             function goBack() {
@@ -1036,6 +1057,54 @@
 
                 reader.readAsDataURL(input.files[0]);
             }
+
+            function validateCheckIn() {
+                const btn = document.getElementById("checkinBtn");
+                if (!btn) {
+                    return;
+                }
+                let valid = true;
+                // CHECK CUSTOMER IMAGE
+                const customerImage =
+                        document.getElementById("customerImage");
+                if (customerImage) {
+                    if (customerImage.files.length === 0) {
+                        valid = false;
+                    }
+                }
+                // CHECK COMPANIONS
+                const rows =
+                        document.querySelectorAll("#companionBody tr");
+                rows.forEach(row => {
+                    const name =
+                            row.querySelector(".companion-name");
+                    const image =
+                            row.querySelector(".companion-image");
+                    const age =
+                            row.querySelector(".age-select");
+                    if (!name || name.value.trim() === "") {
+                        valid = false;
+                    }
+                    if (!image || image.files.length === 0) {
+                        valid = false;
+                    }
+                    if (!age || age.value === "") {
+                        valid = false;
+                    }
+                });
+                // UPDATE BUTTON
+                if (valid) {
+                    btn.disabled = false;
+                } else {
+                    btn.disabled = true;
+                }
+            }
+
+            document.addEventListener(
+                    "DOMContentLoaded",
+                    function () {
+                        validateCheckIn();
+                    });
         </script>
 
     </body>

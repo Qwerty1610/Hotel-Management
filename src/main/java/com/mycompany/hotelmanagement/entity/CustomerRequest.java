@@ -19,7 +19,7 @@ public class CustomerRequest {
     private String title;            // nội dung yêu cầu
     private String description;
     private String priority;         // Low / Medium / High / Urgent
-    private String status;           // Pending / InProgress / Completed / Cancelled
+    private String status;           // Pending / InProgress / RequestCompleted / Completed / Cancelled
     private Integer assignedStaffId; // null = chưa gán
     private String assignedStaffName;// lấy kèm từ JOIN Account
     private Timestamp createdAt;     // thời gian yêu cầu

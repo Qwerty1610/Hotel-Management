@@ -447,12 +447,7 @@
                                                     \${toggleIcon}
                                                  </button>`;
 
-                                            const deleteBtn = promo.usedCount === 0
-                                                ? `<button class="btn-action delete" onclick="deletePromotion(\${promo.id})" title="Xóa">
-                                                       <i class="fa-solid fa-trash-can"></i>
-                                                   </button>`
-                                                : `<button class="btn-action" title="Đã được sử dụng, không thể xóa"
-                                                       style="opacity:0.35;cursor:not-allowed;" disabled>
+                                            const deleteBtn = `<button class="btn-action delete" onclick="deletePromotion(\${promo.id})" title="Xóa">
                                                        <i class="fa-solid fa-trash-can"></i>
                                                    </button>`;
 
@@ -535,10 +530,18 @@
                                 }
 
                                 // Modal Handlers
+                                function clearFormValidation() {
+                                    const form = document.getElementById('promotionForm');
+                                    form.querySelectorAll('input, select, textarea').forEach(function (el) {
+                                        el.setCustomValidity('');
+                                    });
+                                }
+
                                 function openAddModal() {
                                     document.getElementById("modalTitle").innerText = "Thêm khuyến mãi mới";
                                     document.getElementById("promotionId").value = "";
                                     document.getElementById("promotionForm").reset();
+                                    clearFormValidation();
                                     onDiscountTypeChange();
                                     document.getElementById("promotionModal").style.display = "flex";
                                 }
@@ -562,6 +565,7 @@
                                     document.getElementById("modalUsageLimit").value       = promo.usageLimit || '';
                                     document.getElementById("modalMinBooking").value       = promo.minBooking || '';
                                     document.getElementById("modalMaxDiscount").value      = promo.maxDiscount || '';
+                                    clearFormValidation();
                                     onDiscountTypeChange();
                                     document.getElementById("promotionModal").style.display = "flex";
                                 }
@@ -628,8 +632,27 @@
                                     }
                                 });
 
+                                // Unified Vietnamese HTML5 Validation Messages
+                                document.addEventListener('invalid', function (e) {
+                                    const el = e.target;
+                                    if (!el || !['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)) return;
+                                    if (el.validity.valueMissing) {
+                                        if (el.tagName === 'SELECT') {
+                                            el.setCustomValidity('Vui lòng chọn một tùy chọn trong danh sách.');
+                                        } else {
+                                            el.setCustomValidity('Vui lòng điền vào trường này.');
+                                        }
+                                    } else if (el.validity.rangeUnderflow) {
+                                        el.setCustomValidity('Giá trị phải lớn hơn hoặc bằng ' + el.min + '.');
+                                    } else if (el.validity.rangeOverflow) {
+                                        el.setCustomValidity('Giá trị không được vượt quá ' + el.max + '.');
+                                    } else if (el.validity.typeMismatch) {
+                                        el.setCustomValidity('Định dạng dữ liệu không hợp lệ.');
+                                    }
+                                }, true);
+
                                 // Clear custom validity on input
-                                ['modalCode', 'modalName', 'modalDiscountValue', 'modalEndDate'].forEach(function (id) {
+                                ['modalCode', 'modalName', 'modalDiscountValue', 'modalStartDate', 'modalEndDate'].forEach(function (id) {
                                     const el = document.getElementById(id);
                                     if (el) el.addEventListener('input', function () { this.setCustomValidity(''); });
                                 });

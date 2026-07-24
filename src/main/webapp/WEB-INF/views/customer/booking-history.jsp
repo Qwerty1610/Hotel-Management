@@ -204,13 +204,13 @@
                                             </c:when>
                                         </c:choose>
                                     </td>
-                                    <td>
-                                        <div style="display: flex; gap: 8px;">
-                                            <a href="${pageContext.request.contextPath}/customer/booking/detail?id=${b.bookingId}" class="btn-secondary" style="text-decoration: none; padding: 6px 12px; font-size: 13px;">
+                                    <td style="white-space: nowrap;">
+                                        <div style="display: flex; gap: 8px; align-items: center;">
+                                            <a href="${pageContext.request.contextPath}/customer/booking/detail?id=${b.bookingId}" class="btn-secondary" style="text-decoration: none; padding: 5px 12px; font-size: 13px; background-color: #ffffff; color: var(--brand-blue); border: 1px solid var(--brand-blue); border-radius: 6px; font-weight: 600; white-space: nowrap; transition: all 0.2s;">
                                                 Chi tiết
                                             </a>
                                             <c:if test="${b.status eq 'Pending' || b.status eq 'Confirmed'}">
-                                                <button type="button" class="btn-danger" style="padding: 6px 12px; font-size: 13px;" onclick="confirmCancelBooking(${b.bookingId})">
+                                                <button type="button" style="padding: 5px 12px; font-size: 13px; background-color: #ffffff; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; white-space: nowrap;" onclick="confirmCancelBooking('${b.bookingId}')">
                                                     Hủy
                                                 </button>
                                             </c:if>

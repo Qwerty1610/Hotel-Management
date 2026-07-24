@@ -68,7 +68,6 @@ public class ReceptionistDashboardController extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(ReceptionistDashboardController.class.getName());
     private static final int PAGE_SIZE = 8;
-    private static final int PAGE_SIZE_CHECKIN = 12;
 
     private static final Set<String> ALLOWED_TABS = Set.of("bookings", "changerequests", "checkin", "checkout", "servicerequests",
             "roommap", "walkin-bookings");
@@ -375,7 +374,7 @@ public class ReceptionistDashboardController extends HttpServlet {
 
         int totalItems = dao.countCheckInBookings(status, keyword);
 
-        int totalPages = (int) Math.ceil(totalItems / (double) PAGE_SIZE_CHECKIN);
+        int totalPages = (int) Math.ceil(totalItems / (double) PAGE_SIZE);
 
         if (totalPages < 1) {
             totalPages = 1;
@@ -385,10 +384,10 @@ public class ReceptionistDashboardController extends HttpServlet {
             page = totalPages;
         }
 
-        int offset = (page - 1) * PAGE_SIZE_CHECKIN;
+        int offset = (page - 1) * PAGE_SIZE;
 
         List<Booking> checkInList
-                = dao.getCheckInBookings(status, keyword, offset, PAGE_SIZE_CHECKIN);
+                = dao.getCheckInBookings(status, keyword, offset, PAGE_SIZE);
 
         request.setAttribute("checkInList", checkInList);
         request.setAttribute("keyword", keyword == null ? "" : keyword);
@@ -401,76 +400,72 @@ public class ReceptionistDashboardController extends HttpServlet {
 
     private void loadRoomMapTab(HttpServletRequest request) {
 
-        RoomDAO repo = new RoomDAO();
+        com.mycompany.hotelmanagement.service.RoomService roomService = new com.mycompany.hotelmanagement.service.RoomService();
 
-        String fromDate = request.getParameter("fromDate");
-        String toDate = request.getParameter("toDate");
+        String fromDateStr = request.getParameter("fromDate");
+        String toDateStr = request.getParameter("toDate");
 
-        List<RoomInfo> roomList;
+        java.time.LocalDate fromDate;
+        java.time.LocalDate toDate;
 
-        if (fromDate != null
-                && !fromDate.isBlank()
-                && toDate != null
-                && !toDate.isBlank()) {
-
-            roomList = repo.getRoomMapByDate(
-                    Date.valueOf(fromDate),
-                    Date.valueOf(toDate));
-
-        } else {
-
-            roomList = repo.getAllRooms();
-            for (RoomInfo room : roomList) {
-                if ("Cleaning".equalsIgnoreCase(room.getStatus())) {
-                    room.setStatus("Available");
-                }
+        try {
+            if (fromDateStr != null && !fromDateStr.isBlank()) {
+                fromDate = java.time.LocalDate.parse(fromDateStr.trim());
+            } else {
+                fromDate = java.time.LocalDate.now();
             }
+        } catch (Exception e) {
+            fromDate = java.time.LocalDate.now();
         }
 
+        try {
+            if (toDateStr != null && !toDateStr.isBlank()) {
+                toDate = java.time.LocalDate.parse(toDateStr.trim());
+            } else {
+                toDate = fromDate.plusDays(1);
+            }
+        } catch (Exception e) {
+            toDate = fromDate.plusDays(1);
+        }
+
+        if (!toDate.isAfter(fromDate)) {
+            toDate = fromDate.plusDays(1);
+            request.setAttribute("dateWarning", "Ngày trả phòng phải sau ngày nhận phòng. Hệ thống đã tự động điều chỉnh.");
+        }
+
+        List<RoomInfo> roomList = roomService.getRoomsByDateRange(fromDate, toDate);
         if (roomList == null) {
             roomList = new ArrayList<>();
         }
 
         String status = request.getParameter("status");
-
         if (status == null || status.isBlank()) {
             status = "All";
+        } else {
+            status = status.trim();
         }
 
         List<RoomInfo> filtered = new ArrayList<>();
-
         for (RoomInfo room : roomList) {
-
-            if ("All".equalsIgnoreCase(status)
-                    || status.equalsIgnoreCase(room.getStatus())) {
-
+            String roomDisplayStatus = room.getDisplayStatus();
+            if ("All".equalsIgnoreCase(status) || status.equalsIgnoreCase(roomDisplayStatus)) {
                 filtered.add(room);
             }
         }
 
         Map<String, List<RoomInfo>> roomByFloor = new LinkedHashMap<>();
-
         for (RoomInfo room : filtered) {
-
             String floor = room.getFloor();
-
             if (floor == null || floor.isBlank()) {
                 floor = "Unknown";
             }
-
-            roomByFloor
-                    .computeIfAbsent(
-                            floor,
-                            k -> new ArrayList<>())
-                    .add(room);
+            roomByFloor.computeIfAbsent(floor, k -> new ArrayList<>()).add(room);
         }
 
         request.setAttribute("roomByFloor", roomByFloor);
-
         request.setAttribute("currentStatus", status);
-
-        request.setAttribute("fromDate", fromDate);
-        request.setAttribute("toDate", toDate);
+        request.setAttribute("fromDate", fromDate.toString());
+        request.setAttribute("toDate", toDate.toString());
     }
 
     private void loadWalkInBookingTab(HttpServletRequest request) {

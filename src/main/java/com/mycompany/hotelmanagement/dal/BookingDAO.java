@@ -1334,4 +1334,29 @@ public class BookingDAO {
 
         return list;
     }
+    public boolean updateGroupBookingStatus(int rootBookingId, String status) {
+
+    String sql = """
+        UPDATE Booking
+        SET status = ?
+        WHERE booking_id = ?
+           OR group_booking_id = ?
+        """;
+
+    try (
+            Connection conn = DBContext.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setString(1, status);
+        ps.setInt(2, rootBookingId);
+        ps.setInt(3, rootBookingId);
+
+        return ps.executeUpdate() > 0;
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+    return false;
+}
 }

@@ -55,16 +55,34 @@
                         Lưu thông tin loại phòng thành công.
                     </div>
                 </c:if>
+                <c:if test="${param.success eq 'deleted'}">
+                    <div class="alert-banner alert-success">
+                        <i class="fa-solid fa-circle-check"></i>
+                        Xóa loại phòng thành công.
+                    </div>
+                </c:if>
+                <c:if test="${param.error eq 'hasOccupiedGuests'}">
+                    <div class="alert-banner alert-danger">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        Không thể xóa do loại phòng này hiện đang có người ở.
+                    </div>
+                </c:if>
+                <c:if test="${param.error eq 'hasRooms'}">
+                    <div class="alert-banner alert-danger">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        Không thể xóa loại phòng này vì đang có các phòng liên kết trong hệ thống.
+                    </div>
+                </c:if>
                 <c:if test="${param.error eq 'deleteError'}">
                     <div class="alert-banner alert-danger">
                         <i class="fa-solid fa-circle-exclamation"></i>
-                        Không thể xóa loại phòng này. Loại phòng đang được sử dụng bởi phòng khác trong hệ thống.
+                        Không thể xóa loại phòng này. Vui lòng thử lại sau.
                     </div>
                 </c:if>
                 <c:if test="${param.error eq 'duplicateName'}">
                     <div class="alert-banner alert-danger">
                         <i class="fa-solid fa-circle-exclamation"></i>
-                        This Room Type is already available.
+                        Tên loại phòng này đã tồn tại trong hệ thống. Vui lòng chọn tên khác.
                     </div>
                 </c:if>
 
@@ -528,7 +546,7 @@
             }
             if (/-\s*\d/.test(bedTypeVal) || /^\s*-/.test(bedTypeVal) || /^\s*0\s/.test(bedTypeVal) || /^\s*0$/.test(bedTypeVal)) {
                 e.preventDefault();
-                bedTypeInput.setCustomValidity("Incorrect format");
+                bedTypeInput.setCustomValidity("Định dạng loại giường không hợp lệ.");
                 bedTypeInput.reportValidity();
                 return;
             }
@@ -557,7 +575,7 @@
                 const fileInput = document.getElementById('modalRtImageFile');
                 if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
                     e.preventDefault();
-                    alert("Vui lòng chọn một file ảnh để upload.");
+                    alert("Vui lòng chọn một tệp ảnh để tải lên.");
                     return;
                 }
             }
@@ -567,6 +585,25 @@
                 sessionStorage.setItem("ManagerTable_page_roomTypesTable", ManagerTable.tables["roomTypesTable"].currentPage);
             }
         });
+
+        // Unified Vietnamese HTML5 Validation Messages
+        document.addEventListener('invalid', function (e) {
+            const el = e.target;
+            if (!el || !['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)) return;
+            if (el.validity.valueMissing) {
+                if (el.tagName === 'SELECT') {
+                    el.setCustomValidity('Vui lòng chọn một tùy chọn trong danh sách.');
+                } else {
+                    el.setCustomValidity('Vui lòng điền vào trường này.');
+                }
+            } else if (el.validity.rangeUnderflow) {
+                el.setCustomValidity('Giá trị phải lớn hơn hoặc bằng ' + el.min + '.');
+            } else if (el.validity.rangeOverflow) {
+                el.setCustomValidity('Giá trị không được vượt quá ' + el.max + '.');
+            } else if (el.validity.typeMismatch) {
+                el.setCustomValidity('Định dạng dữ liệu không hợp lệ.');
+            }
+        }, true);
     </script>
 </body>
 </html>

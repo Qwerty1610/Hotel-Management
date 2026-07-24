@@ -352,6 +352,15 @@
                         </div>
                     </div>
                 </div>
+
+                    <%-- Warning notice --%>
+                    <div style="margin: 12px 20px 0 20px; padding: 10px 14px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; display: flex; align-items: flex-start; gap: 8px;">
+                        <i class="fa-solid fa-triangle-exclamation" style="color: #f97316; font-size: 15px; margin-top: 2px; flex-shrink: 0;"></i>
+                        <span style="font-size: 13px; color: #9a3412; line-height: 1.5;">
+                            <strong>Lưu ý:</strong> Sau khi gửi đánh giá, bạn <strong>sẽ không thể chỉnh sửa hoặc xóa</strong> đánh giá này. Vui lòng kiểm tra kỹ trước khi xác nhận.
+                        </span>
+                    </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary" style="margin-top: 0; padding: 10px 20px;" onclick="closeFeedbackModal()">Hủy</button>
                     <button type="submit" class="btn-primary" style="margin-top: 0; width: auto; padding: 10px 20px;">Gửi đánh giá</button>

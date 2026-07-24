@@ -233,16 +233,16 @@
                                         <table class="booking-list-table">
                                             <thead>
                                                 <tr>
-                                                    <th>Mã yêu cầu</th>
-                                                    <th>Ngày yêu cầu</th>
-                                                    <th>Đặt phòng</th>
-                                                    <th>Phòng</th>
-                                                    <th>Dịch vụ</th>
-                                                    <th>Số lượng</th>
-                                                    <th>Tạm tính</th>
+                                                    <th style="white-space: nowrap;">Mã yêu cầu</th>
+                                                    <th style="white-space: nowrap;">Ngày yêu cầu</th>
+                                                    <th style="white-space: nowrap;">Đặt phòng</th>
+                                                    <th style="white-space: nowrap;">Phòng</th>
+                                                    <th style="white-space: nowrap;">Dịch vụ</th>
+                                                    <th style="white-space: nowrap;">Số lượng</th>
+                                                    <th style="white-space: nowrap;">Tạm tính</th>
                                                     <th>Ghi chú</th>
-                                                    <th>Trạng thái</th>
-                                                    <th>Hành động</th>
+                                                    <th style="white-space: nowrap;">Trạng thái</th>
+                                                    <th style="white-space: nowrap;">Hành động</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -307,18 +307,18 @@
                                                                         </c:when>
                                                                     </c:choose>
                                                                 </td>
-                                                                <td>
+                                                                <td style="white-space: nowrap;">
                                                                      <div style="display: flex; gap: 8px; align-items: center;">
                                                                          <c:if test="${r.status eq 'Pending'}">
-                                                                             <button type="button" class="btn-danger"
-                                                                                 style="padding: 6px 12px; font-size: 13px;"
+                                                                             <button type="button" 
+                                                                                 style="padding: 5px 12px; font-size: 13px; background-color: #ffffff; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; white-space: nowrap;"
                                                                                  onclick="confirmCancelRequest('${r.requestId}')">
                                                                                  Hủy
                                                                              </button>
                                                                          </c:if>
                                                                          <c:if test="${r.status eq 'Completed' || r.status eq 'Cancelled'}">
                                                                              <button type="button" class="btn-secondary"
-                                                                                 style="padding: 5px 12px; font-size: 13px; background-color: #ffffff; color: var(--brand-blue); border: 1px solid var(--brand-blue); border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s;"
+                                                                                 style="padding: 5px 12px; font-size: 13px; background-color: #ffffff; color: var(--brand-blue); border: 1px solid var(--brand-blue); border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; white-space: nowrap;"
                                                                                  data-id="${r.requestId}"
                                                                                  data-status="${r.status}"
                                                                                  data-date="<fmt:formatDate value="${not empty r.completedAt ? r.completedAt : r.updatedAt}" pattern="dd/MM/yyyy HH:mm" />"
