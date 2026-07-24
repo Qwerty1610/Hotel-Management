@@ -24,5 +24,17 @@
             <page-encoding>UTF-8</page-encoding>
         </jsp-property-group>
     </jsp-config>
+    <!-- Force Tomcat's DefaultServlet to read/serve static files (JS, CSS, ...)
+         as UTF-8, instead of the JVM/OS default (windows-1252 on Windows),
+         which corrupts Vietnamese text embedded in .js/.css files. -->
+    <servlet>
+        <servlet-name>default</servlet-name>
+        <servlet-class>org.apache.catalina.servlets.DefaultServlet</servlet-class>
+        <init-param>
+            <param-name>fileEncoding</param-name>
+            <param-value>UTF-8</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
 
 </web-app>

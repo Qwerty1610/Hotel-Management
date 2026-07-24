@@ -1918,8 +1918,7 @@
             }
         </script>
         <script
-            src="${pageContext.request.contextPath}/assets/js/receptionist.js?v=5"
-        charset="UTF-8"></script>
+            src="${pageContext.request.contextPath}/assets/js/receptionist.js?v=6"></script>
     </body>
 
 </html>
