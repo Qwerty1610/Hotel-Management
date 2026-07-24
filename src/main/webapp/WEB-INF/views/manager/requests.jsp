@@ -132,11 +132,13 @@
                     <table class="services-table-element">
                         <thead>
                             <tr>
-                                <th style="width:34%">Yêu cầu</th>
-                                <th style="width:13%">Ưu tiên</th>
-                                <th style="width:18%">Nhân viên được giao</th>
-                                <th style="width:15%">Trạng thái</th>
-                                <th style="width:20%">Thao tác</th>
+                                <th style="width:20%">Yêu cầu</th>
+                                <th style="width:18%">Mô tả</th>
+                                <th style="width:8%">Ưu tiên</th>
+                                <th style="width:14%">Nhân viên được giao</th>
+                                <th style="width:16%">Ghi chú nhân viên</th>
+                                <th style="width:10%">Trạng thái</th>
+                                <th style="width:14%">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -148,9 +150,6 @@
                                                 <span class="service-title">
                                                     <c:out value="${r.issueNames}" />
                                                 </span>
-                                                <c:if test="${not empty r.description}">
-                                                    <br/><span class="request-sub"><c:out value="${r.description}" /></span>
-                                                </c:if>
                                                 <span class="request-sub">
                                                     <i class="fa-solid fa-bed"></i> Phòng
                                                     <c:out value="${r.roomNumbers}" />
@@ -160,6 +159,16 @@
                                                 </span>
                                             </div>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${not empty r.description}">
+                                                <span class="request-sub"><c:out value="${r.description}" /></span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span style="color:var(--text-muted); font-style:italic;">Không có</span>
+                                            </c:otherwise>
+                                        </c:choose>
                                     </td>
                                     <td>
                                         <c:choose>
@@ -186,6 +195,16 @@
                                     </td>
                                     <td>
                                         <c:choose>
+                                            <c:when test="${not empty r.resolutionNote}">
+                                                <span class="request-sub"><c:out value="${r.resolutionNote}" /></span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span style="color:var(--text-muted); font-style:italic;">Chưa có ghi chú</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+                                    <td>
+                                        <c:choose>
                                             <c:when test="${r.status eq 'InProgress'}"><span
                                                     class="status-pill status-occupied"><i
                                                         class="fa-solid fa-circle"></i> ĐANG THỰC
@@ -209,6 +228,11 @@
                                     </td>
                                     <td>
                                         <div class="table-actions" style="display:flex; gap:8px;">
+                                            <c:if test="${r.status ne 'Resolved'}">
+                                                <button class="btn-action edit" title="Đổi mức ưu tiên"
+                                                        onclick="openPriorityModal('${r.requestId}', '${r.priority}')"><i
+                                                        class="fa-solid fa-flag"></i></button>
+                                            </c:if>
                                             <c:choose>
                                                 <c:when
                                                     test="${r.status eq 'Pending' or r.status eq 'InProgress'}">
@@ -222,8 +246,10 @@
                                                             onclick="changeStatus('${r.requestId}', 'Cancelled')"><i
                                                             class="fa-solid fa-xmark"></i></button>
                                                     </c:when>
-                                                    <c:otherwise><span
-                                                        style="color:var(--text-muted); font-size:12px;">—</span>
+                                                    <c:otherwise>
+                                                        <c:if test="${r.status eq 'Resolved'}">
+                                                            <span style="color:var(--text-muted); font-size:12px;">—</span>
+                                                        </c:if>
                                                 </c:otherwise>
                                             </c:choose>
                                         </div>
@@ -232,7 +258,7 @@
                             </c:forEach>
                             <c:if test="${empty requests}">
                                 <tr>
-                                    <td colspan="5"
+                                    <td colspan="7"
                                         style="text-align:center; padding:40px; color:var(--text-muted);">
                                         <i class="fa-solid fa-folder-open"
                                            style="font-size:32px; margin-bottom:12px; display:block;"></i>
@@ -367,6 +393,117 @@
                     </table>
                 </div>
 
+                <!-- STAFF ROOM ISSUE REPORTS TABLE -->
+                <div class="content-header-row" style="margin-bottom:16px; margin-top:24px;">
+                    <div>
+                        <h1 style="font-size:22px;">Báo cáo của nhân viên</h1>
+                        <p>Toàn bộ sự cố phòng do nhân viên buồng phòng báo cáo.</p>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <table class="services-table-element">
+                        <thead>
+                            <tr>
+                                <th style="width:8%">Phòng</th>
+                                <th style="width:12%">Loại sự cố</th>
+                                <th style="width:8%">Mức độ</th>
+                                <th style="width:18%">Mô tả chung</th>
+                                <th style="width:16%">Ghi chú</th>
+                                <th style="width:12%">Người báo cáo</th>
+                                <th style="width:12%">Thời gian báo cáo</th>
+                                <th style="width:10%">Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <c:forEach var="ri" items="${roomIssues}">
+                                <tr>
+                                    <td><span style="font-weight:600;"><i class="fa-solid fa-bed"></i>
+                                            <c:out value="${ri.roomNumber}" /></span></td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${ri.issueType eq 'Damage'}">Hư hỏng</c:when>
+                                            <c:when test="${ri.issueType eq 'Cleaning'}">Dọn dẹp</c:when>
+                                            <c:when test="${ri.issueType eq 'Refill'}">Bổ sung vật tư</c:when>
+                                            <c:when test="${ri.issueType eq 'Other'}">Khác</c:when>
+                                            <c:otherwise><c:out value="${ri.issueType}" /></c:otherwise>
+                                        </c:choose>
+                                    </td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${ri.severity eq 'High'}"><span
+                                                    class="prio-badge prio-high">CAO</span></c:when>
+                                            <c:when test="${ri.severity eq 'Medium'}"><span
+                                                    class="prio-badge prio-medium">TRUNG BÌNH</span></c:when>
+                                            <c:when test="${ri.severity eq 'Low'}"><span
+                                                    class="prio-badge prio-low">THẤP</span></c:when>
+                                            <c:otherwise><c:out value="${ri.severity}" /></c:otherwise>
+                                        </c:choose>
+                                    </td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${not empty ri.description}">
+                                                <span class="request-sub"><c:out value="${ri.description}" /></span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span style="color:var(--text-muted); font-style:italic;">Không có</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${not empty ri.note}">
+                                                <span class="request-sub"><c:out value="${ri.note}" /></span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span style="color:var(--text-muted); font-style:italic;">Không có</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${not empty ri.reporterName}">
+                                                <span style="font-weight:600; color:var(--text-navy);">
+                                                    <c:out value="${ri.reporterName}" />
+                                                </span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span style="color:var(--text-muted); font-style:italic;">Không rõ</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+                                    <td>
+                                        <c:if test="${not empty ri.reportedAt}">
+                                            <span class="request-sub">
+                                                ${ri.reportedAt.dayOfMonth}/${ri.reportedAt.monthValue}/${ri.reportedAt.year}
+                                                ${ri.reportedAt.hour}:${ri.reportedAt.minute}
+                                            </span>
+                                        </c:if>
+                                    </td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${ri.status eq 'Success'}"><span
+                                                    class="status-pill status-available"><i
+                                                        class="fa-solid fa-circle"></i> ĐÃ XỬ LÝ</span>
+                                                </c:when>
+                                                <c:otherwise><span class="status-pill status-cleaning"><i
+                                                        class="fa-solid fa-circle"></i> ĐANG CHỜ</span>
+                                                </c:otherwise>
+                                            </c:choose>
+                                    </td>
+                                </tr>
+                            </c:forEach>
+                            <c:if test="${empty roomIssues}">
+                                <tr>
+                                    <td colspan="8"
+                                        style="text-align:center; padding:40px; color:var(--text-muted);">
+                                        Chưa có báo cáo sự cố nào từ nhân viên</td>
+                                </tr>
+                            </c:if>
+                        </tbody>
+                    </table>
+                </div>
+
             </main>
 
             <footer class="dashboard-footer">
@@ -426,6 +563,38 @@
         <input type="hidden" id="statusValue" name="status" value="" />
     </form>
 
+    <!-- PRIORITY MODAL -->
+    <div class="modal-overlay" id="priorityModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>Đổi mức ưu tiên</h3>
+                <button class="btn-close-modal" onclick="closePriorityModal()"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="priorityForm" action="${pageContext.request.contextPath}/manager/requests"
+                      method="post">
+                    <input type="hidden" name="action" value="priority" />
+                    <input type="hidden" id="priorityRequestId" name="requestId" value="" />
+                    <div class="modal-form-group">
+                        <label for="priorityValue">Mức độ ưu tiên</label>
+                        <select id="priorityValue" name="priority" class="modal-select" required>
+                            <option value="Urgent">Khẩn cấp</option>
+                            <option value="High">Cao</option>
+                            <option value="Medium">Trung bình</option>
+                            <option value="Low">Thấp</option>
+                        </select>
+                    </div>
+                    <div class="modal-footer-row">
+                        <button type="button" class="btn-modal-cancel" onclick="closePriorityModal()">Hủy
+                            bỏ</button>
+                        <button type="submit" class="btn-modal-submit">Lưu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         function openAssignModal(requestId, btn) {
             document.getElementById("assignRequestId").value = requestId;
@@ -442,6 +611,15 @@
         }
         function closeAssignModal() {
             document.getElementById("assignModal").style.display = "none";
+        }
+
+        function openPriorityModal(requestId, currentPriority) {
+            document.getElementById("priorityRequestId").value = requestId;
+            document.getElementById("priorityValue").value = currentPriority;
+            document.getElementById("priorityModal").style.display = "flex";
+        }
+        function closePriorityModal() {
+            document.getElementById("priorityModal").style.display = "none";
         }
 
         function changeStatus(requestId, status) {

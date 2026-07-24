@@ -25,7 +25,15 @@ public class HousekeepingDAO {
            rt.type_name,
            r.status,
            r.floor,
-           ri.image_url
+           ri.image_url,
+           CASE WHEN EXISTS (
+               SELECT 1 FROM RoomAssignment ra
+               JOIN Booking b ON ra.booking_id = b.booking_id
+               WHERE ra.room_id = r.room_id
+                 AND b.status IN (N'Confirmed', N'CheckedIn')
+                 AND CAST(GETDATE() AS DATE) >= b.check_in_date
+                 AND CAST(GETDATE() AS DATE) < b.check_out_date
+           ) THEN 1 ELSE 0 END AS has_guest
     FROM Room r
     JOIN RoomType rt ON r.type_id = rt.type_id
     LEFT JOIN RoomImage ri ON ri.type_id = rt.type_id
@@ -44,6 +52,7 @@ public class HousekeepingDAO {
                 room.setStatus(rs.getString("status").trim());
                 room.setFloor(rs.getString("floor"));
                 room.setImageUrl(rs.getString("image_url"));
+                room.setHasGuest(rs.getBoolean("has_guest"));
 
                 list.add(room);
             }

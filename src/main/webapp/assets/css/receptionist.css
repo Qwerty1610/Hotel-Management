@@ -1129,36 +1129,6 @@ ROOM MAP FILTER
     flex-wrap:wrap;
 }
 
-.btn-roommap-search{
-    height:44px;
-    padding:0 20px;
-
-    border:none;
-    border-radius:12px;
-
-    background:linear-gradient(
-        135deg,
-        #2563eb,
-        #1d4ed8
-    );
-
-    color:#fff;
-    font-size:13px;
-    font-weight:700;
-
-    display:flex;
-    align-items:center;
-    gap:8px;
-
-    cursor:pointer;
-    transition:.2s;
-}
-
-.btn-roommap-search:hover{
-    transform:translateY(-1px);
-    box-shadow:0 6px 16px rgba(37,99,235,.25);
-}
-
 .roommap-status-tabs{
     margin-bottom:24px;
 }
@@ -1185,7 +1155,7 @@ ROOM STATUS COLORS
     border-left:4px solid #10b981;
 }
 
-.status-Reserved{
+.status-Confirmed{
     border-left:4px solid #2563eb;
 }
 
@@ -1193,8 +1163,38 @@ ROOM STATUS COLORS
     border-left:4px solid #64748b;
 }
 
+.status-Cleaning{
+    border-left:4px solid #eab308;
+}
+
+.status-Refilling{
+    border-left:4px solid #f97316;
+}
+
 .status-Maintenance{
-    border-left:4px solid #f59e0b;
+    border-left:4px solid #ef4444;
+}
+
+.room-card .room-maintenance-dot{
+    position:absolute;
+    top:10px;
+    right:10px;
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:#ef4444;
+    animation:roommapMaintenanceBlink 1.8s ease-in-out infinite;
+}
+
+@keyframes roommapMaintenanceBlink{
+    0%, 100% {
+        opacity:1;
+        transform:scale(1);
+    }
+    50% {
+        opacity:0.3;
+        transform:scale(1.25);
+    }
 }
 
 .badge-Available{
@@ -1202,7 +1202,7 @@ ROOM STATUS COLORS
     color:#16a34a;
 }
 
-.badge-Reserved{
+.badge-Confirmed{
     background:#eff6ff;
     color:#2563eb;
 }
@@ -1212,9 +1212,19 @@ ROOM STATUS COLORS
     color:#475569;
 }
 
+.badge-Cleaning{
+    background:#fefce8;
+    color:#a16207;
+}
+
+.badge-Refilling{
+    background:#fff7ed;
+    color:#c2410c;
+}
+
 .badge-Maintenance{
-    background:#fef3c7;
-    color:#d97706;
+    background:#fef2f2;
+    color:#dc2626;
 }
 /* =====================================================
 WALK-IN BOOKING
@@ -1289,6 +1299,28 @@ border-radius:16px;
 padding:24px;
 margin-bottom:20px;
 box-shadow:0 4px 12px rgba(0,0,0,.04);
+}
+
+/* Gộp toàn bộ các section walk-in booking vào chung 1 khối (giống trang check-in) */
+.walkin-card-group{
+background:#fff;
+border:1px solid var(--border-color);
+border-radius:16px;
+box-shadow:0 4px 12px rgba(0,0,0,.04);
+overflow:hidden;
+margin-bottom:20px;
+}
+
+.walkin-card-group .walkin-card{
+background:transparent;
+border:none;
+border-radius:0;
+box-shadow:none;
+margin-bottom:0;
+}
+
+.walkin-card-group .walkin-card + .walkin-card{
+border-top:1px solid var(--border-color);
 }
 
 .walkin-section-header{
@@ -2084,7 +2116,9 @@ RESPONSIVE
 }
 
 .walkin-toast.success{
-    background:#16a34a;
+    background:#f0fdf4;
+    color:#166534;
+    border:1px solid #86efac;
 }
 
 .walkin-toast.error{
@@ -2097,6 +2131,10 @@ RESPONSIVE
     color:white;
     font-size:22px;
     cursor:pointer;
+}
+
+.walkin-toast.success .walkin-toast-close{
+    color:#166534;
 }
 
 .walkin-toast-close:hover{

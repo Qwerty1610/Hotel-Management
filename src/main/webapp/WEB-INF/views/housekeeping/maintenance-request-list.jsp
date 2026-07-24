@@ -223,12 +223,25 @@
                                         <td>${m.issueNames}</td>
                                         <td>
                                             <span class="priority-badge priority-${fn:toLowerCase(m.priority)}">
-                                                ${m.priority}
+                                                <c:choose>
+                                                    <c:when test="${m.priority == 'Urgent'}">Khẩn cấp</c:when>
+                                                    <c:when test="${m.priority == 'High'}">Cao</c:when>
+                                                    <c:when test="${m.priority == 'Medium'}">Trung bình</c:when>
+                                                    <c:when test="${m.priority == 'Low'}">Thấp</c:when>
+                                                    <c:otherwise>${m.priority}</c:otherwise>
+                                                </c:choose>
                                             </span>
                                         </td>
                                         <td>
                                             <span class="status-badge status-${fn:toLowerCase(m.status)}">
-                                                ${m.status}
+                                                <c:choose>
+                                                    <c:when test="${m.status == 'Pending'}">Chờ xử lý</c:when>
+                                                    <c:when test="${m.status == 'InProgress'}">Đang xử lý</c:when>
+                                                    <c:when test="${m.status == 'Resolved'}">Đã xử lý</c:when>
+                                                    <c:when test="${m.status == 'Unresolvable'}">Không thể xử lý</c:when>
+                                                    <c:when test="${m.status == 'Cancelled'}">Đã huỷ</c:when>
+                                                    <c:otherwise>${m.status}</c:otherwise>
+                                                </c:choose>
                                             </span>
                                         </td>
                                         <td>

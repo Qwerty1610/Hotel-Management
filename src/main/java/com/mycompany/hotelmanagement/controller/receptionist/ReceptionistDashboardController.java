@@ -279,6 +279,10 @@ public class ReceptionistDashboardController extends HttpServlet {
             request.setAttribute("kpiCompleted", kpiCompleted);
             request.setAttribute("kpiCancelled", kpiCancelled);
 
+            // Dữ liệu cho popup "Đặt dịch vụ cho khách"
+            request.setAttribute("addServiceRooms", dao.getCheckedInRooms());
+            request.setAttribute("addServiceServices", dao.getActiveServices());
+
         } catch (Exception e) {
             throw new RuntimeException("Error in loadServiceRequestsTab of ReceptionistDashboardController", e);
         }

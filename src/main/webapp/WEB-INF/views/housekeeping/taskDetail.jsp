@@ -93,18 +93,26 @@
                         <!-- HEADER -->
                         <div class="task-card-header">
                             <div>
-                                <h2>Room ${room.roomNumber}</h2>
+                                <h2>Phòng ${room.roomNumber}</h2>
                                 <p>${room.typeName}</p>
                             </div>
 
-                            <span class="status-pill 
+                            <span class="status-pill
                                   ${status == 'OutOfService' ? 'status-outofservice' : ''}
                                   ${status == 'Available' ? 'status-available' : ''}
                                   ${status == 'Cleaning' ? 'status-cleaning' : ''}
                                   ${status == 'Refilling' ? 'status-refilling' : ''}
                                   ${status == 'Maintenance' ? 'status-maintenance' : ''}
                                   ${status == 'Completed' ? 'status-completed' : ''}">
-                                ${status}
+                                <c:choose>
+                                    <c:when test="${status == 'OutOfService'}">Ngừng hoạt động</c:when>
+                                    <c:when test="${status == 'Available'}">Sẵn sàng</c:when>
+                                    <c:when test="${status == 'Cleaning'}">Đang dọn phòng</c:when>
+                                    <c:when test="${status == 'Refilling'}">Đang bổ sung vật dụng</c:when>
+                                    <c:when test="${status == 'Maintenance'}">Bảo trì</c:when>
+                                    <c:when test="${status == 'Completed'}">Đã hoàn thành</c:when>
+                                    <c:otherwise>${status}</c:otherwise>
+                                </c:choose>
                             </span>
                         </div>
 
@@ -170,8 +178,23 @@
                                                             <c:forEach var="issue" items="${issues}">
                                                                 <tr>
                                                                     <td>${issue.issueId}</td>
-                                                                    <td>${issue.issueType}</td>
-                                                                    <td>${issue.severity}</td>
+                                                                    <td>
+                                                                        <c:choose>
+                                                                            <c:when test="${issue.issueType == 'Damage'}">Hỏng hóc</c:when>
+                                                                            <c:when test="${issue.issueType == 'Refill'}">Thiếu vật tư</c:when>
+                                                                            <c:when test="${issue.issueType == 'Cleaning'}">Cần dọn dẹp</c:when>
+                                                                            <c:when test="${issue.issueType == 'Other'}">Khác</c:when>
+                                                                            <c:otherwise>${issue.issueType}</c:otherwise>
+                                                                        </c:choose>
+                                                                    </td>
+                                                                    <td>
+                                                                        <c:choose>
+                                                                            <c:when test="${issue.severity == 'Low'}">Thấp</c:when>
+                                                                            <c:when test="${issue.severity == 'Medium'}">Trung bình</c:when>
+                                                                            <c:when test="${issue.severity == 'High'}">Cao</c:when>
+                                                                            <c:otherwise>${issue.severity}</c:otherwise>
+                                                                        </c:choose>
+                                                                    </td>
                                                                     <td>${issue.description}</td>
                                                                     <td>
                                                                         ${empty issue.note ? '-' : issue.note}
@@ -179,7 +202,10 @@
 
                                                                     <td>
                                                                         <span class="issue-status ${issue.status == 'Pending' ? 'pending' : 'success'}">
-                                                                            ${issue.status}
+                                                                            <c:choose>
+                                                                                <c:when test="${issue.status == 'Pending'}">Chờ xử lý</c:when>
+                                                                                <c:otherwise>Đã hoàn thành</c:otherwise>
+                                                                            </c:choose>
                                                                         </span>
                                                                     </td>
 

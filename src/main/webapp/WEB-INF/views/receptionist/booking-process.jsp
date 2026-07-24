@@ -69,12 +69,6 @@
                             <i class="fa-solid fa-bell-concierge"></i> <span>Quản lý yêu cầu dịch vụ</span>
                         </a>
                     </li>
-                    <li class="menu-item ${currentTab eq 'add-booking-service' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/add-booking-service">
-                            <i class="fa-solid fa-circle-plus"></i>
-                            <span>Đặt dịch vụ cho khách</span>
-                        </a>
-                    </li>
                 </ul>
 
                 <div class="sidebar-footer">
@@ -200,7 +194,9 @@
                                         <div class="detail-card" style="margin-top:24px">
                                             <div class="card-header">
                                                 <h3><i class="fa-solid fa-calendar-days"></i>
-                                                    Chi tiết yêu cầu đặt phòng</h3>
+                                                    Chi tiết yêu cầu đặt phòng
+                                                    <span id="dateError" class="error-message" style="display:none; margin-left:10px;"></span>
+                                                </h3>
                                             </div>
                                             <div class="card-body">
                                                 <div class="info-row">
@@ -998,10 +994,15 @@
                 }
                 const checkIn = document.getElementById("editCheckIn");
                 if (checkIn) {
+                    const todayStr = new Date().toISOString().slice(0, 10);
+                    checkIn.min = todayStr;
                     checkIn.addEventListener("change", onDateChange);
                 }
                 const checkOut = document.getElementById("editCheckOut");
                 if (checkOut) {
+                    if (checkIn && checkIn.value) {
+                        checkOut.min = checkIn.value;
+                    }
                     checkOut.addEventListener("change", onDateChange);
                 }
                 for (let cid of childIds) {
@@ -1081,6 +1082,10 @@
                 document.getElementById('actionField').value = action;
                 const errDiv = document.getElementById('selection-error');
                 errDiv.style.display = 'none';
+
+                if ((action === 'confirm' || action === 'update') && !validateBookingDates()) {
+                    return;
+                }
 
                 let allValid = true;
 
@@ -1205,6 +1210,40 @@
                     filterRooms(cid);
                 }
             }
+            function validateBookingDates() {
+                const checkInInput = document.getElementById("editCheckIn");
+                const checkOutInput = document.getElementById("editCheckOut");
+                const errorSpan = document.getElementById("dateError");
+
+                const checkInVal = checkInInput.value;
+                const checkOutVal = checkOutInput.value;
+
+                let message = "";
+
+                if (checkInVal) {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const checkIn = new Date(checkInVal);
+
+                    if (checkIn < today) {
+                        message = "Ngày check-in không được ở trong quá khứ";
+                    }
+                }
+
+                if (!message && checkInVal && checkOutVal) {
+                    if (new Date(checkOutVal) < new Date(checkInVal)) {
+                        message = "Ngày check-out không được nhỏ hơn ngày check-in";
+                    }
+                }
+
+                if (errorSpan) {
+                    errorSpan.innerText = message;
+                    errorSpan.style.display = message ? "inline" : "none";
+                }
+
+                return message === "";
+            }
+
             let debounceTimer;
 
             function reloadRooms() {
@@ -1224,7 +1263,7 @@
                 const url = `${window.contextPath || ''}/receptionist/room/available`
                         + `?checkIn=${checkIn}&checkOut=${checkOut}`;
 
-                fetch(url)
+                return fetch(url)
                         .then(res => res.json())
                         .then(data => {
                             updateRoomGrid(data);
@@ -1267,6 +1306,16 @@
             }
             function onDateChange() {
                 recalcAmount();
+
+                const checkInVal = document.getElementById("editCheckIn").value;
+                const checkOutInput = document.getElementById("editCheckOut");
+                if (checkInVal && checkOutInput) {
+                    checkOutInput.min = checkInVal;
+                }
+
+                if (!validateBookingDates()) {
+                    return;
+                }
 
                 fetchAvailableRooms().then(() => {
                     applyRoomFilterAllGrids();

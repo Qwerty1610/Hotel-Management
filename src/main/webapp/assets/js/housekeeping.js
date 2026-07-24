@@ -10,6 +10,7 @@ function initRooms() {
             number: r.querySelector(".room-num").innerText,
             type: r.querySelector(".room-type").innerText,
             status: r.dataset.roomStatus,
+            hasGuest: r.dataset.hasGuest === "true",
             floor: r.closest(".floor-card")
                     ?.querySelector(".floor-header span")
                     ?.textContent?.trim() || "Unknown"
@@ -96,6 +97,11 @@ function applyStatusFilter(status, event) {
             }
 
 
+            if (filterStatus === "hasguest") {
+                return r.hasGuest === true;
+            }
+
+
             // Cleaning + Refilling chung một nhóm
             if (filterStatus === "cleaning") {
                 return roomStatus === "cleaning"
@@ -136,11 +142,13 @@ function applyStatusFilter(status, event) {
                         ${rooms.map((r, i) => `
                             <div class="room-item ${getStatusClass(r.status)} is-showing"
                                  data-room-status="${r.status}"
+                                 data-has-guest="${r.hasGuest}"
                                  data-room-id="${r.id}"
                                  onclick="goTaskDetail(${r.id})"
                                  style="animation-delay:${i * 40}ms">
 
                                 <div class="maintenance-dot"></div>
+                                ${r.hasGuest ? '<span class="guest-badge">Có khách</span>' : ''}
                                 <span class="room-num">${r.number}</span>
                                 <span class="room-type">${r.type}</span>
                             </div>
@@ -189,6 +197,11 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
 
+            if (filterStatus === "hasguest") {
+                return r.hasGuest === true;
+            }
+
+
             if (filterStatus === "cleaning") {
 
                 return roomStatus === "cleaning"
@@ -222,10 +235,12 @@ document.addEventListener("DOMContentLoaded", () => {
                         ${rooms.map((r, i) => `
                             <div class="room-item ${getStatusClass(r.status)} is-showing"
                                  data-room-status="${r.status}"
+                                 data-has-guest="${r.hasGuest}"
                                  data-room-id="${r.id}"
                                  onclick="goTaskDetail('${r.id}')"
                                  style="animation-delay: ${i * 30}ms">
                                 <div class="maintenance-dot"></div>
+                                ${r.hasGuest ? '<span class="guest-badge">Có khách</span>' : ''}
                                 <span class="room-num">${r.number}</span>
                                 <span class="room-type">${r.type}</span>
                             </div>
