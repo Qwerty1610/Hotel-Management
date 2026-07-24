@@ -55,8 +55,15 @@ public class RoomDetailController extends HttpServlet {
             return;
         }
 
-        // Fetch detail using Service
-        RoomTypeInfo roomDetail = roomTypeService.getRoomTypeDetail(typeId);
+        String checkInParam = request.getParameter("checkIn");
+        String checkOutParam = request.getParameter("checkOut");
+        RoomsController.DateRangeResult dateResult = RoomsController.parseAndValidateDateRange(checkInParam, checkOutParam);
+
+        java.time.LocalDate checkIn = dateResult.isValid() ? dateResult.checkIn : java.time.LocalDate.now();
+        java.time.LocalDate checkOut = dateResult.isValid() ? dateResult.checkOut : java.time.LocalDate.now().plusDays(1);
+
+        // Fetch detail using Service with date range
+        RoomTypeInfo roomDetail = roomTypeService.getRoomTypeDetail(typeId, checkIn, checkOut);
 
         if (roomDetail == null) {
             // Room type ID does not exist in database or database query failed
@@ -76,6 +83,11 @@ public class RoomDetailController extends HttpServlet {
         request.setAttribute("feedbackList", feedbackList);
         request.setAttribute("totalReviews", totalReviews);
         request.setAttribute("averageRating", averageRating);
+        request.setAttribute("selectedCheckIn", checkIn.toString());
+        request.setAttribute("selectedCheckOut", checkOut.toString());
+        if (!dateResult.isValid()) {
+            request.setAttribute("dateError", dateResult.error);
+        }
         
         request.getRequestDispatcher("/WEB-INF/views/home/room_detail.jsp").forward(request, response);
     }

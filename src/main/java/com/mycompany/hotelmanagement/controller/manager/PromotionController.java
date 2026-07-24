@@ -75,8 +75,12 @@ public class PromotionController extends HttpServlet {
             } else {
                 newStatus = "Active";
             }
-            promotionService.togglePromotionStatus(promotionId, newStatus);
-            response.sendRedirect(request.getContextPath() + "/manager/promotions?success=toggled");
+            boolean success = promotionService.togglePromotionStatus(promotionId, newStatus);
+            if (success) {
+                response.sendRedirect(request.getContextPath() + "/manager/promotions?success=toggled");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/manager/promotions?error=saveError");
+            }
             return;
         }
 
@@ -237,8 +241,12 @@ public class PromotionController extends HttpServlet {
         promotion.setMaxDiscountAmount(maxDiscountAmount);
         promotion.setUsageLimit(usageLimit);
 
-        promotionService.savePromotion(promotion);
-        response.sendRedirect(request.getContextPath() + "/manager/promotions?success=saved");
+        boolean saved = promotionService.savePromotion(promotion);
+        if (saved) {
+            response.sendRedirect(request.getContextPath() + "/manager/promotions?success=saved");
+        } else {
+            response.sendRedirect(request.getContextPath() + "/manager/promotions?error=saveError");
+        }
     }
 
     // ── Utility ───────────────────────────────────────────────────────────────

@@ -29,7 +29,7 @@ public class BookingServiceRequestDAO {
     }
 
     /**
-     * UC-64: View Service Request History Lấy danh sách lịch sử yêu cầu dịch vụ
+     * UC-62: View Service Request History Lấy danh sách lịch sử yêu cầu dịch vụ
      * của khách hàng theo accountId và trạng thái lọc.
      *
      * @param accountId ID tài khoản của khách hàng
@@ -75,7 +75,7 @@ public class BookingServiceRequestDAO {
     }
 
     /**
-     * UC-10: Submit Service Request Thêm mới một yêu cầu dịch vụ phòng của
+     * UC-09: Submit Service Request Thêm mới một yêu cầu dịch vụ phòng của
      * khách hàng vào cơ sở dữ liệu.
      *
      * @param r đối tượng BookingServiceRequest chứa thông tin yêu cầu
@@ -112,7 +112,7 @@ public class BookingServiceRequestDAO {
     }
 
     /**
-     * UC-64: View Service Request History (Action Cancel) Khách hàng thực hiện
+     * UC-62: View Service Request History (Action Cancel) Khách hàng thực hiện
      * hủy yêu cầu dịch vụ của họ (chỉ cho phép khi trạng thái là Pending).
      *
      * @param requestId ID yêu cầu dịch vụ cần hủy
@@ -165,7 +165,7 @@ public class BookingServiceRequestDAO {
     }
 
     /**
-     * UC-35: View Service Requests Lễ tân lấy danh sách các yêu cầu dịch vụ của
+     * UC-34: View Service Requests Lễ tân lấy danh sách các yêu cầu dịch vụ của
      * khách hàng kèm theo phân trang và lọc từ khóa.
      *
      * @param statusFilter trạng thái yêu cầu lọc
@@ -231,7 +231,7 @@ public class BookingServiceRequestDAO {
     }
 
     /**
-     * UC-35: View Service Requests Đếm tổng số lượng yêu cầu dịch vụ thỏa mãn
+     * UC-34: View Service Requests Đếm tổng số lượng yêu cầu dịch vụ thỏa mãn
      * bộ lọc để tính toán phân trang phía Lễ tân.
      *
      * @param statusFilter trạng thái lọc
@@ -504,61 +504,6 @@ public class BookingServiceRequestDAO {
         return list;
     }
 
-    public boolean isBookingCheckedIn(int bookingId) {
-
-        String sql = """
-        SELECT COUNT(*)
-        FROM dbo.Booking
-        WHERE booking_id=?
-        AND status=N'CheckedIn'
-    """;
-        try (Connection conn
-                = DBContext.getConnection()) {
-            useDatabase(conn);
-            try (PreparedStatement ps
-                    = conn.prepareStatement(sql)) {
-                ps.setInt(1, bookingId);
-                ResultSet rs
-                        = ps.executeQuery();
-                rs.next();
-                return rs.getInt(1) > 0;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    public boolean checkRoomBelongBooking(
-            int bookingId,
-            int roomId) {
-
-        String sql = """
-        SELECT COUNT(*)
-
-        FROM dbo.RoomAssignment
-
-        WHERE booking_id=?
-
-        AND room_id=?
-    """;
-        try (Connection conn
-                = DBContext.getConnection()) {
-            useDatabase(conn);
-            try (PreparedStatement ps
-                    = conn.prepareStatement(sql)) {
-                ps.setInt(1, bookingId);
-                ps.setInt(2, roomId);
-                ResultSet rs
-                        = ps.executeQuery();
-                rs.next();
-                return rs.getInt(1) > 0;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
 
     public boolean insertRequestByReceptionist(BookingServiceRequest r) {
 

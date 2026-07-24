@@ -100,11 +100,11 @@
             <div class="breadcrumbs">
                 <a href="${pageContext.request.contextPath}/">Trang chủ</a>
                 <span>&gt;</span>
-                <a href="${pageContext.request.contextPath}/rooms">Phòng</a>
+                <a href="${pageContext.request.contextPath}/rooms?checkIn=${selectedCheckIn}&checkOut=${selectedCheckOut}">Phòng</a>
                 <span>&gt;</span>
                 <span class="current">${room.typeName}</span>
             </div>
-            <a href="${pageContext.request.contextPath}/rooms" class="back-link">
+            <a href="${pageContext.request.contextPath}/rooms?checkIn=${selectedCheckIn}&checkOut=${selectedCheckOut}" class="back-link">
                 <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách phòng
             </a>
         </div>
@@ -303,12 +303,17 @@
                         </div>
                     </div>
 
+                    <!-- Selected Dates Display -->
+                    <div style="font-size:13px; color:#475569; margin-bottom:12px; background:#f8fafc; border:1px solid #e2e8f0; padding:8px 12px; border-radius:6px;">
+                        <i class="fa-regular fa-calendar-days" style="color:#2563eb;"></i> Khoảng ngày: <strong>${selectedCheckIn}</strong> → <strong>${selectedCheckOut}</strong>
+                    </div>
+
                     <!-- Action Button -->
                     <c:choose>
                         <c:when test="${room.availableCount > 0}">
                             <c:choose>
                                 <c:when test="${not empty sessionScope.role and sessionScope.role == 'CUSTOMER'}">
-                                    <a href="${pageContext.request.contextPath}/booking/start?id=${room.typeId}" class="btn-book-now" style="text-decoration: none;">Đặt phòng ngay</a>
+                                    <a href="${pageContext.request.contextPath}/booking/start?id=${room.typeId}&checkIn=${selectedCheckIn}&checkOut=${selectedCheckOut}" class="btn-book-now" style="text-decoration: none;">Đặt phòng ngay</a>
                                 </c:when>
                                 <c:otherwise>
                                     <a href="${pageContext.request.contextPath}/home/login" class="btn-book-now" style="text-decoration: none;">Đặt phòng ngay</a>

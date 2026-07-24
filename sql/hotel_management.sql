@@ -801,7 +801,6 @@ UPDATE dbo.Account SET work_status = N'Active'
 WHERE email = N'housekeeping@hotel.com' AND work_status = N'Offline';
 GO
 
-
 /* ============================================================
    6. INVOICE MANAGEMENT (Manager)
    ============================================================ */
@@ -1341,7 +1340,6 @@ GO
    Maintenance requests (giao Housekeeping): booking_id IS NULL
    Service requests (Receptionist duyet -> InvoiceItem): booking_id IS NOT NULL
    ============================================================ */
-
 
 /* Seed mau: Service requests tu Customer de test Receptionist duyet -> Invoice.
    Chi chen khi chua co service request nao. */

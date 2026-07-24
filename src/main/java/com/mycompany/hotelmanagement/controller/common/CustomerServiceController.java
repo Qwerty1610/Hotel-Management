@@ -192,7 +192,7 @@ public class CustomerServiceController extends HttpServlet {
     }
 
     /**
-     * UC-64: View Service Request History
+     * UC-62: View Service Request History
      * Hiển thị danh sách lịch sử yêu cầu dịch vụ của khách hàng.
      */
     private void showRequestHistory(HttpServletRequest request, HttpServletResponse response, int accountId)
@@ -221,7 +221,7 @@ public class CustomerServiceController extends HttpServlet {
     }
 
     /**
-     * UC-10: Submit Service Request
+     * UC-09: Submit Service Request
      * Tiếp nhận và xử lý lưu thông tin yêu cầu dịch vụ của khách hàng vào cơ sở dữ liệu.
      */
     private void handleSubmitRequest(HttpServletRequest request, HttpServletResponse response, int accountId)
@@ -311,7 +311,6 @@ public class CustomerServiceController extends HttpServlet {
             req.setTitle(serviceName);
             req.setDescription(notes);
             req.setQuantity(quantity);
-            req.setPriority("Medium");
             req.setStatus("Pending");
 
             boolean success = customerRequestDAO.insertRequest(req);
@@ -326,7 +325,7 @@ public class CustomerServiceController extends HttpServlet {
     }
 
     /**
-     * UC-64: View Service Request History (Action Cancel)
+     * UC-62: View Service Request History (Action Cancel)
      * Cho phép khách hàng tự hủy yêu cầu dịch vụ của họ nếu yêu cầu đó đang ở trạng thái chờ xử lý (Pending).
      */
     private void handleCancelRequest(HttpServletRequest request, HttpServletResponse response, int accountId)
