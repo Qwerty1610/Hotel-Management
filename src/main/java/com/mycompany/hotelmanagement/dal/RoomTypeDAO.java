@@ -10,8 +10,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Project: Hotel Management System
@@ -214,7 +216,7 @@ public class RoomTypeDAO {
         return -1;
     }
 
-    public void updateRoomType(RoomTypeInfo rt, Connection conn) throws SQLException {
+    public boolean updateRoomType(RoomTypeInfo rt, Connection conn) throws SQLException {
         useDatabase(conn);
         String sql = "UPDATE RoomType SET type_name = ?, base_price = ?, price_per_hour = ?, deposit_percent = ?, capacity = ?, description = ?, area = ?, bed_type = ? WHERE type_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -227,7 +229,8 @@ public class RoomTypeDAO {
             ps.setString(7, rt.getArea());
             ps.setString(8, rt.getBedType());
             ps.setInt(9, rt.getTypeId());
-            ps.executeUpdate();
+            int affected = ps.executeUpdate();
+            return affected > 0;
         }
     }
 
@@ -297,6 +300,40 @@ public class RoomTypeDAO {
             ps.setInt(2, amenityId);
             ps.executeUpdate();
         }
+    }
+
+    /**
+     * Lấy tập hợp type_id của các loại phòng đang có khách đang ở.
+     * Dùng 1 query duy nhất thay vì gọi hasOccupiedGuests() cho từng loại phòng.
+     */
+    public Set<Integer> getOccupiedTypeIds() {
+        Set<Integer> occupiedIds = new HashSet<>();
+        String sql = """
+            SELECT DISTINCT r.type_id
+            FROM Room r
+            LEFT JOIN RoomAssignment ra ON r.room_id = ra.room_id
+            LEFT JOIN Booking b ON ra.booking_id = b.booking_id
+            WHERE r.is_deleted = 0
+              AND (
+                UPPER(r.status) IN ('OCCUPIED', 'CHECKEDIN', 'CHECKED-IN', 'CONFIRMED')
+                OR UPPER(ISNULL(b.status, '')) IN ('CHECKEDIN', 'CHECKED-IN', 'CONFIRMED', 'IN-HOUSE')
+              )
+            UNION
+            SELECT DISTINCT room_type_id
+            FROM Booking
+            WHERE UPPER(status) IN ('CHECKEDIN', 'CHECKED-IN', 'CONFIRMED', 'IN-HOUSE')
+        """;
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            useDatabase(conn);
+            while (rs.next()) {
+                occupiedIds.add(rs.getInt(1));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return occupiedIds;
     }
 
     public boolean hasOccupiedGuests(int typeId) {

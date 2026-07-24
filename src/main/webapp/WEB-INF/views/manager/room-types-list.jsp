@@ -43,7 +43,8 @@
                             data-area="<c:out value="${rt.area}" />"
                             data-image-url="<c:out value="${rt.imageUrl}" />"
                             data-description="<c:out value="${rt.description}" />"
-                            data-amenities="<c:forEach var="am" items="${rt.amenities}" varStatus="st">${am}${!st.last ? ',' : ''}</c:forEach>">
+                            data-amenities="<c:forEach var="am" items="${rt.amenities}" varStatus="st">${am}${!st.last ? ',' : ''}</c:forEach>"
+                            data-has-occupied="${rt.hasOccupiedGuests}">
                         </div>
                     </c:forEach>
                 </div>
@@ -299,7 +300,8 @@
                         area: (item.getAttribute("data-area") || "").trim(),
                         imageUrl: (item.getAttribute("data-image-url") || "").trim(),
                         description: (item.getAttribute("data-description") || "").trim(),
-                        amenities: amenitiesList
+                        amenities: amenitiesList,
+                        hasOccupied: item.getAttribute("data-has-occupied") === "true"
                     };
                 },
                 renderRow: function (rt) {
@@ -320,6 +322,14 @@
                             amenitiesHtml += `<span class="roomtype-badge">\${badgeText}</span>`;
                         }
                     });
+
+                    const deleteBtnHtml = rt.hasOccupied
+                        ? `<button class="btn-action delete" style="opacity: 0.35; cursor: not-allowed;" title="Không thể xóa loại phòng đang có khách">
+                               <i class="fa-solid fa-trash-can"></i>
+                           </button>`
+                        : `<button class="btn-action delete" onclick="deleteRoomType(\${rt.id})" title="Xóa">
+                               <i class="fa-solid fa-trash-can"></i>
+                           </button>`;
 
                     return `
                         <td>
@@ -349,9 +359,7 @@
                                 <button class="btn-action edit" onclick="openEditRoomTypeModal(\${rt.id})" title="Chỉnh sửa">
                                     <i class="fa-solid fa-pencil"></i>
                                 </button>
-                                <button class="btn-action delete" onclick="deleteRoomType(\${rt.id})" title="Xóa">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
+                                \${deleteBtnHtml}
                             </div>
                         </td>
                     `;

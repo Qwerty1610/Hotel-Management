@@ -329,7 +329,7 @@
                         ? `<button class="btn-action delete" onclick="deleteRoom(\${room.id})" title="Xóa">
                             <i class="fa-solid fa-trash-can"></i>
                            </button>`
-                        : `<button class="btn-action delete" style="opacity: 0.35; cursor: not-allowed;" onclick="deleteRoom(\${room.id})" title="Không thể xóa phòng đang có khách, có đơn đặt trong tương lai, đang dọn dẹp hoặc bảo trì">
+                        : `<button class="btn-action delete" style="opacity: 0.35; cursor: not-allowed;" title="Không thể xóa phòng đang có khách, có đơn đặt trong tương lai, đang dọn dẹp hoặc bảo trì">
                             <i class="fa-solid fa-trash-can"></i>
                            </button>`;
 

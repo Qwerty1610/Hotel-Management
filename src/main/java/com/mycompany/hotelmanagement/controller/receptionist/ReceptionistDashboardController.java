@@ -26,7 +26,7 @@ import jakarta.servlet.http.HttpSession;
  * Booking Request) - checkin: Xem danh sách chờ nhận phòng và làm thủ tục
  * check-in (UC-14: Check In Customer) - checkout: Xem danh sách chờ trả phòng
  * và làm thủ tục check-out (UC-16: Check Out Customer) - servicerequests: Xem
- * danh sách yêu cầu dịch vụ của khách hàng để duyệt/hủy (UC-35: View Service
+ * danh sách yêu cầu dịch vụ của khách hàng để duyệt/hủy (UC-34: View Service
  * Requests) - roommap: Xem sơ đồ phòng theo thời gian thực (UC-38: View Room
  * Map) - walkin-bookings: Tạo đặt phòng trực tiếp tại quầy (UC-15: Create
  * Walk-in Booking)
@@ -50,12 +50,12 @@ import java.util.logging.Logger;
  *
  * Description: Controller chính cho dashboard của vai trò lễ tân. Quản lý điều
  * hướng qua các tab: danh sách đặt phòng (UC-12), danh sách chờ nhận phòng
- * (UC-14), danh sách chờ trả phòng (UC-16), yêu cầu dịch vụ (UC-35), sơ đồ
+ * (UC-14), danh sách chờ trả phòng (UC-16), yêu cầu dịch vụ (UC-34), sơ đồ
  * phòng (UC-38) và đặt phòng trực tiếp (UC-13). Tổng hợp dữ liệu từ BookingDAO,
  * CheckOutDAO, WalkInBookingDAO và BookingServiceRequestDAO.
  *
  * Related Use Cases: - UC-12 Process Booking Request - UC-13 Create Walk-in
- * Booking - UC-14 Check-In Customer - UC-16 Check-Out Customer - UC-35 View
+ * Booking - UC-14 Check-In Customer - UC-16 Check-Out Customer - UC-34 View
  * Service Requests - UC-38 View Room Map
  *
  * Date: 01-06-2026
@@ -217,7 +217,7 @@ public class ReceptionistDashboardController extends HttpServlet {
     }
 
     /**
-     * UC-35: View Service Requests Tải danh sách yêu cầu dịch vụ của khách hàng
+     * UC-34: View Service Requests Tải danh sách yêu cầu dịch vụ của khách hàng
      * để hiển thị trên tab của Lễ tân, hỗ trợ tìm kiếm, lọc theo trạng thái và
      * phân trang.
      */

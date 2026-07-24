@@ -45,6 +45,9 @@ public class RoomTypeInfo {
     private String area;
     private String bedType;
 
+    // Delete guard: true if this room type currently has occupied guests
+    private boolean hasOccupiedGuests;
+
     public int getTypeId() {
         return typeId;
     }
@@ -155,5 +158,13 @@ public class RoomTypeInfo {
 
     public void setBedType(String bedType) {
         this.bedType = bedType;
+    }
+
+    public boolean isHasOccupiedGuests() {
+        return hasOccupiedGuests;
+    }
+
+    public void setHasOccupiedGuests(boolean hasOccupiedGuests) {
+        this.hasOccupiedGuests = hasOccupiedGuests;
     }
 }

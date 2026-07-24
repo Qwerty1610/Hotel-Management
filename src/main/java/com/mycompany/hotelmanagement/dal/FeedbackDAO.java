@@ -162,13 +162,6 @@ public class FeedbackDAO {
     }
 
     /**
-     * Kiểm tra tính hợp lệ của việc gửi Feedback cho một booking_id + room_id.
-     */
-    public boolean checkFeedbackEligibility(int bookingId, int roomId, int accountId) {
-        return isBookingRoomAssignedAndCheckedOut(bookingId, roomId, accountId) && !existsFeedback(bookingId, roomId);
-    }
-
-    /**
      * Thêm feedback mới vào cơ sở dữ liệu.
      */
     public boolean createFeedback(Feedback feedback) {

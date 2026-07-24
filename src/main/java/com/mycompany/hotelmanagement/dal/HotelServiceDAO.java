@@ -40,6 +40,22 @@ public class HotelServiceDAO {
         }
     }
 
+    public java.util.Set<Integer> getUsedServiceIds() {
+        java.util.Set<Integer> usedIds = new java.util.HashSet<>();
+        String sql = "SELECT DISTINCT service_id FROM dbo.BookingServiceRequest";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            useDatabase(conn);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    usedIds.add(rs.getInt("service_id"));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return usedIds;
+    }
+
     public List<HotelService> getAllServices() {
         List<HotelService> list = new ArrayList<>();
         String sql = "SELECT service_id, service_name, description, price, unit, is_active FROM HotelService ORDER BY service_id";
@@ -64,30 +80,34 @@ public class HotelServiceDAO {
         return list;
     }
 
-    public void deleteService(int serviceId) {
+    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(HotelServiceDAO.class.getName());
+
+    public boolean deleteService(int serviceId) {
         String sql = "DELETE FROM HotelService WHERE service_id = ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setInt(1, serviceId);
-            ps.executeUpdate();
+            return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error deleting hotel service " + serviceId, e);
+            return false;
         }
     }
 
-    public void toggleServiceStatus(int serviceId, boolean isActive) {
+    public boolean toggleServiceStatus(int serviceId, boolean isActive) {
         String sql = "UPDATE HotelService SET is_active = ?, updated_at = SYSDATETIME() WHERE service_id = ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setBoolean(1, isActive);
             ps.setInt(2, serviceId);
-            ps.executeUpdate();
+            return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error toggling status for service " + serviceId, e);
+            return false;
         }
     }
 
-    public void insertService(HotelService hs) {
+    public boolean insertService(HotelService hs) {
         String sql = "INSERT INTO HotelService (service_name, description, price, unit, is_active) VALUES (?, ?, ?, ?, 1)";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
@@ -95,13 +115,14 @@ public class HotelServiceDAO {
             ps.setString(2, hs.getDescription());
             ps.setDouble(3, hs.getPrice());
             ps.setString(4, hs.getUnit());
-            ps.executeUpdate();
+            return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error inserting service", e);
+            return false;
         }
     }
 
-    public void updateService(HotelService hs) {
+    public boolean updateService(HotelService hs) {
         String sql = "UPDATE HotelService SET service_name = ?, description = ?, price = ?, unit = ?, updated_at = SYSDATETIME() WHERE service_id = ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
@@ -110,9 +131,10 @@ public class HotelServiceDAO {
             ps.setDouble(3, hs.getPrice());
             ps.setString(4, hs.getUnit());
             ps.setInt(5, hs.getServiceId());
-            ps.executeUpdate();
+            return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error updating service " + hs.getServiceId(), e);
+            return false;
         }
     }
 
