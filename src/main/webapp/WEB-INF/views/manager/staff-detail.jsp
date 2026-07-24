@@ -81,7 +81,7 @@
                                                         <c:when test="${t.priority eq 'Low'}"><span class="prio-badge prio-low">THẤP</span></c:when>
                                                         <c:otherwise><span class="prio-badge prio-medium">TRUNG BÌNH</span></c:otherwise>
                                                     </c:choose>
-                                                    <c:out value="${t.title}" /> <span style="color:var(--text-muted);">— Phòng <c:out value="${t.roomNumber}" /></span>
+                                                    <c:out value="${t.issueNames}" /> <span style="color:var(--text-muted);">— Phòng <c:out value="${t.roomNumbers}" /></span>
                                                 </li>
                                             </c:forEach>
                                         </ul>
@@ -110,11 +110,12 @@
                                                         <c:when test="${t.priority eq 'Low'}"><span class="prio-badge prio-low">THẤP</span></c:when>
                                                         <c:otherwise><span class="prio-badge prio-medium">TRUNG BÌNH</span></c:otherwise>
                                                     </c:choose>
-                                                    <c:out value="${t.title}" />
-                                                    <span style="color:var(--text-muted);">— Phòng <c:out value="${t.roomNumber}" /></span>
+                                                    <c:out value="${t.issueNames}" />
+                                                    <span style="color:var(--text-muted);">— Phòng <c:out value="${t.roomNumbers}" /></span>
                                                     <c:choose>
                                                         <c:when test="${t.status eq 'InProgress'}"><span class="status-pill status-occupied" style="margin-left:4px;"><i class="fa-solid fa-circle"></i> ĐANG THỰC HIỆN</span></c:when>
-                                                        <c:when test="${t.status eq 'Completed'}"><span class="status-pill status-available" style="margin-left:4px;"><i class="fa-solid fa-circle"></i> HOÀN THÀNH</span></c:when>
+                                                        <c:when test="${t.status eq 'Resolved'}"><span class="status-pill status-available" style="margin-left:4px;"><i class="fa-solid fa-circle"></i> ĐÃ XỬ LÝ</span></c:when>
+                                                        <c:when test="${t.status eq 'Unresolvable'}"><span class="status-pill status-unresolvable" style="margin-left:4px;"><i class="fa-solid fa-circle"></i> KHÔNG THỂ XỬ LÝ</span></c:when>
                                                         <c:when test="${t.status eq 'Cancelled'}"><span class="status-pill status-maintenance" style="margin-left:4px;"><i class="fa-solid fa-circle"></i> ĐÃ HUỶ</span></c:when>
                                                         <c:otherwise><span class="status-pill status-cleaning" style="margin-left:4px;"><i class="fa-solid fa-circle"></i> ĐANG CHỜ</span></c:otherwise>
                                                     </c:choose>

@@ -1,6 +1,5 @@
 package com.mycompany.hotelmanagement.controller.manager;
 
-import com.mycompany.hotelmanagement.entity.CustomerRequest;
 import com.mycompany.hotelmanagement.entity.StaffInfo;
 import com.mycompany.hotelmanagement.service.RequestManagementService;
 
@@ -103,6 +102,7 @@ public class ManagerRequestController extends HttpServlet {
 
     private boolean isValidStatus(String status) {
         return "Pending".equals(status) || "InProgress".equals(status)
-                || "Completed".equals(status) || "Cancelled".equals(status);
+                || "Resolved".equals(status) || "Unresolvable".equals(status)
+                || "Cancelled".equals(status);
     }
 }

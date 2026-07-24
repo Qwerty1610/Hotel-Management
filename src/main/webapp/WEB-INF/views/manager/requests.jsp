@@ -117,8 +117,10 @@
                                     chờ</option>
                                 <option value="InProgress" ${statusFilter eq 'InProgress' ? 'selected' : ''
                                         }>Đang thực hiện</option>
-                                <option value="Completed" ${statusFilter eq 'Completed' ? 'selected' : '' }>
-                                    Hoàn thành</option>
+                                <option value="Resolved" ${statusFilter eq 'Resolved' ? 'selected' : '' }>
+                                    Đã xử lý</option>
+                                <option value="Unresolvable" ${statusFilter eq 'Unresolvable' ? 'selected' : '' }>
+                                    Không thể xử lý</option>
                                 <option value="Cancelled" ${statusFilter eq 'Cancelled' ? 'selected' : '' }>
                                     Đã huỷ</option>
                             </select>
@@ -144,14 +146,17 @@
                                         <div class="service-name-cell">
                                             <div>
                                                 <span class="service-title">
-                                                    <c:out value="${r.title}" />
+                                                    <c:out value="${r.issueNames}" />
                                                 </span>
+                                                <c:if test="${not empty r.description}">
+                                                    <br/><span class="request-sub"><c:out value="${r.description}" /></span>
+                                                </c:if>
                                                 <span class="request-sub">
                                                     <i class="fa-solid fa-bed"></i> Phòng
-                                                    <c:out value="${r.roomNumber}" />
+                                                    <c:out value="${r.roomNumbers}" />
                                                     &nbsp;•&nbsp; <i class="fa-regular fa-clock"></i>
-                                                    <fmt:formatDate value="${r.createdAt}"
-                                                                    pattern="dd/MM/yyyy HH:mm" />
+                                                    ${r.createdAt.dayOfMonth}/${r.createdAt.monthValue}/${r.createdAt.year}
+                                                    ${r.createdAt.hour}:${r.createdAt.minute}
                                                 </span>
                                             </div>
                                         </div>
@@ -170,9 +175,9 @@
                                     </td>
                                     <td>
                                         <c:choose>
-                                            <c:when test="${not empty r.assignedStaffName}"><span
+                                            <c:when test="${not empty r.assignedStaff}"><span
                                                     style="font-weight:600; color:var(--text-navy);">
-                                                    <c:out value="${r.assignedStaffName}" />
+                                                    <c:out value="${r.assignedStaff.fullName}" />
                                                 </span></c:when>
                                             <c:otherwise><span
                                                     style="color:var(--text-muted); font-style:italic;">Chưa
@@ -185,9 +190,13 @@
                                                     class="status-pill status-occupied"><i
                                                         class="fa-solid fa-circle"></i> ĐANG THỰC
                                                     HIỆN</span></c:when>
-                                            <c:when test="${r.status eq 'Completed'}"><span
+                                            <c:when test="${r.status eq 'Resolved'}"><span
                                                     class="status-pill status-available"><i
-                                                        class="fa-solid fa-circle"></i> HOÀN THÀNH</span>
+                                                        class="fa-solid fa-circle"></i> ĐÃ XỬ LÝ</span>
+                                                </c:when>
+                                                <c:when test="${r.status eq 'Unresolvable'}"><span
+                                                    class="status-pill status-unresolvable"><i
+                                                        class="fa-solid fa-circle"></i> KHÔNG THỂ XỬ LÝ</span>
                                                 </c:when>
                                                 <c:when test="${r.status eq 'Cancelled'}"><span
                                                     class="status-pill status-maintenance"><i
@@ -205,8 +214,8 @@
                                                     test="${r.status eq 'Pending' or r.status eq 'InProgress'}">
                                                     <button class="btn-action assign"
                                                             title="${r.assignedStaffId != null ? 'Đổi NV' : 'Gán việc'}"
-                                                            data-title="<c:out value='${r.title}' />"
-                                                            data-room="<c:out value='${r.roomNumber}' />"
+                                                            data-title="<c:out value='${r.issueNames}' />"
+                                                            data-room="<c:out value='${r.roomNumbers}' />"
                                                             onclick="openAssignModal('${r.requestId}', this)"><i
                                                             class="fa-solid fa-user-plus"></i></button>
                                                     <button class="btn-action delete" title="Huỷ"
