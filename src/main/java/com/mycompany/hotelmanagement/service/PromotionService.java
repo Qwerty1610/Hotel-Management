@@ -77,6 +77,13 @@ public class PromotionService {
     }
 
     /**
+     * Lấy một khuyến mãi theo ID.
+     */
+    public Promotion getPromotionById(int promotionId) {
+        return promotionRepository.getPromotionById(promotionId);
+    }
+
+    /**
      * Lấy một khuyến mãi theo mã Code.
      */
     public Promotion getPromotionByCode(String code) {

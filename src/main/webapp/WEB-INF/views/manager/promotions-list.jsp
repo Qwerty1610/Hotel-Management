@@ -104,6 +104,12 @@
                                                         Giới hạn sử dụng phải lớn hơn 0 nếu có nhập.
                                                     </div>
                                                 </c:if>
+                                                <c:if test="${param.error eq 'limitLessThanUsed'}">
+                                                    <div class="alert-banner alert-danger">
+                                                        <i class="fa-solid fa-circle-exclamation"></i>
+                                                        Giới hạn lượt dùng không được nhỏ hơn số lượt đã sử dụng hiện tại.
+                                                    </div>
+                                                </c:if>
                                                 <c:if test="${param.error eq 'invalidMin'}">
                                                     <div class="alert-banner alert-danger">
                                                         <i class="fa-solid fa-circle-exclamation"></i>
@@ -649,6 +655,25 @@
                                         endInput.reportValidity();
                                         return;
                                     }
+
+                                    const promoIdVal = document.getElementById('promotionId').value;
+                                    const promoId = promoIdVal ? parseInt(promoIdVal) : -1;
+                                    const usageLimitInput = document.getElementById('modalUsageLimit');
+                                    const usageLimitVal = usageLimitInput ? usageLimitInput.value.trim() : '';
+
+                                    if (promoId > 0 && usageLimitVal !== '') {
+                                        const limit = parseInt(usageLimitVal);
+                                        const table = ManagerTable.tables.promotionsTable;
+                                        if (table && table.items) {
+                                            const promo = table.items.find(p => p.id === promoId);
+                                            if (promo && !isNaN(limit) && limit < promo.usedCount) {
+                                                e.preventDefault();
+                                                usageLimitInput.setCustomValidity('Giới hạn lượt dùng không được nhỏ hơn số lượt đã sử dụng hiện tại (' + promo.usedCount + ').');
+                                                usageLimitInput.reportValidity();
+                                                return;
+                                            }
+                                        }
+                                    }
                                 });
 
                                 // Unified Vietnamese HTML5 Validation Messages
@@ -671,7 +696,7 @@
                                 }, true);
 
                                 // Clear custom validity on input
-                                ['modalCode', 'modalName', 'modalDiscountValue', 'modalStartDate', 'modalEndDate'].forEach(function (id) {
+                                ['modalCode', 'modalName', 'modalDiscountValue', 'modalStartDate', 'modalEndDate', 'modalUsageLimit'].forEach(function (id) {
                                     const el = document.getElementById(id);
                                     if (el) el.addEventListener('input', function () { this.setCustomValidity(''); });
                                 });
