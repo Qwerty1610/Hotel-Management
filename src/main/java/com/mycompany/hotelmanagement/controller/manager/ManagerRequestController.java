@@ -59,6 +59,7 @@ public class ManagerRequestController extends HttpServlet {
         request.setAttribute("pendingCount", service.countPending());
         request.setAttribute("inProgressCount", service.countInProgress());
         request.setAttribute("activeStaffCount", service.countActiveStaff());
+        request.setAttribute("roomIssues", service.getAllRoomIssues());
 
         request.setAttribute("q", roomKw == null ? "" : roomKw);
         request.setAttribute("priorityFilter", priority);

@@ -73,18 +73,54 @@
         border-radius:8px;
         cursor:pointer;
         font-weight:600;
+        transition:background .2s ease, transform .2s ease;
     }
 
     .btn-primary{
         background:#2563eb;
     }
 
+    .btn-primary:hover{
+        background:#1d4ed8;
+        transform:translateY(-2px);
+    }
+
     .btn-success{
         background:#16a34a;
     }
 
+    .btn-success:hover{
+        background:#15803d;
+        transform:translateY(-2px);
+    }
+
     .btn-danger{
         background:#dc2626;
+    }
+
+    .btn-danger:hover{
+        background:#b91c1c;
+        transform:translateY(-2px);
+    }
+
+    .btn-secondary{
+        border:1px solid #dbe2ea;
+        color:#475569;
+        background:#fff;
+        padding:10px 18px;
+        border-radius:8px;
+        cursor:pointer;
+        font-weight:600;
+        text-decoration:none;
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        transition:background .2s ease, transform .2s ease;
+    }
+
+    .btn-secondary:hover{
+        background:#f1f5f9;
+        transform:translateY(-2px);
     }
     .status-badge{
         display:inline-flex;
@@ -319,6 +355,12 @@
                                         </button>
                                     </c:if>
                                 </c:if>
+                                <a href="${pageContext.request.contextPath}/housekeeping/handlemaintenance"
+                                   class="btn-secondary"
+                                   style="margin-left:auto;">
+                                    <i class="fa-solid fa-arrow-left"></i>
+                                    Quay lại
+                                </a>
                             </div>
                         </form>
                     </div>

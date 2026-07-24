@@ -86,7 +86,7 @@
                 </div>
 
                 <ul class="sidebar-menu">
-                    <li class="menu-item ${currentTab eq 'bookings' ? 'active' : ''}">
+                    <li class="menu-item active">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=bookings">
                             <i class="fa-solid fa-calendar-check"></i> <span>Yêu cầu đặt phòng</span>
                         </a>
@@ -130,12 +130,6 @@
                         <a
                             href="${pageContext.request.contextPath}/receptionist/dashboard?tab=servicerequests">
                             <i class="fa-solid fa-bell-concierge"></i> <span>Quản lý yêu cầu dịch vụ</span>
-                        </a>
-                    </li>
-                    <li class="menu-item ${currentTab eq 'add-booking-service' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/add-booking-service">
-                            <i class="fa-solid fa-circle-plus"></i>
-                            <span>Đặt dịch vụ cho khách</span>
                         </a>
                     </li>
                 </ul>

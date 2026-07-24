@@ -1,8 +1,10 @@
 package com.mycompany.hotelmanagement.service;
 
 import com.mycompany.hotelmanagement.dal.MaintenanceRequestDAO;
+import com.mycompany.hotelmanagement.dal.RoomIssueDAO;
 import com.mycompany.hotelmanagement.dal.StaffDAO;
 import com.mycompany.hotelmanagement.entity.MaintenanceRequest;
+import com.mycompany.hotelmanagement.entity.RoomIssue;
 import com.mycompany.hotelmanagement.entity.StaffInfo;
 
 import java.util.List;
@@ -31,6 +33,7 @@ public class RequestManagementService {
 
     private final MaintenanceRequestDAO requestDAO = new MaintenanceRequestDAO();
     private final StaffDAO staffDAO = new StaffDAO();
+    private final RoomIssueDAO roomIssueDAO = new RoomIssueDAO();
 
     /* ---------- Danh sách yêu cầu bảo trì: lọc + phân trang ---------- */
     public List<MaintenanceRequest> getRequests(String roomKw, String priority, String staffFilter,
@@ -87,5 +90,10 @@ public class RequestManagementService {
 
     public boolean updatePriority(int requestId, String priority) {
         return requestDAO.updatePriority(requestId, priority);
+    }
+
+    /** Báo cáo sự cố phòng do nhân viên gửi (bảng RoomIssue) — cho Manager xem. */
+    public List<RoomIssue> getAllRoomIssues() {
+        return roomIssueDAO.getAllForManager();
     }
 }
