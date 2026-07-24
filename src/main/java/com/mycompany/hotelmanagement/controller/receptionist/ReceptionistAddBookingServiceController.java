@@ -6,16 +6,11 @@ package com.mycompany.hotelmanagement.controller.receptionist;
  */
 import com.mycompany.hotelmanagement.dal.BookingServiceRequestDAO;
 import com.mycompany.hotelmanagement.entity.BookingServiceRequest;
-import com.mycompany.hotelmanagement.entity.RoomInfo;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
-
-import java.io.IOException;
-import java.util.List;
 
 /**
  * Created: 14/07/2026
@@ -35,32 +30,15 @@ public class ReceptionistAddBookingServiceController extends HttpServlet {
     }
 
     // ==========================
-    // LOAD FORM
+    // Trang riêng đã được thay bằng popup ở tab "Quản lý yêu cầu dịch vụ"
     // ==========================
     @Override
     protected void doGet(HttpServletRequest request,
             HttpServletResponse response)
             throws ServletException, IOException {
 
-        try {
-
-            // Lấy tất cả phòng đang CheckedIn
-            List<RoomInfo> rooms = dao.getCheckedInRooms();
-
-            // Lấy tất cả dịch vụ còn hoạt động
-            List<BookingServiceRequest> services = dao.getActiveServices();
-
-            request.setAttribute("rooms", rooms);
-            request.setAttribute("services", services);
-
-            request.getRequestDispatcher(
-                    "/WEB-INF/views/receptionist/add-booking-service.jsp")
-                    .forward(request, response);
-
-        } catch (Exception e) {
-            throw new ServletException(e);
-        }
-
+        response.sendRedirect(
+                request.getContextPath() + "/receptionist/dashboard?tab=servicerequests");
     }
 
     @Override
@@ -69,6 +47,9 @@ public class ReceptionistAddBookingServiceController extends HttpServlet {
             throws ServletException, IOException {
 
         request.setCharacterEncoding("UTF-8");
+
+        String redirectBase = request.getContextPath()
+                + "/receptionist/dashboard?tab=servicerequests";
 
         try {
 
@@ -105,13 +86,13 @@ public class ReceptionistAddBookingServiceController extends HttpServlet {
 
             if (bookingId == null) {
 
-                request.setAttribute("error",
-                        "Phòng này hiện không có khách đang Check-in.");
+                response.sendRedirect(redirectBase + "&result=fail&error=noroom_checkedin");
+                return;
 
             } else if (!dao.isServiceActive(serviceId)) {
 
-                request.setAttribute("error",
-                        "Dịch vụ đã ngừng hoạt động.");
+                response.sendRedirect(redirectBase + "&result=fail&error=service_inactive");
+                return;
 
             } else {
 
@@ -127,15 +108,9 @@ public class ReceptionistAddBookingServiceController extends HttpServlet {
                 boolean success = dao.insertRequestByReceptionist(serviceRequest);
 
                 if (success) {
-
-                    request.setAttribute("success",
-                            "Đặt dịch vụ thành công.");
-
+                    response.sendRedirect(redirectBase + "&result=success&action=addservice");
                 } else {
-
-                    request.setAttribute("error",
-                            "Không thể đặt dịch vụ.");
-
+                    response.sendRedirect(redirectBase + "&result=fail&error=addservice_failed");
                 }
 
             }
@@ -144,19 +119,7 @@ public class ReceptionistAddBookingServiceController extends HttpServlet {
 
             ex.printStackTrace();
 
-            request.setAttribute("error",
-                    "Có lỗi xảy ra trong quá trình xử lý.");
-
+            response.sendRedirect(redirectBase + "&result=fail&error=addservice_failed");
         }
-
-        // ==========================
-        // Load lại dữ liệu cho JSP
-        // ==========================
-        request.setAttribute("rooms", dao.getCheckedInRooms());
-        request.setAttribute("services", dao.getActiveServices());
-
-        request.getRequestDispatcher(
-                "/WEB-INF/views/receptionist/add-booking-service.jsp")
-                .forward(request, response);
     }
 }

@@ -71,12 +71,6 @@
                             <i class="fa-solid fa-bell-concierge"></i> <span>Quản lý yêu cầu dịch vụ</span>
                         </a>
                     </li>
-                    <li class="menu-item ${currentTab eq 'add-booking-service' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/add-booking-service">
-                            <i class="fa-solid fa-circle-plus"></i>
-                            <span>Đặt dịch vụ cho khách</span>
-                        </a>
-                    </li>
                 </ul>
 
                 <div class="sidebar-footer">
@@ -117,11 +111,12 @@
                             <c:choose>
                                 <c:when test="${param.action eq 'approve'}">Đã duyệt hoàn thành yêu cầu dịch vụ thành công!</c:when>
                                 <c:when test="${param.action eq 'cancel'}">Đã hủy yêu cầu dịch vụ thành công!</c:when>
+                                <c:when test="${param.action eq 'addservice'}">Đặt dịch vụ cho khách thành công!</c:when>
                                 <c:otherwise>Thao tác thành công!</c:otherwise>
                             </c:choose>
                         </div>
                     </c:if>
-                    <c:if test="${param.result eq 'fail'}">
+                    <c:if test="${param.result eq 'fail' and empty param.error}">
                         <div class="toast-notify toast-error">
                             <i class="fa-solid fa-circle-xmark"></i>
                             Thao tác thất bại. Vui lòng thử lại sau.
@@ -133,6 +128,9 @@
                             <c:choose>
                                 <c:when test="${param.error eq 'invalid'}">Mã yêu cầu hoặc hành động không hợp lệ.</c:when>
                                 <c:when test="${param.error eq 'reason_required'}">Vui lòng nhập lý do từ chối yêu cầu.</c:when>
+                                <c:when test="${param.error eq 'noroom_checkedin'}">Phòng này hiện không có khách đang Check-in.</c:when>
+                                <c:when test="${param.error eq 'service_inactive'}">Dịch vụ đã ngừng hoạt động.</c:when>
+                                <c:when test="${param.error eq 'addservice_failed'}">Không thể đặt dịch vụ. Vui lòng thử lại.</c:when>
                                 <c:otherwise>Đã xảy ra lỗi. Vui lòng thử lại sau.</c:otherwise>
                             </c:choose>
                         </div>
@@ -144,6 +142,10 @@
                             <h2><i class="fa-solid fa-bell-concierge" style="color:var(--brand-blue);margin-right:8px"></i>Quản lý yêu cầu dịch vụ</h2>
                             <p>Xem, xác nhận, từ chối và cập nhật trạng thái các yêu cầu dịch vụ từ khách hàng.</p>
                         </div>
+                        <button type="button" class="btn-modal-save" onclick="openModal('addServiceModal')">
+                            <i class="fa-solid fa-circle-plus" style="margin-right:6px"></i>
+                            Đặt dịch vụ cho khách
+                        </button>
                     </div>
 
                     <%-- KPI Stats Cards --%>
@@ -492,6 +494,62 @@
             </div>
         </div>
 
+        <!-- Add Service Modal -->
+        <div class="modal-overlay" id="addServiceModal">
+            <div class="modal-container" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3>Đặt dịch vụ cho khách</h3>
+                    <button class="btn-close-modal" onclick="closeModal('addServiceModal')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addServiceForm" action="${pageContext.request.contextPath}/receptionist/add-booking-service" method="post">
+
+                        <div class="modal-form-group">
+                            <label>Phòng</label>
+                            <select name="roomId" id="addServiceRoomId" class="modal-select" required>
+                                <option value="">-- Chọn phòng --</option>
+                                <c:forEach items="${addServiceRooms}" var="room">
+                                    <option value="${room.roomId}">Phòng ${room.roomNumber}</option>
+                                </c:forEach>
+                            </select>
+                        </div>
+
+                        <div class="modal-form-group">
+                            <label>Dịch vụ</label>
+                            <select name="serviceId" id="addServiceServiceId" class="modal-select" required>
+                                <option value="">-- Chọn dịch vụ --</option>
+                                <c:forEach items="${addServiceServices}" var="service">
+                                    <option value="${service.serviceId}" data-price="${service.unitPrice}">
+                                        ${service.title} — <fmt:formatNumber value="${service.unitPrice}" type="number" />/${service.unit}
+                                    </option>
+                                </c:forEach>
+                            </select>
+                        </div>
+
+                        <div class="modal-form-group">
+                            <label>Số lượng</label>
+                            <input type="number" id="addServiceQuantity" name="quantity" class="modal-input" min="1" value="1" required />
+                        </div>
+
+                        <div class="modal-form-group">
+                            <label>Tổng tiền dịch vụ</label>
+                            <div id="addServiceTotal" class="total-amount-display">0 VNĐ</div>
+                        </div>
+
+                        <div class="modal-form-group" style="margin-bottom:0">
+                            <label>Ghi chú</label>
+                            <textarea name="notes" class="modal-textarea" placeholder="Ghi chú thêm (nếu có)..."></textarea>
+                        </div>
+
+                        <div class="modal-footer-row">
+                            <button type="button" class="btn-modal-cancel" onclick="closeModal('addServiceModal')">Hủy bỏ</button>
+                            <button type="submit" class="btn-modal-save">Xác nhận đặt dịch vụ</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <script src="${pageContext.request.contextPath}/assets/js/receptionist.js?v=5" charset="UTF-8"></script>
         <script>
                                 function openApproveServiceModal(requestId, customerName, serviceTitle) {
@@ -534,6 +592,29 @@
                                         });
                                     }
                                 });
+
+                                function updateAddServiceTotal() {
+                                    const service = document.getElementById("addServiceServiceId");
+                                    const quantity = document.getElementById("addServiceQuantity");
+                                    const option = service.options[service.selectedIndex];
+
+                                    let price = 0;
+                                    if (option && option.dataset.price) {
+                                        price = parseFloat(option.dataset.price);
+                                    }
+
+                                    let qty = parseInt(quantity.value);
+                                    if (isNaN(qty) || qty < 1) {
+                                        qty = 1;
+                                    }
+
+                                    const total = price * qty;
+                                    document.getElementById("addServiceTotal").innerText =
+                                            total.toLocaleString('vi-VN') + " VNĐ";
+                                }
+
+                                document.getElementById("addServiceServiceId").addEventListener("change", updateAddServiceTotal);
+                                document.getElementById("addServiceQuantity").addEventListener("input", updateAddServiceTotal);
         </script>
     </body>
 </html>

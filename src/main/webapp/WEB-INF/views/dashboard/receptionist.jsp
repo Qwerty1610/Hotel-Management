@@ -76,12 +76,6 @@
                             <i class="fa-solid fa-bell-concierge"></i> <span>Quản lý yêu cầu dịch vụ</span>
                         </a>
                     </li>
-                    <li class="menu-item ${currentTab eq 'add-booking-service' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/add-booking-service">
-                            <i class="fa-solid fa-circle-plus"></i>
-                            <span>Đặt dịch vụ cho khách</span>
-                        </a>
-                    </li>
                 </ul>
 
                 <div class="sidebar-footer">
@@ -563,7 +557,8 @@
                         <!-- FORM TÌM KIẾM THEO NGÀY -->
                         <form method="get"
                               action="${pageContext.request.contextPath}/receptionist/dashboard"
-                              class="roommap-filter-form">
+                              class="roommap-filter-form"
+                              id="roommapFilterForm">
 
                             <input type="hidden" name="tab" value="roommap" />
 
@@ -578,22 +573,29 @@
                                 <div class="form-group">
                                     <label>Từ ngày</label>
                                     <input type="date" name="fromDate"
-                                           value="${fromDate}" class="walkin-input">
+                                           value="${fromDate}" class="walkin-input"
+                                           onchange="submitRoomMapFilterIfReady()">
                                 </div>
 
                                 <div class="form-group">
                                     <label>Đến ngày</label>
                                     <input type="date" name="toDate"
-                                           value="${toDate}" class="walkin-input">
+                                           value="${toDate}" class="walkin-input"
+                                           onchange="submitRoomMapFilterIfReady()">
                                 </div>
-
-                                <button type="submit" class="btn-roommap-search">
-                                    <i class="fa-solid fa-magnifying-glass"></i>
-                                    Kiểm tra phòng
-                                </button>
 
                             </div>
                         </form>
+                        <script>
+                            function submitRoomMapFilterIfReady() {
+                                const form = document.getElementById("roommapFilterForm");
+                                const fromDate = form.querySelector("[name='fromDate']").value;
+                                const toDate = form.querySelector("[name='toDate']").value;
+                                if (fromDate && toDate) {
+                                    form.submit();
+                                }
+                            }
+                        </script>
                         <form method="get"
                               action="${pageContext.request.contextPath}/receptionist/dashboard">
 
@@ -684,6 +686,10 @@
 
                                                     <div
                                                         class="room-card status-${room.displayStatus}">
+
+                                                        <c:if test="${room.displayStatus eq 'Maintenance'}">
+                                                            <div class="room-maintenance-dot"></div>
+                                                        </c:if>
 
                                                         <div
                                                             class="room-card-header">
@@ -846,9 +852,33 @@
                                                 </span>
                                             </td>
 
-                                            <td>${b.customerName}</td>
+                                            <td>
+                                                <div class="customer-cell">
+                                                    <div class="name">
+                                                        ${b.customerName}
+                                                    </div>
+                                                    <div class="meta">
+                                                        Đặt: ${b.createdAt}
+                                                    </div>
+                                                </div>
+                                            </td>
 
-                                            <td>${b.groupRoomTypeNames}</td>
+                                            <td>
+                                                <c:choose>
+                                                    <c:when
+                                                        test="${not empty b.groupRoomTypeNames}">
+                                                        <span
+                                                            class="roomtype-badge">${b.groupRoomTypeNames}</span><br />
+                                                        <small
+                                                            style="color:var(--text-muted)">${b.totalRoomQuantity}
+                                                            phòng</small>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span
+                                                            style="color:var(--text-muted)">—</span>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </td>
 
                                             <td>${b.checkInDate}</td>
 
@@ -862,6 +892,7 @@
                                                         test="${b.status eq 'Confirmed'}">
                                                         <span
                                                             class="status-pill pill-confirmed">
+                                                            <i class="fa-solid fa-circle"></i>
                                                             Đã xác nhận
                                                         </span>
                                                     </c:when>
@@ -870,6 +901,7 @@
                                                         test="${b.status eq 'CheckedIn'}">
                                                         <span
                                                             class="status-pill pill-checkedin">
+                                                            <i class="fa-solid fa-circle"></i>
                                                             Đã check in
                                                         </span>
                                                     </c:when>
@@ -878,6 +910,7 @@
                                                         test="${b.status eq 'CheckedOut'}">
                                                         <span
                                                             class="status-pill pill-checkedout">
+                                                            <i class="fa-solid fa-circle"></i>
                                                             Đã check out
                                                         </span>
                                                     </c:when>
@@ -915,7 +948,7 @@
                                                         test="${b.status eq 'CheckedOut'}">
 
                                                         <span
-                                                            style="color:#64748b;font-weight:600">
+                                                            style="color:var(--brand-blue);font-weight:600">
                                                             Đã check out
                                                         </span>
                                                     </c:when>
@@ -1003,8 +1036,9 @@
                                     Tìm tài khoản
                                 </button>
                             </div>
-                            <!-- ========================================================= 
-                            CARD 1 - THÔNG TIN KHÁCH HÀNG 
+                            <div class="walkin-card-group">
+                            <!-- =========================================================
+                            CARD 1 - THÔNG TIN KHÁCH HÀNG
                             ========================================================= -->
                             <div class="walkin-card">
                                 <div class="walkin-section-header">
@@ -1255,6 +1289,7 @@
                                     rows="4"
                                     placeholder="Ghi chú nội bộ...">
                                 </textarea>
+                            </div>
                             </div>
                             <%--=============================
                                         FOOTER

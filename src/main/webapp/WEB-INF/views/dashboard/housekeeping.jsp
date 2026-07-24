@@ -245,6 +245,11 @@
                                 onclick="applyStatusFilter('Maintenance', event)">
                             BẢO TRÌ
                         </button>
+
+                        <button class="btn-filter" data-status="HasGuest"
+                                onclick="applyStatusFilter('HasGuest', event)">
+                            CÓ KHÁCH
+                        </button>
                     </div>
 
                     <div class="floor-container">
@@ -278,10 +283,14 @@
 
                                             <div class="room-item ${colorClass}"
                                                  data-room-status="${fn:toLowerCase(room.status)}"
+                                                 data-has-guest="${room.hasGuest}"
                                                  data-room-id="${room.roomId}"
                                                  onclick="goTaskDetail('${room.roomId}')">
 
                                                 <div class="maintenance-dot"></div>
+                                                <c:if test="${room.hasGuest}">
+                                                    <span class="guest-badge">Có khách</span>
+                                                </c:if>
                                                 <span class="room-num">${room.roomNumber}</span>
                                                 <span class="room-type">${room.typeName}</span>
                                             </div>

@@ -180,20 +180,19 @@ public class BookingServiceRequestDAO {
         String sql = "SELECT bsr.service_request_id AS request_id, bsr.booking_id, bsr.room_id, bsr.service_id, "
                 + "       hs.service_name AS title, bsr.notes AS description, bsr.quantity, bsr.status, "
                 + "       bsr.processed_by_staff_id, bsr.created_at, bsr.updated_at, bsr.completed_at, bsr.cancel_reason, "
-                + "       r.room_number, a.full_name AS staff_name, c.full_name AS customer_name, hs.unit AS unit, hs.price AS unit_price "
+                + "       r.room_number, a.full_name AS staff_name, b.customer_name AS customer_name, hs.unit AS unit, hs.price AS unit_price "
                 + "FROM dbo.BookingServiceRequest bsr "
                 + "JOIN dbo.Booking b ON bsr.booking_id = b.booking_id "
                 + "JOIN dbo.HotelService hs ON bsr.service_id = hs.service_id "
                 + "LEFT JOIN dbo.Room r ON bsr.room_id = r.room_id "
                 + "LEFT JOIN dbo.Account a ON bsr.processed_by_staff_id = a.account_id "
-                + "LEFT JOIN dbo.Account c ON b.account_id = c.account_id "
                 + "WHERE 1=1 ";
 
         if (!"All".equalsIgnoreCase(statusFilter)) {
             sql += "  AND bsr.status = ? ";
         }
         if (keyword != null && !keyword.trim().isEmpty()) {
-            sql += "  AND (hs.service_name LIKE ? OR r.room_number LIKE ? OR c.full_name LIKE ?) ";
+            sql += "  AND (hs.service_name LIKE ? OR r.room_number LIKE ? OR b.customer_name LIKE ?) ";
         }
         sql += "ORDER BY bsr.created_at DESC "
                 + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
@@ -244,14 +243,13 @@ public class BookingServiceRequestDAO {
                 + "JOIN dbo.Booking b ON bsr.booking_id = b.booking_id "
                 + "JOIN dbo.HotelService hs ON bsr.service_id = hs.service_id "
                 + "LEFT JOIN dbo.Room r ON bsr.room_id = r.room_id "
-                + "LEFT JOIN dbo.Account c ON b.account_id = c.account_id "
                 + "WHERE 1=1 ";
 
         if (!"All".equalsIgnoreCase(statusFilter)) {
             sql += "  AND bsr.status = ? ";
         }
         if (keyword != null && !keyword.trim().isEmpty()) {
-            sql += "  AND (hs.service_name LIKE ? OR r.room_number LIKE ? OR c.full_name LIKE ?) ";
+            sql += "  AND (hs.service_name LIKE ? OR r.room_number LIKE ? OR b.customer_name LIKE ?) ";
         }
 
         try (Connection conn = DBContext.getConnection()) {

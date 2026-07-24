@@ -73,18 +73,54 @@
         border-radius:8px;
         cursor:pointer;
         font-weight:600;
+        transition:background .2s ease, transform .2s ease;
     }
 
     .btn-primary{
         background:#2563eb;
     }
 
+    .btn-primary:hover{
+        background:#1d4ed8;
+        transform:translateY(-2px);
+    }
+
     .btn-success{
         background:#16a34a;
     }
 
+    .btn-success:hover{
+        background:#15803d;
+        transform:translateY(-2px);
+    }
+
     .btn-danger{
         background:#dc2626;
+    }
+
+    .btn-danger:hover{
+        background:#b91c1c;
+        transform:translateY(-2px);
+    }
+
+    .btn-secondary{
+        border:1px solid #dbe2ea;
+        color:#475569;
+        background:#fff;
+        padding:10px 18px;
+        border-radius:8px;
+        cursor:pointer;
+        font-weight:600;
+        text-decoration:none;
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        transition:background .2s ease, transform .2s ease;
+    }
+
+    .btn-secondary:hover{
+        background:#f1f5f9;
+        transform:translateY(-2px);
     }
     .status-badge{
         display:inline-flex;
@@ -227,7 +263,13 @@
                             <div class="detail-row">
                                 <label>Mức ưu tiên</label>
                                 <span class="priority-badge priority-${fn:toLowerCase(maintenance.priority)}">
-                                    ${maintenance.priority}
+                                    <c:choose>
+                                        <c:when test="${maintenance.priority == 'Urgent'}">Khẩn cấp</c:when>
+                                        <c:when test="${maintenance.priority == 'High'}">Cao</c:when>
+                                        <c:when test="${maintenance.priority == 'Medium'}">Trung bình</c:when>
+                                        <c:when test="${maintenance.priority == 'Low'}">Thấp</c:when>
+                                        <c:otherwise>${maintenance.priority}</c:otherwise>
+                                    </c:choose>
                                 </span>
                             </div>
                             <div class="detail-row">
@@ -248,7 +290,14 @@
                             </h3>
 
                             <span class="status-badge status-${fn:toLowerCase(maintenance.status)}">
-                                ${maintenance.status}
+                                <c:choose>
+                                    <c:when test="${maintenance.status == 'Pending'}">Chờ xử lý</c:when>
+                                    <c:when test="${maintenance.status == 'InProgress'}">Đang xử lý</c:when>
+                                    <c:when test="${maintenance.status == 'Resolved'}">Đã xử lý</c:when>
+                                    <c:when test="${maintenance.status == 'Unresolvable'}">Không thể xử lý</c:when>
+                                    <c:when test="${maintenance.status == 'Cancelled'}">Đã huỷ</c:when>
+                                    <c:otherwise>${maintenance.status}</c:otherwise>
+                                </c:choose>
                             </span>
                         </div>
                         <div class="detail-row">
@@ -306,6 +355,12 @@
                                         </button>
                                     </c:if>
                                 </c:if>
+                                <a href="${pageContext.request.contextPath}/housekeeping/handlemaintenance"
+                                   class="btn-secondary"
+                                   style="margin-left:auto;">
+                                    <i class="fa-solid fa-arrow-left"></i>
+                                    Quay lại
+                                </a>
                             </div>
                         </form>
                     </div>

@@ -551,12 +551,6 @@
                             <i class="fa-solid fa-bell-concierge"></i> <span>Quản lý yêu cầu dịch vụ</span>
                         </a>
                     </li>
-                    <li class="menu-item ${currentTab eq 'add-booking-service' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/add-booking-service">
-                            <i class="fa-solid fa-circle-plus"></i>
-                            <span>Đặt dịch vụ cho khách</span>
-                        </a>
-                    </li>
                 </ul>
 
                 <div class="sidebar-footer">
@@ -649,7 +643,6 @@
                                                         id="customerImage"
                                                         name="customerImage"
                                                         accept="image/*"
-                                                        required
                                                         onchange="
                                                                 previewCustomerImage(this);
                                                                 validateCheckIn();">
@@ -665,6 +658,7 @@
                                                     <img id="customerPreview" class="preview-image">
                                                 </label>
                                             </div>
+                                            <span id="customerImageError" class="error-message" style="display:none;">Khách phải có ảnh CCCD</span>
                                         </c:when>
                                         <c:when test="${booking.status eq 'CheckedIn'}">
                                             <label>
@@ -710,7 +704,7 @@
                             <!-- ================= COMPANION ================= -->
                             <div class="section-divider"></div>
                             <div style="display:flex;justify-content:space-between;align-items:center;">
-                                <h3>Bạn đồng hành</h3>
+                                <h3>Bạn đồng hành <span id="companionError" class="error-message" style="display:none; margin-left:10px;"></span></h3>
                                 <c:if test="${booking.status eq 'Confirmed'}">
                                     <button 
                                         class="add-btn" 
@@ -845,8 +839,7 @@
                                             <button
                                                 id="checkinBtn"
                                                 type="submit"
-                                                class="btn-confirm"
-                                                disabled>
+                                                class="btn-confirm">
                                                 Xác nhận check in
                                             </button>
                                         </c:otherwise>
@@ -1058,53 +1051,90 @@
                 reader.readAsDataURL(input.files[0]);
             }
 
+            let submitAttempted = false;
+
             function validateCheckIn() {
-                const btn = document.getElementById("checkinBtn");
-                if (!btn) {
-                    return;
-                }
+
                 let valid = true;
+
                 // CHECK CUSTOMER IMAGE
                 const customerImage =
                         document.getElementById("customerImage");
-                if (customerImage) {
-                    if (customerImage.files.length === 0) {
-                        valid = false;
-                    }
+                const customerImageError =
+                        document.getElementById("customerImageError");
+                let customerInvalid = false;
+
+                if (customerImage && customerImage.files.length === 0) {
+                    customerInvalid = true;
+                    valid = false;
                 }
+
+                if (customerImageError) {
+                    customerImageError.style.display =
+                            (submitAttempted && customerInvalid) ? "inline" : "none";
+                }
+
                 // CHECK COMPANIONS
-                const rows =
-                        document.querySelectorAll("#companionBody tr");
-                rows.forEach(row => {
-                    const name =
-                            row.querySelector(".companion-name");
-                    const image =
-                            row.querySelector(".companion-image");
-                    const age =
-                            row.querySelector(".age-select");
+                let missingName = false;
+                let missingImage = false;
+                let missingAge = false;
+
+                document.querySelectorAll("#companionBody tr").forEach(row => {
+                    const name = row.querySelector(".companion-name");
+                    const image = row.querySelector(".companion-image");
+                    const age = row.querySelector(".age-select");
+
                     if (!name || name.value.trim() === "") {
-                        valid = false;
+                        missingName = true;
                     }
                     if (!image || image.files.length === 0) {
-                        valid = false;
+                        missingImage = true;
                     }
                     if (!age || age.value === "") {
-                        valid = false;
+                        missingAge = true;
                     }
                 });
-                // UPDATE BUTTON
-                if (valid) {
-                    btn.disabled = false;
-                } else {
-                    btn.disabled = true;
+
+                const companionInvalid = missingName || missingImage || missingAge;
+                if (companionInvalid) {
+                    valid = false;
                 }
+
+                const companionError = document.getElementById("companionError");
+                if (companionError) {
+                    if (submitAttempted && companionInvalid) {
+                        const parts = [];
+                        if (missingName) {
+                            parts.push("Họ và tên");
+                        }
+                        if (missingImage) {
+                            parts.push("Ảnh CCCD / giấy khai sinh");
+                        }
+                        if (missingAge) {
+                            parts.push("Độ tuổi");
+                        }
+                        companionError.innerText = "Hãy điền đầy đủ " + parts.join(", ");
+                        companionError.style.display = "inline";
+                    } else {
+                        companionError.style.display = "none";
+                    }
+                }
+
+                return valid;
             }
 
-            document.addEventListener(
-                    "DOMContentLoaded",
-                    function () {
-                        validateCheckIn();
-                    });
+            document.addEventListener("DOMContentLoaded", function () {
+                const form = document.querySelector("form");
+                if (!form) {
+                    return;
+                }
+                form.addEventListener("submit", function (e) {
+                    submitAttempted = true;
+                    if (!validateCheckIn()) {
+                        e.preventDefault();
+                    }
+                });
+            });
         </script>
 
     </body>
