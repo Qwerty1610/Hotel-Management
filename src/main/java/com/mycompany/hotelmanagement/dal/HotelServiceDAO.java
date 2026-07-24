@@ -42,7 +42,7 @@ public class HotelServiceDAO {
 
     public java.util.Set<Integer> getUsedServiceIds() {
         java.util.Set<Integer> usedIds = new java.util.HashSet<>();
-        String sql = "SELECT DISTINCT service_id FROM dbo.BookingServiceRequest";
+        String sql = "SELECT DISTINCT service_id FROM dbo.BookingServiceRequest WHERE status NOT IN (N'Cancelled', N'Rejected', 'Cancelled', 'Rejected')";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             try (ResultSet rs = ps.executeQuery()) {
@@ -83,11 +83,18 @@ public class HotelServiceDAO {
     private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(HotelServiceDAO.class.getName());
 
     public boolean deleteService(int serviceId) {
-        String sql = "DELETE FROM HotelService WHERE service_id = ?";
-        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        String deleteRequestsSql = "DELETE FROM dbo.BookingServiceRequest WHERE service_id = ? AND status IN (N'Cancelled', N'Rejected', 'Cancelled', 'Rejected')";
+        String deleteServiceSql = "DELETE FROM HotelService WHERE service_id = ?";
+        try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
-            ps.setInt(1, serviceId);
-            return ps.executeUpdate() > 0;
+            try (PreparedStatement psReq = conn.prepareStatement(deleteRequestsSql)) {
+                psReq.setInt(1, serviceId);
+                psReq.executeUpdate();
+            }
+            try (PreparedStatement psService = conn.prepareStatement(deleteServiceSql)) {
+                psService.setInt(1, serviceId);
+                return psService.executeUpdate() > 0;
+            }
         } catch (Exception e) {
             LOGGER.log(java.util.logging.Level.SEVERE, "Error deleting hotel service " + serviceId, e);
             return false;
