@@ -1,0 +1,672 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
+<head>
+<meta charset="UTF-8">
+<title>Script Demo & Giải Thích Code — Use Cases QuyPQ</title>
+<style>
+  body { font-family: "Segoe UI", Calibri, sans-serif; font-size: 11pt; line-height: 1.45; margin: 40px; color: #1a1a2e; }
+  h1 { font-size: 20pt; color: #0b3d91; border-bottom: 3px solid #0b3d91; padding-bottom: 6px; }
+  h2 { font-size: 15pt; color: #0b3d91; margin-top: 34px; border-bottom: 1.5px solid #9db8e8; padding-bottom: 4px; }
+  h3 { font-size: 12.5pt; color: #14532d; margin-top: 22px; }
+  h4 { font-size: 11.5pt; color: #7c2d12; margin-top: 16px; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0 16px 0; }
+  th, td { border: 1px solid #8fa3c8; padding: 6px 8px; vertical-align: top; font-size: 10pt; }
+  th { background: #dbe7ff; text-align: left; }
+  pre { background: #f4f4f8; border: 1px solid #ccc; padding: 8px 10px; font-family: Consolas, monospace; font-size: 9.5pt; white-space: pre-wrap; }
+  code { font-family: Consolas, monospace; font-size: 10pt; background: #eef2fa; padding: 0 3px; }
+  .warn { background: #fff3cd; border: 1px solid #d9a520; padding: 8px 12px; margin: 8px 0; }
+  .bug  { background: #fde2e2; border: 1px solid #c0392b; padding: 8px 12px; margin: 8px 0; }
+  .tip  { background: #e2f0e6; border: 1px solid #2e8b57; padding: 8px 12px; margin: 8px 0; }
+  .path { color: #555; font-family: Consolas, monospace; font-size: 9.5pt; }
+  .step { margin-left: 4px; }
+</style>
+</head>
+<body>
+
+<h1>SCRIPT DEMO &amp; GIẢI THÍCH CODE — CÁC USE CASE (QuyPQ)</h1>
+<p><b>Dự án:</b> Hotel Management System &nbsp;|&nbsp; <b>Ngày lập:</b> 22/07/2026<br>
+<b>Phạm vi:</b> 12 use case / 11 màn hình: View + Edit Personal Profile, Request Booking Change, Make Online Payment, View Payment History, Process Booking Change, View Invoices, Review Invoice Detail, View Manager Dashboard, Monitor Room Issue Requests, Track Staff Work, View System Dashboard.</p>
+
+<p><b>Cấu trúc mỗi mục:</b> (A) Kịch bản demo — data chuẩn bị + luồng chính + alternative flow + exception flow, đối chiếu từng bước với Use Case Specification trong SRS; (B) Giải thích code — đường đi dữ liệu từ JSP → Controller → Service → DAO → SQL, Business Rule (BR) gắn với từng phép tính, bảng validate (FE/BE/BR), và dữ liệu form submit đi đâu / được dùng làm gì. Các trang Dashboard có thêm mục (C) Ý nghĩa phân tích của từng KPI / biểu đồ.</p>
+
+<h2>0. TỔNG HỢP CÁC ĐIỂM CHƯA KHỚP SPEC (cần lưu ý trước khi demo)</h2>
+<table>
+<tr><th style="width:4%">#</th><th style="width:18%">Màn / UC</th><th style="width:12%">Mức độ</th><th>Mô tả</th></tr>
+<tr><td>1</td><td>Process Booking Change (Lễ tân)</td><td><b>BUG chặn demo</b></td>
+<td>Trong <code>ReceptionistBookingChangeController.java</code> (dòng 47–85), sau khi Duyệt / Từ chối, code redirect về <code>base + "&amp;result=..."</code> trong khi <code>base = /receptionist/bookingchange</code> <b>không có dấu ?</b>. URL kết quả <code>/receptionist/bookingchange&amp;result=success&amp;action=approve</code> không khớp servlet nào → trình duyệt nhận <b>404</b> ngay sau khi bấm duyệt (dù dữ liệu đã được cập nhật đúng trong DB). Ngoài ra <code>doGet</code> của servlet này chỉ forward JSP mà <b>không nạp requestList/KPI</b>, nên kể cả sửa "&amp;" thành "?" thì trang vẫn trống. Cách sửa đúng: redirect về <code>/receptionist/dashboard?tab=changerequests&amp;result=success&amp;action=...</code>. Spec 3.5.9 yêu cầu sau xử lý phải quay lại danh sách kèm toast thành công → hiện tại KHÔNG khớp.</td></tr>
+<tr><td>2</td><td>Request Booking Change</td><td>Thiếu ràng buộc</td>
+<td>DAO có sẵn <code>hasPendingRequest(bookingId, type)</code> (BookingRequestDAO.java:78) nhưng <code>BookingRequestService</code> <b>không gọi</b> → khách có thể gửi nhiều yêu cầu Pending trùng nhau cho cùng một booking. Spec không cấm tường minh nhưng đây là lỗ hổng nghiệp vụ nên nêu ra.</td></tr>
+<tr><td>3</td><td>Request/Process Booking Change</td><td>Khác câu chữ spec</td>
+<td>BR-41 và E2 của spec nói kiểm tra trùng với "another confirmed booking of the <b>same room</b>". Code kiểm tra qua <code>checkRoomAvailability</code> — đếm số phòng trống <b>theo loại phòng</b> (peak-day), không xét phòng vật lý cụ thể khách đang ở. Kết quả nghiệp vụ tương đương (còn phòng cùng loại là cho gia hạn) nhưng khác câu chữ.</td></tr>
+<tr><td>4</td><td>Review Invoice Detail</td><td>Khác câu chữ BR</td>
+<td>BR-49 nói đơn giá phụ phí / số tiền hoàn phải "positive". Code yêu cầu <code>&gt; 1</code> (InvoiceService.java:69, 80) — khớp với E1 của spec chi tiết ("amount &lt;= 1 invalid") nhưng lệch chữ BR-49 (giá trị đúng 1đ bị chặn).</td></tr>
+<tr><td>5</td><td>Process Booking Change</td><td>Khác nhẹ</td>
+<td>BR-56 nói danh sách "newest-first"; code sắp <b>Pending lên trước</b> rồi mới newest-first (<code>ORDER BY CASE WHEN status='Pending' THEN 0 ELSE 1 END, created_at DESC</code>). Hợp lý cho lễ tân nhưng khác câu chữ.</td></tr>
+<tr><td>6</td><td>Request Booking Change</td><td>Thiếu tính năng phụ</td>
+<td>AF-2 spec nói khi hết phòng "System … suggests alternatives or a room change". Code chỉ hiển thị MSG16 (hết phòng), không gợi ý phương án thay thế.</td></tr>
+<tr><td>7</td><td>Monitor Room Issue Requests</td><td>Validate FE-only</td>
+<td>BR-54: chỉ được gán yêu cầu cho nhân viên có work status <b>Active</b>. Modal gán việc lọc <code>workStatus eq 'Active'</code> ở JSP (requests.jsp:405) nhưng BE (<code>CustomerRequestDAO.assignRequest</code>) <b>không kiểm tra lại</b> work_status — ai sửa HTML có thể gán cho staff Offline. Nên nêu là điểm cần cải thiện.</td></tr>
+</table>
+<p class="tip"><b>Ghi chú demo:</b> các mục dưới đây giả định app chạy tại <code>http://localhost:8080/&lt;context&gt;</code>, DB SQL Server <code>HotelManagementDB</code>. Các câu SQL chuẩn bị data là mẫu — thay <code>account_id</code>, <code>type_id</code>, <code>room_id</code>… bằng id thật trong DB của bạn.</p>
+
+<!-- ============================================================ -->
+<h2>1. MÀN HỒ SƠ CÁ NHÂN — View Personal Profile (UC 2.1.6) &amp; Edit Personal Profile (UC 2.1.7)</h2>
+<p><b>Actor:</b> mọi role đã đăng nhập (Customer vào <code>/customer/profile</code>, staff/manager/admin vào <code>/profile</code>).<br>
+<b>File liên quan:</b> <span class="path">controller/common/ProfileController.java · service/ProfileService.java · dal/AccountDAO.java (dòng 55–136) · views/profile/profile.jsp</span></p>
+
+<h3>A. Kịch bản demo</h3>
+<h4>Data chuẩn bị</h4>
+<pre>-- 1 tài khoản Customer có điểm loyalty (đã có sẵn qua Register); 1 tài khoản chưa có phone để demo AF-1:
+UPDATE dbo.Account SET phone = NULL WHERE email = 'demo.customer@gmail.com';
+-- 1 tài khoản khác giữ 1 số phone bất kỳ để demo lỗi trùng phone (E2), vd:
+UPDATE dbo.Account SET phone = '0912345678' WHERE email = 'other.customer@gmail.com';</pre>
+
+<h4>Luồng chính — View (khớp spec bước 1–4)</h4>
+<ol class="step">
+<li>Đăng nhập Customer → mở menu tài khoản → "Hồ sơ" (spec bước 1: user requests to view profile).</li>
+<li>Trang hiển thị: avatar chữ cái đầu tên, họ tên, badge role, trạng thái "Đang hoạt động", email (khóa), phone, ngày tạo tài khoản (spec bước 2–3: system loads account của user trong session và hiển thị).</li>
+<li>Vì là Customer → có thêm 2 thẻ <b>Điểm loyalty</b> và <b>Hạng thành viên</b> (AF-2). Đăng nhập bằng Receptionist/Manager để cho thấy 2 thẻ này <b>không</b> xuất hiện.</li>
+<li>AF-1: đăng nhập tài khoản chưa có phone → ô Số điện thoại hiển thị chữ nghiêng "Chưa cập nhật" (placeholder).</li>
+</ol>
+<h4>Luồng chính — Edit (khớp spec bước 1–6)</h4>
+<ol class="step">
+<li>Bấm "Chỉnh sửa hồ sơ" → form thay thế vùng xem; Email bị disable kèm chú thích "Email không thể thay đổi" (BR-36).</li>
+<li>Sửa Họ tên + Số điện thoại hợp lệ (vd 0987654321) → "Lưu thay đổi" → trang reload ở chế độ xem + toast thành công (MSG13); tên trên navbar cũng đổi theo (controller set lại <code>session.user</code>).</li>
+<li>AF-2: bấm "Huỷ" → quay lại chế độ xem, không lưu gì (thuần client, không có request).</li>
+</ol>
+<h4>Alternative / Exception flows</h4>
+<table>
+<tr><th>Flow</th><th>Cách kích hoạt khi demo</th><th>Kết quả mong đợi</th></tr>
+<tr><td>AF-1 Edit — bỏ trống họ tên</td><td>Xóa trắng ô Họ tên rồi Lưu</td><td>FE chặn bằng alert "Vui lòng nhập họ và tên." (MSG02); nếu bypass FE thì server trả <code>?error=name_required</code> → toast lỗi.</td></tr>
+<tr><td>E1 — vượt độ dài</td><td>Ô Họ tên có <code>maxlength=100</code> nên gõ tay không vượt được; demo bằng cách sửa DOM (bỏ maxlength) và dán chuỗi &gt;100 ký tự</td><td>Server trả <code>error=name_too_long</code> (MSG03) — chứng minh có validate 2 lớp.</td></tr>
+<tr><td>Phone sai định dạng</td><td>Nhập "0123456789" (số thứ 2 là 1 — không thuộc 3/5/7/8/9)</td><td>FE alert "Số điện thoại không hợp lệ…"; server cũng chặn với <code>error=invalid_phone</code>.</td></tr>
+<tr><td>E2 — phone trùng</td><td>Nhập đúng số đã gán cho tài khoản khác (0912345678)</td><td>Server trả <code>error=phone_exists</code> → toast "Số điện thoại đã được sử dụng bởi một tài khoản khác." (MSG09). Đây là check chỉ có ở BE (phải query DB).</td></tr>
+<tr><td>E3 — hết session</td><td>Xóa cookie JSESSIONID (DevTools) rồi F5 trang profile</td><td>Redirect về trang login kèm <code>?error=session_timeout</code> (Customer → /home/login, staff → /staff/login).</td></tr>
+</table>
+<p class="tip"><b>Đối chiếu spec:</b> khớp toàn bộ flow 2.1.6 / 2.1.7 và spec màn hình 3.10.1 / 3.10.2 (email khóa, phone rule "0 + 3/5/7/8/9 + 8 số", max 100 ký tự tên, toast theo mã lỗi name_required / name_too_long / invalid_phone / phone_exists).</p>
+
+<h3>B. Giải thích code</h3>
+<h4>Đường đi dữ liệu (View)</h4>
+<ol>
+<li>GET <code>/profile</code> → <code>ProfileController.doGet</code>. Trang này <b>không nằm sau AuthFilter</b> nên controller tự kiểm tra session bằng <code>resolveAccountId()</code>: đọc <code>session.accountId</code>, null/≤0 → redirect login (E1, BR-03).</li>
+<li><code>ProfileService.getProfile(accountId)</code> → <code>AccountDAO.getProfileByAccountId</code> (AccountDAO.java:55):
+<pre>SELECT a.account_id, a.email, a.full_name, a.phone, a.is_active, a.created_at,
+       r.role_name, c.loyalty_points, c.membership_level
+FROM Account a
+JOIN Role r ON a.role_id = r.role_id
+LEFT JOIN Customer c ON a.account_id = c.account_id
+WHERE a.account_id = ?</pre>
+Giải thích: JOIN <code>Role</code> để lấy tên role hiển thị badge; <b>LEFT JOIN</b> <code>Customer</code> vì chỉ Customer mới có bản ghi loyalty — với staff kết quả cột loyalty là NULL, DAO chỉ set <code>membershipLevel/loyaltyPoints</code> khi khác NULL và cờ <code>isCustomer</code> quyết định JSP có render 2 thẻ loyalty hay không (AF-2). Đây là phép "lấy lên hiển thị", không có tính toán → không gắn BR tính toán; quyền chỉ xem hồ sơ của chính mình được bảo đảm vì <code>accountId</code> lấy từ <b>session</b>, không nhận từ tham số URL (BR-35).</li>
+<li>Kết quả gói vào entity <code>ProfileView</code>, set attribute <code>profile</code> → forward <code>profile.jsp</code>.</li>
+</ol>
+<h4>Validate (Edit)</h4>
+<table>
+<tr><th>Trường</th><th>FE (profile.jsp)</th><th>BE (ProfileService.updateProfile)</th><th>BR</th></tr>
+<tr><td>Họ tên</td><td><code>required</code> + <code>maxlength=100</code> + hàm <code>profileValidate()</code> alert khi trống</td><td>trim; trống → <code>name_required</code>; &gt;100 ký tự → <code>name_too_long</code></td><td>BR-35 (chỉ sửa hồ sơ của mình), OR-11/12</td></tr>
+<tr><td>Số điện thoại</td><td><code>maxlength=10</code> + regex trong <code>profileValidate()</code></td><td>regex <code>^0[35789]\d{8}$</code>; sai → <code>invalid_phone</code>; trùng người khác (query <code>existsByPhoneExcept</code>: <code>SELECT 1 FROM Account WHERE phone=? AND account_id&lt;&gt;?</code>) → <code>phone_exists</code></td><td>BR-36 (email/phone định danh duy nhất — phần phone)</td></tr>
+<tr><td>Email</td><td>input <code>disabled</code> → trình duyệt không submit</td><td>Server <b>không đọc</b> tham số email — không thể sửa dù POST tay</td><td>BR-36 (email không đổi sau đăng ký) — validate cả 2 phía theo kiểu "không cho nhập + không nhận"</td></tr>
+</table>
+<h4>Form submit</h4>
+<p>POST về <b>chính URL đang đứng</b> (<code>/profile</code> hoặc <code>/customer/profile</code>) với 2 field: <code>fullName</code>, <code>phone</code>. <code>ProfileController.doPost</code> → <code>ProfileService.updateProfile</code> validate như bảng trên → nếu hợp lệ gọi <code>AccountDAO.updateOwnProfile</code>: <code>UPDATE Account SET full_name=?, phone=? WHERE account_id=?</code> (account_id lấy từ session). Thành công → cập nhật lại <code>session.user</code> (để navbar hiện tên mới) rồi redirect <code>?result=success</code> (pattern Post-Redirect-Get chống double-submit); thất bại → redirect <code>?error=&lt;code&gt;</code> để JSP hiển thị toast tương ứng.</p>
+
+<!-- ============================================================ -->
+<h2>2. MÀN BOOKING CHANGE (Customer) — Request Booking Change / Stay Extension (UC 2.3.9)</h2>
+<p><b>Actor:</b> Customer. <b>URL:</b> GET <code>/customer/booking/change</code>; POST <code>/customer/booking/change-request</code> và <code>/customer/booking/extension-request</code>.<br>
+<b>File liên quan:</b> <span class="path">controller/common/CustomerBookingsController.java (dòng 270–304, 490–532) · service/BookingRequestService.java · dal/BookingRequestDAO.java · dal/BookingDAO.java (checkRoomAvailability dòng 896) · views/customer/booking-change.jsp</span></p>
+
+<h3>A. Kịch bản demo</h3>
+<h4>Data chuẩn bị</h4>
+<pre>USE HotelManagementDB;
+-- (1) Booking ĐỦ điều kiện thay đổi: Confirmed, check-in TƯƠNG LAI, thuộc customer demo
+INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity,
+        check_in_date, check_out_date, total_amount, status, created_at)
+VALUES (&lt;accId&gt;, N'Khách Demo', 1, 1,
+        DATEADD(DAY, 5, CAST(GETDATE() AS DATE)), DATEADD(DAY, 7, CAST(GETDATE() AS DATE)),
+        2000000, N'Confirmed', SYSDATETIME());
+-- (2) Booking đang lưu trú để demo GIA HẠN: status CheckedIn, check-out tương lai gần
+INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity,
+        check_in_date, check_out_date, total_amount, status, created_at)
+VALUES (&lt;accId&gt;, N'Khách Demo', 1, 1,
+        DATEADD(DAY, -1, CAST(GETDATE() AS DATE)), DATEADD(DAY, 2, CAST(GETDATE() AS DATE)),
+        3000000, N'CheckedIn', SYSDATETIME());
+-- (3) Để demo HẾT PHÒNG (MSG16): tạo các booking Confirmed chiếm hết số phòng của 1 loại
+--     trong khoảng ngày định demo (lặp INSERT với room_quantity = tổng số phòng của loại đó).
+SELECT type_id, COUNT(*) FROM dbo.Room WHERE is_deleted = 0 AND status &lt;&gt; N'Maintenance' GROUP BY type_id;</pre>
+
+<h4>Luồng chính (khớp spec bước 1–8)</h4>
+<ol class="step">
+<li>Menu khách hàng → "Đặt phòng của tôi" → nút/трang <b>Thay Đổi Đặt Phòng</b> (spec bước 1–2: hệ thống hiển thị 2 thẻ loại yêu cầu).</li>
+<li>Bấm thẻ "Yêu cầu thay đổi đặt phòng" → form mở ra + cuộn tới, thẻ được viền xanh (spec bước 3, khớp mô tả màn 3.3.4).</li>
+<li>Chọn đơn trong dropdown (chỉ liệt kê đơn Pending/Confirmed) → panel "Thông tin hiện tại" hiện loại phòng, số lượng, ngày ở, đồng thời các ô nhập được <b>pre-fill</b> giá trị hiện tại (spec bước 4a, JS <code>onChangeBookingSelect()</code>).</li>
+<li>Sửa ngày check-in/out mới, đổi loại phòng, số phòng, nhập lý do ≤500 ký tự → "Gửi yêu cầu" (bước 5).</li>
+<li>Hệ thống validate ngày + kiểm tra phòng trống (bước 6) → tạo request Pending (bước 7) → chuyển về Lịch sử đặt phòng với banner "Đã gửi yêu cầu thay đổi đặt phòng. Vui lòng chờ lễ tân/quản lý duyệt." (MSG22, bước 8).</li>
+<li>Lặp lại với thẻ "Yêu cầu gia hạn lưu trú": chọn đơn CheckedIn → chọn ngày trả mới (date picker bị khóa min = ngày trả hiện tại) → box "Phụ phí dự kiến cho N đêm: X VND" hiện ngay (bước 4b–6) → submit → banner MSG23 kèm phụ phí dự kiến.</li>
+<li>Cuối trang: bảng "Yêu cầu thay đổi &amp; gia hạn của tôi" cho thấy request vừa tạo ở trạng thái <b>Chờ duyệt</b> (POST-3: customer track được trạng thái).</li>
+</ol>
+<h4>Alternative / Exception flows</h4>
+<table>
+<tr><th>Flow</th><th>Cách kích hoạt</th><th>Kết quả mong đợi</th></tr>
+<tr><td>AF-1 thiếu trường (MSG02)</td><td>Xóa ngày check-in mới rồi submit</td><td>FE alert "Vui lòng điền đầy đủ các trường bắt buộc."; server song song trả <code>?error=MSG02</code> nếu bypass.</td></tr>
+<tr><td>E2 ngày không hợp lệ (MSG17)</td><td>Chọn check-out ≤ check-in; hoặc ngày trả mới của gia hạn ≤ ngày trả hiện tại</td><td>FE alert; BE trả MSG17 "Ngày trả phòng phải sau ngày nhận phòng." / với gia hạn: "phải muộn hơn ngày trả hiện tại".</td></tr>
+<tr><td>AF-2 hết phòng (MSG16)</td><td>Dùng data (3): xin đổi sang loại phòng đã bị đặt kín trong khoảng ngày đó</td><td>Banner đỏ "Yêu cầu thất bại: Không còn phòng trống phù hợp…" — request KHÔNG được tạo.</td></tr>
+<tr><td>E1 đơn không đủ điều kiện</td><td>POST tay (Postman/DevTools) với bookingId của đơn CheckedOut/Cancelled, hoặc đơn có check-in đã qua</td><td>Server trả <code>NOT_ELIGIBLE</code> → "Đơn đặt phòng này không đủ điều kiện…". UI bình thường không cho chọn vì dropdown đã lọc.</td></tr>
+<tr><td>AF-3 hủy submit</td><td>Bấm "← Về lịch sử đặt phòng"</td><td>Không request nào được tạo.</td></tr>
+<tr><td>Không có đơn đủ điều kiện</td><td>Đăng nhập customer không có đơn Pending/Confirmed</td><td>Cảnh báo vàng, form không mở (khớp mô tả màn 3.3.4).</td></tr>
+</table>
+<p class="warn"><b>Chưa khớp:</b> (i) không chặn gửi trùng nhiều request Pending cho cùng booking (mục #2 bảng tổng hợp); (ii) không "gợi ý phương án thay thế" khi hết phòng như AF-2 spec (#6); (iii) kiểm tra trùng phòng khi gia hạn làm theo loại phòng, không theo phòng vật lý (#3).</p>
+
+<h3>B. Giải thích code</h3>
+<h4>Đường đi dữ liệu khi mở trang</h4>
+<ol>
+<li>GET <code>/customer/booking/change</code> → <code>CustomerBookingsController.doGet</code>: kiểm tra session role <code>CUSTOMER</code> (BR-02/03) → <code>showBookingChangePage()</code> (dòng 270).</li>
+<li>Nạp 3 nguồn dữ liệu:
+ (a) <code>roomTypeService.getAllRoomTypes()</code> → dropdown loại phòng + bảng giá <code>roomTypePrices</code> cho JS tính phụ phí;
+ (b) <code>bookingService.getBookingsByAccount(accountId,"All",null)</code> → JSP lọc: dropdown "đơn cần thay đổi" chỉ render đơn Pending/Confirmed, dropdown "đơn đang lưu trú" chỉ render đơn CheckedIn;
+ (c) <code>bookingRequestService.getRequestsByAccount(accountId)</code> → bảng theo dõi. SQL (BookingRequestDAO.java:97):
+<pre>SELECT r.*, nt.type_name AS new_room_type_name, ct.type_name AS current_room_type_name
+FROM dbo.BookingChangeRequest r
+LEFT JOIN dbo.RoomType nt ON r.new_room_type_id = nt.type_id
+LEFT JOIN dbo.Booking b   ON r.booking_id = b.booking_id
+LEFT JOIN dbo.RoomType ct ON b.room_type_id = ct.type_id
+WHERE r.account_id = ? ORDER BY r.created_at DESC</pre>
+2 LEFT JOIN RoomType (alias nt/ct) để hiển thị đồng thời tên loại phòng <b>mới</b> (khách xin) và loại phòng <b>hiện tại</b> của booking; lọc theo <code>account_id</code> trong session nên khách chỉ thấy request của mình (BR-02), sắp mới nhất trước.</li>
+</ol>
+<h4>Xử lý submit — Request Booking Change</h4>
+<p>Form POST tới <code>/customer/booking/change-request</code> với: <code>bookingId, newCheckInDate, newCheckOutDate, roomTypeId, roomQuantity, reason</code>. Controller chuyển nguyên bộ tham số cho <code>BookingRequestService.requestBookingChange()</code> (dòng 193), nơi thực hiện <b>chuỗi validate BE</b>:</p>
+<ol>
+<li>Booking tồn tại + <code>account_id</code> = session (chống sửa đơn người khác — BR-02/38).</li>
+<li>Status ∈ {Pending, Confirmed} và hôm nay &lt; check-in gốc (cửa sổ thay đổi còn mở — <b>BR-38</b>); vi phạm → NOT_ELIGIBLE.</li>
+<li>Đủ 4 trường bắt buộc (MSG02); reason ≤ 500 ký tự (MSG03 — BR-62 dùng chung rule ghi chú).</li>
+<li>Check-in mới &lt; check-out mới, check-in mới không ở quá khứ (MSG17 — <b>BR-05</b>).</li>
+<li>Kiểm tra phòng trống (<b>BR-04</b>): <code>BookingDAO.checkRoomAvailability(typeId, in, out)</code> — thuật toán 2 bước:
+<pre>-- Bước 1: tổng phòng khả dụng của loại
+SELECT COUNT(*) FROM dbo.Room WHERE type_id=? AND status &lt;&gt; N'Maintenance' AND is_deleted=0
+-- Bước 2: các booking đè lên khoảng ngày
+SELECT check_in_date, check_out_date, room_quantity FROM dbo.Booking
+WHERE room_type_id=? AND status IN (N'Pending',N'Confirmed',N'CheckedIn')
+  AND check_in_date &lt; ? AND check_out_date &gt; ?</pre>
+Sau đó duyệt từng NGÀY trong khoảng, cộng room_quantity của các booking phủ ngày đó, lấy <b>max theo ngày</b> (peak) → <code>available = totalRooms − maxBooked</code>. Điểm tinh tế: nếu khách giữ nguyên loại phòng, số phòng booking hiện tại được <b>cộng trả lại</b> (<code>effectiveAvailable = available + qty cũ</code>) để không bị báo "hết phòng" giả khi chỉ đổi ngày.</li>
+<li>Hợp lệ → <code>BookingRequestDAO.create()</code>: INSERT vào <code>dbo.BookingChangeRequest</code> với <code>request_type='Change'</code>, lưu cả giá trị cũ (old_check_in/out) lẫn mới, <code>status='Pending'</code>, <code>created_at=SYSDATETIME()</code>. <b>Booking gốc chưa bị đổi gì</b> — đúng BR-39 (chỉ hiệu lực sau khi duyệt).</li>
+</ol>
+<h4>Xử lý submit — Stay Extension</h4>
+<p>POST tới <code>/customer/booking/extension-request</code> với <code>bookingId, newCheckOutDate, reason</code>. Validate: booking CheckedIn (<b>BR-40</b>); ngày trả mới &gt; ngày trả hiện tại (<b>BR-41</b>, MSG17); còn phòng cùng loại cho các đêm thêm (<b>BR-42</b>, gọi <code>checkRoomAvailability(typeId, oldCheckOut, newCheckOut)</code>). Phụ phí tính tại service (dòng 325):</p>
+<pre>extraNights = (newCheckOut − currentCheckOut) / 86400000
+additionalCharge = basePrice(loại phòng) × room_quantity × extraNights   // BR-42</pre>
+<p>Giá trị này lưu vào cột <code>additional_charge</code> của request và trả về controller để redirect <code>?success=ext_requested&amp;charge=...</code> hiển thị trong banner. Box "Phụ phí dự kiến" trên FE (<code>updateExtEstimate()</code>) tính đúng cùng công thức <code>price × qty × nights</code> từ bảng giá đã render — FE chỉ để <b>hiển thị trước</b>, con số chính thức luôn do BE tính.</p>
+<h4>Bảng validate tổng hợp</h4>
+<table>
+<tr><th>Trường</th><th>FE (booking-change.jsp)</th><th>BE (BookingRequestService)</th><th>BR</th></tr>
+<tr><td>Chọn đơn</td><td><code>required</code>; dropdown chỉ chứa đơn đủ điều kiện</td><td>Tồn tại + của chính khách + đúng status + trước check-in</td><td>BR-02, BR-38/BR-40</td></tr>
+<tr><td>Ngày mới</td><td><code>validateChange()</code>: out&gt;in, in≥hôm nay; gia hạn: <code>min</code> của date picker + <code>validateExtension()</code></td><td>parse + so sánh lại toàn bộ</td><td>BR-05, BR-41</td></tr>
+<tr><td>Loại phòng/Số phòng</td><td><code>required</code>, number <code>min=1 max=100</code></td><td>qty&gt;0; loại phòng tồn tại; kiểm tra phòng trống</td><td>BR-04, BR-06 (gián tiếp qua sức chứa loại), BR-61</td></tr>
+<tr><td>Lý do</td><td><code>maxlength=500</code></td><td>&gt;500 → MSG03</td><td>BR-62 (quy tắc ghi chú 500 ký tự)</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>3. MÀN XỬ LÝ THAY ĐỔI ĐẶT PHÒNG (Receptionist) — Process Booking Change (UC 2.4.5)</h2>
+<p><b>Actor:</b> Receptionist. <b>URL:</b> GET <code>/receptionist/dashboard?tab=changerequests</code> (danh sách); POST <code>/receptionist/bookingchange</code> (duyệt/từ chối).<br>
+<b>File liên quan:</b> <span class="path">controller/receptionist/ReceptionistDashboardController.java (loadChangeRequestsTab dòng 298) · controller/receptionist/ReceptionistBookingChangeController.java · service/BookingRequestService.java (approveRequest dòng 77, rejectRequest dòng 173) · dal/BookingRequestDAO.java · views/receptionist/booking-change-requests.jsp</span></p>
+
+<h3>A. Kịch bản demo</h3>
+<h4>Data chuẩn bị</h4>
+<p>Dùng chính các request đã tạo ở mục 2 (1 request Change + 1 request Extension đang Pending). Thêm để demo đủ exception:</p>
+<pre>-- Request Pending nhưng booking đã bị hủy (demo AF-3/E "không còn đủ điều kiện"):
+UPDATE dbo.Booking SET status = N'Cancelled' WHERE booking_id = &lt;bookingCủaRequestNào Đó&gt;;
+-- Request hết hạn: sửa new_check_in về quá khứ
+UPDATE dbo.BookingChangeRequest SET new_check_in = DATEADD(DAY,-2,CAST(GETDATE() AS DATE)) WHERE request_id = &lt;id&gt;;</pre>
+
+<h4>Luồng chính (khớp spec bước 1–6)</h4>
+<ol class="step">
+<li>Đăng nhập Receptionist → sidebar "Thay đổi đặt phòng" (bước 1).</li>
+<li>Trang hiển thị: 4 thẻ KPI (Tổng yêu cầu / Chờ duyệt / Đã duyệt / Đã từ chối), ô tìm theo tên khách hoặc mã đơn, 4 tab trạng thái, bảng gồm: mã YC, mã đơn, khách, pill loại yêu cầu, chi tiết (giá trị cũ gạch ngang → giá trị mới), phụ phí dự kiến, lý do, ngày gửi, trạng thái (bước 2 + khớp mô tả màn 3.5.9).</li>
+<li>Demo tìm kiếm theo tên khách, chuyển tab "Chờ duyệt" — search giữ tab và ngược lại; phân trang 10 dòng/trang.</li>
+<li>Bấm ✓ trên một request Pending → modal "Xác nhận duyệt yêu cầu" kèm tóm tắt → "Duyệt yêu cầu" (bước 3).</li>
+<li>Hệ thống re-validate + áp thay đổi vào booking + tính lại tổng tiền + request sang Approved (bước 4–5). Mở tab Customer để cho thấy bảng theo dõi của khách đã đổi thành "Đã duyệt" và chi tiết booking đã mang ngày/loại phòng mới (POST-2, POST-3).</li>
+<li>AF-1: bấm ✗ trên request khác → modal từ chối → request sang Rejected, booking giữ nguyên.</li>
+</ol>
+<div class="bug"><b>⚠ BUG khi demo bước 5-6 (mục #1 bảng tổng hợp):</b> ngay sau khi bấm Duyệt/Từ chối, server xử lý DB <b>thành công</b> nhưng redirect về URL sai (<code>/receptionist/bookingchange&amp;result=success&amp;action=approve</code> — thiếu dấu "?") → trình duyệt hiện <b>404</b>. Phải bấm lại menu "Thay đổi đặt phòng" mới thấy kết quả. Cần sửa 6 chỗ <code>sendRedirect(base + "&amp;...")</code> trong ReceptionistBookingChangeController thành redirect về <code>/receptionist/dashboard?tab=changerequests&amp;result=...</code> trước buổi demo, hoặc chủ động giải thích đây là bug đã phát hiện.</div>
+<h4>Exception flows</h4>
+<table>
+<tr><th>Flow</th><th>Cách kích hoạt</th><th>Kết quả (sau khi sửa bug redirect)</th></tr>
+<tr><td>E1 request đã xử lý</td><td>Mở 2 tab trình duyệt cùng trang, duyệt ở tab 1, rồi duyệt lại cùng request ở tab 2</td><td>Service trả <code>not_pending</code> → toast lỗi "đã được xử lý", danh sách refresh. (SQL <code>UPDATE ... WHERE status=N'Pending'</code> bảo đảm idempotent.)</td></tr>
+<tr><td>E2 hết phòng lúc duyệt</td><td>Sau khi khách gửi request, tạo thêm booking chiếm hết phòng loại đó rồi mới duyệt</td><td><code>no_room</code> → toast "không còn phòng trống phù hợp", request vẫn Pending (AF-2) — lễ tân có thể Từ chối.</td></tr>
+<tr><td>AF-3 booking hết điều kiện</td><td>Duyệt request có booking đã Cancelled (data chuẩn bị)</td><td><code>not_eligible</code> → toast lỗi, không thay đổi gì.</td></tr>
+</table>
+
+<h3>B. Giải thích code</h3>
+<h4>Đường đi dữ liệu khi mở trang</h4>
+<p><code>ReceptionistDashboardController</code> (tab <code>changerequests</code>, dòng 298–353): đọc filter <code>status</code> (whitelist All/Pending/Approved/Rejected), <code>keyword</code>, <code>page</code>; pageSize=10; gọi <code>BookingRequestService.countRequestsForStaff / getRequestsForStaff</code> → <code>BookingRequestDAO</code> chạy <code>SELECT_WITH_JOINS</code> (join Booking để lấy <code>customer_name</code>, <code>booking_status</code>; join 2 lần RoomType lấy tên loại cũ/mới) + filter động:</p>
+<pre>WHERE 1=1 [AND r.status=?] [AND (b.customer_name LIKE ? OR CAST(r.booking_id AS NVARCHAR) LIKE ?)]
+ORDER BY CASE WHEN r.status=N'Pending' THEN 0 ELSE 1 END, r.created_at DESC
+OFFSET ? ROWS FETCH NEXT ? ROWS ONLY</pre>
+<p>Phân trang server-side bằng OFFSET/FETCH (BR-56); Pending được đẩy lên đầu (khác nhẹ câu chữ BR-56 — mục #5). 4 KPI card = 4 lần <code>countRequestsForStaff</code> với từng status.</p>
+<h4>Form submit (duyệt / từ chối)</h4>
+<p>Modal POST tới <code>/receptionist/bookingchange</code> với 2 hidden field: <code>requestId</code>, <code>action=approve|reject</code>. Controller kiểm tra role RECEPTIONIST trong session rồi gọi service:</p>
+<ul>
+<li><b>approveRequest(requestId)</b> (BookingRequestService.java:77) — đúng trình tự spec bước 4–5:
+ (1) request còn Pending? → <code>not_pending</code>;
+ (2) với <b>Change</b>: booking còn Pending/Confirmed + đủ trường + new_check_in chưa qua → <code>not_eligible</code>; re-check phòng trống <code>checkRoomAvailability</code> (cộng trả phòng của chính booking nếu giữ nguyên loại) → <code>no_room</code>; sau đó set ngày/loại/số phòng mới vào entity, <b>tính lại tổng tiền</b> qua <code>BookingService.calculateBookingAmount</code>:
+<pre>totalAmount = basePrice(loại phòng) × room_quantity × số đêm   // BR-39: recalculate on approval</pre>
+ rồi <code>BookingDAO.applyBookingChange</code>: <code>UPDATE dbo.Booking SET room_type_id=?, room_quantity=?, check_in_date=?, check_out_date=?, total_amount=?, updated_at=SYSDATETIME() WHERE booking_id=?</code> (dùng hàm này thay <code>updateBookingDetails</code> vì phải update được cả đơn Confirmed); cuối cùng <b>xóa phân phòng cũ</b> (<code>assignRoomsToBooking(id, [])</code>) vì phòng đã gán có thể không còn hợp với ngày/loại mới — lễ tân sẽ gán lại lúc check-in (BR-07/08);
+ (3) với <b>Extension</b>: booking phải CheckedIn + ngày mới &gt; ngày cũ (BR-40/41), re-check phòng cho các đêm thêm (BR-42), set check-out mới + tính lại tổng tiền, update;
+ (4) <code>BookingRequestDAO.updateStatus(requestId,'Approved')</code> — SQL có guard <code>AND status=N'Pending'</code> chống double-approve.</li>
+<li><b>rejectRequest</b>: chỉ đổi status → Rejected, booking không đụng tới (AF-1, POST-1).</li>
+</ul>
+<p>Dữ liệu sau xử lý được khách hàng nhìn thấy ở bảng theo dõi (mục 2) — cùng bảng <code>BookingChangeRequest</code>, chỉ khác câu query lọc theo account.</p>
+
+<!-- ============================================================ -->
+<h2>4. MÀN THANH TOÁN &amp; LỊCH SỬ GIAO DỊCH (Customer) — View Payment History (UC 2.3.3)</h2>
+<p><b>Actor:</b> Customer. <b>URL:</b> GET <code>/customer/payments</code>.<br>
+<b>File liên quan:</b> <span class="path">controller/common/CustomerPaymentController.java (showPaymentHistory dòng 67) · service/PaymentService.java · dal/PaymentDAO.java (getPaymentsByAccount dòng 191, getPendingBookingsByAccount dòng 238) · dal/InvoiceDAO.java (getUnpaidInvoicesByAccount dòng 548) · views/customer/payment-history.jsp</span></p>
+
+<h3>A. Kịch bản demo</h3>
+<h4>Data chuẩn bị</h4>
+<pre>USE HotelManagementDB;
+-- (1) Booking Pending chưa cọc (hiện ở mục "Đặt phòng chờ thanh toán cọc")
+INSERT INTO dbo.Booking (account_id, customer_name, room_type_id, room_quantity,
+        check_in_date, check_out_date, total_amount, status, created_at)
+VALUES (&lt;accId&gt;, N'Khách Demo', 1, 1,
+        DATEADD(DAY,10,CAST(GETDATE() AS DATE)), DATEADD(DAY,12,CAST(GETDATE() AS DATE)),
+        2000000, N'Pending', SYSDATETIME());
+-- (2) Hóa đơn Pending kèm dòng tiền phòng + dịch vụ (hiện ở "Hóa đơn chờ thanh toán")
+INSERT INTO dbo.Invoice (booking_id, customer_name, room_number, status, created_at)
+VALUES (&lt;bookingIdĐãCheckOut&gt;, N'Khách Demo', N'101', N'Pending', SYSDATETIME());
+INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount)
+VALUES (&lt;invId&gt;, N'Room',    N'Tiền phòng 2 đêm', 2, 1000000, 2000000),
+       (&lt;invId&gt;, N'Service', N'Giặt ủi',          1,  150000,  150000);
+-- (3) Vài giao dịch lịch sử (hoặc tạo tự nhiên bằng webhook ở mục 5)
+INSERT INTO dbo.Payment (invoice_id, booking_id, sepay_tx_id, amount, gateway, reference_code, content, transaction_date)
+VALUES (NULL, &lt;bookingId(1)&gt;, 88001, 600000, N'MBBank', N'FT88001', N'COC&lt;bookingId&gt; ck coc', SYSDATETIME());</pre>
+
+<h4>Luồng chính (khớp spec bước 1–6)</h4>
+<ol class="step">
+<li>Navbar customer → "Thanh toán" (bước 1); nếu chưa đăng nhập → bị đẩy về login (bước 2 / E1).</li>
+<li>Trang hiện đúng 3 khối như spec bước 3–4: <b>"Đặt phòng chờ thanh toán cọc"</b> (booking Pending, cột: mã, loại phòng, thời gian nghỉ, tổng tiền, tiền cọc 30% màu đỏ, đã chuyển, trạng thái badge), <b>"Hóa đơn chờ thanh toán"</b> (mã HĐ, phòng, ngày tạo, tổng, đã cọc, còn phải trả, badge "Chờ thanh toán"), <b>"Lịch sử thanh toán"</b> (mã GD, loại "Cọc đặt phòng"/thanh toán HĐ, phòng, số tiền +xanh, ngân hàng, mã tham chiếu, thời gian, trạng thái).</li>
+<li>Chỉ ra cột trạng thái được suy diễn theo spec bước 5: giao dịch cọc → "Đã nhận cọc"; giao dịch hóa đơn → theo status hóa đơn (Paid → "Đã thanh toán"…), hóa đơn chưa đủ tiền → "Chưa đủ tiền".</li>
+<li>Bấm "Thanh toán cọc"/"Thanh toán" → sang màn QR (bước 6 → UC 2.3.8, POST-2).</li>
+</ol>
+<h4>Alternative / Exception flows</h4>
+<table>
+<tr><th>Flow</th><th>Cách kích hoạt</th><th>Kết quả</th></tr>
+<tr><td>AF-1 rỗng từng khối</td><td>Đăng nhập customer mới không có dữ liệu</td><td>Từng khối hiện empty-state có icon: "Bạn không có hóa đơn nào đang chờ thanh toán." v.v.</td></tr>
+<tr><td>AF-2 banner sau thanh toán</td><td>Hoàn tất luồng QR (mục 5) → tự redirect về đây</td><td>Banner xanh "Thanh toán thành công!…" (<code>?success=paid</code>) hoặc "Đã nhận tiền cọc!…" (<code>?success=deposit_paid</code>).</td></tr>
+<tr><td>E1 không phải Customer</td><td>Vào <code>/customer/payments</code> khi đang đăng nhập bằng role khác / chưa login</td><td>Redirect <code>/home/login</code>.</td></tr>
+<tr><td>Banner lỗi</td><td>Gõ tay <code>/customer/payments/pay?invoiceId=999999</code></td><td>Quay lại trang với banner đỏ "Hóa đơn không tồn tại, không thuộc về bạn hoặc đã được thanh toán." (<code>error=notpayable</code>).</td></tr>
+</table>
+
+<h3>B. Giải thích code</h3>
+<h4>Đường đi dữ liệu — 3 khối</h4>
+<table>
+<tr><th>Khối trên trang</th><th>Service → DAO</th><th>SQL &amp; giải thích</th><th>BR</th></tr>
+<tr><td>Lịch sử thanh toán</td><td><code>getPaymentHistory</code> → <code>PaymentDAO.getPaymentsByAccount</code></td>
+<td>SELECT từ <code>dbo.Payment p</code> LEFT JOIN <code>Invoice i</code> (lấy status + room_number) và 2 lần LEFT JOIN <code>Booking</code> (bi qua invoice, bd qua booking_id của giao dịch cọc); điều kiện sở hữu <code>ISNULL(bd.account_id, bi.account_id) = ?</code> — nghĩa là: giao dịch cọc xác định chủ qua booking, giao dịch hóa đơn xác định chủ qua booking của hóa đơn; subquery <code>SUM(InvoiceItem.amount)</code> lấy tổng HĐ để JSP tính "Chưa đủ tiền"; <code>ORDER BY p.created_at DESC</code> — mới nhất trước.</td>
+<td><b>BR-13</b> (mọi giao dịch được lưu và xem lại), BR-02</td></tr>
+<tr><td>Hóa đơn chờ thanh toán</td><td><code>getUnpaidInvoices</code> → <code>InvoiceDAO.getUnpaidInvoicesByAccount</code></td>
+<td>BASE_SELECT của InvoiceDAO: mỗi hóa đơn kèm 4 cột dẫn xuất bằng subquery — <code>total_amount = SUM(items)</code> (<b>BR-45</b>), <code>deposit_amount = SUM(items Room) × 0.3</code> (<b>BR-47</b>: cọc = 30% tiền phòng), <code>refunded_amount</code>, <code>pending_refund_amount</code>; lọc status Pending + thuộc account.</td>
+<td>BR-45, BR-47</td></tr>
+<tr><td>Đặt phòng chờ cọc</td><td><code>getPendingDeposits</code> → <code>PaymentDAO.getPendingBookingsByAccount</code> + <code>sumPaidForBooking</code></td>
+<td>Lấy booking Pending gốc (<code>group_booking_id IS NULL</code>) kèm <code>overall_total = total_amount + SUM(total_amount các booking con)</code> — cọc tính trên <b>tổng cả nhóm</b> đặt nhiều phòng; service tính <code>depositAmount = round(overall × 0.3)</code> (<b>BR-47</b>) và <code>paid = SUM(Payment.amount WHERE booking_id=?)</code>; badge "Đã cọc — chờ xác nhận" khi <code>remaining ≤ 0.01</code>.</td>
+<td>BR-47, BR-61</td></tr>
+</table>
+<p>Trang này chỉ đọc, không có form submit; 2 nút "Thanh toán (cọc)" là GET sang <code>/customer/payments/pay?invoiceId=..|bookingId=..</code>.</p>
+
+<!-- ============================================================ -->
+<h2>5. MÀN THANH TOÁN QR SePay — Make Online Payment (UC 2.3.8)</h2>
+<p><b>Actor:</b> Customer; secondary: SePay Payment Gateway. <b>URL:</b> GET <code>/customer/payments/pay</code>, GET <code>/customer/payments/status</code> (polling), POST <code>/api/sepay-webhook</code> (SePay gọi).<br>
+<b>File liên quan:</b> <span class="path">controller/common/CustomerPaymentController.java (showPaymentPage dòng 92, writePaymentStatus dòng 144) · controller/common/SePayWebhookController.java · service/PaymentService.java · dal/PaymentDAO.java (recordPaymentAndSettle dòng 71) · views/customer/payment-qr.jsp</span></p>
+
+<h3>A. Kịch bản demo</h3>
+<h4>Data chuẩn bị</h4>
+<p>Dùng hóa đơn Pending + booking Pending của mục 4. Vì demo local không có tiền vào thật, <b>giả lập webhook SePay bằng curl/Postman</b> (đúng payload SePay thật gửi):</p>
+<pre># API key lấy trong config.properties (sepay.webhook.apikey)
+curl -X POST http://localhost:8080/&lt;context&gt;/api/sepay-webhook ^
+  -H "Authorization: Apikey &lt;key&gt;" -H "Content-Type: application/json" ^
+  -d "{\"id\": 99001, \"transferType\": \"in\", \"transferAmount\": 350000, \"content\": \"HD&lt;invoiceId&gt; chuyen tien\", \"gateway\": \"MBBank\", \"referenceCode\": \"FT99001\", \"transactionDate\": \"2026-07-22 10:00:00\"}"</pre>
+
+<h4>Luồng chính (khớp spec bước 1–8)</h4>
+<ol class="step">
+<li>Từ trang Thanh toán bấm "Thanh toán" trên hóa đơn (bước 1). Server validate hóa đơn thuộc khách + Pending + còn tiền phải trả (bước 2).</li>
+<li>Trang QR hiển thị đủ các trường của spec màn 3.4.1: ảnh VietQR nhúng sẵn số tiền + nội dung, ngân hàng, số TK, chủ TK, loại phòng, thời gian nghỉ, tổng tiền, cọc 30%, <b>Số tiền cần thanh toán</b> (đỏ), <b>Nội dung chuyển khoản</b> (vd HD12 / COC41), box cảnh báo vàng + box hướng dẫn xanh (bước 3).</li>
+<li>Trong khi trang đang poll ("Đang chờ thanh toán..."), chạy lệnh curl với <code>transferAmount = đúng số còn thiếu</code> (bước 4–5: giả lập khách chuyển khoản, SePay bắn webhook).</li>
+<li>Webhook xác thực API key, bóc mã HD từ nội dung CK, ghi giao dịch, đủ tiền → hóa đơn sang <b>Paid</b> (bước 6–7).</li>
+<li>Trong ~3 giây, dòng trạng thái đổi thành "Đã nhận thanh toán! Đang chuyển trang..." rồi tự redirect về trang Thanh toán với banner thành công; giao dịch xuất hiện đầu Lịch sử (bước 8, POST-3).</li>
+<li>Lặp lại với <b>tiền cọc</b>: bấm "Thanh toán cọc", nội dung CK là <code>COC&lt;bookingId&gt;</code>, curl với content COC… → banner "Đã nhận tiền cọc!"; nhấn mạnh: <b>booking vẫn Pending</b>, chờ lễ tân xác nhận (POST-2, BR-12).</li>
+</ol>
+<h4>Alternative / Exception flows</h4>
+<table>
+<tr><th>Flow</th><th>Cách kích hoạt (curl)</th><th>Kết quả</th></tr>
+<tr><td>AF-1 chuyển thiếu tiền</td><td>Gửi webhook với <code>transferAmount</code> nhỏ hơn số còn phải trả</td><td>Giao dịch được ghi (PARTIAL), hóa đơn vẫn Pending; trang Thanh toán hiển thị "Chưa đủ tiền", số còn thiếu được tính lại; gửi tiếp webhook lần 2 đủ phần còn lại → Paid.</td></tr>
+<tr><td>AF-2 rời trang QR</td><td>Bấm "Quay lại trang thanh toán" không chuyển tiền</td><td>Không ghi gì; hóa đơn vẫn thanh toán được sau.</td></tr>
+<tr><td>AF-3 webhook gửi trùng</td><td>Chạy lại curl với <b>cùng</b> <code>"id": 99001</code></td><td>Response <code>{"success":true,"message":"duplicate"}</code>, không ghi thêm giao dịch — idempotent theo <code>sepay_tx_id</code> (UNIQUE).</td></tr>
+<tr><td>E2 hóa đơn không hợp lệ</td><td>Gõ <code>/customer/payments/pay?invoiceId=&lt;củaKhácHoặcPaid&gt;</code></td><td>Redirect về trang thanh toán, banner đỏ theo mã lỗi notfound/notpayable/nothingdue.</td></tr>
+<tr><td>E3 sai API key</td><td>curl với <code>Authorization: Apikey sai</code></td><td>HTTP <b>401</b> {"message":"unauthorized"}, không ghi giao dịch.</td></tr>
+<tr><td>E4 nội dung CK không có mã</td><td>curl với <code>content: "chuyen tien khong ma"</code></td><td>HTTP 200 <code>no_invoice_code</code> — log lại, không ghi nhận (chờ đối soát tay); trả 200 để SePay không retry vô ích.</td></tr>
+</table>
+
+<h3>B. Giải thích code</h3>
+<h4>Bên hiển thị QR</h4>
+<ol>
+<li><code>showPaymentPage</code>: với invoice — <code>getPayableInvoice</code> (query <code>getInvoiceForCustomer</code> ràng buộc invoice thuộc account qua JOIN Booking) + status Pending; tính <b>số còn phải trả</b>:
+<pre>remaining = inv.getNetAmount() − sumPaidForInvoice(id)
+          = (Tổng SUM(items) − Cọc 30% tiền phòng − Đã hoàn) − Đã chuyển online   // BR-45, BR-47</pre></li>
+<li><code>buildTransferContent</code> = prefix <code>HD</code>/<code>COC</code> + id (config <code>sepay.payment.prefix</code>) — đây là "mã đối soát" để webhook khớp tiền về đúng hóa đơn/booking.</li>
+<li><code>buildQrUrl</code> dựng URL ảnh VietQR <code>https://vietqr.app/img?bank=..&amp;acc=..&amp;amount=..&amp;des=HD12...</code> — số tiền làm tròn VND, nội dung đã encode; app ngân hàng quét là tự điền sẵn.</li>
+<li>JS trong payment-qr.jsp: <code>setInterval</code> ~3s <code>fetch('/customer/payments/status?invoiceId=..')</code>; endpoint trả JSON <code>{"status":"...","paid":true|false}</code> (hóa đơn: paid = status Paid; cọc: paid = đã chuyển đủ 30%); <code>paid=true</code> → redirect kèm <code>?success=paid|deposit_paid</code>.</li>
+</ol>
+<h4>Bên webhook (form "submit" thực sự của UC này là do SePay POST)</h4>
+<p><b>Dữ liệu nhận:</b> JSON SePay gồm <code>id</code> (mã GD SePay), <code>transferType</code>, <code>transferAmount</code>, <code>content</code>, <code>gateway</code>, <code>referenceCode</code>, <code>transactionDate</code>. <b>Đi đâu:</b> POST <code>/api/sepay-webhook</code> → <code>SePayWebhookController</code>. <b>Dùng như thế nào:</b></p>
+<ol>
+<li>Xác thực header <code>Authorization: Apikey &lt;key&gt;</code> so với config — sai → 401, không ghi gì (E3, <b>BR-12</b>: chỉ cập nhật Paid khi kết quả gateway được xác thực).</li>
+<li>Bỏ qua giao dịch không phải tiền vào (<code>transferType != "in"</code>).</li>
+<li><code>PaymentService.handleIncomingTransfer</code>: regex <code>HD(\d+)</code> / <code>COC(\d+)</code> (không phân biệt hoa thường) bóc id từ nội dung CK.</li>
+<li>Nhánh hóa đơn → <code>PaymentDAO.recordPaymentAndSettle(p, due)</code> chạy trong <b>1 transaction</b>:
+<pre>1. INSERT dbo.Payment (... sepay_tx_id UNIQUE ...)   -- trùng tx → SQLError 2627/2601 → DUPLICATE
+2. SELECT ISNULL(SUM(amount),0) FROM dbo.Payment WHERE invoice_id=?
+3. Nếu tổng đã trả + 0.01 ≥ due → UPDATE dbo.Invoice SET status=N'Paid' WHERE status=N'Pending'
+4. COMMIT (lỗi bất kỳ → ROLLBACK)</pre>
+Cột UNIQUE <code>sepay_tx_id</code> chính là cơ chế idempotent của AF-3; cộng dồn ở bước 2 là cơ chế "chuyển thiếu, trả nhiều lần" của AF-1.</li>
+<li>Nhánh cọc → <code>recordDepositPayment</code>: chỉ INSERT Payment gắn <code>booking_id</code> (kèm tạo sẵn Invoice cho booking nếu chưa có, để về sau trừ cọc); <b>không đổi status Booking</b> — lễ tân đối chiếu và Confirm thủ công (POST-2).</li>
+</ol>
+<h4>Bảng validate</h4>
+<table>
+<tr><th>Ràng buộc</th><th>FE</th><th>BE</th><th>BR</th></tr>
+<tr><td>Hóa đơn/booking thuộc khách, Pending, còn nợ</td><td>— (chỉ hiện nút với item hợp lệ)</td><td><code>getPayableInvoice/getPayableDepositBooking</code> + <code>remaining &gt; 0</code>; sai → error banner</td><td>BR-02, BR-12</td></tr>
+<tr><td>Xác thực nguồn tiền</td><td>—</td><td>API key webhook; số tiền do ngân hàng báo, không nhận từ client</td><td>BR-12</td></tr>
+<tr><td>Chống ghi trùng</td><td>—</td><td>UNIQUE sepay_tx_id + transaction</td><td>BR-13</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>6. MÀN QUẢN LÝ HÓA ĐƠN (Manager) — View Invoices (UC 2.6.10)</h2>
+<p><b>Actor:</b> Hotel Manager. <b>URL:</b> GET <code>/manager/invoices</code> (qua AuthFilter — chỉ role Manager).<br>
+<b>File liên quan:</b> <span class="path">controller/manager/ManagerInvoiceController.java (doGet dòng 37) · service/InvoiceService.java · dal/InvoiceDAO.java (BASE_SELECT dòng 42, getInvoices dòng 91, sumTotalByStatus dòng 217) · views/manager/invoices.jsp</span></p>
+
+<h3>A. Kịch bản demo</h3>
+<h4>Data chuẩn bị</h4>
+<pre>-- Tạo ≥ 9 hóa đơn đủ 4 trạng thái để thấy phân trang (pageSize=8) + filter:
+-- vài Pending, 1-2 Paid, 1 Refunding (tạo bằng chức năng Add Refund ở mục 7), 1 Cancelled.
+-- Mỗi hóa đơn có InvoiceItem Room (+ Service) như mẫu ở mục 4.</pre>
+<h4>Luồng chính (khớp spec bước 1–6)</h4>
+<ol class="step">
+<li>Đăng nhập Manager → sidebar "Invoice" (bước 1). (Thử vào bằng role khác → AuthFilter chặn 403/redirect login — BR-03, PRE-1.)</li>
+<li>Trang hiện 2 thẻ KPI: <b>Tổng chưa thanh toán</b> và <b>Tổng chờ hoàn tiền</b> + bảng hóa đơn: mã, khách (kèm số phòng), ngày tạo, tổng tiền, trạng thái badge (bước 2–3). Danh sách mặc định <b>mới nhất trước</b> (BR-44).</li>
+<li>Demo tìm kiếm: gõ tên khách / số phòng / mã HĐ (vd "36") → danh sách lọc; đổi dropdown trạng thái → lọc theo status; hai bộ lọc kết hợp được với nhau và KPI <b>không đổi</b> (KPI tính toàn hệ thống) (bước 4, AF-2).</li>
+<li>Phân trang: 8 dòng/trang, bấm số trang / mũi tên — bộ lọc được giữ trên URL.</li>
+<li>Bấm nút mắt (Details) của một hóa đơn → sang trang chi tiết (bước 5–6 → UC 2.6.11).</li>
+</ol>
+<h4>Alternative / Exception flows</h4>
+<table>
+<tr><th>Flow</th><th>Cách kích hoạt</th><th>Kết quả</th></tr>
+<tr><td>AF-1 không có hóa đơn</td><td>DB trống (hoặc filter status không ai có)</td><td>Placeholder "không có hóa đơn".</td></tr>
+<tr><td>AF-2 search không khớp</td><td>Gõ từ khóa vô nghĩa</td><td>Placeholder "no matching invoice", KPI giữ nguyên.</td></tr>
+<tr><td>E1 id không hợp lệ</td><td>Gõ tay <code>/manager/invoices?id=abc</code> hoặc <code>?id=999999</code></td><td>Redirect êm về danh sách (không lỗi 500).</td></tr>
+</table>
+
+<h3>B. Giải thích code</h3>
+<h4>Đường đi dữ liệu</h4>
+<ol>
+<li><code>doGet</code> không có <code>id</code> → nhánh danh sách: đọc <code>q</code> (keyword), <code>status</code> (mặc định all), <code>page</code>; pageSize=8; <code>countInvoices</code> để tính tổng trang (clamp page) rồi <code>getInvoices(keyword, status, offset, 8)</code>.</li>
+<li>SQL nền tảng — <code>BASE_SELECT</code> (InvoiceDAO.java:42): mỗi dòng hóa đơn kèm 4 <b>cột dẫn xuất bằng subquery</b>:
+<pre>total_amount          = SUM(InvoiceItem.amount)                                  -- BR-45
+deposit_amount        = SUM(InvoiceItem.amount WHERE item_type='Room') × 0.3     -- BR-47
+refunded_amount       = SUM(Refund.amount WHERE status='Done')
+pending_refund_amount = SUM(Refund.amount WHERE status='Pending')</pre>
+Tổng tiền không lưu cứng trong bảng Invoice mà luôn tính từ line items → thêm phụ phí là tổng tự đúng (BR-45).</li>
+<li>Bộ lọc <code>buildWhere</code>: keyword LIKE trên <code>customer_name</code>, <code>room_number</code>; riêng mã hóa đơn thì bóc chữ số từ keyword (bỏ số 0 đầu, vd "HD-0036" → "36") rồi LIKE trên <code>CAST(invoice_id AS NVARCHAR)</code> — nhờ đó gõ "HD-0036" hay "36" đều tìm ra; status ≠ all → <code>AND i.status=?</code>. Sắp xếp <code>ORDER BY created_at DESC</code> + <code>OFFSET ? FETCH NEXT ?</code> = phân trang server-side (BR-44).</li>
+<li>2 KPI — <code>sumTotalByStatus</code>: <code>SELECT SUM(ii.amount) FROM Invoice JOIN InvoiceItem WHERE i.status=?</code> với 'Pending' (Total Unpaid) và 'Refunding' (Total Pending Refund) — đúng định nghĩa <b>BR-46</b>.</li>
+</ol>
+<p>Màn này không có form submit; mọi filter là GET query string (bookmark/refresh giữ nguyên trạng thái).</p>
+
+<!-- ============================================================ -->
+<h2>7. MÀN CHI TIẾT HÓA ĐƠN — Review Invoice Detail (UC 2.6.11)</h2>
+<p><b>Actor:</b> Hotel Manager. <b>URL:</b> GET <code>/manager/invoices?id=X</code>; POST <code>/manager/invoices?action=surcharge|refund|confirmRefunds</code>.<br>
+<b>File liên quan:</b> <span class="path">controller/manager/ManagerInvoiceController.java (doPost dòng 92) · service/InvoiceService.java (addSurcharge dòng 66, addPendingRefund dòng 78) · dal/InvoiceDAO.java (addSurcharge dòng 236, addPendingRefund dòng 262, confirmRefunds dòng 298) · entity/Invoice.java (getNetAmount dòng 63, getRefundableAmount dòng 74) · views/manager/invoice-detail.jsp</span></p>
+
+<h3>A. Kịch bản demo</h3>
+<h4>Data chuẩn bị</h4>
+<p>1 hóa đơn Pending có dòng Room + Service (mục 4/6); 1 hóa đơn <b>Paid</b> để demo E1.</p>
+<h4>Luồng chính (khớp spec bước 1–6)</h4>
+<ol class="step">
+<li>Từ danh sách bấm Details (bước 1) → trang chi tiết: breadcrumb, badge trạng thái góc phải, thông tin khách/phòng/ngày tạo, bảng line items nhóm theo TYPE (Room → Service → Surcharge — do <code>ORDER BY CASE item_type</code>), khối tài chính: <b>Tổng cộng, Cọc đã trừ, Đã hoàn, Thực thu</b>, badge cam "Chờ hoàn", bảng chờ hoàn + lịch sử hoàn (bước 2–3).</li>
+<li><b>Add Surcharge</b> (AF-2): nhập "Late check-out", SL 1, đơn giá 200000 → "Add to invoice" → trang reload, xuất hiện dòng Surcharge, Tổng cộng + Thực thu tự tăng (BR-45).</li>
+<li><b>Add Refund Request</b> (AF-3): nhập số tiền ≤ mức tối đa hiển thị + lý do → hóa đơn chuyển badge <b>Refunding</b>, khoản hiện trong "Chờ hoàn", KPI "Tổng chờ hoàn tiền" ngoài danh sách tăng theo (BR-50).</li>
+<li><b>Confirm Refund</b> (AF-4): demo cả 3 kiểu — xác nhận 1 dòng, tick chọn nhiều + "Approve Selected", Select All; khi hết khoản chờ → hóa đơn tự quay về <b>Pending</b>, các khoản chuyển xuống Lịch sử hoàn tiền kèm thời điểm (BR-50).</li>
+</ol>
+<h4>Exception flows (E1 — hành động không hợp lệ)</h4>
+<table>
+<tr><th>Case</th><th>Cách kích hoạt</th><th>Kết quả</th></tr>
+<tr><td>Phụ phí đơn giá ≤ 1</td><td>Nhập đơn giá 1 (bypass min của input nếu có bằng DevTools)</td><td>Service trả false → không thêm dòng, trang reload không đổi.</td></tr>
+<tr><td>Hoàn vượt mức</td><td>Nhập amount &gt; "tối đa" hiển thị</td><td>BE chặn (<code>amount &gt; refundableAmount</code>) → không tạo khoản hoàn (BR-19/49).</td></tr>
+<tr><td>Hóa đơn đã Paid</td><td>Mở hóa đơn Paid</td><td>Form thêm phụ phí / hoàn bị ẩn hoặc submit bị BE từ chối (BR-48).</td></tr>
+<tr><td>AF-1 id sai</td><td><code>?id=999999</code></td><td>Redirect về danh sách.</td></tr>
+</table>
+
+<h3>B. Giải thích code</h3>
+<h4>Các con số tài chính lấy/tính thế nào</h4>
+<table>
+<tr><th>Hiển thị</th><th>Nguồn</th><th>Công thức / SQL</th><th>BR</th></tr>
+<tr><td>Tổng cộng</td><td>BASE_SELECT subquery</td><td>SUM(tất cả InvoiceItem.amount); mỗi item <code>amount = quantity × unit_price</code> (được tính lúc INSERT)</td><td>BR-45</td></tr>
+<tr><td>Cọc đã trừ</td><td>BASE_SELECT subquery</td><td>30% × SUM(items loại Room)</td><td>BR-47</td></tr>
+<tr><td>Đã hoàn / Chờ hoàn</td><td>BASE_SELECT subquery</td><td>SUM(Refund.amount) theo status Done / Pending</td><td>BR-50</td></tr>
+<tr><td>Thực thu (Actual Collection)</td><td>Entity <code>Invoice.getNetAmount()</code></td><td><code>max(0, Tổng − Cọc − Đã hoàn)</code> — kẹp về 0 để không âm</td><td>BR-47</td></tr>
+<tr><td>Mức hoàn tối đa</td><td>Entity <code>getRefundableAmount()</code></td><td><code>max(0, Tổng − Cọc − Đã hoàn − Đang chờ hoàn)</code> — trừ cả khoản đang chờ để tổng hoàn không bao giờ vượt thực thu</td><td>BR-19, BR-49</td></tr>
+</table>
+<h4>3 form submit của trang</h4>
+<table>
+<tr><th>Form</th><th>Field gửi đi</th><th>BE xử lý</th><th>BR</th></tr>
+<tr><td>Add Surcharge<br>(POST action=surcharge)</td><td>invoiceId, description, quantity, unitPrice</td><td><code>InvoiceService.addSurcharge</code>: description bắt buộc; qty&gt;0; unitPrice&gt;1; hóa đơn tồn tại + <b>khác Paid</b> → <code>INSERT InvoiceItem(item_type='Surcharge', amount=qty×price)</code> + touch <code>updated_at</code>. Tổng tự đúng nhờ BR-45.</td><td>BR-48, BR-49, BR-14 (kèm lý do, chỉ manager)</td></tr>
+<tr><td>Add Refund Item<br>(POST action=refund)</td><td>invoiceId, amount, reason</td><td><code>addPendingRefund</code>: amount&gt;1; khác Paid; amount ≤ refundable → transaction: <code>INSERT Refund(status='Pending')</code> + <code>UPDATE Invoice SET status='Refunding'</code>.</td><td>BR-14, BR-19, BR-48–50</td></tr>
+<tr><td>Confirm Refund(s)<br>(POST action=confirmRefunds)</td><td>invoiceId, refundIds (CSV "3,5,8" từ checkbox)</td><td><code>confirmRefunds</code> — 1 transaction: <code>UPDATE Refund SET status='Done', confirmed_at=SYSDATETIME() WHERE status='Pending' AND refund_id IN (...)</code>; đếm lại khoản Pending còn lại; = 0 → <code>UPDATE Invoice SET status='Pending'</code>; lỗi → ROLLBACK toàn bộ ("processed atomically").</td><td>BR-50</td></tr>
+</table>
+<p>Sau mỗi POST controller redirect lại <code>?id=X</code> (PRG) → trang luôn hiển thị số liệu mới nhất từ DB. Validate của màn này chủ yếu ở <b>BE</b> (service), FE chỉ có input type=number + hiển thị mức tối đa — nên demo bypass bằng DevTools để chứng minh BE vẫn chặn.</p>
+
+<!-- ============================================================ -->
+<h2>8. MANAGER DASHBOARD — View Manager Dashboard (UC 2.6.12)</h2>
+<p><b>Actor:</b> Hotel Manager. <b>URL:</b> GET <code>/manager/dashboard</code> (tab Overview).<br>
+<b>File liên quan:</b> <span class="path">controller/manager/ManagerDashboardController.java · service/DashboardService.java · dal/DashboardDAO.java · entity/DashboardStats.java · views/dashboard/manager.jsp (Chart.js 4.4.1)</span></p>
+
+<h3>A. Kịch bản demo</h3>
+<h4>Data chuẩn bị</h4>
+<pre>-- Booking rải nhiều tháng, đủ trạng thái, để mọi biểu đồ có dữ liệu:
+--  • 5-10 đơn Confirmed/CheckedIn/CheckedOut có check_in/check_out trong THÁNG NÀY (KPI kỳ mặc định)
+--  • 1 đơn "vắt kỳ" (vd check-in 28 tháng trước → check-out ngày 3 tháng này) để demo PRORATION
+--  • 2-3 đơn Cancelled/Rejected tạo trong tháng (tỷ lệ hủy) — có note lý do hủy
+--  • Đơn thuộc ≥ 2 loại phòng khác nhau (biểu đồ theo loại phòng)
+--  • Hóa đơn có item Room + Service + Surcharge trong 90 ngày (biểu đồ cơ cấu)
+--  • Vài BookingServiceRequest status='Completed' (bảng top dịch vụ)
+--  • &gt;20 đơn doanh thu trong kỳ nếu muốn demo phân trang danh sách chi tiết (20 dòng/trang)</pre>
+<h4>Luồng chính (khớp spec bước 1–7)</h4>
+<ol class="step">
+<li>Đăng nhập Manager → Overview (bước 1). Kỳ KPI mặc định = <b>tháng hiện tại</b> (label hiện trên từng thẻ); biểu đồ 1–2 mặc định 30 ngày, biểu đồ 3–4 mặc định 90 ngày (bước 2 — BR-52).</li>
+<li>Đọc 5 KPI: Tổng doanh thu (kèm số đơn được tính), RevPAR, ADR, Công suất TB, Tỷ lệ hủy (kèm số đơn hủy/tổng đơn).</li>
+<li>Đổi kỳ báo cáo: By month → chọn tháng trước → Apply; thử By quarter / By year / Custom (bước 3–4).</li>
+<li>Đổi khoảng ngày riêng của MỘT biểu đồ (From–To ở header) → chỉ biểu đồ đó vẽ lại, KPI và biểu đồ khác giữ nguyên; kéo khoảng &gt; 92 ngày để thấy chip granularity chuyển "Theo ngày" → "Theo tháng" (bước 5–6).</li>
+<li>Bấm thẻ <b>Tổng doanh thu</b> → panel danh sách đơn được tính doanh thu (mã, khách, ngày ở, tiền, trạng thái, ngày tạo), 20 dòng/trang với First/Prev/Next/Last (bước 7, AF-3); bấm thẻ <b>Tỷ lệ hủy</b> → danh sách đơn hủy kèm <b>note</b> lý do; X để đóng.</li>
+</ol>
+<h4>Alternative / Exception flows</h4>
+<table>
+<tr><th>Flow</th><th>Cách kích hoạt</th><th>Kết quả</th></tr>
+<tr><td>AF-1 From &gt; To</td><td>Custom: From 2026-07-20, To 2026-07-01</td><td>Hệ thống tự hoán đổi 2 ngày rồi chạy tiếp (không lỗi) — BR-52.</td></tr>
+<tr><td>AF-2 kỳ không có dữ liệu</td><td>Chọn năm 2020</td><td>KPI = 0, biểu đồ hiện chú thích trống.</td></tr>
+<tr><td>E1 tham số rác</td><td>Sửa URL <code>?kpMode=xxx&amp;c1From=abc&amp;page=-5</code></td><td>Mọi giá trị sai rơi về mặc định (tháng hiện tại / 30 ngày / trang 1) — không lỗi 500.</td></tr>
+<tr><td>Read-only</td><td>—</td><td>Không có nút ghi dữ liệu nào trên trang — BR-43.</td></tr>
+</table>
+
+<h3>B. Giải thích code</h3>
+<h4>Đường đi dữ liệu</h4>
+<ol>
+<li><code>ManagerDashboardController.loadOverview</code>: <code>resolvePeriod(request,"kp")</code> phân giải kỳ KPI (month/quarter/year/custom — validate + swap ngày ngược, BR-52); <code>resolveRange</code> cho 4 tiền tố <code>c1..c4</code>; whitelist <code>view ∈ {revenue, cancelled}</code>; gom vào <code>DashboardQuery</code> → <code>DashboardService.getStats(q)</code>.</li>
+<li>Nguồn số liệu chính — <code>DashboardDAO.getStaysOverlapping(from,to)</code>:
+<pre>SELECT b.check_in_date, b.check_out_date, b.room_quantity, b.total_amount
+FROM dbo.Booking b
+WHERE b.status IN (N'Confirmed',N'CheckedIn',N'CheckedOut')   -- BR-51: chỉ đơn ghi nhận
+  AND b.check_in_date &lt;= ? AND b.check_out_date &gt; ?           -- kỳ lưu trú GIAO với khoảng lọc</pre></li>
+<li><code>aggregateDaily</code> (DashboardService.java:150) — trái tim của <b>proration BR-51</b>: mỗi đơn có <code>perNight = total_amount / số đêm</code>; duyệt từng ngày giao giữa [check-in, check-out) và kỳ lọc: cộng <code>perNight</code> vào doanh thu ngày đó, cộng <code>room_quantity</code> vào số phòng chiếm ngày đó. Nhờ vậy đơn "vắt kỳ" chỉ đóng góp phần đêm nằm trong kỳ — demo bằng đơn vắt kỳ ở data chuẩn bị.</li>
+<li>Từ aggregate suy ra KPI (DashboardService.java:80–92) — xem bảng C.</li>
+<li>Chuỗi biểu đồ: <code>bucketize</code> gom theo ngày/tháng/quý tự động (≤92 ngày → ngày; ≤~3 năm → tháng; hơn → quý); nhóm trống điền 0; công suất lấy <b>trung bình</b> nhóm, doanh thu <b>cộng dồn</b> nhóm. Biểu đồ loại phòng prorate ngay trong SQL (<code>getRevenueByRoomType</code> dùng DATEDIFF phần giao / tổng đêm). Cơ cấu doanh thu (<code>getInvoiceRevenueMix</code>): SUM InvoiceItem.amount GROUP BY item_type của hóa đơn <b>không Cancelled</b> tạo trong khoảng (BR-80). Top dịch vụ (<code>getTopServices</code>): <code>SUM(quantity)</code> và <code>SUM(quantity × giá hiện hành)</code> của BookingServiceRequest <b>Completed</b> (BR-80).</li>
+<li>Danh sách chi tiết: <code>buildDetail</code> phân trang 20 dòng (clamp page), query <code>getRevenueBookingsPage</code> / <code>getCancelledBookingsPage</code> với OFFSET/FETCH — render hoàn toàn ở backend, JSP chỉ lặp (spec bước 7). Không có form POST — mọi filter submit dạng GET, controller dựng lại <code>baseQuery</code> đã chuẩn hóa (URL-encode từ giá trị đã validate) để gắn vào link thẻ KPI/phân trang, tránh phản chiếu tham số thô của người dùng.</li>
+</ol>
+
+<h3>C. Ý nghĩa phân tích từng KPI / biểu đồ (cho Hotel Manager)</h3>
+<table>
+<tr><th style="width:16%">Thành phần</th><th style="width:34%">Tính toán (code)</th><th style="width:10%">BR</th><th>Tác dụng phân tích</th></tr>
+<tr><td>Tổng doanh thu</td><td>Σ perNight của các đêm thuộc kỳ (proration)</td><td>BR-51</td><td>Doanh thu "thuộc về" đúng kỳ, không bị dồn vào ngày tạo đơn → so sánh tháng/quý công bằng; footer cho biết bao nhiêu đơn đóng góp; click để đối chiếu từng đơn (verification).</td></tr>
+<tr><td>RevPAR</td><td><code>doanh thu kỳ / (tổng phòng × số ngày kỳ)</code></td><td>BR-51</td><td>Chỉ số hiệu suất tổng hợp GIÁ × LẤP ĐẦY trên mỗi phòng sẵn có — chuẩn ngành để so với đối thủ/kỳ trước; thấp = hoặc giá thấp hoặc trống nhiều.</td></tr>
+<tr><td>ADR</td><td><code>doanh thu kỳ / số phòng-đêm đã bán</code></td><td>BR-51</td><td>Giá bán bình quân mỗi đêm ĐÃ bán — tách yếu tố giá khỏi yếu tố sản lượng; ADR cao + RevPAR thấp → bán giá tốt nhưng ít khách.</td></tr>
+<tr><td>Công suất TB</td><td>Trung bình của (phòng chiếm/ tổng phòng, cap 100%) từng ngày</td><td>BR-53</td><td>Mức lấp đầy vận hành; cap 100% tránh méo số khi overbooking dữ liệu.</td></tr>
+<tr><td>Tỷ lệ hủy</td><td><code>đơn Cancelled/Rejected tạo trong kỳ ÷ tổng đơn tạo trong kỳ × 100</code></td><td>BR-79</td><td>Sức khỏe phễu đặt phòng; tăng đột biến → xem lại chính sách cọc/giá; click xem từng đơn kèm <b>note lý do hủy</b> để tìm nguyên nhân.</td></tr>
+<tr><td>Doanh thu theo thời gian (bar)</td><td>revenueByDay bucketize (cộng dồn nhóm)</td><td>BR-51/52</td><td>Nhận diện mùa vụ, ngày đỉnh/đáy để điều giá và phân ca.</td></tr>
+<tr><td>Công suất theo thời gian (line 0-100%)</td><td>occupancyByDay bucketize (trung bình nhóm)</td><td>BR-53</td><td>Phát hiện ngày trống chuỗi (chạy khuyến mãi) và ngày kín (tăng giá).</td></tr>
+<tr><td>Doanh thu theo loại phòng (bar ngang)</td><td>SQL prorate theo phần đêm trong khoảng, ORDER BY DESC</td><td>BR-51</td><td>Loại phòng nào "gánh" doanh thu → quyết định đầu tư/nâng cấp, điều chỉnh giá loại yếu.</td></tr>
+<tr><td>Cơ cấu doanh thu Room/Service/Surcharge</td><td>SUM InvoiceItem theo item_type, hóa đơn không hủy</td><td>BR-80</td><td>Tỷ trọng thu ngoài tiền phòng (ancillary) — service thấp → cơ hội bán thêm dịch vụ.</td></tr>
+<tr><td>Top 5 dịch vụ</td><td>SL hoàn thành × đơn giá hiện hành, TOP 5</td><td>BR-80</td><td>Dịch vụ nào đáng nhân rộng / đưa vào combo.</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>9. MÀN REQUESTS &amp; STAFF (Manager) — Monitor Room Issue Requests (UC 2.6.13)</h2>
+<p><b>Actor:</b> Hotel Manager; secondary: Housekeeping/Customer. <b>URL:</b> GET/POST <code>/manager/requests</code>.<br>
+<b>File liên quan:</b> <span class="path">controller/manager/ManagerRequestController.java · service/RequestManagementService.java · dal/CustomerRequestDAO.java (assignRequest dòng 416, updateStatus dòng 439) · dal/StaffDAO.java · views/manager/requests.jsp</span></p>
+
+<h3>A. Kịch bản demo</h3>
+<h4>Data chuẩn bị</h4>
+<pre>-- Yêu cầu bảo trì của khách (booking_id NULL = maintenance; do khách tạo từ màn Customer Maintenance):
+INSERT INTO dbo.CustomerRequest (room_id, booking_id, title, description, priority, status, created_at)
+VALUES (&lt;roomId101&gt;, NULL, N'Điều hòa không mát', N'Phòng 101 điều hòa kêu to', N'High',   N'Pending', SYSDATETIME()),
+       (&lt;roomId102&gt;, NULL, N'Vòi sen rò nước',    N'',                          N'Medium', N'Pending', SYSDATETIME()),
+       (&lt;roomId103&gt;, NULL, N'Bóng đèn cháy',      N'',                          N'Urgent', N'Pending', SYSDATETIME());
+-- Nhân viên housekeeping đủ 3 work_status để demo:
+UPDATE dbo.Account SET work_status = N'Active'  WHERE email = 'hk1@hotel.com';
+UPDATE dbo.Account SET work_status = N'OnBreak' WHERE email = 'hk2@hotel.com';
+UPDATE dbo.Account SET work_status = N'Offline' WHERE email = 'hk3@hotel.com';</pre>
+<h4>Luồng chính (khớp spec bước 1–6)</h4>
+<ol class="step">
+<li>Manager → sidebar "Requests &amp; Staff" (bước 1).</li>
+<li>Trang hiện 3 KPI: <b>Yêu cầu đang chờ</b> (Pending + InProgress), <b>Đang xử lý</b>, <b>Nhân viên đang trực</b>; bảng yêu cầu: tiêu đề + phòng/giờ tạo, độ ưu tiên, nhân viên phụ trách, trạng thái, nút thao tác; bên dưới là bảng theo dõi nhân viên (bước 2, khớp mô tả màn 3.8.2).</li>
+<li>Demo lọc: tìm theo số phòng, lọc theo Priority (Low→Urgent), theo Nhân viên (kể cả "unassigned"), theo Status — các filter kết hợp nhau, phân trang 6 dòng/trang (bước 3, BR-56).</li>
+<li><b>Gán việc</b> (bước 4, AF-2): bấm icon gán trên yêu cầu Pending → modal chỉ liệt kê nhân viên <b>Active</b> → chọn → yêu cầu tự chuyển <b>InProgress</b> + hiện tên nhân viên; KPI cập nhật (bước 5–6, BR-54).</li>
+<li><b>Hoàn thành</b>: bấm ✓ trên yêu cầu InProgress đã có người phụ trách → Completed (ghi thời điểm — dùng cho thống kê năng suất, BR-55); cột "Hoàn thành hôm nay" của nhân viên đó +1.</li>
+</ol>
+<h4>Alternative / Exception flows</h4>
+<table>
+<tr><th>Flow</th><th>Cách kích hoạt</th><th>Kết quả</th></tr>
+<tr><td>AF-1 filter không khớp</td><td>Tìm phòng "999"</td><td>Placeholder "không có yêu cầu khớp".</td></tr>
+<tr><td>AF-3 Complete khi chưa gán</td><td>Yêu cầu Pending chưa có nhân viên → nút ✓ bị disable; bypass bằng cách POST tay <code>action=status&amp;status=Completed</code></td><td>SQL guard <code>AND (?&lt;&gt;'Completed' OR assigned_staff_id IS NOT NULL)</code> → 0 row updated, trạng thái giữ Pending (validate cả FE lẫn BE — BR-55).</td></tr>
+<tr><td>Không còn staff Active</td><td>Set hết work_status = OnBreak/Offline rồi mở modal gán</td><td>Dropdown ẩn, hiện hint "không có nhân viên đang trực", nút gán bị disable (JS requests.jsp:442-446).</td></tr>
+<tr><td>Status không hợp lệ</td><td>POST tay <code>status=Hacked</code></td><td>Controller whitelist <code>isValidStatus</code> → bỏ qua.</td></tr>
+</table>
+<p class="warn"><b>Chưa khớp (#7):</b> BR-54 "chỉ gán cho staff Active" hiện chỉ được lọc ở <b>FE</b> (JSP c:if workStatus='Active'); BE <code>assignRequest</code> không kiểm tra lại work_status → POST tay vẫn gán được cho staff Offline.</p>
+
+<h3>B. Giải thích code</h3>
+<ol>
+<li>GET: controller đọc 4 filter + page (pageSize=6) → <code>CustomerRequestDAO.getMaintenanceRequests</code>: SELECT từ <code>CustomerRequest cr</code> JOIN <code>Room rm</code> (số phòng) LEFT JOIN <code>Account</code> (tên nhân viên) với điều kiện gốc <code>cr.booking_id IS NULL</code> — tách bạch: yêu cầu <b>bảo trì</b> (Manager giao Housekeeping) với yêu cầu <b>dịch vụ</b> (booking_id NOT NULL, do Receptionist xử lý); filter động LIKE số phòng / = priority / = status / assigned_staff (hoặc IS NULL khi "unassigned"); ORDER BY created_at DESC + OFFSET/FETCH (BR-56).</li>
+<li>3 KPI: <code>countMaintenanceByStatus('Pending')</code> — chú ý SQL đếm <code>status IN (Pending, InProgress)</code> cho thẻ "đang chờ xử lý" tổng; <code>countMaintenanceByStatus('InProgress')</code>; <code>countActiveStaff</code>: <code>COUNT Account JOIN Role WHERE role='Housekeeping' AND is_active=1 AND work_status=N'Active'</code> (BR-54/57).</li>
+<li><b>Form gán việc</b>: POST <code>action=assign, requestId, staffId</code> → <code>assignRequest</code>:
+<pre>UPDATE dbo.CustomerRequest
+SET assigned_staff_id=?, status = CASE WHEN status=N'Pending' THEN N'InProgress' ELSE status END,
+    updated_at=SYSDATETIME()
+WHERE request_id=? AND status IN (N'Pending', N'InProgress')</pre>
+CASE WHEN thực hiện đúng AF-2 spec (gán Pending → tự InProgress); guard WHERE chặn gán vào yêu cầu đã Completed/Cancelled.</li>
+<li><b>Form đổi trạng thái</b>: POST <code>action=status, requestId, status</code> → <code>updateStatus</code>: set <code>completed_at = SYSDATETIME()</code> khi Completed (nếu khác thì NULL) — mốc thời gian này là đầu vào cho thống kê năng suất ở màn Track Staff Work (BR-55/57); guard "chưa gán thì không cho Completed" nằm ngay trong WHERE.</li>
+<li>Sau POST luôn redirect GET <code>/manager/requests</code> (PRG) để KPI + bảng phản ánh trạng thái mới.</li>
+</ol>
+<h3>C. Ý nghĩa phân tích</h3>
+<table>
+<tr><th>Thành phần</th><th>Tính toán</th><th>BR</th><th>Tác dụng với Manager</th></tr>
+<tr><td>KPI Yêu cầu đang chờ</td><td>COUNT maintenance Pending+InProgress</td><td>BR-56</td><td>Khối lượng tồn đọng — cao bất thường = thiếu người hoặc sự cố hàng loạt.</td></tr>
+<tr><td>KPI Đang xử lý</td><td>COUNT InProgress</td><td>BR-54</td><td>Lượng việc đang chạy; so với "đang trực" để cân bằng tải.</td></tr>
+<tr><td>KPI Nhân viên đang trực</td><td>COUNT Housekeeping work_status=Active</td><td>BR-54/57</td><td>Năng lực xử lý tức thời — quyết định có gán thêm được không.</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>10. MÀN CHI TIẾT NHÂN VIÊN — Track Staff Work (UC 2.6.14)</h2>
+<p><b>Actor:</b> Hotel Manager. <b>URL:</b> GET <code>/manager/staff?id=X&amp;page=N</code>.<br>
+<b>File liên quan:</b> <span class="path">controller/manager/ManagerStaffController.java · dal/StaffDAO.java (getHousekeepingStaff dòng 41, getStaffById dòng 82) · dal/CustomerRequestDAO.java (getRequestsByStaff/getInProgressByStaff) · views/manager/staff-detail.jsp</span></p>
+
+<h3>A. Kịch bản demo</h3>
+<h4>Data chuẩn bị</h4>
+<p>Dùng data mục 9: gán vài yêu cầu cho hk1, hoàn thành 1-2 cái hôm nay + để lại 1 cái InProgress; tạo ≥ 6 yêu cầu cho 1 nhân viên nếu muốn demo phân trang (5 dòng/trang). Backdate để demo "trong tháng":</p>
+<pre>UPDATE dbo.CustomerRequest SET completed_at = DATEADD(DAY,-3,SYSDATETIME()) WHERE request_id=&lt;id&gt;; -- vẫn trong tháng, không tính "hôm nay"</pre>
+<h4>Luồng chính (khớp spec bước 1–6)</h4>
+<ol class="step">
+<li>Bảng "Theo dõi nhân viên" ở màn Requests hiển thị mỗi nhân viên: tên/email, badge work status (Đang trực / Nghỉ giải lao / Offline), <b>việc đang làm</b>, <b>hoàn thành hôm nay</b>, <b>hoàn thành tháng này</b> (bước 2–3).</li>
+<li>Bấm 1 nhân viên → trang chi tiết: thẻ trạng thái + 3 counter, danh sách "Đang thực hiện", bảng lịch sử "Công việc đã nhận" 5 dòng/trang (bước 4–5).</li>
+<li>Quay lại màn 9 hoàn thành thêm 1 việc của nhân viên này → mở lại chi tiết → counter "hôm nay" +1 (chứng minh số liệu tính live từ DB).</li>
+</ol>
+<h4>Alternative / Exception flows</h4>
+<table>
+<tr><th>Flow</th><th>Cách kích hoạt</th><th>Kết quả</th></tr>
+<tr><td>AF-1 nhân viên chưa có việc</td><td>Mở nhân viên mới (hk3)</td><td>Counter = 0, bảng trống.</td></tr>
+<tr><td>AF-2 không có việc đang làm</td><td>Nhân viên chỉ có việc Completed</td><td>Khối "Đang thực hiện" hiện thông báo trống.</td></tr>
+<tr><td>AF-3 ≤ 5 việc</td><td>Nhân viên có 3 việc</td><td>Không hiện thanh phân trang.</td></tr>
+<tr><td>E id sai</td><td><code>/manager/staff?id=abc</code> hoặc id không tồn tại</td><td>Redirect êm về <code>/manager/requests</code>.</td></tr>
+</table>
+
+<h3>B. Giải thích code</h3>
+<p>Số liệu mỗi nhân viên do <b>3 subquery tương quan</b> trong <code>StaffDAO</code> tính trực tiếp lúc SELECT (không lưu bảng thống kê):</p>
+<pre>completed_today    = COUNT(CustomerRequest WHERE assigned_staff_id=a.account_id AND status='Completed'
+                            AND CAST(completed_at AS DATE) = CAST(GETDATE() AS DATE))
+completed_month    = COUNT(...  AND YEAR(completed_at)=YEAR(GETDATE()) AND MONTH(completed_at)=MONTH(GETDATE()))
+active_assignments = COUNT(...  AND status='InProgress')</pre>
+<p>— tất cả dựa trên <code>assigned_staff_id</code>, <code>status</code>, <code>completed_at</code> mà màn 9 đã ghi ⇒ đúng <b>BR-57</b> ("derived from request assignment, status and completion time"); danh sách chỉ gồm role Housekeeping và <code>is_active=1</code> (BR-57 "only active Housekeeping accounts"). Trang chi tiết dùng thêm <code>getInProgressByStaff</code> (mọi việc InProgress) và <code>getRequestsByStaff</code> (mọi việc đã nhận, ORDER BY created_at DESC, OFFSET/FETCH 5 dòng — BR-56). Màn này thuần đọc, không form submit.</p>
+<h3>C. Ý nghĩa phân tích</h3>
+<table>
+<tr><th>Thông tin</th><th>Tác dụng với Manager</th><th>BR</th></tr>
+<tr><td>Work status (Active/OnBreak/Offline)</td><td>Biết ai đang sẵn sàng nhận việc ngay — đầu vào cho quyết định gán ở màn 9.</td><td>BR-54</td></tr>
+<tr><td>Việc đang làm</td><td>Cân bằng tải: người 3 việc InProgress thì không dồn thêm.</td><td>BR-55/57</td></tr>
+<tr><td>Hoàn thành hôm nay / tháng</td><td>Năng suất ngắn hạn vs dài hạn — cơ sở đánh giá, khen thưởng; chênh lệch lớn giữa các nhân viên → xem lại phân công.</td><td>BR-57</td></tr>
+<tr><td>Lịch sử việc đã nhận</td><td>Truy vết một sự cố cụ thể: ai nhận, bao giờ xong.</td><td>BR-55</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>11. ADMIN SYSTEM DASHBOARD — View System Dashboard (UC 2.7.5)</h2>
+<p><b>Actor:</b> Admin. <b>URL:</b> GET <code>/admin/system-dashboard</code> (AuthFilter chặn role khác — E1).<br>
+<b>File liên quan:</b> <span class="path">controller/admin/AdminSystemDashboardController.java · service/AdminDashboardService.java · dal/AdminDashboardDAO.java · entity/SystemDashboardStats.java · views/dashboard/admin-system.jsp</span></p>
+
+<h3>A. Kịch bản demo</h3>
+<h4>Data chuẩn bị</h4>
+<pre>-- Tài khoản đủ role, vài tài khoản is_active=0 (thẻ Active/Locked)
+-- Booking rải 12 tháng gần nhất (biểu đồ xu hướng 365 ngày) và đủ trạng thái
+-- (Pending/Confirmed/CheckedIn/CheckedOut/Cancelled) cho biểu đồ trạng thái</pre>
+<h4>Luồng chính (khớp spec bước 1–6)</h4>
+<ol class="step">
+<li>Đăng nhập Admin → "System Dashboard" (bước 1). Thử truy cập bằng Manager → 403/redirect (bước 2 / E1, BR-03).</li>
+<li>Mặc định (bước 3): 2 thẻ <b>Tổng lượt đặt phòng</b> và <b>Tổng doanh thu</b> theo <b>tháng hiện tại</b> (label kỳ hiện trên thẻ); biểu đồ doanh thu + trạng thái = 30 ngày, xu hướng đặt phòng = 365 ngày, doanh thu theo loại phòng = 90 ngày.</li>
+<li>Đọc 4 thẻ KPI: Tổng tài khoản, Tài khoản hoạt động, Lượt đặt phòng (kỳ), Doanh thu (kỳ) (bước 4).</li>
+<li>AF-1: đổi kỳ của riêng thẻ "Tổng doanh thu" sang Quý → chỉ thẻ đó đổi số, thẻ đặt phòng và các biểu đồ giữ nguyên (mỗi thẻ có tiền tố lọc riêng bk/rv — <b>độc lập từng thẻ</b>).</li>
+<li>AF-2: đổi From–To của 1 biểu đồ → chỉ biểu đồ đó vẽ lại; kéo rộng &gt;92 ngày / &gt;3 năm để thấy nhãn granularity đổi Theo ngày → Theo tháng → Theo quý (bước 5).</li>
+<li>AF-3: bấm từng thẻ KPI → panel chi tiết dưới hàng thẻ: danh sách tài khoản (tất cả / đang hoạt động) hoặc danh sách booking trong kỳ / booking được tính doanh thu; phân trang 20 dòng; nút X đóng.</li>
+</ol>
+<h4>Exception flows</h4>
+<table>
+<tr><th>Flow</th><th>Cách kích hoạt</th><th>Kết quả</th></tr>
+<tr><td>E2 tham số sai</td><td><code>?bkMode=xxx&amp;c3From=2026-99-99&amp;page=0</code></td><td>Rơi về mặc định; From&gt;To tự hoán đổi; page clamp về hợp lệ.</td></tr>
+<tr><td>AF-4 kỳ không dữ liệu</td><td>Custom range năm 2019</td><td>KPI 0, panel chi tiết hiện "không có dữ liệu trong khoảng đã chọn".</td></tr>
+</table>
+
+<h3>B. Giải thích code</h3>
+<ol>
+<li>Controller giống pattern Manager Dashboard nhưng có <b>2 kỳ KPI độc lập</b>: <code>resolvePeriod("bk")</code> cho thẻ đặt phòng, <code>resolvePeriod("rv")</code> cho thẻ doanh thu; 4 khoảng biểu đồ <code>c1..c4</code> (mặc định 30/30/365/90 ngày); whitelist view ∈ {accounts, active, bookings, revenue}.</li>
+<li>KPI:
+<pre>Tổng/Active/Locked tài khoản: COUNT(Account) [WHERE is_active=1 / 0]  -- toàn hệ thống, không theo kỳ
+Lượt đặt phòng:  COUNT(Booking WHERE CAST(created_at AS DATE) BETWEEN ? AND ?)         -- theo NGÀY TẠO đơn
+Tổng doanh thu:  SUM(total_amount) WHERE status IN (Confirmed,CheckedIn,CheckedOut)
+                 AND created_at trong kỳ</pre>
+Lưu ý phân biệt với Manager Dashboard: Admin đo theo <b>ngày tạo đơn, không proration</b> — đúng câu chữ spec 2.7.5 bước 4 ("bookings/revenue … created within the card's period"); còn BR-51 proration chỉ áp cho báo cáo của Manager.</li>
+<li>Chuỗi thời gian được GROUP BY ngay trong SQL theo granularity (ngày: <code>CAST(created_at AS DATE)</code>; tháng: YEAR+MONTH; quý: YEAR+DATEPART(QUARTER)) — service duyệt liên tục từ from→to và <b>điền 0 cho nhóm trống</b> để trục thời gian không đứt (spec bước 5).</li>
+<li>Biểu đồ trạng thái: COUNT theo <code>status</code> trong khoảng; doanh thu theo loại phòng: SUM total_amount GROUP BY type_name (không proration).</li>
+<li>Danh sách chi tiết render backend + phân trang 20 (<code>getAccountsPage</code>/<code>getBookingsPage</code>); <code>baseQuery</code> chuẩn hóa như mục 8. Trang hoàn toàn read-only (POST không có) — BR-43.</li>
+</ol>
+<h3>C. Ý nghĩa phân tích từng thành phần (cho Admin)</h3>
+<table>
+<tr><th style="width:20%">Thành phần</th><th style="width:35%">Tính toán</th><th style="width:8%">BR</th><th>Tác dụng phân tích</th></tr>
+<tr><td>Tổng tài khoản / Đang hoạt động</td><td>COUNT Account, COUNT is_active=1</td><td>BR-43</td><td>Quy mô người dùng hệ thống và tỷ lệ tài khoản bị khóa — sức khỏe quản trị người dùng; click để soát từng tài khoản (ai, role gì, tạo khi nào).</td></tr>
+<tr><td>Lượt đặt phòng (kỳ)</td><td>COUNT booking tạo trong kỳ (mọi trạng thái)</td><td>BR-43</td><td>Nhịp giao dịch của hệ thống theo kỳ chọn — đo mức độ sử dụng nền tảng, đối chiếu sau các đợt marketing.</td></tr>
+<tr><td>Tổng doanh thu (kỳ)</td><td>SUM total_amount đơn ghi nhận tạo trong kỳ</td><td>BR-43</td><td>Giá trị kinh doanh chảy qua hệ thống; kỳ lọc riêng cho phép so doanh thu quý này với lượt đặt tháng này mà không ảnh hưởng nhau.</td></tr>
+<tr><td>Doanh thu theo thời gian</td><td>SUM theo bucket ngày/tháng/quý</td><td>—</td><td>Xu hướng tăng trưởng, phát hiện ngày bất thường (spike/drop) để điều tra.</td></tr>
+<tr><td>Phân bổ trạng thái đặt phòng</td><td>COUNT theo status trong khoảng</td><td>—</td><td>Phễu vận hành: Pending tồn nhiều → lễ tân xử lý chậm; Cancelled cao → vấn đề nghiệp vụ.</td></tr>
+<tr><td>Xu hướng lượt đặt (365 ngày)</td><td>COUNT theo bucket (thường Theo tháng)</td><td>—</td><td>Nhìn mùa vụ cả năm — đầu vào cho kế hoạch hạ tầng/nhân sự.</td></tr>
+<tr><td>Doanh thu theo loại phòng (90 ngày)</td><td>SUM theo type_name</td><td>—</td><td>Cơ cấu sản phẩm ở góc nhìn toàn hệ thống, đối chiếu chéo với báo cáo của Manager.</td></tr>
+</table>
+
+<hr>
+<p style="color:#666;font-size:9.5pt">Tài liệu sinh tự động từ mã nguồn nhánh <b>QuyPQ</b> và SRS Document.docx ngày 22/07/2026. Các số dòng code tham chiếu theo trạng thái working tree hiện tại.</p>
+
+</body></html>
