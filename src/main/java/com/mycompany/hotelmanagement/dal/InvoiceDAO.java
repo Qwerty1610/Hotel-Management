@@ -24,9 +24,14 @@ import com.mycompany.hotelmanagement.entity.Refund;
  * buildWhere: xây dựng câu lệnh điều kiện để lọc các hóa đơn theo input của người dùng
  * getInvoices: lấy hóa đơn theo bộ lọc buildWhere
  * countInvoices: đếm tổng hóa đơn theo bộ lọc buildWhere để phân trang
- * 
- * Date: 02/6/2026
- * version 1.1
+ *
+ * Sửa 2 thẻ KPI vốn chỉ gom hóa đơn theo trạng thái nên báo sai số tiền:
+ * sumNetUnpaidTotal: thay sumTotalByStatus("Pending") — cộng Thực thu, tính cả hóa đơn Refunding
+ * sumPendingRefundTotal: thay sumTotalByStatus("Refunding") — lấy từ Refund(Pending)
+ * Gom các biểu thức tiền vào hằng số dùng chung để không lệch định nghĩa giữa các truy vấn.
+ *
+ * Date: 25/7/2026
+ * version 1.2
  * @author Pham Quoc Quy
  */
 public class InvoiceDAO {
@@ -39,12 +44,30 @@ public class InvoiceDAO {
         }
     }
 
+    /* Các khoản tiền dẫn xuất của hóa đơn. Mọi truy vấn dùng lại phải đặt alias
+       bảng Invoice là "i". Gom về một chỗ để danh sách, trang chi tiết và thẻ KPI
+       không thể lệch định nghĩa với nhau. */
+    private static final String TOTAL_EXPR =
+            "(SELECT ISNULL(SUM(ii.amount),0) FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id)";
+    private static final String DEPOSIT_EXPR =
+            "(SELECT ISNULL(SUM(pay.amount),0) FROM dbo.Payment pay WHERE pay.booking_id = i.booking_id AND pay.invoice_id IS NULL)";
+    private static final String REFUNDED_EXPR =
+            "(SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Done')";
+    private static final String PENDING_REFUND_EXPR =
+            "(SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Pending')";
+
+    /** Thực thu của một hóa đơn = Tổng − Cọc − Đã hoàn. Bản SQL của Invoice.netAmount(). */
+    private static final String NET_EXPR = TOTAL_EXPR + " - " + DEPOSIT_EXPR + " - " + REFUNDED_EXPR;
+
+    private static final String MONEY_COLUMNS =
+            "  " + TOTAL_EXPR + " AS total_amount, " +
+            "  " + DEPOSIT_EXPR + " AS deposit_amount, " +
+            "  " + REFUNDED_EXPR + " AS refunded_amount, " +
+            "  " + PENDING_REFUND_EXPR + " AS pending_refund_amount ";
+
     private static final String BASE_SELECT =
             "SELECT i.invoice_id, i.booking_id, i.customer_name, i.room_number, i.status, i.created_at, " +
-            "  (SELECT ISNULL(SUM(ii.amount),0) FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id) AS total_amount, " +
-            "  (SELECT ISNULL(SUM(pay.amount),0) FROM dbo.Payment pay WHERE pay.booking_id = i.booking_id AND pay.invoice_id IS NULL) AS deposit_amount, " +
-            "  (SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Done') AS refunded_amount, " +
-            "  (SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Pending') AS pending_refund_amount " +
+            MONEY_COLUMNS +
             "FROM dbo.Invoice i ";
 
     /** Toàn bộ hóa đơn, sắp xếp mặc định theo ngày tạo (mới nhất trước). */
@@ -213,18 +236,38 @@ public class InvoiceDAO {
         return list;
     }
 
-    /** Tổng tiền của các hóa đơn theo trạng thái (dùng cho KPI). */
-    public double sumTotalByStatus(String status) {
-        String sql = "SELECT ISNULL(SUM(ii.amount),0) " +
-                "FROM dbo.Invoice i JOIN dbo.InvoiceItem ii ON ii.invoice_id = i.invoice_id " +
-                "WHERE i.status = ?";
+    /**
+     * KPI: tổng số tiền khách còn phải trả.
+     * Cộng "Thực thu" (Tổng − Cọc − Đã hoàn) của các hóa đơn chưa tất toán. Hóa đơn
+     * đang chờ hoàn (Refunding) vẫn là công nợ nên được tính vào; riêng các khoản CHỜ
+     * hoàn thì chưa trừ vì manager có thể từ chối hoặc sửa lại số tiền.
+     * Kẹp về 0 ở TỪNG hóa đơn (giống Invoice.netAmount()) để một hóa đơn âm không
+     * ăn bớt công nợ của hóa đơn khác.
+     */
+    public double sumNetUnpaidTotal() {
+        return queryDouble(
+                "SELECT ISNULL(SUM(CASE WHEN t.net > 0 THEN t.net ELSE 0 END), 0) FROM (" +
+                "SELECT " + NET_EXPR + " AS net FROM dbo.Invoice i " +
+                "WHERE i.status IN (N'Pending', N'Refunding')) t");
+    }
+
+    /**
+     * KPI: tổng các khoản giảm trừ đang chờ manager duyệt.
+     * Lấy thẳng từ Refund(Pending) — đúng số tiền phải hoàn, không phải tổng hóa đơn.
+     * Không cần lọc theo Invoice.status vì addPendingRefund/confirmRefunds đã giữ bất biến
+     * "có khoản Pending" ⟺ "hóa đơn Refunding" trong cùng transaction.
+     */
+    public double sumPendingRefundTotal() {
+        return queryDouble("SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.status = N'Pending'");
+    }
+
+    /** Chạy truy vấn không tham số trả về một giá trị số duy nhất. */
+    private double queryDouble(String sql) {
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setString(1, status);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) return rs.getDouble(1);
-                }
+            try (PreparedStatement ps = conn.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getDouble(1);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -351,10 +394,7 @@ public class InvoiceDAO {
      */
     public Invoice getInvoiceByBookingId(int bookingId) {
         String sql = "SELECT TOP 1 i.invoice_id, i.booking_id, i.customer_name, i.room_number, i.status, i.created_at, "
-                + "  (SELECT ISNULL(SUM(ii.amount),0) FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id) AS total_amount, "
-                + "  (SELECT ISNULL(SUM(pay.amount),0) FROM dbo.Payment pay WHERE pay.booking_id = i.booking_id AND pay.invoice_id IS NULL) AS deposit_amount, "
-                + "  (SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Done') AS refunded_amount, "
-                + "  (SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Pending') AS pending_refund_amount "
+                + MONEY_COLUMNS
                 + "FROM dbo.Invoice i "
                 + "JOIN dbo.Booking b ON i.booking_id = b.booking_id OR i.booking_id = b.group_booking_id "
                 + "WHERE b.booking_id = ? "
