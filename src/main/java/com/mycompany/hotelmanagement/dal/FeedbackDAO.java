@@ -1,7 +1,5 @@
 package com.mycompany.hotelmanagement.dal;
 
-import com.mycompany.hotelmanagement.config.DBContext;
-import com.mycompany.hotelmanagement.entity.Feedback;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,6 +7,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.mycompany.hotelmanagement.config.DBContext;
+import com.mycompany.hotelmanagement.entity.Feedback;
 
 /**
  * Project: Hotel Management System
