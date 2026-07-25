@@ -42,7 +42,7 @@ public class InvoiceDAO {
     private static final String BASE_SELECT =
             "SELECT i.invoice_id, i.booking_id, i.customer_name, i.room_number, i.status, i.created_at, " +
             "  (SELECT ISNULL(SUM(ii.amount),0) FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id) AS total_amount, " +
-            "  (SELECT ISNULL(SUM(ii.amount),0) * 0.3 FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id AND ii.item_type = N'Room') AS deposit_amount, " +
+            "  (SELECT ISNULL(SUM(pay.amount),0) FROM dbo.Payment pay WHERE pay.booking_id = i.booking_id AND pay.invoice_id IS NULL) AS deposit_amount, " +
             "  (SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Done') AS refunded_amount, " +
             "  (SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Pending') AS pending_refund_amount " +
             "FROM dbo.Invoice i ";
@@ -352,7 +352,7 @@ public class InvoiceDAO {
     public Invoice getInvoiceByBookingId(int bookingId) {
         String sql = "SELECT TOP 1 i.invoice_id, i.booking_id, i.customer_name, i.room_number, i.status, i.created_at, "
                 + "  (SELECT ISNULL(SUM(ii.amount),0) FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id) AS total_amount, "
-                + "  (SELECT ISNULL(SUM(ii.amount),0) * 0.3 FROM dbo.InvoiceItem ii WHERE ii.invoice_id = i.invoice_id AND ii.item_type = N'Room') AS deposit_amount, "
+                + "  (SELECT ISNULL(SUM(pay.amount),0) FROM dbo.Payment pay WHERE pay.booking_id = i.booking_id AND pay.invoice_id IS NULL) AS deposit_amount, "
                 + "  (SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Done') AS refunded_amount, "
                 + "  (SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Pending') AS pending_refund_amount "
                 + "FROM dbo.Invoice i "
@@ -466,6 +466,57 @@ public class InvoiceDAO {
             e.printStackTrace();
         }
         return -1;
+    }
+
+    /**
+     * Đảm bảo hóa đơn có dòng phụ phí check-in (vd: vượt số người tiêu chuẩn).
+     *
+     * Idempotent theo (invoiceId + description): nếu đã có dòng Surcharge cùng mô tả
+     * thì KHÔNG chèn nữa. Nhờ vậy có thể gọi an toàn ở mỗi lần check-in, kể cả khi
+     * hóa đơn đã được tạo từ trước (lúc xác nhận booking / thanh toán cọc) — đây là
+     * lý do trước đây phụ phí không lọt vào hóa đơn: createInvoiceForBooking thấy
+     * hóa đơn đã tồn tại nên return sớm mà không ghi phụ phí.
+     *
+     * Phụ phí là NGUỒN SỰ THẬT duy nhất về tiền nằm ở InvoiceItem; CheckIn.extra_fee
+     * chỉ còn là bản ghi ngữ cảnh tại quầy.
+     *
+     * @param invoiceId   hóa đơn đích
+     * @param extraFee    số tiền phụ phí (bỏ qua nếu <= 0)
+     * @param description mô tả dòng phụ phí (dùng làm khóa chống trùng)
+     * @return true nếu vừa chèn mới
+     */
+    public boolean ensureCheckInSurcharge(int invoiceId, double extraFee, String description) {
+        if (invoiceId <= 0 || extraFee <= 0) return false;
+        String desc = (description != null && !description.trim().isEmpty())
+                ? description.trim() : "Phụ phí";
+        String existsSql = "SELECT 1 FROM dbo.InvoiceItem "
+                + "WHERE invoice_id = ? AND item_type = N'Surcharge' AND description = ?";
+        String insertSql = "INSERT INTO dbo.InvoiceItem "
+                + "(invoice_id, item_type, description, quantity, unit_price, amount) "
+                + "VALUES (?, N'Surcharge', ?, 1, ?, ?)";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(existsSql)) {
+                ps.setInt(1, invoiceId);
+                ps.setString(2, desc);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return false; // đã có -> không chèn trùng
+                }
+            }
+            try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
+                ps.setInt(1, invoiceId);
+                ps.setString(2, desc);
+                ps.setDouble(3, extraFee);
+                ps.setDouble(4, extraFee);
+                if (ps.executeUpdate() > 0) {
+                    touchInvoice(conn, invoiceId);
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     /**

@@ -203,8 +203,17 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
                     break;
                 }
 
-                new com.mycompany.hotelmanagement.dal.InvoiceDAO()
-                        .createInvoiceForBooking(b.getBookingId());
+                // Tạo hóa đơn nếu chưa có (thường đã tạo từ lúc xác nhận booking),
+                // rồi đảm bảo phụ phí check-in được ghi vào hóa đơn dưới dạng dòng
+                // Surcharge. ensureCheckInSurcharge idempotent nên với group booking
+                // (nhiều phòng cùng trỏ về 1 hóa đơn gốc) phụ phí chỉ được ghi 1 lần.
+                com.mycompany.hotelmanagement.dal.InvoiceDAO invoiceDAO
+                        = new com.mycompany.hotelmanagement.dal.InvoiceDAO();
+                int invoiceId = invoiceDAO.createInvoiceForBooking(b.getBookingId());
+                invoiceDAO.ensureCheckInSurcharge(
+                        invoiceId,
+                        extraFee.doubleValue(),
+                        "Phụ phí vượt số người tiêu chuẩn");
             }
 
             if (!success) {
