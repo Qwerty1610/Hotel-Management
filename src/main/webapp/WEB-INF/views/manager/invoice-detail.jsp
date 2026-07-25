@@ -96,7 +96,7 @@
                                     <span><fmt:formatNumber value="${invoice.totalAmount}" type="number" maxFractionDigits="0" /> đ</span>
                                 </div>
                                 <div class="total-row">
-                                    <span>Tiền cọc đã trả (30% tiền phòng)</span>
+                                    <span>Tiền cọc đã trả</span>
                                     <span style="color:#dc2626;">- <fmt:formatNumber value="${invoice.depositAmount}" type="number" maxFractionDigits="0" /> đ</span>
                                 </div>
                                 <div class="total-row">
