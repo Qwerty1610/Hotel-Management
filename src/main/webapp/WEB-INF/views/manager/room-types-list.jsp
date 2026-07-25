@@ -204,7 +204,9 @@
                     </div>
 
                     <div class="modal-form-group">
-                        <label>Hình ảnh loại phòng</label>
+                        <label>Hình ảnh loại phòng
+                            <span style="font-weight: normal; color: var(--text-muted); font-size: 11px;">(Tùy chọn)</span>
+                        </label>
 
                         <%-- Tab toggle buttons --%>
                         <div class="img-mode-tabs" style="display:flex; gap:8px; margin-bottom:10px;">
@@ -570,23 +572,6 @@
                 areaInput.value = numericArea + " m²";
             }
 
-            // Image validation: depends on which mode is active
-            if (currentImageMode === 'url') {
-                if (imageUrlVal === "") {
-                    e.preventDefault();
-                    imageUrlInput.setCustomValidity("Vui lòng nhập URL hình ảnh.");
-                    imageUrlInput.reportValidity();
-                    return;
-                }
-            } else {
-                // Upload mode: check a file has been selected
-                const fileInput = document.getElementById('modalRtImageFile');
-                if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-                    e.preventDefault();
-                    alert("Vui lòng chọn một tệp ảnh để tải lên.");
-                    return;
-                }
-            }
             
             // Save current page to sessionStorage to restore it after reload
             if (ManagerTable && ManagerTable.tables["roomTypesTable"]) {

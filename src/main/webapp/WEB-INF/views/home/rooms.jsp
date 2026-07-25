@@ -310,51 +310,53 @@
                 <c:when test="${not empty roomTypes}">
                     <div class="rooms-grid">
                         <c:forEach var="rt" items="${roomTypes}">
-                            <!-- Border highlight for Room Deluxe (typeId = 2) -->
-                            <div class="room-card">
-                                <div class="card-badges" style="display:flex; justify-content:space-between; align-items:center;">
-                                    <div class="badge-guests">
-                                        <i class="fa-solid fa-user-group"></i> ${rt.capacity} khách
-                                    </div>
-                                    <div class="badge-avail" style="font-size:12px; font-weight:700; color:#15803d; background:#dcfce7; padding:3px 10px; border-radius:12px;">
-                                        <i class="fa-solid fa-check"></i> Còn ${rt.availableCount} phòng
-                                    </div>
-                                </div>
-
-                                <div class="room-img-container">
-                                    <img src="${rt.imageUrl}" alt="${rt.typeName}" />
-                                </div>
-
-                                <div class="room-info">
-                                    <div class="room-category">
-                                        <i class="fa-regular fa-star"></i> LUXURY HOTEL
-                                    </div>
-                                    <h3 class="room-title">${rt.typeName}</h3>
-                                    <p class="room-desc">${rt.description}</p>
-                                    
-                                    <div class="room-amenities">
-                                        <c:forEach var="amenity" items="${rt.amenities}">
-                                            <span class="amenity-pill">
-                                                <i class="fa-solid fa-circle-check"></i> ${amenity}
-                                            </span>
-                                        </c:forEach>
+                            <c:if test="${rt.availableCount > 0}">
+                                <!-- Border highlight for Room Deluxe (typeId = 2) -->
+                                <div class="room-card">
+                                    <div class="card-badges" style="display:flex; justify-content:space-between; align-items:center;">
+                                        <div class="badge-guests">
+                                            <i class="fa-solid fa-user-group"></i> ${rt.capacity} khách
+                                        </div>
+                                        <div class="badge-avail" style="font-size:12px; font-weight:700; color:#15803d; background:#dcfce7; padding:3px 10px; border-radius:12px;">
+                                            <i class="fa-solid fa-check"></i> Còn ${rt.availableCount} phòng
+                                        </div>
                                     </div>
 
-                                    <div class="room-card-footer">
-                                        <div class="price-box">
-                                            <span class="current-price">
-                                                <fmt:formatNumber value="${rt.basePrice}" pattern="#,###" />đ 
-                                                <span class="price-unit">/ đêm</span>
-                                            </span>
+                                    <div class="room-img-container">
+                                        <img src="${rt.imageUrl}" alt="${rt.typeName}" />
+                                    </div>
+
+                                    <div class="room-info">
+                                        <div class="room-category">
+                                            <i class="fa-regular fa-star"></i> LUXURY HOTEL
+                                        </div>
+                                        <h3 class="room-title">${rt.typeName}</h3>
+                                        <p class="room-desc">${rt.description}</p>
+                                        
+                                        <div class="room-amenities">
+                                            <c:forEach var="amenity" items="${rt.amenities}">
+                                                <span class="amenity-pill">
+                                                    <i class="fa-solid fa-circle-check"></i> ${amenity}
+                                                </span>
+                                            </c:forEach>
                                         </div>
 
-                                        <a href="${pageContext.request.contextPath}/rooms/detail?id=${rt.typeId}&checkIn=${selectedCheckIn}&checkOut=${selectedCheckOut}" class="btn-detail">
-                                            Chi tiết <i class="fa-solid fa-arrow-right"></i>
-                                        </a>
-                                    </div>
-                                </div>
+                                        <div class="room-card-footer">
+                                            <div class="price-box">
+                                                <span class="current-price">
+                                                    <fmt:formatNumber value="${rt.basePrice}" pattern="#,###" />đ 
+                                                    <span class="price-unit">/ đêm</span>
+                                                </span>
+                                            </div>
 
-                            </div>
+                                            <a href="${pageContext.request.contextPath}/rooms/detail?id=${rt.typeId}&checkIn=${selectedCheckIn}&checkOut=${selectedCheckOut}" class="btn-detail">
+                                                Chi tiết <i class="fa-solid fa-arrow-right"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </c:if>
                         </c:forEach>
                     </div>
                 </c:when>
