@@ -881,7 +881,8 @@ public class MaintenanceRequestDAO {
     }
 
     public boolean resolveRequest(int requestId,
-            String resolutionNote) {
+            String resolutionNote,
+            int staffId) {
 
         String sql = """
         UPDATE MaintenanceRequest
@@ -891,6 +892,7 @@ public class MaintenanceRequestDAO {
             updated_at = SYSDATETIME(),
             completed_at = SYSDATETIME()
         WHERE request_id = ?
+          AND assigned_staff_id = ?
           AND status IN ('InProgress', 'Unresolvable')
         """;
 
@@ -899,6 +901,7 @@ public class MaintenanceRequestDAO {
 
             ps.setString(1, resolutionNote);
             ps.setInt(2, requestId);
+            ps.setInt(3, staffId);
 
             return ps.executeUpdate() > 0;
 
@@ -910,7 +913,8 @@ public class MaintenanceRequestDAO {
     }
 
     public boolean markUnresolvable(int requestId,
-            String resolutionNote) {
+            String resolutionNote,
+            int staffId) {
 
         String sql = """
         UPDATE MaintenanceRequest
@@ -919,6 +923,7 @@ public class MaintenanceRequestDAO {
             resolution_note = ?,
             updated_at = SYSDATETIME()
         WHERE request_id = ?
+          AND assigned_staff_id = ?
           AND status = 'InProgress'
         """;
 
@@ -927,6 +932,7 @@ public class MaintenanceRequestDAO {
 
             ps.setString(1, resolutionNote);
             ps.setInt(2, requestId);
+            ps.setInt(3, staffId);
 
             return ps.executeUpdate() > 0;
 

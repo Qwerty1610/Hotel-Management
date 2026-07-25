@@ -92,13 +92,13 @@ body.dashboard-body {
 .breadcrumb .current   { color: var(--text-navy-light); font-weight: 600; }
 .btn-logout {
     height: 38px; padding: 0 16px;
-    background: var(--danger-red); color: #fff;
-    border: none; border-radius: 8px; font-weight: 700;
+    background: #ffffff; color: #475569;
+    border: 1px solid var(--border-color); border-radius: 8px; font-weight: 600;
     font-size: 13px; cursor: pointer; text-decoration: none;
     display: inline-flex; align-items: center; gap: 8px;
-    transition: background .2s;
+    transition: all .2s ease;
 }
-.btn-logout:hover { background: #dc2626; }
+.btn-logout:hover { background: #f8fafc; border-color: #cbd5e1; color: #0f172a; }
 
 /* WORKSPACE */
 .workspace-content { padding: 32px 40px; flex: 1; }
@@ -1178,7 +1178,7 @@ ROOM STATUS COLORS
 .room-card .room-maintenance-dot{
     position:absolute;
     top:10px;
-    right:10px;
+    left:10px;
     width:8px;
     height:8px;
     border-radius:50%;
@@ -1321,6 +1321,72 @@ margin-bottom:0;
 
 .walkin-card-group .walkin-card + .walkin-card{
 border-top:1px solid var(--border-color);
+}
+
+/* =====================================================
+WALK-IN LAYOUT: FORM (trái) + TÓM TẮT DÍNH (phải)
+===================================================== */
+
+.walkin-layout{
+    display:grid;
+    grid-template-columns:1fr 360px;
+    gap:24px;
+    align-items:start;
+}
+
+.walkin-main{
+    min-width:0;
+}
+
+.walkin-sidebar{
+    position:sticky;
+    top:24px;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+}
+
+.walkin-notes-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:24px;
+}
+
+.walkin-notes-col{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+}
+
+.walkin-footer-sidebar{
+    flex-direction:column;
+    align-items:stretch;
+    gap:14px;
+    margin-top:0;
+}
+
+.walkin-footer-sidebar .privacy-note{
+    margin-right:0;
+    justify-content:center;
+    text-align:center;
+}
+
+.walkin-footer-sidebar .btn-booking-submit{
+    width:100%;
+    justify-content:center;
+}
+
+@media(max-width:992px){
+    .walkin-layout{
+        grid-template-columns:1fr;
+    }
+    .walkin-sidebar{
+        position:static;
+        top:auto;
+    }
+    .walkin-notes-grid{
+        grid-template-columns:1fr;
+    }
 }
 
 .walkin-section-header{
@@ -1555,10 +1621,26 @@ text-align:center;
 color:#64748b;
 font-size:14px;
 }
+/* Mỗi loại phòng đã chọn hiển thị thành 1 khối/bảng riêng biệt */
+.room-type-box{
+    border:1px solid #e2e8f0;
+    border-radius:14px;
+    padding:16px;
+    background:#f8fafc;
+}
+
+.room-type-box + .room-type-box{
+    margin-top:16px;
+}
+
 .room-group-title{
     display:flex;
     align-items:center;
     gap:10px;
+    margin:0 0 14px;
+    font-size:14px;
+    font-weight:700;
+    color:var(--text-navy);
 }
 
 .room-selection-message{
@@ -2169,6 +2251,22 @@ RESPONSIVE
 
     box-shadow:0 2px 8px rgba(59,130,246,.08);
     transition:.25s;
+}
+
+.walkin-search-account-inline{
+    max-width:340px;
+    flex-shrink:0;
+}
+
+.walkin-search-account-inline .walkin-input{
+    height:36px;
+    font-size:13px;
+}
+
+.walkin-search-account-inline .btn-search-account{
+    min-width:auto;
+    padding:0 14px;
+    font-size:13px;
 }
 
 .walkin-search-account:focus-within{

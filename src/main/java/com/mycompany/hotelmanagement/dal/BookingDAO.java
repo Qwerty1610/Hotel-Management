@@ -105,11 +105,19 @@ public class BookingDAO {
             params.add(statusFilter);
         }
 
-        // Filter by keyword (tên khách hoặc mã)
+        // Filter by keyword (tên khách, mã đặt phòng hoặc số phòng đã gán)
         if (keyword != null && !keyword.trim().isEmpty()) {
             String sanitizedKw = sanitizeLikeKeyword(keyword.trim());
             String kw = "%" + sanitizedKw + "%";
-            sql.append("AND (b.customer_name LIKE ? OR CAST(b.booking_id AS NVARCHAR) LIKE ?) ");
+            sql.append("AND (b.customer_name LIKE ? OR CAST(b.booking_id AS NVARCHAR) LIKE ? "
+                    + "OR EXISTS ("
+                    + "    SELECT 1 FROM dbo.RoomAssignment ra "
+                    + "    JOIN dbo.Room r2 ON ra.room_id = r2.room_id "
+                    + "    JOIN dbo.Booking sb2 ON ra.booking_id = sb2.booking_id "
+                    + "    WHERE (sb2.booking_id = b.booking_id OR sb2.group_booking_id = b.booking_id) "
+                    + "      AND r2.room_number LIKE ?"
+                    + ")) ");
+            params.add(kw);
             params.add(kw);
             params.add(kw);
         }

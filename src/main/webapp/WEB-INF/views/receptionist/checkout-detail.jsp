@@ -221,7 +221,7 @@
 
                     <li class="menu-item ${currentTab eq 'checkin' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin">
-                            <i class="fa-solid fa-key"></i> <span>Nhận phòng (Check-in)</span>
+                            <i class="fa-solid fa-key"></i> <span>Nhận phòng</span>
                         </a>
                     </li>
 

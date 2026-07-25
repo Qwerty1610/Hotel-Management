@@ -14,8 +14,11 @@ import jakarta.servlet.http.HttpSession;
 
 import com.mycompany.hotelmanagement.service.RoomTypeService;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
+import com.mycompany.hotelmanagement.service.RoomService;
+import com.mycompany.hotelmanagement.entity.RoomInfo;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -60,6 +63,17 @@ public class ReceptionistBookingProcessController extends HttpServlet {
             loadRooms(request, response);
             return;
         }
+
+        if ("roomStatus".equals(action)) {
+            if (session == null || session.getAttribute("user") == null
+                    || !"RECEPTIONIST".equals(session.getAttribute("role"))) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
+            loadRoomStatus(request, response);
+            return;
+        }
+
         if (session == null || session.getAttribute("user") == null
                 || !"RECEPTIONIST".equals(session.getAttribute("role"))) {
             response.sendRedirect(request.getContextPath() + "/staff/login?error=unauthorized");
@@ -530,6 +544,51 @@ public class ReceptionistBookingProcessController extends HttpServlet {
 
         } catch (Exception ex) {
             LOGGER.log(Level.SEVERE, "loadRooms error", ex);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().print("[]");
+        }
+    }
+
+    private void loadRoomStatus(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+
+        response.setContentType("application/json;charset=UTF-8");
+        response.setCharacterEncoding("UTF-8");
+
+        try {
+
+            LocalDate checkIn = LocalDate.parse(request.getParameter("checkInDate"));
+            LocalDate checkOut = LocalDate.parse(request.getParameter("checkOutDate"));
+
+            // Dùng cùng nguồn dữ liệu với Sơ đồ phòng (RoomService.getRoomsByDateRange)
+            // để có đủ các trạng thái Available/Occupied/Cleaning/Refilling/Maintenance/OutOfService.
+            List<RoomInfo> rooms = new RoomService().getRoomsByDateRange(checkIn, checkOut);
+
+            StringBuilder json = new StringBuilder();
+            json.append("[");
+
+            for (int i = 0; i < rooms.size(); i++) {
+
+                RoomInfo r = rooms.get(i);
+
+                json.append("{")
+                        .append("\"roomId\":").append(r.getRoomId()).append(",")
+                        .append("\"status\":\"").append(escapeJson(r.getDisplayStatus())).append("\"")
+                        .append("}");
+
+                if (i < rooms.size() - 1) {
+                    json.append(",");
+                }
+            }
+
+            json.append("]");
+
+            PrintWriter out = response.getWriter();
+            out.print(json.toString());
+            out.flush();
+
+        } catch (Exception ex) {
+            LOGGER.log(Level.SEVERE, "loadRoomStatus error", ex);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().print("[]");
         }

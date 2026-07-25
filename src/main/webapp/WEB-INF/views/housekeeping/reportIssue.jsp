@@ -92,6 +92,7 @@
                             <div>
                                 <div class="report-title">
                                     <h2>
+                                        <i class="fa-solid fa-triangle-exclamation" style="color:var(--brand-blue);margin-right:8px"></i>
                                         Báo cáo sự cố phòng
                                         <span id="validateMessage" class="issue-warning" style="display:none;"></span>
                                     </h2>
@@ -211,13 +212,9 @@
                                             </label>
                                             <textarea name="description"
                                                       rows="2"
+                                                      placeholder="Mô tả chi tiết sự cố..."
                                                       ></textarea>
                                         </div>
-                                        <button type="button"
-                                                class="remove-btn"
-                                                onclick="removeIssueRow(this)">
-                                            X
-                                        </button>
                                     </div>
                                 </div>
                                 <!-- GHI CHÚ -->
@@ -226,7 +223,8 @@
                                         Ghi chú
                                     </label>
                                     <textarea name="note"
-                                              rows="3"></textarea>
+                                              rows="3"
+                                              placeholder="Ghi chú thêm (nếu có)..."></textarea>
                                 </div>
                                 <div class="task-buttons">
                                     <button type="submit"
@@ -336,7 +334,8 @@
             <label>Mô tả</label>
 
             <textarea name="description"
-                      rows="2">
+                      rows="2"
+                      placeholder="Mô tả chi tiết sự cố...">
             </textarea>
         </div>
         <button type="button"

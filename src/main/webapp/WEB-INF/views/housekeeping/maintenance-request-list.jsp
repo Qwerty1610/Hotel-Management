@@ -166,7 +166,7 @@
             <main class="workspace-content">
                 <div class="maintenance-wrapper">
                     <div class="page-header">
-                        <h2>Yêu cầu bảo trì</h2>
+                        <h2><i class="fa-solid fa-screwdriver-wrench" style="color:var(--brand-blue);margin-right:8px"></i>Yêu cầu bảo trì</h2>
                         <p>Theo dõi và xử lý các yêu cầu bảo trì từ khách hàng.</p>
                     </div>
                     <div class="maintenance-filter">

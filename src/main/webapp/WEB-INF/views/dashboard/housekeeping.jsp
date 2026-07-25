@@ -80,7 +80,7 @@
                 <c:if test="${param.tab == null || param.tab == 'overview'}">
                     <div class="content-header-row">
                         <div>
-                            <h1>Tổng quan công việc</h1>
+                            <h1><i class="fa-solid fa-table-cells-large" style="color:var(--brand-blue);margin-right:8px"></i>Tổng quan công việc</h1>
                             <p>Danh sách yêu cầu khách hàng được phân công cho bạn.</p>
                         </div>
                     </div>
@@ -105,7 +105,7 @@
                     </div>
                     <!-- ===== CUSTOMER REQUEST TABLE ===== -->
                     <div class="customer-request-wrapper">
-                        <h2>Công việc được giao</h2>
+                        <h2><i class="fa-solid fa-list-check" style="color:var(--brand-blue);margin-right:8px"></i>Công việc được giao</h2>
                         <table class="customer-request-table">
                             <thead>
                                 <tr>
@@ -233,7 +233,7 @@
 
                         <button class="btn-filter" data-status="Available"
                                 onclick="applyStatusFilter('Available', event)">
-                            TRỐNG
+                            SẴN SÀNG
                         </button>
 
                         <button class="btn-filter" data-status="Cleaning"
@@ -289,7 +289,7 @@
 
                                                 <div class="maintenance-dot"></div>
                                                 <c:if test="${room.hasGuest}">
-                                                    <span class="guest-badge">Có khách</span>
+                                                    <span class="guest-dot" title="Có khách"></span>
                                                 </c:if>
                                                 <span class="room-num">${room.roomNumber}</span>
                                                 <span class="room-type">${room.typeName}</span>
