@@ -148,7 +148,7 @@ function applyStatusFilter(status, event) {
                                  style="animation-delay:${i * 40}ms">
 
                                 <div class="maintenance-dot"></div>
-                                ${r.hasGuest ? '<span class="guest-badge">Có khách</span>' : ''}
+                                ${r.hasGuest ? '<span class="guest-dot" title="Có khách"></span>' : ''}
                                 <span class="room-num">${r.number}</span>
                                 <span class="room-type">${r.type}</span>
                             </div>
@@ -240,7 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                  onclick="goTaskDetail('${r.id}')"
                                  style="animation-delay: ${i * 30}ms">
                                 <div class="maintenance-dot"></div>
-                                ${r.hasGuest ? '<span class="guest-badge">Có khách</span>' : ''}
+                                ${r.hasGuest ? '<span class="guest-dot" title="Có khách"></span>' : ''}
                                 <span class="room-num">${r.number}</span>
                                 <span class="room-type">${r.type}</span>
                             </div>

@@ -6,15 +6,58 @@
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/booking-requests.css?v=3" />
 <fmt:setLocale value="vi_VN" />
 
+<style>
+    .btn-view-detail {
+        text-decoration: none;
+        padding: 5px 12px;
+        font-size: 13px;
+        background-color: #ffffff;
+        color: var(--brand-blue);
+        border: 1px solid var(--brand-blue);
+        border-radius: 6px;
+        font-weight: 600;
+        white-space: nowrap;
+        transition: all 0.2s;
+        display: inline-block;
+    }
+    .btn-view-detail:hover {
+        background-color: var(--brand-blue);
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(37, 99, 235, .25);
+    }
+    .btn-cancel-booking {
+        padding: 5px 12px;
+        font-size: 13px;
+        background-color: #ffffff;
+        color: #ef4444;
+        border: 1px solid #ef4444;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+    .btn-cancel-booking:hover {
+        background-color: #ef4444;
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(239, 68, 68, .25);
+    }
+</style>
+
 <body>
 
     <%-- Header Navigation --%>
     <nav class="navbar-rooms">
-        <div class="logo">HotelOps</div>
+        <a href="${pageContext.request.contextPath}/" class="logo">HotelOps</a>
         <ul class="nav-links">
             <li><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
             <li><a href="${pageContext.request.contextPath}/rooms">Phòng</a></li>
             <li><a href="${pageContext.request.contextPath}/customer/bookings" class="active">Đặt phòng của tôi</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/feedbacks">Đánh giá lưu trú</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/services">Dịch vụ</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/maintenance">Sự cố</a></li>
             <li><a href="${pageContext.request.contextPath}/customer/payments">Thanh toán</a></li>
         </ul>
 
@@ -38,6 +81,7 @@
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/booking/change" class="dropdown-item">
                                         <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
+                                    </a>
                                     <a href="${pageContext.request.contextPath}/customer/feedbacks" class="dropdown-item">
                                         <i class="fa-solid fa-star"></i> Đánh giá lưu trú
                                     </a>
@@ -206,11 +250,11 @@
                                     </td>
                                     <td style="white-space: nowrap;">
                                         <div style="display: flex; gap: 8px; align-items: center;">
-                                            <a href="${pageContext.request.contextPath}/customer/booking/detail?id=${b.bookingId}" class="btn-secondary" style="text-decoration: none; padding: 5px 12px; font-size: 13px; background-color: #ffffff; color: var(--brand-blue); border: 1px solid var(--brand-blue); border-radius: 6px; font-weight: 600; white-space: nowrap; transition: all 0.2s;">
+                                            <a href="${pageContext.request.contextPath}/customer/booking/detail?id=${b.bookingId}" class="btn-view-detail">
                                                 Chi tiết
                                             </a>
                                             <c:if test="${b.status eq 'Pending' || b.status eq 'Confirmed'}">
-                                                <button type="button" style="padding: 5px 12px; font-size: 13px; background-color: #ffffff; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; white-space: nowrap;" onclick="confirmCancelBooking('${b.bookingId}')">
+                                                <button type="button" class="btn-cancel-booking" onclick="confirmCancelBooking('${b.bookingId}')">
                                                     Hủy
                                                 </button>
                                             </c:if>

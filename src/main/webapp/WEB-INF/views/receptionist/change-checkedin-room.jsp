@@ -227,7 +227,7 @@
                                         </c:when>
                                         <c:otherwise>
                                             <div class="info-row">
-                                                <label>Họ và tên khách:</label>
+                                                <label>Họ và tên:</label>
                                                 <span>
                                                     <c:out value="${booking.customerName}" />
                                                 </span>

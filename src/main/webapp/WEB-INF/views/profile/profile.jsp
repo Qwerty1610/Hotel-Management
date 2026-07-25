@@ -53,11 +53,14 @@
 <%-- ============== CUSTOMER CHROME: top navbar ============== --%>
 <c:if test="${isCustomer}">
     <nav class="navbar-rooms">
-        <div class="logo">HotelOps</div>
+        <a href="${pageContext.request.contextPath}/" class="logo">HotelOps</a>
         <ul class="nav-links">
             <li><a href="${ctx}/">Trang chủ</a></li>
             <li><a href="${ctx}/rooms">Phòng</a></li>
             <li><a href="${ctx}/customer/bookings">Đặt phòng của tôi</a></li>
+            <li><a href="${ctx}/customer/feedbacks">Đánh giá lưu trú</a></li>
+            <li><a href="${ctx}/customer/services">Dịch vụ</a></li>
+            <li><a href="${ctx}/customer/maintenance">Sự cố</a></li>
             <li><a href="${ctx}/customer/payments">Thanh toán</a></li>
         </ul>
         <div class="nav-actions">
@@ -76,6 +79,7 @@
                     </a>
                     <a href="${ctx}/customer/booking/change" class="dropdown-item">
                         <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
+                    </a>
                     <a href="${ctx}/customer/feedbacks" class="dropdown-item">
                         <i class="fa-solid fa-star"></i> Đánh giá lưu trú
                     </a>
