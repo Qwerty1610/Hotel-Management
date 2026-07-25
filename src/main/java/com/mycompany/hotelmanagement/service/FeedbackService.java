@@ -86,8 +86,12 @@ public class FeedbackService {
         }
     }
 
+    public List<Feedback> getFeedbacksByRoomTypeId(int roomTypeId, int page, int pageSize) {
+        return feedbackDAO.getFeedbacksByRoomTypeId(roomTypeId, page, pageSize);
+    }
+
     public List<Feedback> getFeedbacksByRoomTypeId(int roomTypeId) {
-        return feedbackDAO.getFeedbacksByRoomTypeId(roomTypeId);
+        return feedbackDAO.getFeedbacksByRoomTypeId(roomTypeId, 1, 5);
     }
 
     public double[] getFeedbackStatsByRoomTypeId(int roomTypeId) {

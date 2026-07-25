@@ -75,16 +75,34 @@ public class RoomDetailController extends HttpServlet {
 
         // Fetch feedback using FeedbackService
         FeedbackService feedbackService = new FeedbackService();
-        List<Feedback> feedbackList = feedbackService.getFeedbacksByRoomTypeId(typeId);
         double[] stats = feedbackService.getFeedbackStatsByRoomTypeId(typeId);
         int totalReviews = (int) stats[0];
         double averageRating = stats[1];
+
+        int pageSize = 5;
+        int totalPages = (int) Math.ceil((double) totalReviews / pageSize);
+        if (totalPages < 1) totalPages = 1;
+
+        int reviewPage = 1;
+        String pageParam = request.getParameter("page");
+        if (pageParam != null && !pageParam.trim().isEmpty()) {
+            try {
+                reviewPage = Integer.parseInt(pageParam);
+            } catch (NumberFormatException ignored) {}
+        }
+        if (reviewPage < 1) reviewPage = 1;
+        if (reviewPage > totalPages) reviewPage = totalPages;
+
+        List<Feedback> feedbackList = feedbackService.getFeedbacksByRoomTypeId(typeId, reviewPage, pageSize);
 
         // Set attributes and forward
         request.setAttribute("room", roomDetail);
         request.setAttribute("feedbackList", feedbackList);
         request.setAttribute("totalReviews", totalReviews);
         request.setAttribute("averageRating", averageRating);
+        request.setAttribute("currentPage", reviewPage);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("pageSize", pageSize);
         request.setAttribute("selectedCheckIn", checkIn.toString());
         request.setAttribute("selectedCheckOut", checkOut.toString());
         if (!dateResult.isValid()) {
