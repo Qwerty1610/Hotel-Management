@@ -1,8 +1,5 @@
 package com.mycompany.hotelmanagement.dal;
 
-import com.mycompany.hotelmanagement.config.DBContext;
-import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
-import com.mycompany.hotelmanagement.entity.AmenityInfo;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,6 +11,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.mycompany.hotelmanagement.config.DBContext;
+import com.mycompany.hotelmanagement.entity.AmenityInfo;
+import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 
 /**
  * Project: Hotel Management System
