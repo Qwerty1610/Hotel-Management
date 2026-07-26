@@ -101,47 +101,6 @@ public class RoomTypeService {
     }
 
     /**
-     * UC-03: Search Available Rooms
-     * Lọc danh sách các loại phòng theo tên loại phòng, số lượng khách tối đa và khoảng giá.
-     *
-     * @param typeFilter tên loại phòng cần tìm kiếm (chấp nhận tìm gần đúng)
-     * @param guestsFilter số lượng khách tối thiểu phòng phải đáp ứng
-     * @param minPriceFilter mức giá thuê tối thiểu
-     * @param maxPriceFilter mức giá thuê tối đa
-     * @return danh sách loại phòng thỏa mãn các tiêu chí lọc
-     */
-    public List<RoomTypeInfo> getFilteredRoomTypes(String typeFilter, int guestsFilter, double minPriceFilter,
-            double maxPriceFilter) {
-        List<RoomTypeInfo> allRoomTypes = getAllRoomTypes();
-        List<RoomTypeInfo> filteredRoomTypes = new ArrayList<>();
-
-        for (RoomTypeInfo room : allRoomTypes) {
-            // Filter by Room Type Name (contains)
-            if (typeFilter != null && !typeFilter.trim().isEmpty() && !"all".equalsIgnoreCase(typeFilter)) {
-                String roomName = room.getTypeName().toLowerCase();
-                String filterVal = typeFilter.toLowerCase().trim();
-                if (!roomName.contains(filterVal)) {
-                    continue;
-                }
-            }
-
-            // Filter by Capacity (Guests)
-            if (guestsFilter != -1 && room.getCapacity() < guestsFilter) {
-                continue;
-            }
-
-            // Filter by Price range
-            double finalPrice = room.getBasePrice();
-            if (finalPrice < minPriceFilter || finalPrice > maxPriceFilter) {
-                continue;
-            }
-
-            filteredRoomTypes.add(room);
-        }
-        return filteredRoomTypes;
-    }
-
-    /**
      * UC-31: View Room Type Detail
      * Lấy thông tin chi tiết của một loại phòng cụ thể, bao gồm toàn bộ danh sách hình ảnh, tiện nghi chi tiết và số phòng hiện tại còn trống.
      *

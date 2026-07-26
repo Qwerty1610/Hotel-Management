@@ -283,30 +283,6 @@ WHERE r.room_id = ? AND r.is_deleted = 0
         return null;
     }
 
-    public boolean updateRoomAvailable(int roomId) {
-
-        String sql = """
-        UPDATE Room
-        SET status = 'Available'
-        WHERE room_id = ?
-    """;
-
-        try (
-                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, roomId);
-
-            return ps.executeUpdate() > 0;
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-        }
-
-        return false;
-    }
-
     public boolean refreshRoomStatusByPendingIssues(int roomId) {
 
         String getIssueSql = """

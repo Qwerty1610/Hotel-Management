@@ -4,7 +4,6 @@
  */
 package com.mycompany.hotelmanagement.entity;
 
-import java.sql.Date;
 import java.sql.Timestamp;
 
 public class CheckIn {

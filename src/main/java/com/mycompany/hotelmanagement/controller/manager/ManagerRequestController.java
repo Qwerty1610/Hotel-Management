@@ -1,6 +1,5 @@
 package com.mycompany.hotelmanagement.controller.manager;
 
-import com.mycompany.hotelmanagement.entity.StaffInfo;
 import com.mycompany.hotelmanagement.service.RequestManagementService;
 
 import jakarta.servlet.ServletException;
@@ -10,7 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * ManagerRequestController

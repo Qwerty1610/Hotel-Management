@@ -2,7 +2,6 @@ package com.mycompany.hotelmanagement.controller.receptionist;
 
 import com.mycompany.hotelmanagement.dal.BookingDAO;
 import com.mycompany.hotelmanagement.dal.BookingServiceRequestDAO;
-import com.mycompany.hotelmanagement.dal.RoomDAO;
 import com.mycompany.hotelmanagement.dal.RoomTypeDAO;
 import com.mycompany.hotelmanagement.dal.WalkInBookingDAO;
 import com.mycompany.hotelmanagement.dal.CheckOutDAO;

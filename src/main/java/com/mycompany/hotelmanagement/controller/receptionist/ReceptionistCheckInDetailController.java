@@ -6,7 +6,6 @@ package com.mycompany.hotelmanagement.controller.receptionist;
 
 import com.mycompany.hotelmanagement.dal.BookingDAO;
 import com.mycompany.hotelmanagement.dal.CheckInDAO;
-import com.mycompany.hotelmanagement.entity.Account;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.CheckIn;
 import com.mycompany.hotelmanagement.service.CloudinaryService;

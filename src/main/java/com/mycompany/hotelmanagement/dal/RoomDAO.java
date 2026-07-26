@@ -2,7 +2,6 @@ package com.mycompany.hotelmanagement.dal;
 
 import com.mycompany.hotelmanagement.config.DBContext;
 import com.mycompany.hotelmanagement.entity.RoomInfo;
-import com.mycompany.hotelmanagement.entity.RoomIssue;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -170,10 +169,6 @@ public class RoomDAO {
     public List<RoomInfo> getRoomsByDate(java.sql.Date selectedDate) {
         java.sql.Date nextDate = java.sql.Date.valueOf(selectedDate.toLocalDate().plusDays(1));
         return getRoomsByDateRange(selectedDate, nextDate);
-    }
-
-    public List<RoomInfo> getRoomMapByDate(java.sql.Date checkIn, java.sql.Date checkOut) {
-        return getRoomsByDateRange(checkIn, checkOut);
     }
 
     public boolean isRoomCurrentlyOccupied(int roomId) {
