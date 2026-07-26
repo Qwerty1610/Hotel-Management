@@ -74,25 +74,6 @@ public class BookingRequestDAO {
         return -1;
     }
 
-    /** True if a Pending request of the given type already exists for a booking. */
-    public boolean hasPendingRequest(int bookingId, String requestType) {
-        String sql = "SELECT 1 FROM dbo.BookingChangeRequest "
-                + "WHERE booking_id = ? AND request_type = ? AND status = N'Pending'";
-        try (Connection conn = DBContext.getConnection()) {
-            useDatabase(conn);
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setInt(1, bookingId);
-                ps.setString(2, requestType);
-                try (ResultSet rs = ps.executeQuery()) {
-                    return rs.next();
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error checking pending request", e);
-        }
-        return false;
-    }
-
     /** Returns the customer's requests (newest first) for status tracking. */
     public List<BookingRequest> getRequestsByAccount(int accountId) {
         List<BookingRequest> list = new ArrayList<>();

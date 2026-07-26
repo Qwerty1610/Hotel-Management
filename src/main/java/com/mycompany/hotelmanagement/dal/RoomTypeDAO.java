@@ -254,29 +254,6 @@ public class RoomTypeDAO {
         }
     }
 
-    public void deleteRoomAmenities(int typeId, Connection conn) throws SQLException {
-        useDatabase(conn);
-        String sql = "DELETE FROM RoomType_Amenity WHERE type_id = ?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, typeId);
-            ps.executeUpdate();
-        }
-    }
-
-    public int getAmenityIdByName(String name, Connection conn) throws SQLException {
-        useDatabase(conn);
-        String sql = "SELECT amenity_id FROM Amenity WHERE name = ?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, name);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("amenity_id");
-                }
-            }
-        }
-        return -1;
-    }
-
     public int insertAmenity(String name, String iconUrl, Connection conn) throws SQLException {
         useDatabase(conn);
         String sql = "INSERT INTO Amenity (name, icon_url) VALUES (?, ?)";
@@ -291,16 +268,6 @@ public class RoomTypeDAO {
             }
         }
         return -1;
-    }
-
-    public void insertRoomTypeAmenityMapping(int typeId, int amenityId, Connection conn) throws SQLException {
-        useDatabase(conn);
-        String sql = "INSERT INTO RoomType_Amenity (type_id, amenity_id) VALUES (?, ?)";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, typeId);
-            ps.setInt(2, amenityId);
-            ps.executeUpdate();
-        }
     }
 
     /**

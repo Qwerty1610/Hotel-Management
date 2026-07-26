@@ -458,9 +458,6 @@ document.querySelectorAll('input[name="walkinMode"]').forEach(r => {
         saveWalkInMode();
     });
 });
-function clearWalkInState() {
-    sessionStorage.removeItem(WALKIN_STORAGE_KEY);
-}
 function autoSaveWalkIn() {
     document.addEventListener("input", () => {
         if (!isSubmittingWalkIn && document.getElementById("customerName")) {
@@ -1021,50 +1018,6 @@ function toggleRoomCard(card) {
 
 /*
  ==================================================
- RENDER AVAILABLE ROOMS
- ==================================================
- */
-
-function renderAvailableRooms(data) {
-    const container =
-            document.getElementById("availableRoomsContainer");
-    if (!container)
-        return;
-    container.innerHTML = "";
-    Object.keys(data).forEach(typeName => {
-        const rooms = data[typeName];
-        let html = `
-            <div class="room-type-section">
-                <h4>${typeName}</h4>
-                <div class="room-grid">
-        `;
-
-        rooms.forEach(room => {
-            html += `
-                <label class="room-card">
-                    <input type="checkbox"
-                           class="room-checkbox"
-                           value="${room.roomId}"
-                           onchange="updateSummary()">
-                    <span class="room-number">
-                        ${room.roomNumber}
-                    </span>
-                    <span class="room-price">
-                        ${formatVND(room.price)}
-                    </span>
-                </label>
-            `;
-        });
-        html += `
-                </div>
-            </div>
-        `;
-        container.insertAdjacentHTML("beforeend", html);
-    });
-}
-
-/*
- ==================================================
  SUMMARY
  ==================================================
  */
@@ -1139,61 +1092,6 @@ function updateSummary() {
     summary.innerHTML = html;
 }
 
-/*
- ==================================================
- VALIDATE BEFORE SUBMIT
- ==================================================
- */
-
-function validateWalkInBooking() {
-
-    const customerName =
-            document.getElementById("customerName").value.trim();
-
-    const phone =
-            document.getElementById("phone").value.trim();
-
-    const email =
-            document.getElementById("email").value.trim();
-
-    const checkIn =
-            document.getElementById("checkInDate").value;
-
-    const checkOut =
-            document.getElementById("checkOutDate").value;
-
-    if (customerName === "") {
-
-        alert("Vui lòng nhập họ tên");
-        return false;
-    }
-
-    if (phone === "" && email === "") {
-
-        alert("Phải nhập SĐT hoặc Email");
-        return false;
-    }
-
-    if (!checkIn || !checkOut) {
-
-        alert("Chọn ngày check-in/check-out");
-        return false;
-    }
-
-    const selectedRooms =
-            document.querySelectorAll(
-                    ".room-checkbox:checked"
-                    );
-
-    if (selectedRooms.length === 0) {
-
-        alert("Vui lòng chọn phòng");
-        return false;
-    }
-
-    return true;
-}
-
 async function loadRoomTypes() {
 
     const checkInDate =
@@ -1262,23 +1160,6 @@ async function loadRoomTypes() {
                 e
                 );
     }
-}
-function getRequiredRoomCount() {
-    let total = 0;
-    document
-            .querySelectorAll(".room-qty-input")
-            .forEach(input => {
-
-                total += parseInt(input.value) || 0;
-            });
-    return total;
-}
-function getSelectedRoomCount() {
-    return document
-            .querySelectorAll(
-                    ".room-checkbox:checked"
-                    )
-            .length;
 }
 function validateRoomSelection(scroll = false) {
     let valid = true;
@@ -1398,20 +1279,6 @@ function removeCompanion(btn) {
             ).remove();
     saveWalkInState();
 }
-function setBookingMode(mode) {
-    document.getElementById(
-            "bookingMode"
-            ).value = mode;
-    if (mode === "CHECKIN") {
-        document
-                .getElementById(
-                        "companionCard"
-                        )
-                .style.display = "block";
-    }
-    document.querySelector("form").submit();
-}
-
 function refreshRoomTypeOptions() {
     if (!window.roomTypeOptionsHtml)
         return;

@@ -565,7 +565,7 @@ public class InvoiceDAO {
      * Hóa đơn phải ở trạng thái Pending (chưa thanh toán) thì mới cho phép thêm.
      *
      * @param invoiceId   ID hóa đơn cần cập nhật
-     * @param description Tên dịch vụ (title từ CustomerRequest)
+     * @param description Tên dịch vụ (title từ BookingServiceRequest)
      * @param quantity    Số lượng (mặc định 1)
      * @param unitPrice   Đơn giá lấy từ HotelService.price
      * @return true nếu thêm thành công

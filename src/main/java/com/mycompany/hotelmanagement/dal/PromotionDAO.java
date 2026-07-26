@@ -3,7 +3,6 @@ package com.mycompany.hotelmanagement.dal;
 import com.mycompany.hotelmanagement.config.DBContext;
 import com.mycompany.hotelmanagement.entity.Promotion;
 
-import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;

@@ -142,37 +142,6 @@ public class AccountDAO {
     }
 
     /**
-     * Thêm tài khoản mới vào CSDL và trả về ID tài khoản được sinh tự động.
-     * 
-     * @param email Email tài khoản
-     * @param passwordHash Mật khẩu đã mã hóa băm
-     * @param fullName Họ và tên
-     * @param roleId ID vai trò
-     * @return ID tài khoản mới tạo, hoặc -1 nếu thất bại
-     */
-    public int insertAccount(String email, String passwordHash, String fullName, int roleId) {
-        String sql = "INSERT INTO Account (email, password, full_name, role_id, is_active) VALUES (?, ?, ?, ?, 1)";
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
-            
-            ps.setString(1, email);
-            ps.setString(2, passwordHash);
-            ps.setString(3, fullName);
-            ps.setInt(4, roleId);
-            
-            ps.executeUpdate();
-            try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next()) {
-                    return rs.getInt(1);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return -1;
-    }
-
-    /**
      * Lấy ID vai trò từ tên vai trò (ví dụ: 'Customer', 'Admin', 'Receptionist').
      * 
      * @param roleName Tên vai trò
