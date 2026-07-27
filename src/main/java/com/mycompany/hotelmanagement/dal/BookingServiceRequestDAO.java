@@ -1,9 +1,5 @@
 package com.mycompany.hotelmanagement.dal;
 
-import com.mycompany.hotelmanagement.config.DBContext;
-import com.mycompany.hotelmanagement.entity.BookingServiceRequest;
-import com.mycompany.hotelmanagement.entity.RoomInfo;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,6 +7,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.mycompany.hotelmanagement.config.DBContext;
+import com.mycompany.hotelmanagement.entity.BookingServiceRequest;
+import com.mycompany.hotelmanagement.entity.RoomInfo;
 
 /**
  * BookingServiceRequestDAO Lớp truy xuất dữ liệu (DAO) cho các yêu cầu dịch vụ
@@ -29,6 +29,29 @@ public class BookingServiceRequestDAO {
     }
 
     /**
+     * Tự động hủy các yêu cầu dịch vụ còn ở trạng thái Pending nếu đơn đặt phòng (Booking)
+     * tương ứng đã Check-out (CheckedOut) hoặc đã bị hủy (Cancelled / Rejected).
+     */
+    public void autoCancelOrphanedPendingRequests() {
+        String sql = "UPDATE bsr "
+                + "SET bsr.status = N'Cancelled', "
+                + "    bsr.cancel_reason = N'Tự động hủy do phòng đã trả (Check-out)', "
+                + "    bsr.updated_at = SYSDATETIME() "
+                + "FROM dbo.BookingServiceRequest bsr "
+                + "JOIN dbo.Booking b ON bsr.booking_id = b.booking_id "
+                + "WHERE UPPER(bsr.status) = 'PENDING' "
+                + "  AND UPPER(b.status) IN ('CHECKEDOUT', 'CHECKED-OUT', 'CANCELLED', 'REJECTED')";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (Statement stmt = conn.createStatement()) {
+                stmt.executeUpdate(sql);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * UC-62: View Service Request History Lấy danh sách lịch sử yêu cầu dịch vụ
      * của khách hàng theo accountId và trạng thái lọc.
      *
@@ -38,6 +61,7 @@ public class BookingServiceRequestDAO {
      * @return danh sách các yêu cầu dịch vụ của khách hàng
      */
     public List<BookingServiceRequest> getRequestsByCustomer(int accountId, String statusFilter) {
+        autoCancelOrphanedPendingRequests();
         List<BookingServiceRequest> list = new ArrayList<>();
         String sql = "SELECT bsr.service_request_id AS request_id, bsr.booking_id, bsr.room_id, bsr.service_id, "
                 + "       hs.service_name AS title, bsr.notes AS description, bsr.quantity, bsr.status, "
@@ -176,6 +200,7 @@ public class BookingServiceRequestDAO {
      * @return danh sách yêu cầu dịch vụ thỏa mãn bộ lọc
      */
     public List<BookingServiceRequest> getReceptionistRequests(String statusFilter, String keyword, int offset, int pageSize) {
+        autoCancelOrphanedPendingRequests();
         List<BookingServiceRequest> list = new ArrayList<>();
         String sql = "SELECT bsr.service_request_id AS request_id, bsr.booking_id, bsr.room_id, bsr.service_id, "
                 + "       hs.service_name AS title, bsr.notes AS description, bsr.quantity, bsr.status, "
@@ -239,6 +264,7 @@ public class BookingServiceRequestDAO {
      * @return tổng số dòng thỏa mãn
      */
     public int countReceptionistRequests(String statusFilter, String keyword) {
+        autoCancelOrphanedPendingRequests();
         String sql = "SELECT COUNT(*) FROM dbo.BookingServiceRequest bsr "
                 + "JOIN dbo.Booking b ON bsr.booking_id = b.booking_id "
                 + "JOIN dbo.HotelService hs ON bsr.service_id = hs.service_id "
@@ -278,6 +304,7 @@ public class BookingServiceRequestDAO {
     }
 
     public int countReceptionistByStatus(String status) {
+        autoCancelOrphanedPendingRequests();
         String sql = "SELECT COUNT(*) FROM dbo.BookingServiceRequest WHERE status = ?";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);

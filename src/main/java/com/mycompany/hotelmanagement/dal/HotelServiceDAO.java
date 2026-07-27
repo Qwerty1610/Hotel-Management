@@ -83,17 +83,33 @@ public class HotelServiceDAO {
     private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(HotelServiceDAO.class.getName());
 
     public boolean deleteService(int serviceId) {
-        String deleteRequestsSql = "DELETE FROM dbo.BookingServiceRequest WHERE service_id = ? AND status IN (N'Cancelled', N'Rejected', 'Cancelled', 'Rejected')";
-        String deleteServiceSql = "DELETE FROM HotelService WHERE service_id = ?";
+        String checkUsageSql = "SELECT COUNT(*) FROM dbo.BookingServiceRequest WHERE service_id = ?";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
-            try (PreparedStatement psReq = conn.prepareStatement(deleteRequestsSql)) {
-                psReq.setInt(1, serviceId);
-                psReq.executeUpdate();
+            boolean isUsed = false;
+            try (PreparedStatement psCheck = conn.prepareStatement(checkUsageSql)) {
+                psCheck.setInt(1, serviceId);
+                try (ResultSet rs = psCheck.executeQuery()) {
+                    if (rs.next() && rs.getInt(1) > 0) {
+                        isUsed = true;
+                    }
+                }
             }
-            try (PreparedStatement psService = conn.prepareStatement(deleteServiceSql)) {
-                psService.setInt(1, serviceId);
-                return psService.executeUpdate() > 0;
+
+            if (isUsed) {
+                // Service has usage history -> Soft delete (deactivate) so historical requests & invoices retain full details
+                String sqlSoftDelete = "UPDATE HotelService SET is_active = 0, updated_at = SYSDATETIME() WHERE service_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sqlSoftDelete)) {
+                    ps.setInt(1, serviceId);
+                    return ps.executeUpdate() > 0;
+                }
+            } else {
+                // Service has no history -> Clean hard delete
+                String sqlHardDelete = "DELETE FROM HotelService WHERE service_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sqlHardDelete)) {
+                    ps.setInt(1, serviceId);
+                    return ps.executeUpdate() > 0;
+                }
             }
         } catch (Exception e) {
             LOGGER.log(java.util.logging.Level.SEVERE, "Error deleting hotel service " + serviceId, e);

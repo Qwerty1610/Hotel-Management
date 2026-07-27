@@ -153,7 +153,7 @@ public class CustomerServiceController extends HttpServlet {
         List<Booking> allBookings = bookingService.getBookingsByAccount(accountId, "All", null);
         List<Booking> activeBookings = new ArrayList<>();
         for (Booking b : allBookings) {
-            if ("CheckedIn".equals(b.getStatus())) {
+            if ("CheckedIn".equalsIgnoreCase(b.getStatus())) {
                 activeBookings.add(b);
             }
         }
@@ -275,7 +275,7 @@ public class CustomerServiceController extends HttpServlet {
             }
 
             // Verify booking is CheckedIn - only checked-in guests can request services
-            if (!"CheckedIn".equals(booking.getStatus())) {
+            if (!"CheckedIn".equalsIgnoreCase(booking.getStatus())) {
                 response.sendRedirect(request.getContextPath() + "/customer/services?error=not_checked_in");
                 return;
             }
