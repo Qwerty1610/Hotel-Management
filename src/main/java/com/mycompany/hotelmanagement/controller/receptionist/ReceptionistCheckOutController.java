@@ -91,6 +91,18 @@ public class ReceptionistCheckOutController extends HttpServlet {
                 return;
             }
 
+            // Nếu lễ tân chọn "Chuyển khoản ngân hàng (QRPay)" thì phải kiểm tra khách
+            // đã thực sự thanh toán qua app (SePay) đủ số tiền còn lại chưa — không cho
+            // check out "khống" nếu chưa có giao dịch nào khớp số tiền còn thiếu.
+            if ("Bank Transfer".equals(paymentMethod)) {
+                CheckOut summary = checkOutService.getCheckOutSummary(bookingId);
+                if (summary.getRemainingAmount() > 0.01) {
+                    response.sendRedirect(request.getContextPath()
+                            + "/receptionist/checkout?bookingId=" + bookingId + "&error=notpaid");
+                    return;
+                }
+            }
+
             boolean success = checkOutService.processCheckOut(bookingId, receptionistId, paymentMethod, notes);
 
             if (success) {

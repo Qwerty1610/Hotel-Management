@@ -250,11 +250,10 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                 if (note != null) {
                     existing.setNote(note.trim());
                 }
-                existing.setTotalAmount(
-                        bookingService.calculateBookingAmount(existing));
-                bookingService.updateBookingDetails(existing);
 
-                // Update child bookings
+                // Cập nhật ngày/tên khách + loại phòng/số lượng cho từng booking con
+                // TRƯỚC khi tính tiền, để recalculateGroupAmounts tính đúng theo dữ
+                // liệu mới nhất của cả nhóm (giữ nguyên mã khuyến mãi đã áp nếu có).
                 for (Booking child : children) {
                     child.setCheckInDate(existing.getCheckInDate());
                     child.setCheckOutDate(existing.getCheckOutDate());
@@ -269,10 +268,12 @@ public class ReceptionistBookingProcessController extends HttpServlet {
                     if (cTypeStr != null && !cTypeStr.isBlank()) {
                         child.setRoomTypeId(Integer.parseInt(cTypeStr));
                     }
+                }
 
-                    child.setTotalAmount(
-                            bookingService.calculateBookingAmount(child));
+                bookingService.recalculateGroupAmounts(existing, children);
 
+                bookingService.updateBookingDetails(existing);
+                for (Booking child : children) {
                     bookingService.updateBookingDetails(child);
                 }
             }

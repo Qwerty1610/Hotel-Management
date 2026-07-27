@@ -297,6 +297,13 @@
                         <i class="fa-solid fa-arrow-left"></i> Quay lại
                     </a>
 
+                    <c:if test="${param.error eq 'notpaid'}">
+                        <div class="toast-notify toast-error" style="margin-bottom: 20px; max-width: 800px; margin-left: auto; margin-right: auto;">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                            Khách hàng chưa thanh toán qua chuyển khoản. Vui lòng kiểm tra lại trước khi cho khách check out.
+                        </div>
+                    </c:if>
+
                     <div class="invoice-card">
                         <div class="invoice-header">
                             <div>

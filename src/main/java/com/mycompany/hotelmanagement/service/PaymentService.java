@@ -149,6 +149,15 @@ public class PaymentService {
         return invoiceDAO.getInvoiceForCustomer(invoiceId, accountId);
     }
 
+    /**
+     * Tự tất toán hóa đơn khi không còn khoản nào phải trả (ví dụ mã khuyến
+     * mãi giảm về 0đ) — không có giao dịch chuyển khoản thật nào sẽ tới để
+     * tất toán hóa đơn này nên phải tự đánh dấu Paid.
+     */
+    public boolean markInvoicePaidDirectly(int invoiceId) {
+        return paymentDAO.markInvoicePaidDirectly(invoiceId);
+    }
+
     /** Danh sách hóa đơn chưa thanh toán của khách (để chọn hóa đơn cần trả). */
     public List<Invoice> getUnpaidInvoices(int accountId) {
         return invoiceDAO.getUnpaidInvoicesByAccount(accountId);

@@ -53,7 +53,7 @@ public class BookingDAO {
     private static final String BASE_SELECT = "SELECT b.booking_id, b.account_id, b.customer_name, b.phone, b.email, "
             + "       b.room_type_id, ISNULL(rt.type_name, N'Loại phòng cũ') AS room_type_name, "
             + "       b.room_quantity, b.check_in_date, b.check_out_date, "
-            + "       b.total_amount, b.status, b.note, b.group_booking_id, CAST(b.created_at AS DATE) AS created_at, "
+            + "       b.total_amount, b.status, b.note, b.group_booking_id, b.promotion_id, CAST(b.created_at AS DATE) AS created_at, "
             + "       (SELECT STRING_AGG(r.room_number, ', ') "
             + "        FROM dbo.RoomAssignment br "
             + "        JOIN dbo.Room r ON br.room_id = r.room_id "
@@ -289,6 +289,34 @@ public class BookingDAO {
         return false;
     }
 
+    /**
+     * Gắn (hoặc gỡ, nếu promotionId null) mã khuyến mãi cho một booking (cha).
+     * Đây là method duy nhất được phép thay đổi cột promotion_id — các UPDATE
+     * khác (updateBookingDetails, applyBookingChange...) không đụng tới cột
+     * này, nhờ vậy promotion_id luôn được giữ nguyên khi sửa ngày/loại phòng.
+     */
+    public boolean updateBookingPromotion(int bookingId, Integer promotionId) {
+        if (bookingId <= 0) {
+            return false;
+        }
+        String sql = "UPDATE dbo.Booking SET promotion_id = ?, updated_at = SYSDATETIME() WHERE booking_id = ?";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                if (promotionId != null) {
+                    ps.setInt(1, promotionId);
+                } else {
+                    ps.setNull(1, Types.INTEGER);
+                }
+                ps.setInt(2, bookingId);
+                return ps.executeUpdate() > 0;
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in updateBookingPromotion for id: " + bookingId, e);
+        }
+        return false;
+    }
+
     public boolean cancelBooking(int bookingId, String reason) {
         if (bookingId <= 0) {
             return false;
@@ -372,6 +400,10 @@ public class BookingDAO {
         int groupBookingId = rs.getInt("group_booking_id");
         if (!rs.wasNull()) {
             b.setGroupBookingId(groupBookingId);
+        }
+        int promotionId = rs.getInt("promotion_id");
+        if (!rs.wasNull()) {
+            b.setPromotionId(promotionId);
         }
         b.setCreatedAt(rs.getDate("created_at"));
         try {
