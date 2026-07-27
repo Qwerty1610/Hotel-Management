@@ -214,6 +214,13 @@
                                 Đã huỷ <span
                                     class="tab-count">${cntCancelled}</span>
                             </a>
+                            <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=bookings&status=CheckedIn&keyword=${keyword}"
+                               class="status-tab ${currentStatus eq 'CheckedIn' ? 'active' : ''}">
+                                <i class="fa-solid fa-key"
+                                   style="font-size:11px"></i>
+                                Đã nhận phòng <span
+                                    class="tab-count">${cntCheckedIn}</span>
+                            </a>
                         </div>
 
                         <%-- Search bar --%>
