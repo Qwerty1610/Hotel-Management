@@ -4,7 +4,6 @@
  */
 package com.mycompany.hotelmanagement.entity;
 
-import java.sql.Timestamp;
 
 /**
  *

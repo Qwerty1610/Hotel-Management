@@ -3,7 +3,7 @@ package com.mycompany.hotelmanagement.service;
 import com.mycompany.hotelmanagement.dal.BookingDAO;
 import com.mycompany.hotelmanagement.dal.RoomTypeDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
-import com.mycompany.hotelmanagement.entity.Room;
+import com.mycompany.hotelmanagement.entity.RoomInfo;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import com.mycompany.hotelmanagement.entity.CustomerDetails;
 import java.sql.Date;
@@ -179,21 +179,21 @@ public class BookingService {
     /**
      * Returns all rooms in the hotel with their type name and current status.
      */
-    public List<Room> getAllRooms(Date checkIn, Date checkOut) {
+    public List<RoomInfo> getAllRooms(Date checkIn, Date checkOut) {
         return bookingDAO.getAllRooms(checkIn, checkOut);
     }
 
     /**
      * Returns rooms filtered by room type ID.
      */
-    public List<Room> getRoomsByTypeId(int typeId, Date checkIn, Date checkOut) {
+    public List<RoomInfo> getRoomsByTypeId(int typeId, Date checkIn, Date checkOut) {
         return bookingDAO.getRoomsByTypeId(typeId, checkIn, checkOut);
     }
 
     /**
      * Returns rooms already assigned to a specific booking via RoomAssignment.
      */
-    public List<Room> getAssignedRoomsForBooking(int bookingId, Date checkIn, Date checkOut) {
+    public List<RoomInfo> getAssignedRoomsForBooking(int bookingId, Date checkIn, Date checkOut) {
         return bookingDAO.getAssignedRoomsForBooking(bookingId, checkIn, checkOut);
     }
 

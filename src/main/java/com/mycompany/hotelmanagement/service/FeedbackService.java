@@ -1,8 +1,9 @@
 package com.mycompany.hotelmanagement.service;
 
+import java.util.List;
+
 import com.mycompany.hotelmanagement.dal.FeedbackDAO;
 import com.mycompany.hotelmanagement.entity.Feedback;
-import java.util.List;
 
 /**
  * Project: Hotel Management System
@@ -54,7 +55,7 @@ public class FeedbackService {
         // 2. Validate Comment
         String processedComment = null;
         if (comment != null) {
-            processedComment = comment.trim();
+            processedComment = comment.replace("\r\n", "\n").trim();
             if (processedComment.length() > 1000) {
                 return SubmitResult.COMMENT_TOO_LONG;
             }
@@ -85,8 +86,12 @@ public class FeedbackService {
         }
     }
 
+    public List<Feedback> getFeedbacksByRoomTypeId(int roomTypeId, int page, int pageSize) {
+        return feedbackDAO.getFeedbacksByRoomTypeId(roomTypeId, page, pageSize);
+    }
+
     public List<Feedback> getFeedbacksByRoomTypeId(int roomTypeId) {
-        return feedbackDAO.getFeedbacksByRoomTypeId(roomTypeId);
+        return feedbackDAO.getFeedbacksByRoomTypeId(roomTypeId, 1, 5);
     }
 
     public double[] getFeedbackStatsByRoomTypeId(int roomTypeId) {

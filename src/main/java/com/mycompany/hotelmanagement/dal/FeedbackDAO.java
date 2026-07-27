@@ -1,7 +1,5 @@
 package com.mycompany.hotelmanagement.dal;
 
-import com.mycompany.hotelmanagement.config.DBContext;
-import com.mycompany.hotelmanagement.entity.Feedback;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,6 +7,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.mycompany.hotelmanagement.config.DBContext;
+import com.mycompany.hotelmanagement.entity.Feedback;
 
 /**
  * Project: Hotel Management System
@@ -192,22 +193,29 @@ public class FeedbackDAO {
     }
 
     /**
-     * Lấy danh sách tối đa 10 feedback mới nhất thuộc loại phòng roomTypeId.
+     * Lấy danh sách feedback theo trang thuộc loại phòng roomTypeId (5 feedback / trang).
      */
-    public List<Feedback> getFeedbacksByRoomTypeId(int roomTypeId) {
+    public List<Feedback> getFeedbacksByRoomTypeId(int roomTypeId, int page, int pageSize) {
         List<Feedback> list = new java.util.ArrayList<>();
-        String sql = "SELECT TOP 10 f.feedback_id, f.booking_id, f.room_id, f.account_id, f.rating, f.comment, f.created_at, " +
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 5;
+        int offset = (page - 1) * pageSize;
+
+        String sql = "SELECT f.feedback_id, f.booking_id, f.room_id, f.account_id, f.rating, f.comment, f.created_at, " +
                      "r.room_number, a.full_name AS customer_name " +
                      "FROM dbo.Feedback f " +
                      "JOIN dbo.Room r ON f.room_id = r.room_id " +
                      "JOIN dbo.Account a ON f.account_id = a.account_id " +
                      "WHERE r.type_id = ? " +
-                     "ORDER BY f.created_at DESC";
+                     "ORDER BY f.created_at DESC " +
+                     "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
 
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setInt(1, roomTypeId);
+                ps.setInt(2, offset);
+                ps.setInt(3, pageSize);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         Feedback fb = new Feedback();
@@ -234,6 +242,10 @@ public class FeedbackDAO {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public List<Feedback> getFeedbacksByRoomTypeId(int roomTypeId) {
+        return getFeedbacksByRoomTypeId(roomTypeId, 1, 5);
     }
 
     /**

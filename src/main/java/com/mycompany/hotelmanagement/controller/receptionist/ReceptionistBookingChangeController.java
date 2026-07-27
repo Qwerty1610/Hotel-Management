@@ -1,6 +1,5 @@
 package com.mycompany.hotelmanagement.controller.receptionist;
 
-import com.mycompany.hotelmanagement.entity.BookingRequest;
 import com.mycompany.hotelmanagement.service.BookingRequestService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -9,7 +8,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

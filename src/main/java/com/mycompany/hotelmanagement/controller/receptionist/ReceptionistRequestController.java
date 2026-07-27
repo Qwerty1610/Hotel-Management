@@ -1,8 +1,10 @@
 package com.mycompany.hotelmanagement.controller.receptionist;
 
+import com.mycompany.hotelmanagement.dal.BookingDAO;
 import com.mycompany.hotelmanagement.dal.BookingServiceRequestDAO;
 import com.mycompany.hotelmanagement.dal.HotelServiceDAO;
 import com.mycompany.hotelmanagement.dal.InvoiceDAO;
+import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.BookingServiceRequest;
 import com.mycompany.hotelmanagement.entity.HotelService;
 import com.mycompany.hotelmanagement.entity.Invoice;
@@ -95,9 +97,22 @@ public class ReceptionistRequestController extends HttpServlet {
 
                     // ── Bước 2: Nếu là Service request (có booking_id), tạo InvoiceItem ──
                     if (req.getBookingId() != null) {
+                        BookingDAO bookingDAO = new BookingDAO();
+                        Booking b = bookingDAO.getBookingById(req.getBookingId());
+                        if (b != null && ("CheckedOut".equalsIgnoreCase(b.getStatus())
+                                || "Cancelled".equalsIgnoreCase(b.getStatus())
+                                || "Rejected".equalsIgnoreCase(b.getStatus()))) {
+                            dao.updateStatusByReceptionist(requestId, "Cancelled", receptionistId, "Tự động hủy do phòng đã trả (Check-out)");
+                            LOGGER.log(Level.WARNING, "Cannot approve service request {0}: booking {1} is already {2}",
+                                    new Object[]{requestId, req.getBookingId(), b.getStatus()});
+                            response.sendRedirect(request.getContextPath()
+                                    + "/receptionist/dashboard?tab=servicerequests&error=booking_checkedout");
+                            return;
+                        }
+
                         double servicePrice = req.getUnitPrice();
 
-                        // Nếu unitPrice <= 0 thì fallback tìm trong HotelServiceDAO như code cũ
+                        // Nếu unitPrice <= 0 thì fallback tìm trong HotelServiceDAO
                         if (servicePrice <= 0.0) {
                             HotelServiceDAO hsRepo = new HotelServiceDAO();
                             List<HotelService> allServices = hsRepo.getAllServices();
@@ -109,31 +124,45 @@ public class ReceptionistRequestController extends HttpServlet {
                             }
                         }
 
+                        // Nếu giá dịch vụ vẫn <= 0, từ chối approve để tránh thêm dòng giá 0 vào hóa đơn
+                        if (servicePrice <= 0.0) {
+                            LOGGER.log(Level.WARNING,
+                                    "Cannot approve service request {0}: invalid or zero service price", requestId);
+                            response.sendRedirect(request.getContextPath()
+                                    + "/receptionist/dashboard?tab=servicerequests&error=invalid_price");
+                            return;
+                        }
+
                         // ── Bước 3: Tìm Invoice của booking ─────────────────────────
                         InvoiceDAO invoiceDAO = new InvoiceDAO();
                         Invoice invoice = invoiceDAO.getInvoiceByBookingId(req.getBookingId());
 
-                        if (invoice != null) {
-                            // ── Bước 4: Tạo InvoiceItem loại Service ────────────────
-                            boolean itemAdded = invoiceDAO.addServiceItem(
-                                    invoice.getInvoiceId(),
-                                    req.getTitle(),   // tên dịch vụ
-                                    req.getQuantity() > 0 ? req.getQuantity() : 1, // số lượng khách yêu cầu
-                                    servicePrice      // đơn giá (0 nếu không tìm thấy)
-                            );
-                            if (!itemAdded) {
-                                // Invoice đã Paid / Cancelled — vẫn approve request nhưng cảnh báo
-                                extraParam = "&warn=invoice_closed";
-                                LOGGER.log(Level.WARNING,
-                                        "Cannot add service item to invoice {0} (status closed) for request {1}",
-                                        new Object[]{invoice.getInvoiceId(), requestId});
-                            }
-                        } else {
-                            // Booking chưa có hóa đơn — vẫn approve, ghi log để theo dõi
-                            extraParam = "&warn=no_invoice";
+                        if (invoice == null) {
+                            // Booking chưa có hóa đơn — từ chối approve
                             LOGGER.log(Level.WARNING,
                                     "No invoice found for booking {0} when approving service request {1}",
                                     new Object[]{req.getBookingId(), requestId});
+                            response.sendRedirect(request.getContextPath()
+                                    + "/receptionist/dashboard?tab=servicerequests&error=no_invoice");
+                            return;
+                        }
+
+                        // ── Bước 4: Tạo InvoiceItem loại Service ────────────────
+                        boolean itemAdded = invoiceDAO.addServiceItem(
+                                invoice.getInvoiceId(),
+                                req.getTitle(),   // tên dịch vụ
+                                req.getQuantity() > 0 ? req.getQuantity() : 1, // số lượng khách yêu cầu
+                                servicePrice      // đơn giá dịch vụ hợp lệ
+                        );
+
+                        if (!itemAdded) {
+                            // Invoice đã Paid / Cancelled / Closed — từ chối approve
+                            LOGGER.log(Level.WARNING,
+                                    "Cannot add service item to invoice {0} (status closed) for request {1}",
+                                    new Object[]{invoice.getInvoiceId(), requestId});
+                            response.sendRedirect(request.getContextPath()
+                                    + "/receptionist/dashboard?tab=servicerequests&error=invoice_closed");
+                            return;
                         }
                     }
 

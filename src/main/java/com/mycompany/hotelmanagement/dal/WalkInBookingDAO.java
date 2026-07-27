@@ -3,7 +3,7 @@ package com.mycompany.hotelmanagement.dal;
 import com.mycompany.hotelmanagement.config.DBContext;
 import com.mycompany.hotelmanagement.entity.Account;
 import com.mycompany.hotelmanagement.entity.Booking;
-import com.mycompany.hotelmanagement.entity.Room;
+import com.mycompany.hotelmanagement.entity.RoomInfo;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 
 import java.sql.*;
@@ -18,10 +18,10 @@ public class WalkInBookingDAO {
         }
     }
 
-    public List<Room> getAvailableRoomsByType(
+    public List<RoomInfo> getAvailableRoomsByType(
             int typeId) {
 
-        List<Room> list = new ArrayList<>();
+        List<RoomInfo> list = new ArrayList<>();
 
         String sql = """
         SELECT
@@ -54,7 +54,7 @@ public class WalkInBookingDAO {
 
             while (rs.next()) {
 
-                Room r = new Room();
+                RoomInfo r = new RoomInfo();
 
                 r.setRoomId(rs.getInt("room_id"));
                 r.setRoomNumber(rs.getString("room_number"));
@@ -72,12 +72,12 @@ public class WalkInBookingDAO {
         return list;
     }
 
-    public List<Room> getAvailableRoomsByType(
+    public List<RoomInfo> getAvailableRoomsByType(
             int typeId,
             Date checkIn,
             Date checkOut) {
 
-        List<Room> list = new ArrayList<>();
+        List<RoomInfo> list = new ArrayList<>();
 
         String sql = """
         SELECT
@@ -124,7 +124,7 @@ public class WalkInBookingDAO {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                Room room = new Room();
+                RoomInfo room = new RoomInfo();
                 room.setRoomId(
                         rs.getInt("room_id"));
                 room.setRoomNumber(
@@ -140,82 +140,6 @@ public class WalkInBookingDAO {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return list;
-    }
-
-    public boolean hasOverlapBooking(
-            Date checkIn,
-            Date checkOut) {
-
-        String sql = """
-        SELECT TOP 1 booking_id
-        FROM Booking
-        WHERE status IN
-        ('Pending','Confirmed','CheckedIn')
-        AND check_in_date < ?
-        AND check_out_date > ?
-        """;
-
-        try (
-                Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
-
-            useDatabase(con);
-
-            ps.setDate(1, checkOut);
-            ps.setDate(2, checkIn);
-
-            ResultSet rs = ps.executeQuery();
-
-            return rs.next();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return false;
-    }
-
-    public List<Room> getAvailableRooms(
-            int typeId) {
-
-        List<Room> list = new ArrayList<>();
-
-        String sql = """
-        SELECT *
-        FROM Room
-        WHERE type_id = ? AND is_deleted = 0
-        AND status NOT IN
-        (
-            'Maintenance',
-            'OutOfService'
-        )
-        ORDER BY room_number
-        """;
-
-        try (
-                Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
-
-            useDatabase(con);
-
-            ps.setInt(1, typeId);
-
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-
-                Room r = new Room();
-
-                r.setRoomId(rs.getInt("room_id"));
-                r.setRoomNumber(rs.getString("room_number"));
-                r.setStatus(rs.getString("status"));
-
-                list.add(r);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         return list;
     }
 
@@ -842,58 +766,6 @@ public class WalkInBookingDAO {
         }
 
         return list;
-    }
-
-    public int countAvailableRoomsForPeriod(
-            int typeId,
-            Date checkIn,
-            Date checkOut) {
-
-        String sql = """
-    SELECT COUNT(*)
-    FROM Room r
-    WHERE r.type_id = ? AND r.is_deleted = 0
-    AND r.status NOT IN
-    (
-        'Maintenance',
-        'OutOfService'
-    )
-    AND r.room_id NOT IN (
-
-        SELECT ra.room_id
-
-        FROM RoomAssignment ra
-
-        JOIN Booking b
-            ON ra.booking_id = b.booking_id
-
-        WHERE b.status IN ('Confirmed','CheckedIn')
-
-        AND b.check_in_date < ?
-        AND b.check_out_date > ?
-    )
-    """;
-
-        try (
-                Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
-
-            useDatabase(con);
-
-            ps.setInt(1, typeId);
-            ps.setDate(2, checkOut);
-            ps.setDate(3, checkIn);
-
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return 0;
     }
 
     public int createCheckIn(

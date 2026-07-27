@@ -5,7 +5,7 @@ import com.mycompany.hotelmanagement.dal.BookingRequestDAO;
 import com.mycompany.hotelmanagement.dal.RoomTypeDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.BookingRequest;
-import com.mycompany.hotelmanagement.entity.Room;
+import com.mycompany.hotelmanagement.entity.RoomInfo;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import java.sql.Date;
 import java.time.LocalDate;
@@ -370,12 +370,12 @@ public class BookingRequestService {
      * phòng khách đang ở cho một đơn khác ngay sau ngày trả hiện tại.
      */
     private boolean hasRoomConflictForExtension(int bookingId, Date from, Date to) {
-        List<Room> assigned = bookingDAO.getAssignedRoomsForBooking(bookingId, from, to);
+        List<RoomInfo> assigned = bookingDAO.getAssignedRoomsForBooking(bookingId, from, to);
         if (assigned == null || assigned.isEmpty()) {
             return false;
         }
         List<Integer> roomIds = new ArrayList<>();
-        for (Room r : assigned) {
+        for (RoomInfo r : assigned) {
             roomIds.add(r.getRoomId());
         }
         return !bookingDAO.getConflictingRooms(roomIds, from, to, bookingId).isEmpty();

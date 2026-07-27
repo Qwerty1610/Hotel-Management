@@ -3,7 +3,6 @@ package com.mycompany.hotelmanagement.controller.receptionist;
 import com.mycompany.hotelmanagement.service.BookingService;
 import com.mycompany.hotelmanagement.service.PaymentService;
 import com.mycompany.hotelmanagement.entity.Booking;
-import com.mycompany.hotelmanagement.entity.Room;
 import com.mycompany.hotelmanagement.entity.CustomerDetails;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -103,12 +102,12 @@ public class ReceptionistBookingProcessController extends HttpServlet {
             }
 
             // Load all rooms in the hotel (to support dynamic client-side filtering)
-            List<Room> rooms = bookingService.getAllRooms(
+            List<RoomInfo> rooms = bookingService.getAllRooms(
                     booking.getCheckInDate(),
                     booking.getCheckOutDate());
 
             // Load assigned rooms if any
-            List<Room> assignedRooms = bookingService.getAssignedRoomsForBooking(
+            List<RoomInfo> assignedRooms = bookingService.getAssignedRoomsForBooking(
                     bookingId,
                     booking.getCheckInDate(),
                     booking.getCheckOutDate());
@@ -119,9 +118,9 @@ public class ReceptionistBookingProcessController extends HttpServlet {
             List<Booking> childBookings = bookingService.getChildBookings(bookingId);
 
             // Load assigned rooms for each child booking
-            Map<Integer, List<Room>> childAssignedRoomsMap = new HashMap<>();
+            Map<Integer, List<RoomInfo>> childAssignedRoomsMap = new HashMap<>();
             for (Booking child : childBookings) {
-                List<Room> childRooms = bookingService.getAssignedRoomsForBooking(child.getBookingId(),
+                List<RoomInfo> childRooms = bookingService.getAssignedRoomsForBooking(child.getBookingId(),
                         booking.getCheckInDate(),
                         booking.getCheckOutDate());
                 childAssignedRoomsMap.put(child.getBookingId(), childRooms);
@@ -511,7 +510,7 @@ public class ReceptionistBookingProcessController extends HttpServlet {
 
             BookingService bookingService = new BookingService();
 
-            List<Room> rooms = bookingService.getRoomsByTypeId(
+            List<RoomInfo> rooms = bookingService.getRoomsByTypeId(
                     roomTypeId,
                     checkIn,
                     checkOut);
@@ -521,7 +520,7 @@ public class ReceptionistBookingProcessController extends HttpServlet {
 
             for (int i = 0; i < rooms.size(); i++) {
 
-                Room r = rooms.get(i);
+                RoomInfo r = rooms.get(i);
 
                 json.append("{")
                         .append("\"roomId\":").append(r.getRoomId()).append(",")

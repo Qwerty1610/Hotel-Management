@@ -172,7 +172,7 @@
                 </div>
 
                 <!-- Đánh giá của khách hàng -->
-                <div class="info-card" style="margin-top: 30px;">
+                <div class="info-card" id="reviews-section" style="margin-top: 30px;">
                     <h2>Đánh giá của khách hàng</h2>
                     
                     <c:choose>
@@ -241,6 +241,61 @@
                                     </div>
                                 </c:forEach>
                             </div>
+
+                            <!-- Phân trang đánh giá (5 comment / trang) -->
+                            <c:if test="${totalPages > 1}">
+                                <c:url var="feedbackPageBaseUrl" value="/rooms/detail">
+                                    <c:param name="id" value="${room.typeId}" />
+                                    <c:if test="${not empty selectedCheckIn}">
+                                        <c:param name="checkIn" value="${selectedCheckIn}" />
+                                    </c:if>
+                                    <c:if test="${not empty selectedCheckOut}">
+                                        <c:param name="checkOut" value="${selectedCheckOut}" />
+                                    </c:if>
+                                </c:url>
+
+                                <div class="feedback-pagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px; padding-top: 15px;">
+                                    <div style="font-size: 13.5px; color: var(--text-muted); font-weight: 500;">
+                                        Hiển thị Trang <strong>${currentPage}</strong> / <strong>${totalPages}</strong> (${totalReviews} đánh giá)
+                                    </div>
+                                    <div style="display: flex; gap: 6px; align-items: center;">
+                                        <!-- Nút Trước -->
+                                        <c:choose>
+                                            <c:when test="${currentPage > 1}">
+                                                <a href="${feedbackPageBaseUrl}&page=${currentPage - 1}#reviews-section" class="feedback-page-btn" title="Trang trước">
+                                                    <i class="fa-solid fa-chevron-left"></i>
+                                                </a>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="feedback-page-btn disabled">
+                                                    <i class="fa-solid fa-chevron-left"></i>
+                                                </span>
+                                            </c:otherwise>
+                                        </c:choose>
+
+                                        <!-- Các trang số -->
+                                        <c:forEach var="p" begin="1" end="${totalPages}">
+                                            <a href="${feedbackPageBaseUrl}&page=${p}#reviews-section" class="feedback-page-btn ${p == currentPage ? 'active' : ''}">
+                                                ${p}
+                                            </a>
+                                        </c:forEach>
+
+                                        <!-- Nút Tiếp theo -->
+                                        <c:choose>
+                                            <c:when test="${currentPage < totalPages}">
+                                                <a href="${feedbackPageBaseUrl}&page=${currentPage + 1}#reviews-section" class="feedback-page-btn" title="Trang tiếp">
+                                                    <i class="fa-solid fa-chevron-right"></i>
+                                                </a>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="feedback-page-btn disabled">
+                                                    <i class="fa-solid fa-chevron-right"></i>
+                                                </span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </div>
+                                </div>
+                            </c:if>
                         </c:when>
                         
                         <c:otherwise>

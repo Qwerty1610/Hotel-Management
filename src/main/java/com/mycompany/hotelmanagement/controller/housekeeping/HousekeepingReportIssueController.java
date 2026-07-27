@@ -11,8 +11,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  *
@@ -198,15 +196,5 @@ public class HousekeepingReportIssueController extends HttpServlet {
                 "rooms",
                 roomRepository.getRoomsForIssueReport()
         );
-    }
-
-    private int getSeverityLevel(String severity) {
-        if ("High".equals(severity)) {
-            return 3;
-        }
-        if ("Medium".equals(severity)) {
-            return 2;
-        }
-        return 1;
     }
 }

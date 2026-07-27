@@ -229,6 +229,15 @@ public class CheckOutDAO {
                 st2.executeUpdate();
             }
 
+            // 2.1. Auto-cancel any unapproved (Pending) service requests for this checked-out booking
+            String autoCancelPendingRequests = "UPDATE dbo.BookingServiceRequest "
+                    + "SET status = N'Cancelled', cancel_reason = N'Tự động hủy do phòng đã trả (Check-out)', updated_at = SYSDATETIME() "
+                    + "WHERE booking_id = ? AND UPPER(status) = 'PENDING'";
+            try (PreparedStatement stCancel = con.prepareStatement(autoCancelPendingRequests)) {
+                stCancel.setInt(1, co.getBookingId());
+                stCancel.executeUpdate();
+            }
+
             // 3. Update Room
             try (PreparedStatement st3 = con.prepareStatement(updateRoom)) {
                 st3.setInt(1, co.getBookingId());

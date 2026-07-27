@@ -502,9 +502,10 @@
                                         return;
                                     }
                                     
-                                    const price = parseFloat(selectedOption.getAttribute('data-price') || 0);
-                                    const unit = selectedOption.getAttribute('data-unit') || '';
-                                    const quantity = parseInt(quantityInput.value || 1);
+                                    let quantity = parseInt(quantityInput.value);
+                                    if (isNaN(quantity) || quantity < 1) {
+                                        quantity = 0;
+                                    }
                                     
                                     unitPriceSpan.textContent = formatCurrency(price);
                                     unitNameSpan.textContent = unit ? "/ " + unit : "";

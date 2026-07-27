@@ -4,7 +4,7 @@ import com.mycompany.hotelmanagement.dal.BookingServiceRequestDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.BookingServiceRequest;
 import com.mycompany.hotelmanagement.entity.HotelService;
-import com.mycompany.hotelmanagement.entity.Room;
+import com.mycompany.hotelmanagement.entity.RoomInfo;
 import com.mycompany.hotelmanagement.service.BookingService;
 import com.mycompany.hotelmanagement.service.HotelServiceService;
 
@@ -153,7 +153,7 @@ public class CustomerServiceController extends HttpServlet {
         List<Booking> allBookings = bookingService.getBookingsByAccount(accountId, "All", null);
         List<Booking> activeBookings = new ArrayList<>();
         for (Booking b : allBookings) {
-            if ("CheckedIn".equals(b.getStatus())) {
+            if ("CheckedIn".equalsIgnoreCase(b.getStatus())) {
                 activeBookings.add(b);
             }
         }
@@ -275,7 +275,7 @@ public class CustomerServiceController extends HttpServlet {
             }
 
             // Verify booking is CheckedIn - only checked-in guests can request services
-            if (!"CheckedIn".equals(booking.getStatus())) {
+            if (!"CheckedIn".equalsIgnoreCase(booking.getStatus())) {
                 response.sendRedirect(request.getContextPath() + "/customer/services?error=not_checked_in");
                 return;
             }
@@ -297,7 +297,7 @@ public class CustomerServiceController extends HttpServlet {
 
             // Get room assignment if checked in
             Integer roomId = null;
-            List<Room> assignedRooms = bookingService.getAssignedRoomsForBooking(bookingId,
+            List<RoomInfo> assignedRooms = bookingService.getAssignedRoomsForBooking(bookingId,
                     booking.getCheckInDate(),
                     booking.getCheckOutDate());
             if (assignedRooms != null && !assignedRooms.isEmpty()) {

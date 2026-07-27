@@ -13,6 +13,11 @@
     - Thẻ "Lượt đặt phòng" & "Tổng doanh thu" có bộ lọc kỳ riêng (tháng/quý/năm/tùy chỉnh).
     - 4 biểu đồ, mỗi biểu đồ một khoảng lọc riêng; chuỗi thời gian tự gom nhóm
       ngày → tháng → quý khi khoảng lọc rộng để không bị chi chít.
+
+    CHUẨN GHI NHẬN SỐ LIỆU (thống nhất với manager.jsp):
+    - Doanh thu: rải đều theo từng đêm lưu trú, chỉ tính phần đêm trong khoảng lọc.
+    - Lượt đặt phòng / trạng thái: đếm theo ngày tạo đơn (created_at).
+    Hai thẻ KPI ghi rõ cơ sở đếm ở dòng .stat-foot.
     @author QuyPQ
 --%>
 <body class="dashboard-body">
@@ -45,7 +50,12 @@
                 <div class="content-header-row">
                     <div>
                         <h1>Bảng điều khiển hệ thống</h1>
-                        <p>Giám sát tổng quan hệ thống: tài khoản, đặt phòng và doanh thu. Bấm vào một thẻ để xem danh sách chi tiết.</p>
+                        <p>
+                            Giám sát tổng quan hệ thống: tài khoản, đặt phòng và doanh thu.
+                            Bấm vào một thẻ để xem danh sách chi tiết.
+                            Doanh thu được phân bổ theo đêm lưu trú — cùng chuẩn với trang Tổng quan
+                            của Quản lý, nên hai trang luôn cho cùng một con số trên cùng kỳ.
+                        </p>
                     </div>
                 </div>
 
@@ -98,6 +108,9 @@
                             </div>
                             <i class="fa-solid fa-chevron-right stat-open-icon"></i>
                         </a>
+                        <div class="stat-foot">
+                            <i class="fa-solid fa-calendar-plus"></i> Đếm theo ngày khách tạo đơn
+                        </div>
                         <form class="stat-filter" onsubmit="applyFilter(this); return false;">
                             <select name="bkMode" class="stat-filter-select" onchange="applyFilter(this.form)">
                                 <option value="month" ${bp.mode eq 'month' ? 'selected' : ''}>Theo tháng</option>
@@ -143,6 +156,9 @@
                             </div>
                             <i class="fa-solid fa-chevron-right stat-open-icon"></i>
                         </a>
+                        <div class="stat-foot">
+                            <i class="fa-solid fa-moon"></i> Phân bổ theo đêm lưu trú trong kỳ
+                        </div>
                         <form class="stat-filter" onsubmit="applyFilter(this); return false;">
                             <select name="rvMode" class="stat-filter-select" onchange="applyFilter(this.form)">
                                 <option value="month" ${rp.mode eq 'month' ? 'selected' : ''}>Theo tháng</option>
