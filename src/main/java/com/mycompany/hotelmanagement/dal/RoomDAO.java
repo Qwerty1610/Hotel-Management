@@ -1,8 +1,5 @@
 package com.mycompany.hotelmanagement.dal;
 
-import com.mycompany.hotelmanagement.config.DBContext;
-import com.mycompany.hotelmanagement.entity.RoomInfo;
-import com.mycompany.hotelmanagement.entity.RoomIssue;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,6 +7,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.mycompany.hotelmanagement.config.DBContext;
+import com.mycompany.hotelmanagement.entity.RoomInfo;
 
 /**
  * Project: Hotel Management System
@@ -172,10 +172,6 @@ public class RoomDAO {
         return getRoomsByDateRange(selectedDate, nextDate);
     }
 
-    public List<RoomInfo> getRoomMapByDate(java.sql.Date checkIn, java.sql.Date checkOut) {
-        return getRoomsByDateRange(checkIn, checkOut);
-    }
-
     public boolean isRoomCurrentlyOccupied(int roomId) {
         String sql = """
             SELECT COUNT(*)
@@ -237,7 +233,7 @@ public class RoomDAO {
                 if (rs.next()) {
                     String status = rs.getString("status");
                     int activeOrFutureCount = rs.getInt("active_or_future_booking_count");
-                    if (!"Available".equalsIgnoreCase(status)) {
+                    if (!"Available".equalsIgnoreCase(status) && !"OutOfService".equalsIgnoreCase(status)) {
                         return "roomNotAvailableForDelete";
                     }
                     if (activeOrFutureCount > 0) {

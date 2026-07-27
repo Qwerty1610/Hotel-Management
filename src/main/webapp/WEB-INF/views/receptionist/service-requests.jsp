@@ -40,7 +40,7 @@
 
                     <li class="menu-item ${currentTab eq 'checkin' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin">
-                            <i class="fa-solid fa-key"></i> <span>Nhận phòng (Check-in)</span>
+                            <i class="fa-solid fa-key"></i> <span>Nhận phòng</span>
                         </a>
                     </li>
 
@@ -131,6 +131,10 @@
                                 <c:when test="${param.error eq 'noroom_checkedin'}">Phòng này hiện không có khách đang Check-in.</c:when>
                                 <c:when test="${param.error eq 'service_inactive'}">Dịch vụ đã ngừng hoạt động.</c:when>
                                 <c:when test="${param.error eq 'addservice_failed'}">Không thể đặt dịch vụ. Vui lòng thử lại.</c:when>
+                                <c:when test="${param.error eq 'no_invoice'}">Không tìm thấy hóa đơn của đơn đặt phòng để thêm dịch vụ.</c:when>
+                                <c:when test="${param.error eq 'invoice_closed'}">Hóa đơn của phòng đã thanh toán hoặc đã đóng, không thể duyệt thêm dịch vụ.</c:when>
+                                <c:when test="${param.error eq 'invalid_price'}">Đơn giá dịch vụ không hợp lệ hoặc dịch vụ không còn khả dụng.</c:when>
+                                <c:when test="${param.error eq 'booking_checkedout'}">Không thể duyệt do đơn/phòng này đã Check-out (yêu cầu dịch vụ đã tự động hủy).</c:when>
                                 <c:otherwise>Đã xảy ra lỗi. Vui lòng thử lại sau.</c:otherwise>
                             </c:choose>
                         </div>

@@ -102,6 +102,11 @@
         background:#fee2e2;
         color:#dc2626;
     }
+
+    .status-cancelled{
+        background:#fee2e2;
+        color:#dc2626;
+    }
     /* =========================
        MOBILE RESPONSIVE
     ========================= */
@@ -166,11 +171,15 @@
 
     <%-- Header Navigation --%>
     <nav class="navbar-rooms">
-        <div class="logo">HotelOps</div>
+        <a href="${pageContext.request.contextPath}/" class="logo">HotelOps</a>
         <ul class="nav-links">
             <li><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
+            <li><a href="${pageContext.request.contextPath}/rooms">Phòng</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/bookings">Đặt phòng của tôi</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/feedbacks">Đánh giá lưu trú</a></li>
             <li><a href="${pageContext.request.contextPath}/customer/services">Dịch vụ</a></li>
             <li><a href="${pageContext.request.contextPath}/customer/maintenance" class="active">Sự cố</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/payments">Thanh toán</a></li>
         </ul>
 
         <div class="nav-actions">
@@ -408,6 +417,12 @@
                                                         <c:when test="${item.status eq 'Unresolvable'}">
                                                             <span class="status-badge status-unresolvable">
                                                                 Không thể xử lý
+                                                            </span>
+                                                        </c:when>
+
+                                                        <c:when test="${item.status eq 'Cancelled'}">
+                                                            <span class="status-badge status-cancelled">
+                                                                Đã hủy
                                                             </span>
                                                         </c:when>
 

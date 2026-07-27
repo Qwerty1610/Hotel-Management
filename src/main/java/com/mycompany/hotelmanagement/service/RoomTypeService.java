@@ -1,14 +1,15 @@
 package com.mycompany.hotelmanagement.service;
 
-import com.mycompany.hotelmanagement.config.DBContext;
-import com.mycompany.hotelmanagement.dal.RoomTypeDAO;
-import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
-import com.mycompany.hotelmanagement.entity.AmenityInfo;
 import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import com.mycompany.hotelmanagement.config.DBContext;
+import com.mycompany.hotelmanagement.dal.RoomTypeDAO;
+import com.mycompany.hotelmanagement.entity.AmenityInfo;
+import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 
 /**
  * Project: Hotel Management System
@@ -62,7 +63,7 @@ public class RoomTypeService {
     }
 
     /**
-     * UC-30: View Room Types
+     * UC-29 Browse Available Room Types
      * Lấy toàn bộ danh sách loại phòng từ cơ sở dữ liệu kèm theo hình ảnh đầu tiên và danh sách tiện nghi.
      *
      * @return danh sách đối tượng RoomTypeInfo đầy đủ thông tin
@@ -100,48 +101,7 @@ public class RoomTypeService {
     }
 
     /**
-     * UC-03: Search Available Rooms
-     * Lọc danh sách các loại phòng theo tên loại phòng, số lượng khách tối đa và khoảng giá.
-     *
-     * @param typeFilter tên loại phòng cần tìm kiếm (chấp nhận tìm gần đúng)
-     * @param guestsFilter số lượng khách tối thiểu phòng phải đáp ứng
-     * @param minPriceFilter mức giá thuê tối thiểu
-     * @param maxPriceFilter mức giá thuê tối đa
-     * @return danh sách loại phòng thỏa mãn các tiêu chí lọc
-     */
-    public List<RoomTypeInfo> getFilteredRoomTypes(String typeFilter, int guestsFilter, double minPriceFilter,
-            double maxPriceFilter) {
-        List<RoomTypeInfo> allRoomTypes = getAllRoomTypes();
-        List<RoomTypeInfo> filteredRoomTypes = new ArrayList<>();
-
-        for (RoomTypeInfo room : allRoomTypes) {
-            // Filter by Room Type Name (contains)
-            if (typeFilter != null && !typeFilter.trim().isEmpty() && !"all".equalsIgnoreCase(typeFilter)) {
-                String roomName = room.getTypeName().toLowerCase();
-                String filterVal = typeFilter.toLowerCase().trim();
-                if (!roomName.contains(filterVal)) {
-                    continue;
-                }
-            }
-
-            // Filter by Capacity (Guests)
-            if (guestsFilter != -1 && room.getCapacity() < guestsFilter) {
-                continue;
-            }
-
-            // Filter by Price range
-            double finalPrice = room.getBasePrice();
-            if (finalPrice < minPriceFilter || finalPrice > maxPriceFilter) {
-                continue;
-            }
-
-            filteredRoomTypes.add(room);
-        }
-        return filteredRoomTypes;
-    }
-
-    /**
-     * UC-31: View Room Type Detail
+     * UC-30: View Room Type Detail
      * Lấy thông tin chi tiết của một loại phòng cụ thể, bao gồm toàn bộ danh sách hình ảnh, tiện nghi chi tiết và số phòng hiện tại còn trống.
      *
      * @param typeId ID loại phòng cần lấy thông tin chi tiết

@@ -89,11 +89,10 @@ public class CheckOutDAO {
                 + "  b.total_amount AS booking_room_charge, "
                 + "  i.invoice_id, "
                 + "  ISNULL((SELECT SUM(amount) FROM dbo.InvoiceItem WHERE invoice_id = i.invoice_id AND item_type = N'Service'), 0) AS service_charge, "
-                // Phụ phí quá người ở từ CheckIn (riêng)
-                + "  ISNULL((SELECT TOP 1 extra_fee FROM dbo.CheckIn ci WHERE ci.booking_id = b.booking_id), 0) AS checkin_extra_fee, "
-                // Tổng phụ phí = checkin_extra_fee + Surcharge Manager thêm
-                + "  (ISNULL((SELECT TOP 1 extra_fee FROM dbo.CheckIn ci WHERE ci.booking_id = b.booking_id), 0) "
-                + "   + ISNULL((SELECT SUM(amount) FROM dbo.InvoiceItem WHERE invoice_id = i.invoice_id AND item_type = N'Surcharge'), 0)) AS extra_charge, "
+                // Toàn bộ phụ phí (kể cả phụ phí quá người ở khi check-in) nay là
+                // dòng Surcharge trong InvoiceItem — nguồn sự thật duy nhất về tiền.
+                // KHÔNG cộng CheckIn.extra_fee riêng nữa để tránh tính hai lần.
+                + "  ISNULL((SELECT SUM(amount) FROM dbo.InvoiceItem WHERE invoice_id = i.invoice_id AND item_type = N'Surcharge'), 0) AS extra_charge, "
                 // Một truy vấn với OR thay vì cộng hai subquery: giao dịch gắn cả
                 // invoice_id lẫn booking_id (thanh toán tại quầy, dữ liệu cọc cũ)
                 // sẽ chỉ được cộng ĐÚNG MỘT LẦN vào số đã trả.
@@ -117,14 +116,15 @@ public class CheckOutDAO {
 
                     double roomCharge = rs.getDouble("booking_room_charge");
                     double serviceCharge = rs.getDouble("service_charge");
-                    double checkInExtraFee = rs.getDouble("checkin_extra_fee");
                     double extraCharge = rs.getDouble("extra_charge");
                     double totalAmount = roomCharge + serviceCharge + extraCharge;
                     double amountPaid = rs.getDouble("amount_paid");
 
                     summary.setRoomCharge(roomCharge);
                     summary.setServiceCharge(serviceCharge);
-                    summary.setCheckInExtraFee(checkInExtraFee);
+                    // Phụ phí check-in nay là dòng Surcharge (hiển thị trong danh sách
+                    // phụ phí bên dưới), nên không tách hiển thị riêng -> để 0.
+                    summary.setCheckInExtraFee(0);
                     summary.setExtraCharge(extraCharge);
                     summary.setTotalAmount(totalAmount);
                     summary.setAmountPaid(amountPaid);
@@ -227,6 +227,15 @@ public class CheckOutDAO {
             try (PreparedStatement st2 = con.prepareStatement(updateBooking)) {
                 st2.setInt(1, co.getBookingId());
                 st2.executeUpdate();
+            }
+
+            // 2.1. Auto-cancel any unapproved (Pending) service requests for this checked-out booking
+            String autoCancelPendingRequests = "UPDATE dbo.BookingServiceRequest "
+                    + "SET status = N'Cancelled', cancel_reason = N'Tự động hủy do phòng đã trả (Check-out)', updated_at = SYSDATETIME() "
+                    + "WHERE booking_id = ? AND UPPER(status) = 'PENDING'";
+            try (PreparedStatement stCancel = con.prepareStatement(autoCancelPendingRequests)) {
+                stCancel.setInt(1, co.getBookingId());
+                stCancel.executeUpdate();
             }
 
             // 3. Update Room

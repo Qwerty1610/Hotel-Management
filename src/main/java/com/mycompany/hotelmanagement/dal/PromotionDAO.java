@@ -1,12 +1,18 @@
 package com.mycompany.hotelmanagement.dal;
 
-import com.mycompany.hotelmanagement.config.DBContext;
-import com.mycompany.hotelmanagement.entity.Promotion;
-
-import java.math.BigDecimal;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.mycompany.hotelmanagement.config.DBContext;
+import com.mycompany.hotelmanagement.entity.Promotion;
 
 /**
  * Project: Hotel Management System
@@ -104,6 +110,31 @@ public class PromotionDAO {
             LOGGER.log(java.util.logging.Level.SEVERE, "Error fetching promotions", e);
         }
         return list;
+    }
+
+    /**
+     * Lấy một khuyến mãi theo PromotionID.
+     */
+    public Promotion getPromotionById(int promotionId) {
+        String sql = "SELECT PromotionID, PromotionCode, PromotionName, Description, "
+                + "DiscountType, DiscountValue, StartDate, EndDate, EventName, "
+                + "MinBookingAmount, MaxDiscountAmount, UsageLimit, UsedCount, "
+                + "Status, CreatedAt, UpdatedAt "
+                + "FROM Promotion WHERE PromotionID = ?";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            useDatabase(conn);
+            ps.setInt(1, promotionId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error fetching promotion by ID: " + promotionId, e);
+        }
+        return null;
     }
 
     /**
@@ -210,6 +241,13 @@ public class PromotionDAO {
      * Cập nhật thông tin khuyến mãi (không thay đổi UsedCount).
      */
     public boolean updatePromotion(Promotion p) {
+        if (p.getPromotionId() > 0 && p.getUsageLimit() != null) {
+            Promotion existing = getPromotionById(p.getPromotionId());
+            if (existing != null && p.getUsageLimit() < existing.getUsedCount()) {
+                LOGGER.warning("Block update for promotion ID " + p.getPromotionId() + ": usageLimit (" + p.getUsageLimit() + ") < usedCount (" + existing.getUsedCount() + ")");
+                return false;
+            }
+        }
         String sql = "UPDATE Promotion SET "
                 + "PromotionCode = ?, PromotionName = ?, Description = ?, "
                 + "DiscountType = ?, DiscountValue = ?, StartDate = ?, EndDate = ?, "

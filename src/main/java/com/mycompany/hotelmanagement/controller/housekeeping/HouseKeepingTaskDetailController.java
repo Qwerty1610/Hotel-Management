@@ -2,7 +2,7 @@ package com.mycompany.hotelmanagement.controller.housekeeping;
 
 import com.mycompany.hotelmanagement.dal.HousekeepingDAO;
 import com.mycompany.hotelmanagement.dal.RoomIssueDAO;
-import com.mycompany.hotelmanagement.entity.Room;
+import com.mycompany.hotelmanagement.entity.RoomInfo;
 import com.mycompany.hotelmanagement.entity.RoomIssue;
 
 import jakarta.servlet.*;
@@ -35,7 +35,7 @@ public class HouseKeepingTaskDetailController extends HttpServlet {
                 = new RoomIssueDAO();
 
         // lấy thông tin phòng
-        Room room
+        RoomInfo room
                 = roomDAO.getRoomById(roomId);
 
         // lấy danh sách issue

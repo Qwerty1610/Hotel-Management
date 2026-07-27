@@ -403,8 +403,6 @@ BEGIN
         type_id INT IDENTITY(1,1) PRIMARY KEY,
         type_name NVARCHAR(100) NOT NULL UNIQUE,
         base_price DECIMAL(18,2) NOT NULL DEFAULT 0,
-        price_per_hour DECIMAL(18,2) NOT NULL DEFAULT 0,
-        deposit_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
         capacity INT NOT NULL DEFAULT 2,
         description NVARCHAR(500) NULL,
         area NVARCHAR(50) NULL,
@@ -492,26 +490,26 @@ GO
 /* Seed RoomTypes */
 IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE type_name = N'Phòng Standard')
 BEGIN
-    INSERT INTO dbo.RoomType (type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type)
-    VALUES (N'Phòng Standard', 750000, 100000, 10, 2, N'Phòng tiêu chuẩn phù hợp cho khách đi công tác hoặc nghỉ ngắn ngày.', N'25 m²', N'1 Giường Queen');
+    INSERT INTO dbo.RoomType (type_name, base_price, capacity, description, area, bed_type)
+    VALUES (N'Phòng Standard', 750000, 2, N'Phòng tiêu chuẩn phù hợp cho khách đi công tác hoặc nghỉ ngắn ngày.', N'25 m²', N'1 Giường Queen');
 END
 
 IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe')
 BEGIN
-    INSERT INTO dbo.RoomType (type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type)
-    VALUES (N'Phòng Deluxe', 1200000, 180000, 10, 2, N'Phòng rộng rãi, nội thất hiện đại, có view thành phố cực kỳ lung linh.', N'45 m²', N'1 Giường đôi lớn');
+    INSERT INTO dbo.RoomType (type_name, base_price, capacity, description, area, bed_type)
+    VALUES (N'Phòng Deluxe', 1200000, 2, N'Phòng rộng rãi, nội thất hiện đại, có view thành phố cực kỳ lung linh.', N'45 m²', N'1 Giường đôi lớn');
 END
 
 IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE type_name = N'Phòng Family')
 BEGIN
-    INSERT INTO dbo.RoomType (type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type)
-    VALUES (N'Phòng Family', 1800000, 250000, 10, 4, N'Phòng gia đình với không gian lớn, phù hợp nhóm bạn hoặc gia đình nhỏ.', N'60 m²', N'2 Giường đôi');
+    INSERT INTO dbo.RoomType (type_name, base_price, capacity, description, area, bed_type)
+    VALUES (N'Phòng Family', 1800000, 4, N'Phòng gia đình với không gian lớn, phù hợp nhóm bạn hoặc gia đình nhỏ.', N'60 m²', N'2 Giường đôi');
 END
 
 IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE type_name = N'Phòng Suite')
 BEGIN
-    INSERT INTO dbo.RoomType (type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type)
-    VALUES (N'Phòng Suite', 2800000, 400000, 20, 3, N'Phòng cao cấp có khu tiếp khách riêng, bồn tắm và ban công.', N'75 m²', N'1 Giường King');
+    INSERT INTO dbo.RoomType (type_name, base_price, capacity, description, area, bed_type)
+    VALUES (N'Phòng Suite', 2800000, 3, N'Phòng cao cấp có khu tiếp khách riêng, bồn tắm và ban công.', N'75 m²', N'1 Giường King');
 END
 GO
 
@@ -629,6 +627,7 @@ CREATE TABLE dbo.Booking (
 
     room_type_id INT NULL,
     room_quantity INT NOT NULL DEFAULT 1,
+    promotion_id INT NULL,
     check_in_date DATE NOT NULL,
     check_out_date DATE NOT NULL,
 
@@ -651,6 +650,12 @@ CREATE TABLE dbo.Booking (
     CONSTRAINT FK_Booking_Group
         FOREIGN KEY (group_booking_id)
         REFERENCES dbo.Booking(booking_id)
+
+    /* Tính DUY NHẤT của promotion_id KHÔNG dùng UNIQUE constraint ở đây, mà
+       được đảm bảo bằng FILTERED UNIQUE INDEX (UX_Booking_Promotion) tạo ở
+       mục 15 bên dưới. Lý do: trong SQL Server, UNIQUE constraint chỉ cho phép
+       DUY NHẤT 1 giá trị NULL, trong khi phần lớn booking không có khuyến mãi
+       (promotion_id = NULL) nên sẽ đụng ràng buộc ngay từ booking NULL thứ 2. */
 );
 END
 GO
@@ -1587,6 +1592,55 @@ BEGIN
 END
 GO
 
+/* Đảm bảo cột promotion_id tồn tại trên Booking — dùng cho DB cũ đã có sẵn
+   bảng Booking từ trước (CREATE TABLE ở trên bị bỏ qua vì OBJECT_ID đã tồn
+   tại nên không tự thêm cột được, phải ALTER riêng ở đây). */
+IF COL_LENGTH(N'dbo.Booking', N'promotion_id') IS NULL
+BEGIN
+    ALTER TABLE dbo.Booking ADD promotion_id INT NULL;
+END
+GO
+
+/* Nếu DB cũ (hoặc lần chạy script trước) đã lỡ tạo UNIQUE constraint
+   UQ_Booking_Promotion thì gỡ bỏ, vì constraint này chỉ cho phép 1 giá trị
+   NULL — sẽ chặn các booking không có khuyến mãi. Thay bằng filtered unique
+   index bên dưới. */
+IF EXISTS (
+    SELECT 1 FROM sys.key_constraints
+    WHERE name = 'UQ_Booking_Promotion' AND parent_object_id = OBJECT_ID(N'dbo.Booking')
+)
+BEGIN
+    ALTER TABLE dbo.Booking DROP CONSTRAINT UQ_Booking_Promotion;
+END
+GO
+
+/* Đảm bảo tính DUY NHẤT của promotion_id (FK 1-1: mỗi Promotion chỉ gắn được
+   với đúng 1 Booking, chỉ dùng cho booking cha / root). Dùng FILTERED UNIQUE
+   INDEX thay vì UNIQUE constraint: với filter WHERE promotion_id IS NOT NULL,
+   ta cho phép NHIỀU booking không khuyến mãi (NULL) nhưng vẫn đảm bảo mỗi
+   promotion chỉ được dùng đúng 1 lần. Áp dụng cho cả DB mới lẫn DB cũ. */
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE name = 'UX_Booking_Promotion' AND object_id = OBJECT_ID(N'dbo.Booking')
+)
+BEGIN
+    CREATE UNIQUE INDEX UX_Booking_Promotion
+        ON dbo.Booking(promotion_id)
+        WHERE promotion_id IS NOT NULL;
+END
+GO
+
+/* Đảm bảo FK tới Promotion tồn tại — PHẢI đứng sau khi bảng Promotion đã
+   được tạo ở trên (không thể khai báo FK này ngay trong CREATE TABLE ban
+   đầu của Booking vì lúc đó Promotion chưa tồn tại — forward reference sẽ
+   lỗi). Check riêng theo tên FK, độc lập với 2 bước trên. */
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Booking_Promotion')
+BEGIN
+    ALTER TABLE dbo.Booking ADD CONSTRAINT FK_Booking_Promotion
+        FOREIGN KEY (promotion_id) REFERENCES dbo.Promotion(PromotionID);
+END
+GO
+
 /* ── Sample data for testing ── */
 IF NOT EXISTS (SELECT 1 FROM dbo.Promotion WHERE PromotionCode = 'SUMMER2025')
 BEGIN
@@ -1644,4 +1698,3 @@ BEGIN
     );
 END
 GO
-

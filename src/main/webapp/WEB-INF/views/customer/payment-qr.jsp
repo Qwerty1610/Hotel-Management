@@ -9,11 +9,14 @@
 
     <%-- Header Navigation --%>
     <nav class="navbar-rooms">
-        <div class="logo">HotelOps</div>
+        <a href="${pageContext.request.contextPath}/" class="logo">HotelOps</a>
         <ul class="nav-links">
             <li><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
             <li><a href="${pageContext.request.contextPath}/rooms">Phòng</a></li>
             <li><a href="${pageContext.request.contextPath}/customer/bookings">Đặt phòng của tôi</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/feedbacks">Đánh giá lưu trú</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/services">Dịch vụ</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/maintenance">Sự cố</a></li>
             <li><a href="${pageContext.request.contextPath}/customer/payments" class="active">Thanh toán</a></li>
         </ul>
         <div class="nav-actions">
@@ -32,6 +35,7 @@
                     </a>
                     <a href="${pageContext.request.contextPath}/customer/booking/change" class="dropdown-item">
                         <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
+                    </a>
                     <a href="${pageContext.request.contextPath}/customer/feedbacks" class="dropdown-item">
                         <i class="fa-solid fa-star"></i> Đánh giá lưu trú
                     </a>

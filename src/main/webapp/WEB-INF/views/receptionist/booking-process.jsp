@@ -38,7 +38,7 @@
 
                     <li class="menu-item ${currentTab eq 'checkin' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin">
-                            <i class="fa-solid fa-key"></i> <span>Nhận phòng (Check-in)</span>
+                            <i class="fa-solid fa-key"></i> <span>Nhận phòng</span>
                         </a>
                     </li>
 
@@ -351,11 +351,11 @@
                                                                     </div>
                                                                     <div class="room-card-body">
                                                                         <c:choose>
-                                                                            <c:when test="${isAssigned}"><span class="badge-status badge-avail">Đang gán</span></c:when>
-                                                                            <c:when test="${isAvailable}"><span class="badge-status badge-avail">Trống</span></c:when>
-                                                                            <c:when test="${isCleaning}"><span class="badge-status badge-clean">Dọn dẹp</span></c:when>
-                                                                            <c:when test="${isOccupied}"><span class="badge-status badge-occupied">Có khách</span></c:when>
-                                                                            <c:otherwise><span class="badge-status badge-maint">Bảo trì</span></c:otherwise>
+                                                                            <c:when test="${isAssigned}"><span class="badge-status badge-avail room-status-badge">Đang gán</span></c:when>
+                                                                            <c:when test="${isAvailable}"><span class="badge-status badge-avail room-status-badge">Trống</span></c:when>
+                                                                            <c:when test="${isCleaning}"><span class="badge-status badge-clean room-status-badge">Dọn dẹp</span></c:when>
+                                                                            <c:when test="${isOccupied}"><span class="badge-status badge-occupied room-status-badge">Có khách</span></c:when>
+                                                                            <c:otherwise><span class="badge-status badge-maint room-status-badge">Bảo trì</span></c:otherwise>
                                                                         </c:choose>
                                                                     </div>
                                                                     <c:if test="${isAvailable || isAssigned}">
@@ -1260,8 +1260,8 @@
                 if (!checkIn || !checkOut)
                     return Promise.resolve();
 
-                const url = `${window.contextPath || ''}/receptionist/room/available`
-                        + `?checkIn=${checkIn}&checkOut=${checkOut}`;
+                const url = `<c:out value='${pageContext.request.contextPath}' />/receptionist/booking/process`
+                        + `?action=roomStatus&checkInDate=${checkIn}&checkOutDate=${checkOut}`;
 
                 return fetch(url)
                         .then(res => res.json())
@@ -1270,26 +1270,41 @@
                         })
                         .catch(err => console.error("Room fetch error:", err));
             }
-            function updateRoomGrid(availableRooms) {
-                const availableSet = new Set(
-                        availableRooms.map(r => String(r.roomId))
+            function updateRoomGrid(roomStatusList) {
+
+                // Phòng vệ: nếu API lỗi/trả rỗng thì giữ nguyên hiển thị hiện tại
+                // thay vì đánh sập cả bảng thành "Bảo trì".
+                if (!Array.isArray(roomStatusList) || roomStatusList.length === 0) {
+                    console.warn("roomStatus trả về rỗng, giữ nguyên trạng thái phòng hiện tại.");
+                    return;
+                }
+
+                const statusMap = new Map(
+                        roomStatusList.map(r => [String(r.roomId), r.status])
                         );
 
                 document.querySelectorAll(".room-card").forEach(card => {
                     const roomId = String(card.dataset.roomId);
 
                     const checkbox = card.querySelector(".room-checkbox");
-
-                    const isAvailable = availableSet.has(roomId);
+                    const badge = card.querySelector(".room-status-badge");
+                    const isChecked = checkbox && checkbox.checked;
+                    const status = statusMap.get(roomId);
+                    const isAvailable = status === "Available";
 
                     // reset trạng thái cơ bản
-                    card.classList.remove("card-disabled");
+                    card.classList.remove("card-disabled", "card-avail");
 
-                    if (isAvailable) {
+                    if (isChecked || isAvailable) {
                         card.classList.add("card-avail");
 
                         if (checkbox)
                             checkbox.disabled = false;
+
+                        if (badge && !isChecked) {
+                            badge.className = "badge-status badge-avail room-status-badge";
+                            badge.textContent = "Trống";
+                        }
 
                     } else {
                         card.classList.add("card-disabled");
@@ -1297,6 +1312,19 @@
                         if (checkbox) {
                             checkbox.checked = false;
                             checkbox.disabled = true;
+                        }
+
+                        if (badge) {
+                            if (status === "Cleaning" || status === "Refilling") {
+                                badge.className = "badge-status badge-clean room-status-badge";
+                                badge.textContent = "Dọn dẹp";
+                            } else if (status === "Occupied" || status === "Confirmed") {
+                                badge.className = "badge-status badge-occupied room-status-badge";
+                                badge.textContent = "Có khách";
+                            } else {
+                                badge.className = "badge-status badge-maint room-status-badge";
+                                badge.textContent = "Bảo trì";
+                            }
                         }
                     }
                 });

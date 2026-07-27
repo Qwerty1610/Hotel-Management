@@ -2,6 +2,11 @@ package com.mycompany.hotelmanagement.controller.manager;
 
 import java.io.IOException;
 import java.util.List;
+
+import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
+import com.mycompany.hotelmanagement.service.CloudinaryService;
+import com.mycompany.hotelmanagement.service.RoomTypeService;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
@@ -9,10 +14,6 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
-
-import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
-import com.mycompany.hotelmanagement.service.CloudinaryService;
-import com.mycompany.hotelmanagement.service.RoomTypeService;
 
 /**
  * Project: Hotel Management System
@@ -65,10 +66,6 @@ public class RoomTypeController extends HttpServlet {
             try {
                 if (roomTypeService.hasOccupiedGuests(roomTypeId)) {
                     response.sendRedirect(request.getContextPath() + "/manager/roomtypes?error=hasOccupiedGuests");
-                    return;
-                }
-                if (roomTypeService.hasRooms(roomTypeId)) {
-                    response.sendRedirect(request.getContextPath() + "/manager/roomtypes?error=hasRooms");
                     return;
                 }
                 boolean success = roomTypeService.deleteRoomType(roomTypeId);
@@ -156,15 +153,9 @@ public class RoomTypeController extends HttpServlet {
                 // Keep 2
             }
 
-            // Defaults for helper pricing columns in RoomType table
-            double pricePerHour = price * 0.15;
-            double depositPercent = 10.0;
-
             RoomTypeInfo rt = new RoomTypeInfo();
             rt.setTypeName(name);
             rt.setBasePrice(price);
-            rt.setPricePerHour(pricePerHour);
-            rt.setDepositPercent(depositPercent);
             rt.setCapacity(capacity);
             rt.setDescription(description);
             rt.setArea(area);

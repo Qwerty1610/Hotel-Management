@@ -56,7 +56,7 @@
                                 <c:if test="${param.error eq 'hasUsage'}">
                                     <div class="alert-banner alert-danger">
                                         <i class="fa-solid fa-circle-exclamation"></i>
-                                        Không thể xóa dịch vụ này vì đã có khách hàng đăng ký hoặc sử dụng.
+                                        Không thể xóa dịch vụ này vì đang có khách hàng đăng ký hoặc sử dụng.
                                     </div>
                                 </c:if>
                                 <c:if test="${param.success eq 'saved'}">
@@ -269,7 +269,7 @@
                                             const priceFormatted = new Intl.NumberFormat('vi-VN').format(service.price);
 
                                             const deleteBtnHtml = service.hasUsage
-                                                ? `<button class="btn-action delete" style="opacity: 0.35; cursor: not-allowed;" title="Không thể xóa dịch vụ đã có khách hàng đăng ký hoặc sử dụng">
+                                                ? `<button class="btn-action delete" style="opacity: 0.35; cursor: not-allowed;" title="Không thể xóa dịch vụ đang có khách hàng đăng ký hoặc sử dụng">
                                                        <i class="fa-solid fa-trash-can"></i>
                                                    </button>`
                                                 : `<button class="btn-action delete" onclick="deleteService(\${service.id})" title="Xóa">

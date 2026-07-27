@@ -16,12 +16,20 @@ public class LogoutController extends HttpServlet {
             throws ServletException, IOException {
         
         HttpSession session = request.getSession(false);
+        String role = null;
         if (session != null) {
+            Object roleAttr = session.getAttribute("role");
+            if (roleAttr != null) {
+                role = roleAttr.toString();
+            }
             session.invalidate();
         }
         
-        // Redirect to Home page
-        response.sendRedirect(request.getContextPath() + "/home");
+        if ("CUSTOMER".equals(role)) {
+            response.sendRedirect(request.getContextPath() + "/home");
+        } else {
+            response.sendRedirect(request.getContextPath() + "/staff/login");
+        }
     }
 
     @Override

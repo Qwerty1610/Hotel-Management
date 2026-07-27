@@ -108,11 +108,15 @@
 
                 <%-- Header Navigation --%>
                     <nav class="navbar-rooms">
-                        <div class="logo">HotelOps</div>
+                        <a href="${pageContext.request.contextPath}/" class="logo">HotelOps</a>
                         <ul class="nav-links">
                             <li><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
+                            <li><a href="${pageContext.request.contextPath}/rooms">Phòng</a></li>
+                            <li><a href="${pageContext.request.contextPath}/customer/bookings">Đặt phòng của tôi</a></li>
+                            <li><a href="${pageContext.request.contextPath}/customer/feedbacks">Đánh giá lưu trú</a></li>
                             <li><a href="${pageContext.request.contextPath}/customer/services" class="active">Dịch vụ</a></li>
                             <li><a href="${pageContext.request.contextPath}/customer/maintenance">Sự cố</a></li>
+                            <li><a href="${pageContext.request.contextPath}/customer/payments">Thanh toán</a></li>
                         </ul>
 
                         <div class="nav-actions">
@@ -138,6 +142,7 @@
                                                     </a>
                                                     <a href="${pageContext.request.contextPath}/customer/booking/change" class="dropdown-item">
                                                         <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
+                                                    </a>
                                                     <a href="${pageContext.request.contextPath}/customer/feedbacks"
                                                         class="dropdown-item">
                                                         <i class="fa-solid fa-star"></i> Đánh giá lưu trú
@@ -497,9 +502,13 @@
                                         return;
                                     }
                                     
-                                    const price = parseFloat(selectedOption.getAttribute('data-price') || 0);
+                                    const price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
                                     const unit = selectedOption.getAttribute('data-unit') || '';
-                                    const quantity = parseInt(quantityInput.value || 1);
+                                    
+                                    let quantity = parseInt(quantityInput.value);
+                                    if (isNaN(quantity) || quantity < 1) {
+                                        quantity = 0;
+                                    }
                                     
                                     unitPriceSpan.textContent = formatCurrency(price);
                                     unitNameSpan.textContent = unit ? "/ " + unit : "";

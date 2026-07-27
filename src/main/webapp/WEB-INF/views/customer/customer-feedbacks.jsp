@@ -127,11 +127,14 @@
 
     <%-- Header Navigation --%>
     <nav class="navbar-rooms">
-        <div class="logo">HotelOps</div>
+        <a href="${pageContext.request.contextPath}/" class="logo">HotelOps</a>
         <ul class="nav-links">
             <li><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
             <li><a href="${pageContext.request.contextPath}/rooms">Phòng</a></li>
             <li><a href="${pageContext.request.contextPath}/customer/bookings">Đặt phòng của tôi</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/feedbacks" class="active">Đánh giá lưu trú</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/services">Dịch vụ</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/maintenance">Sự cố</a></li>
             <li><a href="${pageContext.request.contextPath}/customer/payments">Thanh toán</a></li>
         </ul>
 
@@ -153,6 +156,7 @@
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/booking/change" class="dropdown-item">
                                         <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
+                                    </a>
                                     <a href="${pageContext.request.contextPath}/customer/feedbacks" class="dropdown-item">
                                         <i class="fa-solid fa-star"></i> Đánh giá lưu trú
                                     </a>
@@ -337,18 +341,26 @@
                             <i class="fa-regular fa-star star-btn" data-value="4" style="cursor: pointer; color: #fbbf24;"></i>
                             <i class="fa-regular fa-star star-btn" data-value="5" style="cursor: pointer; color: #fbbf24;"></i>
                         </div>
-                        <input type="hidden" name="rating" id="ratingInput" required />
+                        <input type="hidden" name="rating" id="ratingInput" />
                         <div id="ratingText" style="font-weight: 600; color: #64748b; font-size: 14px;">Chọn số sao để đánh giá</div>
+                        <div id="ratingError" style="color: #ef4444; font-size: 12.5px; font-weight: 500; display: none; margin-top: 4px;">
+                            <i class="fa-solid fa-circle-exclamation"></i> Vui lòng chọn số sao để đánh giá.
+                        </div>
                     </div>
 
                     <div style="margin-top: 15px;">
                         <label style="font-weight: 600; display: block; margin-bottom: 8px; color: #334155;">Nhận xét của bạn (không bắt buộc):</label>
                         <textarea name="comment" id="commentText" class="form-control" rows="4" 
-                                  maxlength="1000" placeholder="Chia sẻ thêm chi tiết về kỳ nghỉ của bạn tại phòng này..." 
+                                  placeholder="Chia sẻ thêm chi tiết về kỳ nghỉ của bạn tại phòng này..." 
                                   style="width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; resize: none; box-sizing: border-box;"
                                   oninput="updateCharCount()"></textarea>
-                        <div style="text-align: right; font-size: 12px; color: #94a3b8; margin-top: 4px;">
-                            <span id="charCount">0</span> / 1000 ký tự
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                            <div id="commentError" style="color: #ef4444; font-size: 12.5px; font-weight: 500; display: none;">
+                                <i class="fa-solid fa-circle-exclamation"></i> Nội dung đánh giá không được vượt quá 1000 ký tự.
+                            </div>
+                            <div style="font-size: 12px; color: #94a3b8; margin-left: auto;">
+                                <span id="charCount">0</span> / 1000 ký tự
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -425,10 +437,23 @@
             // Reset modal values
             document.getElementById('ratingInput').value = '';
             document.getElementById('commentText').value = '';
-            document.getElementById('charCount').textContent = '0';
             document.getElementById('ratingText').textContent = 'Chọn số sao để đánh giá';
             document.getElementById('ratingText').style.color = '#64748b';
             
+            const commentTextEl = document.getElementById('commentText');
+            commentTextEl.style.borderColor = '#cbd5e1';
+
+            const charCountEl = document.getElementById('charCount');
+            charCountEl.textContent = '0';
+            charCountEl.style.color = '#94a3b8';
+            charCountEl.style.fontWeight = 'normal';
+
+            const commentErrorEl = document.getElementById('commentError');
+            if (commentErrorEl) commentErrorEl.style.display = 'none';
+
+            const ratingErrorEl = document.getElementById('ratingError');
+            if (ratingErrorEl) ratingErrorEl.style.display = 'none';
+
             const stars = document.querySelectorAll('.star-btn');
             stars.forEach(s => {
                 s.classList.remove('fa-solid');
@@ -462,6 +487,9 @@
                 ratingText.textContent = ratingMeanings[val];
                 ratingText.style.color = '#1e293b';
                 
+                const ratingErrorEl = document.getElementById('ratingError');
+                if (ratingErrorEl) ratingErrorEl.style.display = 'none';
+
                 stars.forEach(s => {
                     const sVal = parseInt(s.getAttribute('data-value'));
                     if (sVal <= val) {
@@ -476,22 +504,53 @@
         });
 
         function updateCharCount() {
-            const comment = document.getElementById('commentText').value;
-            document.getElementById('charCount').textContent = comment.length;
+            const commentTextEl = document.getElementById('commentText');
+            const comment = commentTextEl.value;
+            const charCountEl = document.getElementById('charCount');
+            const commentErrorEl = document.getElementById('commentError');
+
+            charCountEl.textContent = comment.length;
+
+            if (comment.length > 1000) {
+                charCountEl.style.color = '#ef4444';
+                charCountEl.style.fontWeight = 'bold';
+                if (commentErrorEl) commentErrorEl.style.display = 'block';
+                commentTextEl.style.borderColor = '#ef4444';
+            } else {
+                charCountEl.style.color = '#94a3b8';
+                charCountEl.style.fontWeight = 'normal';
+                if (commentErrorEl) commentErrorEl.style.display = 'none';
+                commentTextEl.style.borderColor = '#cbd5e1';
+            }
         }
 
         function validateForm() {
+            let isValid = true;
+
             const rating = document.getElementById('ratingInput').value;
+            const ratingErrorEl = document.getElementById('ratingError');
             if (!rating || rating < 1 || rating > 5) {
-                alert('Vui lòng chọn số sao để đánh giá.');
-                return false;
+                if (ratingErrorEl) ratingErrorEl.style.display = 'block';
+                isValid = false;
+            } else {
+                if (ratingErrorEl) ratingErrorEl.style.display = 'none';
             }
-            const comment = document.getElementById('commentText').value;
+
+            const commentTextEl = document.getElementById('commentText');
+            const comment = commentTextEl.value;
+            const commentErrorEl = document.getElementById('commentError');
+            const charCountEl = document.getElementById('charCount');
+
             if (comment.length > 1000) {
-                alert('Nội dung đánh giá không được vượt quá 1000 ký tự.');
-                return false;
+                if (commentErrorEl) commentErrorEl.style.display = 'block';
+                commentTextEl.style.borderColor = '#ef4444';
+                charCountEl.style.color = '#ef4444';
+                charCountEl.style.fontWeight = 'bold';
+                commentTextEl.focus();
+                isValid = false;
             }
-            return true;
+
+            return isValid;
         }
     </script>
 </body>

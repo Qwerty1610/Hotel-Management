@@ -495,6 +495,10 @@
 
         function deleteAmenity(id) {
             if (confirm("Bạn có chắc chắn muốn xóa tiện nghi này không? Tất cả phòng có tiện nghi này sẽ bị gỡ bỏ tiện nghi.")) {
+                const table = ManagerTable.tables.amenitiesTable;
+                if (table) {
+                    sessionStorage.setItem("ManagerTable_page_amenitiesTable", table.currentPage);
+                }
                 window.location.href = `${pageContext.request.contextPath}/manager/amenities?action=delete&id=` + id;
             }
         }
@@ -542,6 +546,18 @@
                     nameInput.reportValidity();
                     return;
                 }
+            }
+            
+            // Validation passed, save current page to session storage to retain it after reload
+            if (table) {
+                sessionStorage.setItem("ManagerTable_page_amenitiesTable", table.currentPage);
+            }
+        });
+
+        document.getElementById('assignForm').addEventListener('submit', function (e) {
+            const table = ManagerTable.tables.amenitiesTable;
+            if (table) {
+                sessionStorage.setItem("ManagerTable_page_amenitiesTable", table.currentPage);
             }
         });
     </script>

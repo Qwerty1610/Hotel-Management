@@ -5,7 +5,6 @@
 package com.mycompany.hotelmanagement.dal;
 
 import com.mycompany.hotelmanagement.config.DBContext;
-import com.mycompany.hotelmanagement.entity.AssignedRoom;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.RoomInfo;
 

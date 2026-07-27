@@ -2,13 +2,11 @@ package com.mycompany.hotelmanagement.controller.receptionist;
 
 import com.mycompany.hotelmanagement.dal.BookingDAO;
 import com.mycompany.hotelmanagement.dal.BookingServiceRequestDAO;
-import com.mycompany.hotelmanagement.dal.RoomDAO;
 import com.mycompany.hotelmanagement.dal.RoomTypeDAO;
 import com.mycompany.hotelmanagement.dal.WalkInBookingDAO;
 import com.mycompany.hotelmanagement.dal.CheckOutDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.BookingServiceRequest;
-import com.mycompany.hotelmanagement.entity.Room;
 import com.mycompany.hotelmanagement.entity.RoomInfo;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import jakarta.servlet.ServletException;
@@ -141,9 +139,17 @@ public class ReceptionistDashboardController extends HttpServlet {
             BookingDAO dao = new BookingDAO();
             RoomTypeDAO roomTypeRepo = new RoomTypeDAO();
 
+            HttpSession session = request.getSession();
+
             // Tham số lọc
             String statusFilter = request.getParameter("status");
             String keyword = request.getParameter("keyword");
+
+            // Vào tab từ sidebar (không kèm tham số lọc) -> khôi phục bộ lọc đã lưu trước đó
+            if (statusFilter == null && keyword == null) {
+                statusFilter = (String) session.getAttribute("bookingsFilterStatus");
+                keyword = (String) session.getAttribute("bookingsFilterKeyword");
+            }
 
             int page = 1;
             try {
@@ -164,6 +170,10 @@ public class ReceptionistDashboardController extends HttpServlet {
             } else {
                 statusFilter = statusFilter.trim();
             }
+
+            // Lưu lại bộ lọc hiện tại để giữ nguyên khi chuyển tab rồi quay lại
+            session.setAttribute("bookingsFilterStatus", statusFilter);
+            session.setAttribute("bookingsFilterKeyword", keyword);
 
             // Load danh sách
             int totalItems = dao.countBookings(statusFilter, keyword);
@@ -354,13 +364,24 @@ public class ReceptionistDashboardController extends HttpServlet {
 
         BookingDAO dao = new BookingDAO();
 
+        HttpSession session = request.getSession();
+
         String keyword = request.getParameter("keyword");
 
         String status = request.getParameter("status");
 
+        // Vào tab từ sidebar (không kèm tham số lọc) -> khôi phục bộ lọc đã lưu trước đó
+        if (status == null && keyword == null) {
+            status = (String) session.getAttribute("checkinFilterStatus");
+            keyword = (String) session.getAttribute("checkinFilterKeyword");
+        }
+
         if (status == null || status.isBlank()) {
             status = "All";
         }
+
+        session.setAttribute("checkinFilterStatus", status);
+        session.setAttribute("checkinFilterKeyword", keyword);
 
         int page = 1;
         try {
@@ -406,8 +427,18 @@ public class ReceptionistDashboardController extends HttpServlet {
 
         com.mycompany.hotelmanagement.service.RoomService roomService = new com.mycompany.hotelmanagement.service.RoomService();
 
+        HttpSession session = request.getSession();
+
         String fromDateStr = request.getParameter("fromDate");
         String toDateStr = request.getParameter("toDate");
+        String statusParam = request.getParameter("status");
+
+        // Vào tab từ sidebar (không kèm tham số lọc) -> khôi phục bộ lọc đã lưu trước đó
+        if (fromDateStr == null && toDateStr == null && statusParam == null) {
+            fromDateStr = (String) session.getAttribute("roommapFilterFromDate");
+            toDateStr = (String) session.getAttribute("roommapFilterToDate");
+            statusParam = (String) session.getAttribute("roommapFilterStatus");
+        }
 
         java.time.LocalDate fromDate;
         java.time.LocalDate toDate;
@@ -442,12 +473,17 @@ public class ReceptionistDashboardController extends HttpServlet {
             roomList = new ArrayList<>();
         }
 
-        String status = request.getParameter("status");
+        String status = statusParam;
         if (status == null || status.isBlank()) {
             status = "All";
         } else {
             status = status.trim();
         }
+
+        // Lưu lại bộ lọc hiện tại để giữ nguyên khi chuyển tab rồi quay lại
+        session.setAttribute("roommapFilterFromDate", fromDate.toString());
+        session.setAttribute("roommapFilterToDate", toDate.toString());
+        session.setAttribute("roommapFilterStatus", status);
 
         List<RoomInfo> filtered = new ArrayList<>();
         for (RoomInfo room : roomList) {

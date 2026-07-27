@@ -115,7 +115,7 @@ public class HousekeepingHandleMaintenanceController extends HttpServlet {
             return;
         }
 
-        final int pageSize = 10;
+        final int pageSize = 5;
         int page = parseIntOr(request.getParameter("page"), 1);
         if (page < 1) {
             page = 1;
@@ -178,6 +178,14 @@ public class HousekeepingHandleMaintenanceController extends HttpServlet {
             HttpServletResponse response)
             throws ServletException, IOException {
 
+        Integer staffId
+                = (Integer) request.getSession().getAttribute("accountId");
+
+        if (staffId == null) {
+            response.sendRedirect(request.getContextPath() + "/home/login");
+            return;
+        }
+
         int requestId = Integer.parseInt(request.getParameter("id"));
 
         MaintenanceRequestDAO dao = new MaintenanceRequestDAO();
@@ -185,7 +193,10 @@ public class HousekeepingHandleMaintenanceController extends HttpServlet {
         MaintenanceRequest maintenance
                 = dao.getMaintenanceRequestById(requestId);
 
-        if (maintenance == null) {
+        if (maintenance == null
+                || maintenance.getAssignedStaffId() == null
+                || !maintenance.getAssignedStaffId().equals(staffId)) {
+
             response.sendRedirect(
                     request.getContextPath()
                     + "/housekeeping/handlemaintenance?action=list");
@@ -203,6 +214,14 @@ public class HousekeepingHandleMaintenanceController extends HttpServlet {
             HttpServletResponse response)
             throws ServletException, IOException {
 
+        Integer staffId
+                = (Integer) request.getSession().getAttribute("accountId");
+
+        if (staffId == null) {
+            response.sendRedirect(request.getContextPath() + "/home/login");
+            return;
+        }
+
         int requestId = Integer.parseInt(
                 request.getParameter("requestId"));
 
@@ -210,7 +229,8 @@ public class HousekeepingHandleMaintenanceController extends HttpServlet {
 
         boolean success = maintenanceDAO.resolveRequest(
                 requestId,
-                resolutionNote);
+                resolutionNote,
+                staffId);
 
         if (success) {
 
@@ -235,6 +255,14 @@ public class HousekeepingHandleMaintenanceController extends HttpServlet {
             HttpServletResponse response)
             throws ServletException, IOException {
 
+        Integer staffId
+                = (Integer) request.getSession().getAttribute("accountId");
+
+        if (staffId == null) {
+            response.sendRedirect(request.getContextPath() + "/home/login");
+            return;
+        }
+
         int requestId = Integer.parseInt(
                 request.getParameter("requestId"));
 
@@ -242,7 +270,8 @@ public class HousekeepingHandleMaintenanceController extends HttpServlet {
 
         boolean success = maintenanceDAO.markUnresolvable(
                 requestId,
-                resolutionNote);
+                resolutionNote,
+                staffId);
 
         if (success) {
 

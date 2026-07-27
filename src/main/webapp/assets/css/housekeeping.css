@@ -320,18 +320,14 @@
     background: #ef4444;
 }
 
-.room-item .guest-badge {
+.room-item .guest-dot {
     position: absolute;
-    top: 6px;
-    left: 6px;
+    top: 12px;
+    left: 12px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
     background: #2563eb;
-    color: #ffffff;
-    font-size: 9px;
-    font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 999px;
-    text-transform: uppercase;
-    letter-spacing: .3px;
 }
 
 .room-item.status-maintenance .maintenance-dot {
@@ -750,11 +746,15 @@
     resize:none;
     font-size:14px;
 }
+.description-box {
+    margin-left:12px;
+}
 .description-box textarea {
     height:42px;
 }
 .note-box {
     margin-top:20px;
+    margin-bottom:20px;
 }
 .remove-btn {
     height:40px;

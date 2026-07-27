@@ -6,15 +6,58 @@
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/booking-requests.css?v=3" />
 <fmt:setLocale value="vi_VN" />
 
+<style>
+    .btn-view-detail {
+        text-decoration: none;
+        padding: 5px 12px;
+        font-size: 13px;
+        background-color: #ffffff;
+        color: var(--brand-blue);
+        border: 1px solid var(--brand-blue);
+        border-radius: 6px;
+        font-weight: 600;
+        white-space: nowrap;
+        transition: all 0.2s;
+        display: inline-block;
+    }
+    .btn-view-detail:hover {
+        background-color: var(--brand-blue);
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(37, 99, 235, .25);
+    }
+    .btn-cancel-booking {
+        padding: 5px 12px;
+        font-size: 13px;
+        background-color: #ffffff;
+        color: #ef4444;
+        border: 1px solid #ef4444;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+    .btn-cancel-booking:hover {
+        background-color: #ef4444;
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(239, 68, 68, .25);
+    }
+</style>
+
 <body>
 
     <%-- Header Navigation --%>
     <nav class="navbar-rooms">
-        <div class="logo">HotelOps</div>
+        <a href="${pageContext.request.contextPath}/" class="logo">HotelOps</a>
         <ul class="nav-links">
             <li><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
             <li><a href="${pageContext.request.contextPath}/rooms">Phòng</a></li>
             <li><a href="${pageContext.request.contextPath}/customer/bookings" class="active">Đặt phòng của tôi</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/feedbacks">Đánh giá lưu trú</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/services">Dịch vụ</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/maintenance">Sự cố</a></li>
             <li><a href="${pageContext.request.contextPath}/customer/payments">Thanh toán</a></li>
         </ul>
 
@@ -38,6 +81,7 @@
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/booking/change" class="dropdown-item">
                                         <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
+                                    </a>
                                     <a href="${pageContext.request.contextPath}/customer/feedbacks" class="dropdown-item">
                                         <i class="fa-solid fa-star"></i> Đánh giá lưu trú
                                     </a>
@@ -206,11 +250,11 @@
                                     </td>
                                     <td style="white-space: nowrap;">
                                         <div style="display: flex; gap: 8px; align-items: center;">
-                                            <a href="${pageContext.request.contextPath}/customer/booking/detail?id=${b.bookingId}" class="btn-secondary" style="text-decoration: none; padding: 5px 12px; font-size: 13px; background-color: #ffffff; color: var(--brand-blue); border: 1px solid var(--brand-blue); border-radius: 6px; font-weight: 600; white-space: nowrap; transition: all 0.2s;">
+                                            <a href="${pageContext.request.contextPath}/customer/booking/detail?id=${b.bookingId}" class="btn-view-detail">
                                                 Chi tiết
                                             </a>
                                             <c:if test="${b.status eq 'Pending' || b.status eq 'Confirmed'}">
-                                                <button type="button" style="padding: 5px 12px; font-size: 13px; background-color: #ffffff; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; white-space: nowrap;" onclick="confirmCancelBooking('${b.bookingId}')">
+                                                <button type="button" class="btn-cancel-booking" onclick="confirmCancelBooking('${b.bookingId}')">
                                                     Hủy
                                                 </button>
                                             </c:if>
@@ -232,86 +276,7 @@
             </table>
         </div>
 
-        <%-- Request tracking (booking change & stay extension) --%>
-        <c:if test="${not empty myRequests}">
-            <div class="booking-card req-track-card" style="padding: 24px;">
-                <h2><i class="fa-solid fa-clipboard-list" style="color: var(--brand-blue);"></i> Yêu cầu thay đổi &amp; gia hạn của tôi</h2>
-                <p>Theo dõi trạng thái các yêu cầu thay đổi đặt phòng và gia hạn lưu trú của bạn.</p>
-                <div style="overflow-x: auto;">
-                    <table class="booking-list-table">
-                        <thead>
-                            <tr>
-                                <th>Mã đơn</th>
-                                <th>Loại yêu cầu</th>
-                                <th>Chi tiết yêu cầu</th>
-                                <th>Phụ phí dự kiến</th>
-                                <th>Ngày gửi</th>
-                                <th>Trạng thái</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <c:forEach var="r" items="${myRequests}">
-                                <tr>
-                                    <td style="font-weight: 700;">#${r.bookingId}</td>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${r.extension}">
-                                                <span class="req-type-pill extension">Gia hạn lưu trú</span>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="req-type-pill change">Thay đổi đặt phòng</span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                    <td style="font-size: 13px;">
-                                        <c:choose>
-                                            <c:when test="${r.extension}">
-                                                Trả phòng mới:
-                                                <strong><fmt:formatDate value="${r.newCheckOut}" pattern="dd/MM/yyyy" /></strong>
-                                                <br/>
-                                                <small style="color: var(--text-muted);">
-                                                    (Hiện tại: <fmt:formatDate value="${r.oldCheckOut}" pattern="dd/MM/yyyy" />)
-                                                </small>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <strong><fmt:formatDate value="${r.newCheckIn}" pattern="dd/MM/yyyy" /> -
-                                                    <fmt:formatDate value="${r.newCheckOut}" pattern="dd/MM/yyyy" /></strong>
-                                                <br/>
-                                                <small style="color: var(--text-muted);">
-                                                    ${r.newRoomTypeName} · ${r.newRoomQuantity} phòng
-                                                </small>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                    <td style="font-weight: 600; color: var(--gold-price);">
-                                        <c:choose>
-                                            <c:when test="${r.additionalCharge != null && r.additionalCharge > 0}">
-                                                <fmt:formatNumber value="${r.additionalCharge}" type="number" /> VND
-                                            </c:when>
-                                            <c:otherwise><span style="color: var(--text-muted);">—</span></c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                    <td><fmt:formatDate value="${r.createdAt}" pattern="dd/MM/yyyy" /></td>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${r.status eq 'Approved'}">
-                                                <span class="req-status-pill approved">Đã duyệt</span>
-                                            </c:when>
-                                            <c:when test="${r.status eq 'Rejected'}">
-                                                <span class="req-status-pill rejected">Từ chối</span>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="req-status-pill pending">Chờ duyệt</span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                </tr>
-                            </c:forEach>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </c:if>
+
     </div>
 
     <%-- Cancel Confirmation Form --%>
