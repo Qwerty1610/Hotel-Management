@@ -3,6 +3,7 @@ package com.mycompany.hotelmanagement.controller.common;
 import java.io.IOException;
 import com.mycompany.hotelmanagement.entity.Account;
 import com.mycompany.hotelmanagement.service.AuthService;
+import com.mycompany.hotelmanagement.service.LoginResult;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;

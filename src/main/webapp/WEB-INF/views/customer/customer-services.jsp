@@ -108,7 +108,7 @@
 
                 <%-- Header Navigation --%>
                     <nav class="navbar-rooms">
-                        <div class="logo">HotelOps</div>
+                        <div class="logo">${hotelName}</div>
                         <ul class="nav-links">
                             <li><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
                             <li><a href="${pageContext.request.contextPath}/customer/services" class="active">Dịch vụ</a></li>

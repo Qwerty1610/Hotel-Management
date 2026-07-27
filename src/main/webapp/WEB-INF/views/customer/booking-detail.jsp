@@ -9,7 +9,7 @@
 
                 <%-- Header Navigation --%>
                     <nav class="navbar-rooms">
-                        <div class="logo">HotelOps</div>
+                        <div class="logo">${hotelName}</div>
                         <ul class="nav-links">
                             <li><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
                             <li><a href="${pageContext.request.contextPath}/rooms">Phòng</a></li>
@@ -110,7 +110,7 @@
                                 <div class="booking-card" style="padding: 40px; position: relative;">
 
                                     <div class="receipt-header">
-                                        <div class="logo">HotelOps</div>
+                                        <div class="logo">${hotelName}</div>
                                         <h2>ĐƠN ĐẶT PHÒNG KHÁCH SẠN</h2>
                                         <p style="color: var(--text-muted); font-size: 14px; margin-top: 5px;">Mã đặt
                                             phòng: #${booking.bookingId}</p>

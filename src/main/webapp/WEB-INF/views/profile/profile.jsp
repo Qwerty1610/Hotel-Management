@@ -53,7 +53,7 @@
 <%-- ============== CUSTOMER CHROME: top navbar ============== --%>
 <c:if test="${isCustomer}">
     <nav class="navbar-rooms">
-        <div class="logo">HotelOps</div>
+        <div class="logo">${hotelName}</div>
         <ul class="nav-links">
             <li><a href="${ctx}/">Trang chủ</a></li>
             <li><a href="${ctx}/rooms">Phòng</a></li>

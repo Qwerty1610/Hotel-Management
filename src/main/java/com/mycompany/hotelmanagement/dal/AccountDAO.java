@@ -420,6 +420,38 @@ public class AccountDAO {
     }
 
     /**
+     * Lấy thông tin tài khoản khách hàng theo account_id.
+     */
+    public CustomerInfo getCustomerByAccountId(int accountId) {
+        String sql = "SELECT a.account_id, a.email, a.full_name, a.phone, a.is_active, a.created_at, " +
+                     "       c.loyalty_points, c.membership_level " +
+                     "FROM Account a " +
+                     "LEFT JOIN Customer c ON a.account_id = c.account_id " +
+                     "WHERE a.account_id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    CustomerInfo customer = new CustomerInfo();
+                    customer.setAccountId(rs.getInt("account_id"));
+                    customer.setEmail(rs.getString("email"));
+                    customer.setFullName(rs.getString("full_name"));
+                    customer.setPhone(rs.getString("phone"));
+                    customer.setActive(rs.getBoolean("is_active"));
+                    customer.setCreatedAt(rs.getTimestamp("created_at"));
+                    customer.setLoyaltyPoints(rs.getInt("loyalty_points"));
+                    customer.setMembershipLevel(rs.getString("membership_level"));
+                    return customer;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
      * Lấy danh sách các vai trò dành cho nhân viên (loại trừ Customer).
      * 
      * @return Danh sách các đối tượng Role của nhân viên

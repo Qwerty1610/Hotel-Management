@@ -79,36 +79,51 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="otp">Mã xác thực OTP</label>
-                    <div class="input-wrapper">
-                        <input type="text" id="otp" name="otp" class="form-input"
-                            placeholder="Nhập 6 chữ số OTP" required pattern="[0-9]{6}" maxlength="6" autofocus />
-                        <i class="fa-solid fa-key"></i>
+                <!-- BƯỚC 1: NHẬP VÀ XÁC THỰC MÃ OTP -->
+                <div id="stepOtpSection">
+                    <div class="form-group">
+                        <label for="otp">Mã xác thực OTP</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="otp" name="otp" class="form-input"
+                                placeholder="Nhập 6 chữ số OTP" required pattern="[0-9]{6}" maxlength="6" autofocus />
+                            <i class="fa-solid fa-key"></i>
+                        </div>
                     </div>
+
+                    <button type="button" id="btnVerifyOtp" class="btn-submit" style="margin-top: 15px;">
+                        <i class="fa-solid fa-shield-halved"></i> Xác thực mã OTP
+                    </button>
                 </div>
 
-                <div class="form-group">
-                    <label for="newPassword">Mật khẩu mới</label>
-                    <div class="input-wrapper">
-                        <input type="password" id="newPassword" name="newPassword" class="form-input"
-                            placeholder="Tối thiểu 8 ký tự (chữ, số, ký tự đặc biệt)" required minlength="8" />
-                        <i class="fa-solid fa-lock"></i>
+                <!-- BƯỚC 2: KHUNG NHẬP MẬT KHẨU MỚI (Ẩn ban đầu, chỉ hiện khi nhập ĐÚNG mã OTP) -->
+                <div id="stepPasswordSection" style="display: none; margin-top: 15px;">
+                    <div class="success-alert" id="otpSuccessAlert" style="margin-bottom: 20px;">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Mã OTP hợp lệ! Vui lòng thiết lập mật khẩu mới bên dưới.</span>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label for="confirmPassword">Xác nhận mật khẩu mới</label>
-                    <div class="input-wrapper">
-                        <input type="password" id="confirmPassword" name="confirmPassword" class="form-input"
-                            placeholder="Nhập lại mật khẩu mới" required />
-                        <i class="fa-solid fa-lock"></i>
+                    <div class="form-group">
+                        <label for="newPassword">Mật khẩu mới</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="newPassword" name="newPassword" class="form-input"
+                                placeholder="Tối thiểu 8 ký tự (chữ, số, ký tự đặc biệt)" minlength="8" />
+                            <i class="fa-solid fa-lock"></i>
+                        </div>
                     </div>
-                </div>
 
-                <button type="submit" class="btn-submit" style="margin-top: 20px;">
-                    <i class="fa-solid fa-circle-check"></i> Đổi mật khẩu
-                </button>
+                    <div class="form-group">
+                        <label for="confirmPassword">Xác nhận mật khẩu mới</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="confirmPassword" name="confirmPassword" class="form-input"
+                                placeholder="Nhập lại mật khẩu mới" />
+                            <i class="fa-solid fa-lock"></i>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit" style="margin-top: 20px;">
+                        <i class="fa-solid fa-circle-check"></i> Đổi mật khẩu
+                    </button>
+                </div>
             </form>
 
             <div class="signup-prompt" style="margin-top: 25px;">
@@ -118,63 +133,103 @@
     </div>
 
     <script>
-        document.getElementById('resetPasswordForm').addEventListener('submit', function (e) {
+        let isOtpVerified = false;
+
+        document.getElementById('btnVerifyOtp').addEventListener('click', async function () {
             const email = document.getElementById('email').value.trim();
             const otp = document.getElementById('otp').value.trim();
+
+            if (!otp || !/^[0-9]{6}$/.test(otp)) {
+                showError('Vui lòng nhập mã OTP gồm 6 chữ số!');
+                return;
+            }
+
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xác thực...';
+
+            try {
+                const response = await fetch('${pageContext.request.contextPath}/home/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'action=verify_otp&email=' + encodeURIComponent(email) + '&otp=' + encodeURIComponent(otp)
+                });
+                const data = await response.json();
+
+                if (data.valid) {
+                    isOtpVerified = true;
+                    clearError();
+                    
+                    // Khóa ô OTP & ẩn nút xác thực OTP
+                    document.getElementById('otp').readOnly = true;
+                    btn.style.display = 'none';
+
+                    // Hiển thị phần nhập mật khẩu mới
+                    const passSection = document.getElementById('stepPasswordSection');
+                    passSection.style.display = 'block';
+                    document.getElementById('newPassword').required = true;
+                    document.getElementById('confirmPassword').required = true;
+                    document.getElementById('newPassword').focus();
+                } else {
+                    showError(data.message || 'Mã OTP không chính xác hoặc đã hết hạn!');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Xác thực mã OTP';
+                }
+            } catch (err) {
+                showError('Lỗi kết nối máy chủ! Vui lòng thử lại sau.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Xác thực mã OTP';
+            }
+        });
+
+        function showError(msg) {
+            let alertContainer = document.querySelector('.error-alert');
+            if (!alertContainer) {
+                alertContainer = document.createElement('div');
+                alertContainer.className = 'error-alert';
+                alertContainer.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> <span></span>';
+                const card = document.querySelector('.login-card');
+                const form = document.getElementById('resetPasswordForm');
+                card.insertBefore(alertContainer, form);
+            }
+            const successAlert = document.querySelector('.success-alert');
+            if (successAlert) successAlert.style.display = 'none';
+
+            alertContainer.querySelector('span').innerText = msg;
+            alertContainer.style.display = 'flex';
+        }
+
+        function clearError() {
+            const alertContainer = document.querySelector('.error-alert');
+            if (alertContainer) alertContainer.style.display = 'none';
+        }
+
+        document.getElementById('resetPasswordForm').addEventListener('submit', function (e) {
+            if (!isOtpVerified) {
+                e.preventDefault();
+                showError('Vui lòng xác thực mã OTP trước!');
+                return;
+            }
+
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
-            
+
             let errorMessage = '';
-            
-            // 1. Basic empty check
-            if (!email || !otp || !newPassword || !confirmPassword) {
-                errorMessage = 'Vui lòng điền đầy đủ tất cả các trường!';
+            const hasLetter = /[a-zA-Z]/.test(newPassword);
+            const hasDigit = /[0-9]/.test(newPassword);
+            const hasSpecial = /[^a-zA-Z0-9]/.test(newPassword);
+
+            if (newPassword.length < 8) {
+                errorMessage = 'Mật khẩu phải tối thiểu từ 8 ký tự trở lên!';
+            } else if (!hasLetter || !hasDigit || !hasSpecial) {
+                errorMessage = 'Mật khẩu mới phải bao gồm cả chữ, số và ký tự đặc biệt!';
+            } else if (newPassword !== confirmPassword) {
+                errorMessage = 'Mật khẩu xác nhận không trùng khớp!';
             }
-            // 2. OTP format validation (6 digits)
-            else if (!/^[0-9]{6}$/.test(otp)) {
-                errorMessage = 'Mã OTP phải gồm 6 chữ số!';
-            }
-            // 3. Password strength validation
-            else {
-                const hasLetter = /[a-zA-Z]/.test(newPassword);
-                const hasDigit = /[0-9]/.test(newPassword);
-                const hasSpecial = /[^a-zA-Z0-9]/.test(newPassword);
-                
-                if (newPassword.length < 8) {
-                    errorMessage = 'Mật khẩu phải tối thiểu từ 8 ký tự trở lên!';
-                } else if (!hasLetter || !hasDigit || !hasSpecial) {
-                    errorMessage = 'Mật khẩu mới phải bao gồm cả chữ, số và ký tự đặc biệt!';
-                }
-                // 4. Confirm password validation
-                else if (newPassword !== confirmPassword) {
-                    errorMessage = 'Mật khẩu xác nhận không trùng khớp!';
-                }
-            }
-            
+
             if (errorMessage) {
-                e.preventDefault(); // Stop submission
-                
-                // Display error message in the .error-alert div
-                let alertContainer = document.querySelector('.error-alert');
-                if (!alertContainer) {
-                    // Create dynamic error alert container if it doesn't exist
-                    alertContainer = document.createElement('div');
-                    alertContainer.className = 'error-alert';
-                    alertContainer.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> <span></span>';
-                    const card = document.querySelector('.login-card');
-                    const form = document.getElementById('resetPasswordForm');
-                    card.insertBefore(alertContainer, form);
-                    
-                    // Remove success alert if it exists
-                    const successAlert = document.querySelector('.success-alert');
-                    if (successAlert) {
-                        successAlert.remove();
-                    }
-                }
-                
-                // Update text and scroll to top of card
-                alertContainer.querySelector('span').innerText = errorMessage;
-                alertContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                e.preventDefault();
+                showError(errorMessage);
             }
         });
 
@@ -188,6 +243,16 @@
                 this.setCustomValidity('');
             });
         });
+
+        <c:if test="${not empty param.error and param.error ne 'invalid_otp'}">
+            // Trong trường hợp server trả về lỗi mật khẩu (không phải lỗi OTP), tự động giữ mở Bước 2
+            isOtpVerified = true;
+            document.getElementById('otp').readOnly = true;
+            document.getElementById('btnVerifyOtp').style.display = 'none';
+            document.getElementById('stepPasswordSection').style.display = 'block';
+            document.getElementById('newPassword').required = true;
+            document.getElementById('confirmPassword').required = true;
+        </c:if>
     </script>
 </body>
 </html>

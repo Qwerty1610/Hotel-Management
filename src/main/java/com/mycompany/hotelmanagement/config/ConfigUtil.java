@@ -32,6 +32,24 @@ public class ConfigUtil {
         loadConfigFromDatabase();
     }
 
+    /**
+     * Kiểm tra một giá trị cấu hình có phải là placeholder/mặc định hay không.
+     */
+    public static boolean isPlaceholder(String val) {
+        if (val == null || val.trim().isEmpty()) {
+            return true;
+        }
+        String v = val.trim();
+        return v.equalsIgnoreCase("YOUR_SMTP_EMAIL") ||
+               v.equalsIgnoreCase("YOUR_SMTP_PASSWORD") ||
+               v.equalsIgnoreCase("YOUR_GOOGLE_CLIENT_ID") ||
+               v.equalsIgnoreCase("YOUR_GOOGLE_CLIENT_SECRET") ||
+               v.equalsIgnoreCase("your-email@gmail.com") ||
+               v.equalsIgnoreCase("your-app-password") ||
+               v.equalsIgnoreCase("your-google-client-id") ||
+               v.equalsIgnoreCase("your-google-client-secret");
+    }
+
     private static void loadConfigFromDatabase() {
         String sql = "SELECT config_key, config_value FROM dbo.SystemConfig";
         try (java.sql.Connection conn = DBContext.getConnection();
@@ -40,8 +58,8 @@ public class ConfigUtil {
             while (rs.next()) {
                 String key = rs.getString("config_key");
                 String val = rs.getString("config_value");
-                if (key != null && val != null) {
-                    properties.setProperty(key, val);
+                if (key != null && val != null && !val.trim().isEmpty() && !isPlaceholder(val)) {
+                    properties.setProperty(key, val.trim());
                 }
             }
             System.out.println("ConfigUtil: Loaded system configurations from database successfully.");
@@ -58,34 +76,34 @@ public class ConfigUtil {
      * @return Giá trị cấu hình tìm được hoặc defaultValue
      */
     public static String get(String key, String defaultValue) {
-        // 1. Try to find the exact key in config.properties
+        // 1. Try to find the exact key in config.properties / database
         String value = properties.getProperty(key);
         
-        // 2. Try the uppercase/underscore variant in config.properties
-        if (value == null || value.trim().isEmpty()) {
+        // 2. Try the uppercase/underscore variant in properties
+        if (isPlaceholder(value)) {
             String alternativeKey = key.toUpperCase().replace('.', '_');
             value = properties.getProperty(alternativeKey);
         }
         
         // 3. Try System.getenv for env vars
-        if (value == null || value.trim().isEmpty()) {
+        if (isPlaceholder(value)) {
             value = System.getenv(key);
         }
-        if (value == null || value.trim().isEmpty()) {
+        if (isPlaceholder(value)) {
             String alternativeKey = key.toUpperCase().replace('.', '_');
             value = System.getenv(alternativeKey);
         }
         
         // 4. Try System properties
-        if (value == null || value.trim().isEmpty()) {
+        if (isPlaceholder(value)) {
             value = System.getProperty(key);
         }
-        if (value == null || value.trim().isEmpty()) {
+        if (isPlaceholder(value)) {
             String alternativeKey = key.toUpperCase().replace('.', '_');
             value = System.getProperty(alternativeKey);
         }
         
-        if (value == null || value.trim().isEmpty()) {
+        if (isPlaceholder(value)) {
             return defaultValue;
         }
         return value.trim();
@@ -108,3 +126,4 @@ public class ConfigUtil {
         loadConfigFromDatabase();
     }
 }
+

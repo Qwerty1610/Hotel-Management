@@ -9,7 +9,7 @@
 
     <%-- Header Navigation --%>
     <nav class="navbar-rooms">
-        <div class="logo">HotelOps</div>
+        <div class="logo">${hotelName}</div>
         <ul class="nav-links">
             <li><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
             <li><a href="${pageContext.request.contextPath}/rooms">Phòng</a></li>

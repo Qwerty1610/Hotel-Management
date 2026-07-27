@@ -68,6 +68,22 @@ public class ProfileService {
         if (!ok) {
             return "server_error";
         }
+
+        if (current.getEmail() != null && !current.getEmail().trim().isEmpty()) {
+            final String email = current.getEmail().trim();
+            final String name = fullName;
+            String hotelName = com.mycompany.hotelmanagement.config.ConfigUtil.get("hotel.name", "HotelOps Pro");
+            String subject = "[" + hotelName + "] Thông tin cá nhân của bạn đã được cập nhật";
+            String htmlBody = com.mycompany.hotelmanagement.config.EmailUtil.buildCustomerUpdateEmail(name, email, null, null);
+            new Thread(() -> {
+                try {
+                    com.mycompany.hotelmanagement.config.EmailUtil.sendEmail(email, subject, htmlBody);
+                } catch (Exception e) {
+                    // Ignore background email error
+                }
+            }).start();
+        }
+
         return "success";
     }
 }
