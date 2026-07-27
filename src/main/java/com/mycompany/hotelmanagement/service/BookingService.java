@@ -80,9 +80,7 @@ public class BookingService {
             int qty = booking.getRoomQuantity() > 0 ? booking.getRoomQuantity() : 1;
 
             // Check date-based overlapping availability (MSG19)
-            int totalRoomsInHotel = getRoomCountByTypeId(booking.getRoomTypeId());
-            int bookedRoomsCount = bookingDAO.getBookedRoomsCountForDates(booking.getRoomTypeId(), checkIn, checkOut);
-            int availableRooms = totalRoomsInHotel - bookedRoomsCount;
+            int availableRooms = bookingDAO.checkRoomAvailability(booking.getRoomTypeId(), checkIn, checkOut, null);
 
             if (qty > availableRooms) {
                 throw new Exception("MSG19"); // Rooms not available
@@ -228,30 +226,7 @@ public class BookingService {
         return bookingDAO.getConflictingRooms(roomIds, checkIn, checkOut, excludeBookingId);
     }
 
-    /**
-     * Gets the total count of rooms of a specific type in the database.
-     */
-    private int getRoomCountByTypeId(int typeId) {
-        String sql = "SELECT COUNT(*) FROM Room WHERE type_id = ? AND is_deleted = 0";
-        try (java.sql.Connection conn = com.mycompany.hotelmanagement.config.DBContext.getConnection()) {
-            try (java.sql.Statement stmt = conn.createStatement()) {
-                stmt.execute("USE HotelManagementDB");
-            } catch (Exception se) {
-                // Ignore USE DB error
-            }
-            try (java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setInt(1, typeId);
-                try (java.sql.ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        return rs.getInt(1);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error in getRoomCountByTypeId: typeId=" + typeId, e);
-        }
-        return 0;
-    }
+
 
     public double calculateGroupTotalAmount(int parentBookingId) {
         Booking parent = bookingDAO.getBookingById(parentBookingId);

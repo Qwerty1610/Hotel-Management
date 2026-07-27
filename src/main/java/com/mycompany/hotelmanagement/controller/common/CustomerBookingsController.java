@@ -167,8 +167,7 @@ public class CustomerBookingsController extends HttpServlet {
         request.setAttribute("statusFilter", statusFilter);
         request.setAttribute("keyword", keyword);
 
-        // Customer's change/extension requests, for status tracking (POST-3)
-        request.setAttribute("myRequests", bookingRequestService.getRequestsByAccount(accountId));
+
 
         // Display success or error toast/alert if redirected
         String success = request.getParameter("success");
