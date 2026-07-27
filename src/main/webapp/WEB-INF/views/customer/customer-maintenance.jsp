@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ include file="../../includes/taglibs.jsp" %>
 <%@ include file="../../includes/header.jsp" %>
 
@@ -296,15 +296,15 @@
 
     <%-- Header Navigation --%>
     <nav class="navbar-rooms">
-<a href="${pageContext.request.contextPath}/" class="logo">${not empty hotelName ? hotelName : 'HotelOps'}</a>
+        <a href="${pageContext.request.contextPath}/" class="logo">HotelOps</a>
         <ul class="nav-links">
-            <li><a href="${pageContext.request.contextPath}/">Trang chá»§</a></li>
-            <li><a href="${pageContext.request.contextPath}/rooms">PhÃ²ng</a></li>
-            <li><a href="${pageContext.request.contextPath}/customer/bookings">Äáº·t phÃ²ng cá»§a tÃ´i</a></li>
-            <li><a href="${pageContext.request.contextPath}/customer/feedbacks">ÄÃ¡nh giÃ¡ lÆ°u trÃº</a></li>
-            <li><a href="${pageContext.request.contextPath}/customer/services">Dá»‹ch vá»¥</a></li>
-            <li><a href="${pageContext.request.contextPath}/customer/maintenance" class="active">Sá»± cá»‘</a></li>
-            <li><a href="${pageContext.request.contextPath}/customer/payments">Thanh toÃ¡n</a></li>
+            <li><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
+            <li><a href="${pageContext.request.contextPath}/rooms">Phòng</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/bookings">Đặt phòng của tôi</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/feedbacks">Đánh giá lưu trú</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/services">Dịch vụ</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/maintenance" class="active">Sự cố</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/payments">Thanh toán</a></li>
         </ul>
 
         <div class="nav-actions">
@@ -321,25 +321,25 @@
                             <c:choose>
                                 <c:when test="${sessionScope.role eq 'CUSTOMER'}">
                                     <a href="${pageContext.request.contextPath}/customer/profile" class="dropdown-item">
-                                        <i class="fa-solid fa-id-card"></i> Há»“ sÆ¡
+                                        <i class="fa-solid fa-id-card"></i> Hồ sơ
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/bookings" class="dropdown-item">
-                                        <i class="fa-solid fa-calendar-check"></i> Äáº·t phÃ²ng cá»§a tÃ´i
+                                        <i class="fa-solid fa-calendar-check"></i> Đặt phòng của tôi
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/booking/change" class="dropdown-item">
-                                        <i class="fa-solid fa-pen-to-square"></i> Thay Ä‘á»•i Ä‘áº·t phÃ²ng
+                                        <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/feedbacks" class="dropdown-item">
-                                        <i class="fa-solid fa-star"></i> ÄÃ¡nh giÃ¡ lÆ°u trÃº
+                                        <i class="fa-solid fa-star"></i> Đánh giá lưu trú
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/services" class="dropdown-item">
-                                        <i class="fa-solid fa-bell-concierge"></i> YÃªu cáº§u dá»‹ch vá»¥
+                                        <i class="fa-solid fa-bell-concierge"></i> Yêu cầu dịch vụ
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/maintenance" class="dropdown-item">
-                                        <i class="fa-solid fa-screwdriver-wrench"></i> YÃªu cáº§u sá»­a chá»¯a
+                                        <i class="fa-solid fa-screwdriver-wrench"></i> Yêu cầu sửa chữa
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/payments" class="dropdown-item">
-                                        <i class="fa-solid fa-credit-card"></i> Thanh toÃ¡n & Lá»‹ch sá»­
+                                        <i class="fa-solid fa-credit-card"></i> Thanh toán & Lịch sử
                                     </a>
                                 </c:when>
                                 <c:otherwise>
@@ -376,14 +376,14 @@
                             <div class="dropdown-divider"></div>
                             <a href="${pageContext.request.contextPath}/logout"
                                class="dropdown-item logout-item">
-                                <i class="fa-solid fa-right-from-bracket"></i> ÄÄƒng xuáº¥t
+                                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
                             </a>
                         </div>
                     </div>
                 </c:when>
                 <c:otherwise>
-                    <a href="${pageContext.request.contextPath}/home/login" class="btn-login">ÄÄƒng
-                        nháº­p</a>
+                    <a href="${pageContext.request.contextPath}/home/login" class="btn-login">Đăng
+                        nhập</a>
                     </c:otherwise>
                 </c:choose>
         </div>
@@ -395,7 +395,7 @@
             <div class="success-banner" id="serverSuccessMessage">
                 <i class="fa-solid fa-circle-check" style="font-size: 20px;"></i>
                 <div>
-                    <strong>ThÃ nh cÃ´ng:</strong> ${successMessage}
+                    <strong>Thành công:</strong> ${successMessage}
                 </div>
             </div>
         </c:if>
@@ -403,7 +403,7 @@
             <div class="error-banner" id="serverValidationError">
                 <i class="fa-solid fa-circle-exclamation" style="font-size: 20px;"></i>
                 <div>
-                    <strong>Lá»—i:</strong> ${errorMessage}
+                    <strong>Lỗi:</strong> ${errorMessage}
                 </div>
             </div>
         </c:if>
@@ -414,20 +414,20 @@
                  style="width: 260px; flex-shrink: 0; background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.04);">
                 <h3
                     style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-top: 0; margin-bottom: 20px;">
-                    Báº£o trÃ¬</h3>
+                    Bảo trì</h3>
                 <ul
                     style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px;">
                     <li>
                         <a href="${pageContext.request.contextPath}/customer/maintenance"
                            class="active-sidebar-item">
                             <i class="fa-solid fa-screwdriver-wrench"
-                               style="width: 20px; text-align: center;"></i> YÃªu cáº§u sá»­a chá»¯a
+                               style="width: 20px; text-align: center;"></i> Yêu cầu sửa chữa
                         </a>
                     </li>
                     <li>
                         <a href="${pageContext.request.contextPath}/customer/maintenance/history">
                             <i class="fa-solid fa-clock-rotate-left"
-                               style="width: 20px; text-align: center;"></i> Lá»‹ch sá»­ sá»­a chá»¯a
+                               style="width: 20px; text-align: center;"></i> Lịch sử sửa chữa
                         </a>
                     </li>
                 </ul>
@@ -442,7 +442,7 @@
                         <div>
                             <h3>
                                 <i class="fa-solid fa-screwdriver-wrench"></i>
-                                Táº¡o yÃªu cáº§u sá»­a chá»¯a
+                                Tạo yêu cầu sửa chữa
                             </h3>
                         </div>
                     </div>
@@ -451,7 +451,7 @@
                         <div class="top-row">
 
                             <div class="form-group">
-                                <label>Sá»‘ phÃ²ng</label>
+                                <label>Số phòng</label>
 
                                 <select
                                     name="bookingId"
@@ -459,7 +459,7 @@
                                     required>
 
                                     <option value="">
-                                        -- Chá»n phÃ²ng --
+                                        -- Chọn phòng --
                                     </option>
 
                                     <c:choose>
@@ -468,7 +468,7 @@
                                             <c:forEach items="${bookings}" var="booking">
 
                                                 <option value="${booking.bookingId}">
-                                                    PhÃ²ng ${booking.assignedRoomsStr}
+                                                    Phòng ${booking.assignedRoomsStr}
                                                 </option>
 
                                             </c:forEach>
@@ -477,7 +477,7 @@
                                         <c:otherwise>
 
                                             <option value="">
-                                                KhÃ´ng cÃ³ phÃ²ng Ä‘ang lÆ°u trÃº
+                                                Không có phòng đang lưu trú
                                             </option>
 
                                         </c:otherwise>
@@ -495,7 +495,7 @@
 
                                 <i class="fa-solid fa-plus"></i>
 
-                                ThÃªm sá»± cá»‘
+                                Thêm sự cố
 
                             </button>
 
@@ -503,7 +503,7 @@
 
                         <div class="form-group">
 
-                            <label>Loáº¡i sá»± cá»‘</label>
+                            <label>Loại sự cố</label>
 
                             <div id="issueContainer">
 
@@ -515,7 +515,7 @@
                                         required>
 
                                         <option value="">
-                                            -- Chá»n sá»± cá»‘ --
+                                            -- Chọn sự cố --
                                         </option>
 
                                         <c:forEach items="${issueTypes}" var="issue">
@@ -545,20 +545,20 @@
 
                         <div class="form-group">
 
-                            <label>MÃ´ táº£ chung</label>
+                            <label>Mô tả chung</label>
 
                             <textarea
                                 name="description"
                                 class="form-control"
                                 rows="5"
-                                placeholder="Nháº­p mÃ´ táº£ chung cho cÃ¡c sá»± cá»‘..."></textarea>
+                                placeholder="Nhập mô tả chung cho các sự cố..."></textarea>
 
                         </div>
                         <div class="submit-area">
                             <button type="submit"
                                     class="btn-login submit-maintenance">
                                 <i class="fa-solid fa-paper-plane"></i>
-                                Gá»­i yÃªu cáº§u
+                                Gửi yêu cầu
                             </button>
                         </div>
                     </form>
@@ -572,31 +572,31 @@
         <div class="footer-white-grid">
             <div class="footer-white-about">
                 <h3>HotelOps Pro</h3>
-                <p>Há»‡ thá»‘ng quáº£n lÃ½ vÃ  nghá»‰ dÆ°á»¡ng Ä‘áº³ng cáº¥p quá»‘c táº¿, Ä‘em láº¡i tráº£i nghiá»‡m sang trá»ng
-                    vÆ°á»£t thá»i gian.</p>
+                <p>Hệ thống quản lý và nghỉ dưỡng đẳng cấp quốc tế, đem lại trải nghiệm sang trọng
+                    vượt thời gian.</p>
             </div>
 
             <div class="footer-white-links">
-                <h4>LiÃªn káº¿t nhanh</h4>
+                <h4>Liên kết nhanh</h4>
                 <ul>
-                    <li><a href="#">Trang chá»§</a></li>
-                    <li><a href="#">PhÃ²ng & GiÃ¡</a></li>
-                    <li><a href="#">Dá»‹ch vá»¥</a></li>
+                    <li><a href="#">Trang chủ</a></li>
+                    <li><a href="#">Phòng & Giá</a></li>
+                    <li><a href="#">Dịch vụ</a></li>
                 </ul>
             </div>
 
             <div class="footer-white-links">
-                <h4>ChÃ­nh sÃ¡ch</h4>
+                <h4>Chính sách</h4>
                 <ul>
-                    <li><a href="#">ChÃ­nh sÃ¡ch báº£o máº­t</a></li>
-                    <li><a href="#">Äiá»u khoáº£n sá»­ dá»¥ng</a></li>
-                    <li><a href="#">ChÃ­nh sÃ¡ch hoÃ n tiá»n</a></li>
+                    <li><a href="#">Chính sách bảo mật</a></li>
+                    <li><a href="#">Điều khoản sử dụng</a></li>
+                    <li><a href="#">Chính sách hoàn tiền</a></li>
                 </ul>
             </div>
 
             <div class="footer-white-contact">
-                <h4>ThÃ´ng tin liÃªn há»‡</h4>
-                <p><i class="fa-solid fa-location-dot"></i> 123 ÄÆ°á»ng LÃª Lá»£i, Quáº­n 1, TP. Há»“ ChÃ­
+                <h4>Thông tin liên hệ</h4>
+                <p><i class="fa-solid fa-location-dot"></i> 123 Đường Lê Lợi, Quận 1, TP. Hồ Chí
                     Minh</p>
                 <p><i class="fa-solid fa-envelope"></i> contact@hotelopspro.com</p>
                 <span class="phone-number-white"><i class="fa-solid fa-phone"></i> 1900 6789</span>
@@ -627,7 +627,7 @@
 
             if (container.querySelectorAll(".issue-row").length == 1) {
 
-                alert("Pháº£i cÃ³ Ã­t nháº¥t má»™t sá»± cá»‘.");
+                alert("Phải có ít nhất một sự cố.");
 
                 return;
 
