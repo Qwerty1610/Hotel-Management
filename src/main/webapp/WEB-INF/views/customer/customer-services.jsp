@@ -502,6 +502,9 @@
                                         return;
                                     }
                                     
+                                    const price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
+                                    const unit = selectedOption.getAttribute('data-unit') || '';
+                                    
                                     let quantity = parseInt(quantityInput.value);
                                     if (isNaN(quantity) || quantity < 1) {
                                         quantity = 0;
