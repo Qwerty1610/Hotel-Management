@@ -67,8 +67,8 @@ public class RoomDetailController extends HttpServlet {
         // Fetch detail using Service with date range
         RoomTypeInfo roomDetail = roomTypeService.getRoomTypeDetail(typeId, checkIn, checkOut);
 
-        if (roomDetail == null) {
-            // Room type ID does not exist in database or database query failed
+        if (roomDetail == null || !roomDetail.getIsActive()) {
+            // Room type ID does not exist in database or is currently disabled (toggled OFF)
             response.sendRedirect(request.getContextPath() + ROOM_URL);
             return;
         }

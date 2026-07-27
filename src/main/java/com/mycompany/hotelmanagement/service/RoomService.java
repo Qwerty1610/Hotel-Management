@@ -94,10 +94,6 @@ public class RoomService {
         return getRoomsByDate(date);
     }
 
-    public String deleteRoomResult(int roomId) {
-        return roomRepository.deleteRoom(roomId);
-    }
-
     public String updateRoomStatus(int roomId, String status) {
         if (status == null || !VALID_OPERATIONAL_STATUSES.contains(status.trim())) {
             return "invalidStatus";

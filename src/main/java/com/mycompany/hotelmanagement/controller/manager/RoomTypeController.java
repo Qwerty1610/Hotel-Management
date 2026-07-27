@@ -62,21 +62,11 @@ public class RoomTypeController extends HttpServlet {
             return;
         }
 
-        if ("delete".equalsIgnoreCase(action) && roomTypeId != -1) {
-            try {
-                if (roomTypeService.hasOccupiedGuests(roomTypeId)) {
-                    response.sendRedirect(request.getContextPath() + "/manager/roomtypes?error=hasOccupiedGuests");
-                    return;
-                }
-                boolean success = roomTypeService.deleteRoomType(roomTypeId);
-                if (success) {
-                    response.sendRedirect(request.getContextPath() + "/manager/roomtypes?success=deleted");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/manager/roomtypes?error=deleteError");
-                }
-            } catch (Exception e) {
-                response.sendRedirect(request.getContextPath() + "/manager/roomtypes?error=deleteError");
-            }
+        if ("toggle".equalsIgnoreCase(action) && roomTypeId != -1) {
+            String statusParam = request.getParameter("status");
+            boolean isActive = Boolean.parseBoolean(statusParam);
+            roomTypeService.toggleRoomTypeStatus(roomTypeId, isActive);
+            response.sendRedirect(request.getContextPath() + "/manager/roomtypes?success=toggled");
             return;
         }
 

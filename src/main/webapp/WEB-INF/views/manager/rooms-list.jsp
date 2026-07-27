@@ -59,18 +59,6 @@
                         Số phòng này đã tồn tại trong hệ thống. Vui lòng chọn số khác.
                     </div>
                 </c:if>
-                <c:if test="${param.error eq 'roomHasActiveOrFutureBooking'}">
-                    <div class="alert-banner alert-danger">
-                        <i class="fa-solid fa-circle-exclamation"></i>
-                        Không thể xóa phòng vì phòng đang được sử dụng hoặc đã được phân cho một đơn đặt phòng trong tương lai.
-                    </div>
-                </c:if>
-                <c:if test="${param.error eq 'deleteError'}">
-                    <div class="alert-banner alert-danger">
-                        <i class="fa-solid fa-circle-exclamation"></i>
-                        Không thể xóa phòng này vì phòng đang được sử dụng, có lịch đặt trong tương lai, hoặc ở trạng thái không khả dụng.
-                    </div>
-                </c:if>
                 <c:if test="${param.error eq 'roomCurrentlyOccupied'}">
                     <div class="alert-banner alert-danger">
                         <i class="fa-solid fa-circle-exclamation"></i>
@@ -93,12 +81,6 @@
                     <div class="alert-banner alert-success">
                         <i class="fa-solid fa-circle-check"></i>
                         Lưu thông tin phòng thành công.
-                    </div>
-                </c:if>
-                <c:if test="${param.success eq 'deleted'}">
-                    <div class="alert-banner alert-success">
-                        <i class="fa-solid fa-circle-check"></i>
-                        Xóa phòng thành công.
                     </div>
                 </c:if>
 
@@ -325,15 +307,6 @@
                     else if (s === "Maintenance") { statusClass = "status-maintenance"; statusText = "BẢO TRÌ"; }
                     else if (s === "OutOfService") { statusClass = "status-outofservice"; statusText = "NGỪNG HOẠT ĐỘNG"; }
 
-                    const canDelete = !room.hasFutureBooking && !room.currentlyOccupied && (room.operationalStatus === "Available") && (s === "Available");
-                    const deleteBtnHtml = canDelete
-                        ? `<button class="btn-action delete" onclick="deleteRoom(\${room.id})" title="Xóa">
-                            <i class="fa-solid fa-trash-can"></i>
-                           </button>`
-                        : `<button class="btn-action delete" style="opacity: 0.35; cursor: not-allowed;" title="Không thể xóa phòng đang có khách, có đơn đặt trong tương lai, đang dọn dẹp hoặc bảo trì">
-                            <i class="fa-solid fa-trash-can"></i>
-                           </button>`;
-
                     return `
                         <td>
                             <span class="room-number-cell" style="font-weight: bold; color: var(--brand-blue); font-size: 16px;">\${room.number}</span>
@@ -358,7 +331,6 @@
                                 <button class="btn-action edit" onclick="openEditRoomModal(\${room.id})" title="Chỉnh sửa">
                                     <i class="fa-solid fa-pencil"></i>
                                 </button>
-                                \${deleteBtnHtml}
                             </div>
                         </td>
                     `;
@@ -387,26 +359,6 @@
         function changeSelectedDate(dateVal) {
             if (!dateVal) return;
             window.location.href = `${pageContext.request.contextPath}/manager/rooms?selectedDate=` + encodeURIComponent(dateVal);
-        }
-
-        // Delete Room
-        function deleteRoom(id) {
-            const table = ManagerTable.tables.roomsTable;
-            if (table && table.items) {
-                const room = table.items.find(r => r.id === id);
-                if (room) {
-                    const opStatus = room.operationalStatus || room.status;
-                    const dispStatus = room.displayStatus || room.status;
-                    if (room.hasFutureBooking || room.currentlyOccupied || opStatus !== "Available" || dispStatus !== "Available") {
-                        alert("Không thể xóa phòng vì phòng đang được sử dụng hoặc đã được phân cho một đơn đặt phòng trong tương lai.");
-                        return;
-                    }
-                }
-            }
-            if (confirm("Bạn có chắc chắn muốn xóa phòng này không?")) {
-                const selDate = document.getElementById("selectedDateInput").value;
-                window.location.href = `${pageContext.request.contextPath}/manager/rooms?action=delete&id=` + id + "&selectedDate=" + encodeURIComponent(selDate);
-            }
         }
 
         // Modal Handlers

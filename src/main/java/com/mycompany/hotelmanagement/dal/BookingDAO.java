@@ -940,7 +940,7 @@ public class BookingDAO {
      */
     public int checkRoomAvailability(int roomTypeId, Date checkIn, Date checkOut, Integer excludeBookingId) {
         int totalRooms = 0;
-        String countSql = "SELECT COUNT(*) FROM dbo.Room WHERE type_id = ? AND status NOT IN (N'Maintenance', N'OutOfService') AND is_deleted = 0";
+        String countSql = "SELECT COUNT(*) FROM dbo.Room r JOIN dbo.RoomType rt ON r.type_id = rt.type_id WHERE r.type_id = ? AND r.status NOT IN (N'Maintenance', N'OutOfService') AND r.is_deleted = 0 AND ISNULL(rt.is_active, 1) = 1";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(countSql)) {

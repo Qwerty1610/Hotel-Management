@@ -58,15 +58,7 @@ public class PromotionController extends HttpServlet {
             return;
         }
 
-        if ("delete".equalsIgnoreCase(action) && promotionId != -1) {
-            boolean deleted = promotionService.deletePromotion(promotionId);
-            if (deleted) {
-                response.sendRedirect(request.getContextPath() + "/manager/promotions?success=deleted");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/manager/promotions?error=cannotDelete");
-            }
-            return;
-        }
+
 
         if ("toggle".equalsIgnoreCase(action) && promotionId != -1) {
             String newStatus = request.getParameter("status");

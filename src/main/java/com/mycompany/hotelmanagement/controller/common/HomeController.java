@@ -23,6 +23,7 @@ public class HomeController extends HttpServlet {
         RoomTypeDAO repo = new RoomTypeDAO();
 
         List<RoomTypeInfo> roomTypes = repo.getAllRoomTypes();
+        roomTypes.removeIf(rt -> !rt.getIsActive());
 
         HotelServiceDAO serviceRepo = new HotelServiceDAO();
 
