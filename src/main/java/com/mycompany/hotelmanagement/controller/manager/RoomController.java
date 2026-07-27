@@ -5,16 +5,17 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 import com.mycompany.hotelmanagement.entity.RoomInfo;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import com.mycompany.hotelmanagement.service.RoomService;
 import com.mycompany.hotelmanagement.service.RoomTypeService;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Project: Hotel Management System
@@ -60,7 +61,7 @@ public class RoomController extends HttpServlet {
         }
 
         String selectedDateStr = selectedDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
-        String selectedDateFormatted = selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        String selectedDateFormatted = selectedDate.format(DateTimeFormatter.ofPattern("MM/dd/yyyy"));
 
         String action = request.getParameter("action");
         String idParam = request.getParameter("id");
