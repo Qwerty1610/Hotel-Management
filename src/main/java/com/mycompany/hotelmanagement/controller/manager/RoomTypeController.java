@@ -153,15 +153,9 @@ public class RoomTypeController extends HttpServlet {
                 // Keep 2
             }
 
-            // Defaults for helper pricing columns in RoomType table
-            double pricePerHour = price * 0.15;
-            double depositPercent = 10.0;
-
             RoomTypeInfo rt = new RoomTypeInfo();
             rt.setTypeName(name);
             rt.setBasePrice(price);
-            rt.setPricePerHour(pricePerHour);
-            rt.setDepositPercent(depositPercent);
             rt.setCapacity(capacity);
             rt.setDescription(description);
             rt.setArea(area);

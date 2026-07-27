@@ -403,8 +403,6 @@ BEGIN
         type_id INT IDENTITY(1,1) PRIMARY KEY,
         type_name NVARCHAR(100) NOT NULL UNIQUE,
         base_price DECIMAL(18,2) NOT NULL DEFAULT 0,
-        price_per_hour DECIMAL(18,2) NOT NULL DEFAULT 0,
-        deposit_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
         capacity INT NOT NULL DEFAULT 2,
         description NVARCHAR(500) NULL,
         area NVARCHAR(50) NULL,
@@ -492,26 +490,26 @@ GO
 /* Seed RoomTypes */
 IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE type_name = N'Phòng Standard')
 BEGIN
-    INSERT INTO dbo.RoomType (type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type)
-    VALUES (N'Phòng Standard', 750000, 100000, 10, 2, N'Phòng tiêu chuẩn phù hợp cho khách đi công tác hoặc nghỉ ngắn ngày.', N'25 m²', N'1 Giường Queen');
+    INSERT INTO dbo.RoomType (type_name, base_price, capacity, description, area, bed_type)
+    VALUES (N'Phòng Standard', 750000, 2, N'Phòng tiêu chuẩn phù hợp cho khách đi công tác hoặc nghỉ ngắn ngày.', N'25 m²', N'1 Giường Queen');
 END
 
 IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe')
 BEGIN
-    INSERT INTO dbo.RoomType (type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type)
-    VALUES (N'Phòng Deluxe', 1200000, 180000, 10, 2, N'Phòng rộng rãi, nội thất hiện đại, có view thành phố cực kỳ lung linh.', N'45 m²', N'1 Giường đôi lớn');
+    INSERT INTO dbo.RoomType (type_name, base_price, capacity, description, area, bed_type)
+    VALUES (N'Phòng Deluxe', 1200000, 2, N'Phòng rộng rãi, nội thất hiện đại, có view thành phố cực kỳ lung linh.', N'45 m²', N'1 Giường đôi lớn');
 END
 
 IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE type_name = N'Phòng Family')
 BEGIN
-    INSERT INTO dbo.RoomType (type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type)
-    VALUES (N'Phòng Family', 1800000, 250000, 10, 4, N'Phòng gia đình với không gian lớn, phù hợp nhóm bạn hoặc gia đình nhỏ.', N'60 m²', N'2 Giường đôi');
+    INSERT INTO dbo.RoomType (type_name, base_price, capacity, description, area, bed_type)
+    VALUES (N'Phòng Family', 1800000, 4, N'Phòng gia đình với không gian lớn, phù hợp nhóm bạn hoặc gia đình nhỏ.', N'60 m²', N'2 Giường đôi');
 END
 
 IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE type_name = N'Phòng Suite')
 BEGIN
-    INSERT INTO dbo.RoomType (type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type)
-    VALUES (N'Phòng Suite', 2800000, 400000, 20, 3, N'Phòng cao cấp có khu tiếp khách riêng, bồn tắm và ban công.', N'75 m²', N'1 Giường King');
+    INSERT INTO dbo.RoomType (type_name, base_price, capacity, description, area, bed_type)
+    VALUES (N'Phòng Suite', 2800000, 3, N'Phòng cao cấp có khu tiếp khách riêng, bồn tắm và ban công.', N'75 m²', N'1 Giường King');
 END
 GO
 

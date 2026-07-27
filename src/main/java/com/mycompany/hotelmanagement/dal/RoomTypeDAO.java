@@ -126,7 +126,7 @@ public class RoomTypeDAO {
 
     public List<RoomTypeInfo> getAllRoomTypes() {
         List<RoomTypeInfo> list = new ArrayList<>();
-        String sql = "SELECT type_id, type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type FROM RoomType WHERE ISNULL(is_deleted, 0) = 0 ORDER BY type_id";
+        String sql = "SELECT type_id, type_name, base_price, capacity, description, area, bed_type FROM RoomType WHERE ISNULL(is_deleted, 0) = 0 ORDER BY type_id";
         try (Connection conn = DBContext.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {
@@ -136,8 +136,6 @@ public class RoomTypeDAO {
                 info.setTypeId(rs.getInt("type_id"));
                 info.setTypeName(rs.getString("type_name"));
                 info.setBasePrice(rs.getDouble("base_price"));
-                info.setPricePerHour(rs.getDouble("price_per_hour"));
-                info.setDepositPercent(rs.getDouble("deposit_percent"));
                 info.setCapacity(rs.getInt("capacity"));
                 info.setDescription(rs.getString("description"));
                 info.setArea(rs.getString("area"));
@@ -151,7 +149,7 @@ public class RoomTypeDAO {
     }
 
     public RoomTypeInfo getRoomTypeById(int typeId) {
-        String sql = "SELECT type_id, type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type FROM RoomType WHERE type_id = ?";
+        String sql = "SELECT type_id, type_name, base_price, capacity, description, area, bed_type FROM RoomType WHERE type_id = ?";
         try (Connection conn = DBContext.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
@@ -162,8 +160,6 @@ public class RoomTypeDAO {
                     info.setTypeId(rs.getInt("type_id"));
                     info.setTypeName(rs.getString("type_name"));
                     info.setBasePrice(rs.getDouble("base_price"));
-                    info.setPricePerHour(rs.getDouble("price_per_hour"));
-                    info.setDepositPercent(rs.getDouble("deposit_percent"));
                     info.setCapacity(rs.getInt("capacity"));
                     info.setDescription(rs.getString("description"));
                     info.setArea(rs.getString("area"));
@@ -198,16 +194,14 @@ public class RoomTypeDAO {
 
     public int insertRoomType(RoomTypeInfo rt, Connection conn) throws SQLException {
         useDatabase(conn);
-        String sql = "INSERT INTO RoomType (type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO RoomType (type_name, base_price, capacity, description, area, bed_type) VALUES (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, rt.getTypeName());
             ps.setDouble(2, rt.getBasePrice());
-            ps.setDouble(3, rt.getPricePerHour());
-            ps.setDouble(4, rt.getDepositPercent());
-            ps.setInt(5, rt.getCapacity());
-            ps.setString(6, rt.getDescription());
-            ps.setString(7, rt.getArea());
-            ps.setString(8, rt.getBedType());
+            ps.setInt(3, rt.getCapacity());
+            ps.setString(4, rt.getDescription());
+            ps.setString(5, rt.getArea());
+            ps.setString(6, rt.getBedType());
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
@@ -220,17 +214,15 @@ public class RoomTypeDAO {
 
     public boolean updateRoomType(RoomTypeInfo rt, Connection conn) throws SQLException {
         useDatabase(conn);
-        String sql = "UPDATE RoomType SET type_name = ?, base_price = ?, price_per_hour = ?, deposit_percent = ?, capacity = ?, description = ?, area = ?, bed_type = ? WHERE type_id = ?";
+        String sql = "UPDATE RoomType SET type_name = ?, base_price = ?, capacity = ?, description = ?, area = ?, bed_type = ? WHERE type_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, rt.getTypeName());
             ps.setDouble(2, rt.getBasePrice());
-            ps.setDouble(3, rt.getPricePerHour());
-            ps.setDouble(4, rt.getDepositPercent());
-            ps.setInt(5, rt.getCapacity());
-            ps.setString(6, rt.getDescription());
-            ps.setString(7, rt.getArea());
-            ps.setString(8, rt.getBedType());
-            ps.setInt(9, rt.getTypeId());
+            ps.setInt(3, rt.getCapacity());
+            ps.setString(4, rt.getDescription());
+            ps.setString(5, rt.getArea());
+            ps.setString(6, rt.getBedType());
+            ps.setInt(7, rt.getTypeId());
             int affected = ps.executeUpdate();
             return affected > 0;
         }
