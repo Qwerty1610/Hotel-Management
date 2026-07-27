@@ -195,6 +195,8 @@ public class ReceptionistBookingProcessController extends HttpServlet {
             if ("Pending".equals(existing.getStatus())
                     && ("update".equalsIgnoreCase(action) || "confirm".equalsIgnoreCase(action))) {
                 String customerName = request.getParameter("customerName");
+                String phone = request.getParameter("customerPhone");
+                String email = request.getParameter("customerEmail");
                 String checkInStr = request.getParameter("checkInDate");
                 String checkOutStr = request.getParameter("checkOutDate");
                 String roomTypeStr = request.getParameter("roomTypeId");
@@ -204,6 +206,12 @@ public class ReceptionistBookingProcessController extends HttpServlet {
 
                 if (customerName != null && !customerName.trim().isEmpty() && customerName.trim().length() <= 100) {
                     existing.setCustomerName(customerName.trim());
+                }
+                if (phone != null) {
+                    existing.setPhone(phone.trim());
+                }
+                if (email != null) {
+                    existing.setEmail(email.trim());
                 }
 
                 if (checkInStr != null && !checkInStr.isEmpty() && checkOutStr != null && !checkOutStr.isEmpty()) {

@@ -2,7 +2,7 @@
     <%@ include file="../../includes/taglibs.jsp" %>
         <%-- Sidebar chung cho Manager Dashboard. Sử dụng biến 'activePage' (request scope) để highlight menu item hiện
             tại. Các giá trị hợp lệ: 'overview' , 'rooms' , 'room-types' , 'services' , 'requests' , 'invoices'
-            , 'customers' --%>
+            , 'promotions' --%>
             <aside class="dashboard-sidebar">
                 <div class="sidebar-brand">
                     <i class="fa-solid fa-hotel"></i> <span>HotelOps</span>
@@ -47,11 +47,6 @@
                     <li class="menu-item ${activePage eq 'promotions' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/manager/promotions">
                             <i class="fa-solid fa-tag"></i> <span>Khuyến mãi</span>
-                        </a>
-                    </li>
-                    <li class="menu-item ${activePage eq 'customers' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/manager/dashboard?tab=customers">
-                            <i class="fa-solid fa-user-group"></i> <span>Khách hàng</span>
                         </a>
                     </li>
                 </ul>

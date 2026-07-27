@@ -199,8 +199,16 @@ public class CheckOutDAO {
     // 3. Save CheckOut, update Booking, Room and Invoice statuses in a transaction
     public boolean processCheckOut(CheckOut co) {
         String insertCheckOut = "INSERT INTO dbo.CheckOut (booking_id, receptionist_id, room_charge, service_charge, extra_charge, total_amount, amount_paid, remaining_amount, payment_method, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        String updateBooking = "UPDATE dbo.Booking SET status = N'CheckedOut', updated_at = SYSDATETIME() WHERE booking_id = ?";
-        String updateRoom = "UPDATE dbo.Room SET status = N'Cleaning' WHERE room_id IN (SELECT room_id FROM dbo.RoomAssignment WHERE booking_id = ?)";
+        // Booking đặt theo nhóm (group_booking_id) chỉ hiện 1 dòng đại diện (booking
+        // cha) trên tab Check-out, nên phải cập nhật trạng thái/phòng cho TOÀN BỘ
+        // các booking con cùng nhóm luôn — nếu không, các phòng con vẫn còn
+        // 'CheckedIn' mãi mãi dù khách đã trả phòng xong, khiến chúng vẫn hiện ra
+        // cho khách gửi yêu cầu sửa chữa dù đã check-out.
+        String updateBooking = "UPDATE dbo.Booking SET status = N'CheckedOut', updated_at = SYSDATETIME() "
+                + "WHERE booking_id = ? OR group_booking_id = ?";
+        String updateRoom = "UPDATE dbo.Room SET status = N'Cleaning' "
+                + "WHERE room_id IN (SELECT room_id FROM dbo.RoomAssignment WHERE booking_id = ? "
+                + "OR booking_id IN (SELECT booking_id FROM dbo.Booking WHERE group_booking_id = ?))";
         String updateInvoice = "UPDATE dbo.Invoice SET status = N'Paid' WHERE booking_id = ?";
 
         Connection con = null;
@@ -223,24 +231,28 @@ public class CheckOutDAO {
                 st1.executeUpdate();
             }
 
-            // 2. Update Booking
+            // 2. Update Booking (cả booking cha lẫn các booking con cùng nhóm)
             try (PreparedStatement st2 = con.prepareStatement(updateBooking)) {
                 st2.setInt(1, co.getBookingId());
+                st2.setInt(2, co.getBookingId());
                 st2.executeUpdate();
             }
 
-            // 2.1. Auto-cancel any unapproved (Pending) service requests for this checked-out booking
+            // 2.1. Auto-cancel any unapproved (Pending) service requests for this checked-out booking (cả nhóm)
             String autoCancelPendingRequests = "UPDATE dbo.BookingServiceRequest "
                     + "SET status = N'Cancelled', cancel_reason = N'Tự động hủy do phòng đã trả (Check-out)', updated_at = SYSDATETIME() "
-                    + "WHERE booking_id = ? AND UPPER(status) = 'PENDING'";
+                    + "WHERE (booking_id = ? OR booking_id IN (SELECT booking_id FROM dbo.Booking WHERE group_booking_id = ?)) "
+                    + "AND UPPER(status) = 'PENDING'";
             try (PreparedStatement stCancel = con.prepareStatement(autoCancelPendingRequests)) {
                 stCancel.setInt(1, co.getBookingId());
+                stCancel.setInt(2, co.getBookingId());
                 stCancel.executeUpdate();
             }
 
-            // 3. Update Room
+            // 3. Update Room (cả phòng của booking cha lẫn các booking con cùng nhóm)
             try (PreparedStatement st3 = con.prepareStatement(updateRoom)) {
                 st3.setInt(1, co.getBookingId());
+                st3.setInt(2, co.getBookingId());
                 st3.executeUpdate();
             }
 

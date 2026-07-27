@@ -62,7 +62,7 @@ public class RoomDAO {
                 rt.bed_type,
                 rt.area,
                 CASE 
-                    WHEN r.status IN ('OutOfService', 'Maintenance', 'Cleaning', 'Refilling') THEN r.status
+                    WHEN r.status IN ('OutOfService', 'Maintenance') THEN r.status
                     WHEN EXISTS (
                         SELECT 1 
                         FROM RoomAssignment ra
@@ -81,6 +81,7 @@ public class RoomDAO {
                           AND b.check_in_date < ?
                           AND b.check_out_date > ?
                     ) THEN 'Confirmed'
+                    WHEN r.status IN ('Cleaning', 'Refilling') THEN r.status
                     ELSE 'Available'
                 END AS display_status,
                 CASE 

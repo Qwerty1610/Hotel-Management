@@ -42,7 +42,7 @@ public class HotelServiceDAO {
 
     public java.util.Set<Integer> getUsedServiceIds() {
         java.util.Set<Integer> usedIds = new java.util.HashSet<>();
-        String sql = "SELECT DISTINCT service_id FROM dbo.BookingServiceRequest WHERE status NOT IN (N'Cancelled', N'Rejected', 'Cancelled', 'Rejected')";
+        String sql = "SELECT DISTINCT service_id FROM dbo.BookingServiceRequest WHERE status IN (N'Pending', N'InProgress', 'Pending', 'InProgress')";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             try (ResultSet rs = ps.executeQuery()) {

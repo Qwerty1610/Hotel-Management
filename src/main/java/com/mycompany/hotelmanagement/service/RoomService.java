@@ -60,8 +60,13 @@ public class RoomService {
         List<RoomInfo> rooms = getRoomsByDateRange(checkIn, checkOut);
         Map<Integer, Integer> counts = new HashMap<>();
         for (RoomInfo r : rooms) {
-            if ("Available".equalsIgnoreCase(r.getOperationalStatus()) 
-                    && "Available".equalsIgnoreCase(r.getDisplayStatus())) {
+            boolean isOpAvailable = "Available".equalsIgnoreCase(r.getOperationalStatus())
+                    || "Cleaning".equalsIgnoreCase(r.getOperationalStatus())
+                    || "Refilling".equalsIgnoreCase(r.getOperationalStatus());
+            boolean isDispAvailable = "Available".equalsIgnoreCase(r.getDisplayStatus())
+                    || "Cleaning".equalsIgnoreCase(r.getDisplayStatus())
+                    || "Refilling".equalsIgnoreCase(r.getDisplayStatus());
+            if (isOpAvailable && isDispAvailable) {
                 counts.put(r.getTypeId(), counts.getOrDefault(r.getTypeId(), 0) + 1);
             }
         }
