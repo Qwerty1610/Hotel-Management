@@ -3,10 +3,12 @@ package com.mycompany.hotelmanagement.service;
 import com.mycompany.hotelmanagement.dal.BookingDAO;
 import com.mycompany.hotelmanagement.dal.RoomTypeDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
-import com.mycompany.hotelmanagement.entity.Room;
+import com.mycompany.hotelmanagement.entity.Promotion;
+import com.mycompany.hotelmanagement.entity.RoomInfo;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import com.mycompany.hotelmanagement.entity.CustomerDetails;
 import java.sql.Date;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -36,6 +38,7 @@ public class BookingService {
     private static final Logger LOGGER = Logger.getLogger(BookingService.class.getName());
     private final BookingDAO bookingDAO = new BookingDAO();
     private final RoomTypeDAO roomTypeRepository = new RoomTypeDAO();
+    private final PromotionService promotionService = new PromotionService();
 
     /**
      * Creates a new booking with validation. Throws exception with message keys
@@ -77,9 +80,7 @@ public class BookingService {
             int qty = booking.getRoomQuantity() > 0 ? booking.getRoomQuantity() : 1;
 
             // Check date-based overlapping availability (MSG19)
-            int totalRoomsInHotel = getRoomCountByTypeId(booking.getRoomTypeId());
-            int bookedRoomsCount = bookingDAO.getBookedRoomsCountForDates(booking.getRoomTypeId(), checkIn, checkOut);
-            int availableRooms = totalRoomsInHotel - bookedRoomsCount;
+            int availableRooms = bookingDAO.checkRoomAvailability(booking.getRoomTypeId(), checkIn, checkOut, null);
 
             if (qty > availableRooms) {
                 throw new Exception("MSG19"); // Rooms not available
@@ -179,21 +180,21 @@ public class BookingService {
     /**
      * Returns all rooms in the hotel with their type name and current status.
      */
-    public List<Room> getAllRooms(Date checkIn, Date checkOut) {
+    public List<RoomInfo> getAllRooms(Date checkIn, Date checkOut) {
         return bookingDAO.getAllRooms(checkIn, checkOut);
     }
 
     /**
      * Returns rooms filtered by room type ID.
      */
-    public List<Room> getRoomsByTypeId(int typeId, Date checkIn, Date checkOut) {
+    public List<RoomInfo> getRoomsByTypeId(int typeId, Date checkIn, Date checkOut) {
         return bookingDAO.getRoomsByTypeId(typeId, checkIn, checkOut);
     }
 
     /**
      * Returns rooms already assigned to a specific booking via RoomAssignment.
      */
-    public List<Room> getAssignedRoomsForBooking(int bookingId, Date checkIn, Date checkOut) {
+    public List<RoomInfo> getAssignedRoomsForBooking(int bookingId, Date checkIn, Date checkOut) {
         return bookingDAO.getAssignedRoomsForBooking(bookingId, checkIn, checkOut);
     }
 
@@ -225,30 +226,7 @@ public class BookingService {
         return bookingDAO.getConflictingRooms(roomIds, checkIn, checkOut, excludeBookingId);
     }
 
-    /**
-     * Gets the total count of rooms of a specific type in the database.
-     */
-    private int getRoomCountByTypeId(int typeId) {
-        String sql = "SELECT COUNT(*) FROM Room WHERE type_id = ? AND is_deleted = 0";
-        try (java.sql.Connection conn = com.mycompany.hotelmanagement.config.DBContext.getConnection()) {
-            try (java.sql.Statement stmt = conn.createStatement()) {
-                stmt.execute("USE HotelManagementDB");
-            } catch (Exception se) {
-                // Ignore USE DB error
-            }
-            try (java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setInt(1, typeId);
-                try (java.sql.ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        return rs.getInt(1);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error in getRoomCountByTypeId: typeId=" + typeId, e);
-        }
-        return 0;
-    }
+
 
     public double calculateGroupTotalAmount(int parentBookingId) {
         Booking parent = bookingDAO.getBookingById(parentBookingId);
@@ -273,7 +251,8 @@ public class BookingService {
         return total * nights;
     }
 
-    public double calculateBookingAmount(Booking booking) {
+    /** Tính subtotal thuần (chưa trừ khuyến mãi) = basePrice x số lượng x số đêm. */
+    private double calculateSubtotal(Booking booking) {
         if (booking == null || booking.getRoomTypeId() == null) {
             return 0;
         }
@@ -287,9 +266,98 @@ public class BookingService {
     }
 
     /**
-     * Phân bổ số tiền giảm giá vào booking cha (và các booking con nếu có).
+     * Tổng tiền của MỘT booking (đã trừ khuyến mãi nếu có promotion_id).
+     * Dùng cho các booking đứng riêng lẻ (không thuộc nhóm) hoặc khi chỉ cần
+     * ước tính nhanh; với nhóm booking cha/con, ưu tiên dùng
+     * {@link #recalculateGroupAmounts(Booking, List)} để tính đúng theo tổng
+     * cả nhóm rồi rải xuống từng booking.
      */
-    public void applyDiscountToGroup(int parentBookingId, double totalDiscount, String promoCode) {
+    public double calculateBookingAmount(Booking booking) {
+        double subtotal = calculateSubtotal(booking);
+        if (booking == null || booking.getPromotionId() == null) {
+            return subtotal;
+        }
+        Promotion promo = promotionService.getPromotionById(booking.getPromotionId());
+        if (promo == null) {
+            return subtotal;
+        }
+        double discount = promotionService.calculateDiscountAmount(promo, subtotal);
+        return Math.max(0, subtotal - discount);
+    }
+
+    /**
+     * Tính lại total_amount cho cả nhóm booking (cha + các con) mỗi khi
+     * ngày/loại phòng/số lượng thay đổi, GIỮ NGUYÊN mã khuyến mãi đã áp
+     * (nếu có) trên booking cha — không bao giờ làm mã giảm giá "biến mất"
+     * dù subtotal đổi thế nào. Set totalAmount lên các object truyền vào
+     * (in-memory) — người gọi tự lưu DB sau đó.
+     */
+    public void recalculateGroupAmounts(Booking parent, List<Booking> children) {
+        if (parent == null) {
+            return;
+        }
+        if (children == null) {
+            children = new ArrayList<>();
+        }
+
+        double parentSubtotal = calculateSubtotal(parent);
+        List<Double> childSubtotals = new ArrayList<>();
+        for (Booking child : children) {
+            childSubtotals.add(calculateSubtotal(child));
+        }
+
+        Integer promotionId = parent.getPromotionId();
+        if (promotionId == null) {
+            parent.setTotalAmount(parentSubtotal);
+            for (int i = 0; i < children.size(); i++) {
+                children.get(i).setTotalAmount(childSubtotals.get(i));
+            }
+            return;
+        }
+
+        Promotion promo = promotionService.getPromotionById(promotionId);
+        if (promo == null) {
+            parent.setTotalAmount(parentSubtotal);
+            for (int i = 0; i < children.size(); i++) {
+                children.get(i).setTotalAmount(childSubtotals.get(i));
+            }
+            return;
+        }
+
+        double groupSubtotal = parentSubtotal;
+        for (double s : childSubtotals) {
+            groupSubtotal += s;
+        }
+        double totalDiscount = promotionService.calculateDiscountAmount(promo, groupSubtotal);
+
+        double remainingDiscount = totalDiscount;
+        remainingDiscount = cascadeOne(parent, parentSubtotal, remainingDiscount);
+        for (int i = 0; i < children.size(); i++) {
+            remainingDiscount = cascadeOne(children.get(i), childSubtotals.get(i), remainingDiscount);
+        }
+    }
+
+    /** Trừ (một phần của) discount vào 1 booking, trả về phần discount còn dư. */
+    private double cascadeOne(Booking booking, double subtotal, double remainingDiscount) {
+        if (remainingDiscount <= 0) {
+            booking.setTotalAmount(subtotal);
+            return 0;
+        }
+        if (subtotal >= remainingDiscount) {
+            booking.setTotalAmount(subtotal - remainingDiscount);
+            return 0;
+        }
+        booking.setTotalAmount(0);
+        return remainingDiscount - subtotal;
+    }
+
+    /**
+     * Phân bổ số tiền giảm giá vào booking cha (và các booking con nếu có),
+     * đồng thời GHI NHỚ promotion_id lên booking cha để lần sau đổi ngày/loại
+     * phòng có thể tính lại discount này (xem calculateBookingAmount /
+     * recalculateGroupAmounts) thay vì làm mã giảm giá biến mất.
+     */
+    public void applyDiscountToGroup(int parentBookingId, double totalDiscount, int promotionId, String promoCode) {
         Booking parent = bookingDAO.getBookingById(parentBookingId);
         if (parent == null)
             return;
@@ -322,5 +390,7 @@ public class BookingService {
                 remainingDiscount -= childAmount;
             }
         }
+
+        bookingDAO.updateBookingPromotion(parentBookingId, promotionId);
     }
 }

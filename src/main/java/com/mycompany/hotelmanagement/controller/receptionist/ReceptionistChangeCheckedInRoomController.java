@@ -40,47 +40,20 @@ public class ReceptionistChangeCheckedInRoomController extends HttpServlet {
                 request.getParameter("bookingId")
         );
 
-        System.out.println("===== CHANGE ROOM DO GET =====");
-        System.out.println("bookingId = " + bookingId);
-
         BookingDAO bookingDAO = new BookingDAO();
         Booking booking = bookingDAO.getBookingById(bookingId);
-
-        System.out.println("booking = " + booking);
 
         ChangeCheckedInRoomDAO dao = new ChangeCheckedInRoomDAO();
 
         List<Booking> groupBookings
                 = dao.getGroupBookings(bookingId);
 
-        System.out.println(
-                "groupBookings size = "
-                + groupBookings.size()
-        );
-        for (Booking b : groupBookings) {
-
-            System.out.println(
-                    "GROUP BOOKING = "
-                    + b.getBookingId()
-                    + " TYPE = "
-                    + b.getRoomTypeName()
-            );
-
-        }
         List<RoomInfo> assignedRooms
                 = dao.getCurrentAssignedRooms(bookingId);
 
         List<RoomInfo> availableRooms
                 = dao.getAvailableRoomsForChange(bookingId);
 
-        Map<String, List<RoomInfo>> assignedRoomMap = new LinkedHashMap<>();
-        for (RoomInfo room : assignedRooms) {
-            assignedRoomMap
-                    .computeIfAbsent(
-                            room.getTypeName(),
-                            k -> new ArrayList<>())
-                    .add(room);
-        }
         Map<String, List<RoomInfo>> availableRoomMap = new LinkedHashMap<>();
         for (RoomInfo room : availableRooms) {
             availableRoomMap
@@ -90,37 +63,9 @@ public class ReceptionistChangeCheckedInRoomController extends HttpServlet {
                     .add(room);
         }
 
-        System.out.println(
-                "assignedRooms size = "
-                + assignedRooms.size()
-        );
-
-        System.out.println(
-                "availableRooms size = "
-                + availableRooms.size()
-        );
-
-        request.setAttribute(
-                "booking",
-                booking
-        );
-
-        request.setAttribute(
-                "groupBookings",
-                groupBookings
-        );
-
-        request.setAttribute(
-                "assignedRoomMap",
-                assignedRoomMap
-        );
-
-        request.setAttribute(
-                "availableRoomMap",
-                availableRoomMap
-        );
-
-        request.setAttribute("assignedRoomMap", assignedRoomMap);
+        request.setAttribute("booking", booking);
+        request.setAttribute("groupBookings", groupBookings);
+        request.setAttribute("assignedRooms", assignedRooms);
         request.setAttribute("availableRoomMap", availableRoomMap);
 
         String error = request.getParameter("error");
@@ -146,50 +91,19 @@ public class ReceptionistChangeCheckedInRoomController extends HttpServlet {
                 request.getParameter("bookingId")
         );
 
-        String[] oldRoomIds = request.getParameterValues("oldRoomIds");
-
-        List<String> oldRoomList = new ArrayList<>();
-        List<String> newRoomList = new ArrayList<>();
-
-        if (oldRoomIds != null) {
-
-            for (String oldRoomId : oldRoomIds) {
-
-                String newRoomId = request.getParameter(
-                        "newRoom_" + oldRoomId
-                );
-
-                if (newRoomId != null && !newRoomId.isBlank()) {
-
-                    oldRoomList.add(oldRoomId);
-                    newRoomList.add(newRoomId);
-
-                }
-            }
-        }
-
+        String oldRoomIdRaw = request.getParameter("oldRoomId");
+        String newRoomIdRaw = request.getParameter("newRoomId");
         String reason = request.getParameter("reason");
 
         // ================= VALIDATE =================
-        if (oldRoomList.isEmpty()
-                || newRoomList.isEmpty()) {
+        if (oldRoomIdRaw == null || oldRoomIdRaw.isBlank()
+                || newRoomIdRaw == null || newRoomIdRaw.isBlank()) {
 
             response.sendRedirect(
                     request.getContextPath()
                     + "/receptionist/change-room?bookingId="
                     + bookingId
                     + "&error=noroom");
-
-            return;
-        }
-
-        if (oldRoomList.size() != newRoomList.size()) {
-
-            response.sendRedirect(
-                    request.getContextPath()
-                    + "/receptionist/change-room?bookingId="
-                    + bookingId
-                    + "&error=count");
 
             return;
         }
@@ -205,36 +119,45 @@ public class ReceptionistChangeCheckedInRoomController extends HttpServlet {
             return;
         }
 
-        // Không cho đổi sang chính phòng cũ
-        for (int i = 0; i < oldRoomList.size(); i++) {
+        int oldRoomId = Integer.parseInt(oldRoomIdRaw);
+        int newRoomId = Integer.parseInt(newRoomIdRaw);
 
-            if (oldRoomList.get(i).equals(newRoomList.get(i))) {
+        if (oldRoomId == newRoomId) {
 
-                response.sendRedirect(
-                        request.getContextPath()
-                        + "/receptionist/change-room?bookingId="
-                        + bookingId
-                        + "&error=sameroom");
+            response.sendRedirect(
+                    request.getContextPath()
+                    + "/receptionist/change-room?bookingId="
+                    + bookingId
+                    + "&error=sameroom");
 
-                return;
-            }
+            return;
+        }
+
+        HttpSession session = request.getSession(false);
+        Integer accountId = session == null
+                ? null
+                : (Integer) session.getAttribute("accountId");
+
+        if (accountId == null) {
+            response.sendRedirect(request.getContextPath() + "/staff/login?error=unauthorized");
+            return;
         }
 
         // ================= DAO =================
         ChangeCheckedInRoomDAO dao = new ChangeCheckedInRoomDAO();
 
-        boolean success = dao.changeRooms(
-                bookingId,
-                oldRoomList.toArray(new String[0]),
-                newRoomList.toArray(new String[0]),
-                reason.trim()
+        boolean success = dao.changeRoom(
+                oldRoomId,
+                newRoomId,
+                reason.trim(),
+                accountId
         );
 
         if (success) {
 
             response.sendRedirect(
                     request.getContextPath()
-                    + "/receptionist/booking-detail?id="
+                    + "/receptionist/change-room?bookingId="
                     + bookingId
                     + "&success=changed");
 

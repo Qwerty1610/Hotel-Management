@@ -172,6 +172,72 @@ public class RoomIssueDAO {
     }
 
     // ==========================
+    // GET ALL ISSUES FOR MANAGER (kèm số phòng + tên người báo cáo)
+    // ==========================
+    public List<RoomIssue> getAllForManager() {
+
+        List<RoomIssue> list = new ArrayList<>();
+
+        String sql = """
+        SELECT
+            ri.issue_id,
+            ri.room_id,
+            ri.issue_type,
+            ri.severity,
+            ri.description,
+            ri.note,
+            ri.status,
+            ri.reported_by,
+            ri.reported_at,
+            r.room_number,
+            a.full_name AS reporter_name
+        FROM RoomIssue ri
+        LEFT JOIN Room r ON ri.room_id = r.room_id
+        LEFT JOIN Account a ON ri.reported_by = a.account_id
+        ORDER BY ri.reported_at DESC, ri.issue_id DESC
+    """;
+
+        try (
+                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+
+                RoomIssue issue = new RoomIssue();
+
+                issue.setIssueId(rs.getInt("issue_id"));
+                issue.setRoomId(rs.getInt("room_id"));
+                issue.setIssueType(rs.getString("issue_type"));
+                issue.setSeverity(rs.getString("severity"));
+                issue.setDescription(rs.getString("description"));
+                issue.setNote(rs.getString("note"));
+                issue.setStatus(rs.getString("status"));
+
+                int reportedBy = rs.getInt("reported_by");
+                if (!rs.wasNull()) {
+                    issue.setReportedBy(reportedBy);
+                }
+
+                java.sql.Timestamp reportedAt = rs.getTimestamp("reported_at");
+                if (reportedAt != null) {
+                    issue.setReportedAt(reportedAt.toLocalDateTime());
+                }
+
+                issue.setRoomNumber(rs.getString("room_number"));
+                issue.setReporterName(rs.getString("reporter_name"));
+
+                list.add(issue);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    // ==========================
     // COMPLETE ISSUE
     // Pending -> Success
     // ==========================
@@ -200,100 +266,4 @@ public class RoomIssueDAO {
         return false;
     }
 
-    public boolean hasPendingIssue(int roomId) {
-
-        String sql = """
-        SELECT COUNT(*)
-        FROM RoomIssue
-        WHERE room_id = ?
-          AND status = 'Pending'
-    """;
-
-        try (
-                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, roomId);
-
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-
-                return rs.getInt(1) > 0;
-
-            }
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-        }
-        return false;
-    }
-    /* ==========================
-       GET HIGHEST PRIORITY PENDING ISSUE
-       ========================== */
-
-    public RoomIssue getHighestPriorityPendingIssue(int roomId) {
-
-        String sql = """
-        SELECT TOP 1
-            issue_id,
-            room_id,
-            issue_type,
-            severity,
-            description,
-            note,
-            status,
-            reported_by
-        FROM RoomIssue
-        WHERE room_id = ?
-          AND status = 'Pending'
-        ORDER BY
-            CASE
-                WHEN issue_type = 'Damage' THEN 1
-                WHEN issue_type = 'Other'
-                     AND severity IN ('High','Medium') THEN 2
-                WHEN issue_type = 'Refill' THEN 3
-                WHEN issue_type = 'Cleaning' THEN 3
-                WHEN issue_type = 'Other'
-                     AND severity = 'Low' THEN 4
-                ELSE 99
-            END,
-            issue_id
-    """;
-
-        try (
-                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, roomId);
-
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-
-                RoomIssue issue = new RoomIssue();
-
-                issue.setIssueId(rs.getInt("issue_id"));
-                issue.setRoomId(rs.getInt("room_id"));
-                issue.setIssueType(rs.getString("issue_type"));
-                issue.setSeverity(rs.getString("severity"));
-                issue.setDescription(rs.getString("description"));
-                issue.setNote(rs.getString("note"));
-                issue.setStatus(rs.getString("status"));
-
-                int reportedBy = rs.getInt("reported_by");
-
-                if (!rs.wasNull()) {
-                    issue.setReportedBy(reportedBy);
-                }
-
-                return issue;
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
 }

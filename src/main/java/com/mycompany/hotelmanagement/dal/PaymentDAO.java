@@ -110,6 +110,26 @@ public class PaymentDAO {
     }
 
     /**
+     * Tự đánh dấu hóa đơn đã Paid mà KHÔNG cần bản ghi Payment đi kèm — dùng
+     * khi hóa đơn không còn khoản nào phải trả (ví dụ mã khuyến mãi giảm về
+     * 0đ) nên sẽ không bao giờ có giao dịch chuyển khoản thật để tất toán.
+     */
+    public boolean markInvoicePaidDirectly(int invoiceId) {
+        String sql = "UPDATE dbo.Invoice SET status = N'Paid', updated_at = SYSDATETIME() "
+                + "WHERE invoice_id = ? AND status <> N'Paid'";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, invoiceId);
+                return ps.executeUpdate() > 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
      * Ghi nhận một giao dịch TIỀN CỌC đặt phòng (không đổi trạng thái Booking —
      * việc xác nhận đặt phòng do lễ tân thực hiện thủ công).
      * Idempotent theo sepay_tx_id như recordPaymentAndSettle.

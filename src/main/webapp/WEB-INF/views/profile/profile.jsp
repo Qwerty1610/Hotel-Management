@@ -1,11 +1,11 @@
-<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ include file="../../includes/taglibs.jsp" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ include file="../../includes/header.jsp" %>
 <%--
-    Trang Hồ sơ cá nhân (xem & chỉnh sửa) dùng chung cho mọi vai trò.
-    - Customer: vào từ menu "Hồ sơ" (chrome thanh điều hướng trên cùng).
-    - Các vai trò còn lại: vào bằng cách bấm avatar/tên (chrome dashboard).
+    Trang Há»“ sÆ¡ cÃ¡ nhÃ¢n (xem & chá»‰nh sá»­a) dÃ¹ng chung cho má»i vai trÃ².
+    - Customer: vÃ o tá»« menu "Há»“ sÆ¡" (chrome thanh Ä‘iá»u hÆ°á»›ng trÃªn cÃ¹ng).
+    - CÃ¡c vai trÃ² cÃ²n láº¡i: vÃ o báº±ng cÃ¡ch báº¥m avatar/tÃªn (chrome dashboard).
     @author QuyPQ
 --%>
 <fmt:setLocale value="vi_VN" />
@@ -18,23 +18,23 @@
 <c:choose>
     <c:when test="${role eq 'ADMIN'}">
         <c:set var="dashboardUrl" value="${ctx}/admin/dashboard" />
-        <c:set var="roleLabel" value="Quản trị viên" />
+        <c:set var="roleLabel" value="Quáº£n trá»‹ viÃªn" />
     </c:when>
     <c:when test="${role eq 'HOTEL_MANAGER'}">
         <c:set var="dashboardUrl" value="${ctx}/manager/dashboard" />
-        <c:set var="roleLabel" value="Quản lý khách sạn" />
+        <c:set var="roleLabel" value="Quáº£n lÃ½ khÃ¡ch sáº¡n" />
     </c:when>
     <c:when test="${role eq 'RECEPTIONIST'}">
         <c:set var="dashboardUrl" value="${ctx}/receptionist/dashboard" />
-        <c:set var="roleLabel" value="Lễ tân" />
+        <c:set var="roleLabel" value="Lá»… tÃ¢n" />
     </c:when>
     <c:when test="${role eq 'HOUSEKEEPING'}">
         <c:set var="dashboardUrl" value="${ctx}/housekeeping/dashboard" />
-        <c:set var="roleLabel" value="Nhân viên buồng phòng" />
+        <c:set var="roleLabel" value="NhÃ¢n viÃªn buá»“ng phÃ²ng" />
     </c:when>
     <c:otherwise>
         <c:set var="dashboardUrl" value="${ctx}/home" />
-        <c:set var="roleLabel" value="Khách hàng" />
+        <c:set var="roleLabel" value="KhÃ¡ch hÃ ng" />
     </c:otherwise>
 </c:choose>
 
@@ -53,12 +53,15 @@
 <%-- ============== CUSTOMER CHROME: top navbar ============== --%>
 <c:if test="${isCustomer}">
     <nav class="navbar-rooms">
-        <div class="logo">${hotelName}</div>
+<a href="${pageContext.request.contextPath}/" class="logo">${not empty hotelName ? hotelName : 'HotelOps'}</a>
         <ul class="nav-links">
-            <li><a href="${ctx}/">Trang chủ</a></li>
-            <li><a href="${ctx}/rooms">Phòng</a></li>
-            <li><a href="${ctx}/customer/bookings">Đặt phòng của tôi</a></li>
-            <li><a href="${ctx}/customer/payments">Thanh toán</a></li>
+            <li><a href="${ctx}/">Trang chá»§</a></li>
+            <li><a href="${ctx}/rooms">PhÃ²ng</a></li>
+            <li><a href="${ctx}/customer/bookings">Äáº·t phÃ²ng cá»§a tÃ´i</a></li>
+            <li><a href="${ctx}/customer/feedbacks">ÄÃ¡nh giÃ¡ lÆ°u trÃº</a></li>
+            <li><a href="${ctx}/customer/services">Dá»‹ch vá»¥</a></li>
+            <li><a href="${ctx}/customer/maintenance">Sá»± cá»‘</a></li>
+            <li><a href="${ctx}/customer/payments">Thanh toÃ¡n</a></li>
         </ul>
         <div class="nav-actions">
             <div class="user-dropdown">
@@ -69,28 +72,29 @@
                 </button>
                 <div class="dropdown-menu">
                     <a href="${ctx}/customer/profile" class="dropdown-item">
-                        <i class="fa-solid fa-id-card"></i> Hồ sơ
+                        <i class="fa-solid fa-id-card"></i> Há»“ sÆ¡
                     </a>
                     <a href="${ctx}/customer/bookings" class="dropdown-item">
-                        <i class="fa-solid fa-calendar-check"></i> Đặt phòng của tôi
+                        <i class="fa-solid fa-calendar-check"></i> Äáº·t phÃ²ng cá»§a tÃ´i
                     </a>
                     <a href="${ctx}/customer/booking/change" class="dropdown-item">
-                        <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
+                        <i class="fa-solid fa-pen-to-square"></i> Thay Ä‘á»•i Ä‘áº·t phÃ²ng
+                    </a>
                     <a href="${ctx}/customer/feedbacks" class="dropdown-item">
-                        <i class="fa-solid fa-star"></i> Đánh giá lưu trú
+                        <i class="fa-solid fa-star"></i> ÄÃ¡nh giÃ¡ lÆ°u trÃº
                     </a>
                     <a href="${ctx}/customer/services" class="dropdown-item">
-                        <i class="fa-solid fa-bell-concierge"></i> Yêu cầu dịch vụ
+                        <i class="fa-solid fa-bell-concierge"></i> YÃªu cáº§u dá»‹ch vá»¥
                     </a>
                     <a href="${pageContext.request.contextPath}/customer/maintenance" class="dropdown-item">
-                        <i class="fa-solid fa-screwdriver-wrench"></i> Yêu cầu sửa chữa
+                        <i class="fa-solid fa-screwdriver-wrench"></i> YÃªu cáº§u sá»­a chá»¯a
                     </a>
                     <a href="${ctx}/customer/payments" class="dropdown-item">
-                        <i class="fa-solid fa-credit-card"></i> Thanh toán & Lịch sử
+                        <i class="fa-solid fa-credit-card"></i> Thanh toÃ¡n & Lá»‹ch sá»­
                     </a>
                     <div class="dropdown-divider"></div>
                     <a href="${ctx}/logout" class="dropdown-item logout-item">
-                        <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                        <i class="fa-solid fa-right-from-bracket"></i> ÄÄƒng xuáº¥t
                     </a>
                 </div>
             </div>
@@ -104,16 +108,16 @@
     <div class="dashboard-main" style="margin-left:0;width:100%;">
         <header class="main-topbar">
             <div class="breadcrumb">
-                <span>Tài khoản</span>
+                <span>TÃ i khoáº£n</span>
                 <span class="separator">&gt;</span>
-                <span class="current">Hồ sơ cá nhân</span>
+                <span class="current">Há»“ sÆ¡ cÃ¡ nhÃ¢n</span>
             </div>
             <div style="display:flex;align-items:center;gap:12px;">
                 <a href="${dashboardUrl}" class="btn-logout" style="background:#f1f5f9;color:#1c2541;">
-                    <i class="fa-solid fa-arrow-left"></i> Quay lại
+                    <i class="fa-solid fa-arrow-left"></i> Quay láº¡i
                 </a>
                 <a href="${ctx}/logout" class="btn-logout">
-                    <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                    <i class="fa-solid fa-right-from-bracket"></i> ÄÄƒng xuáº¥t
                 </a>
             </div>
         </header>
@@ -124,15 +128,15 @@
             <div class="profile-container">
 
                 <div class="profile-page-head">
-                    <h1>Hồ sơ cá nhân</h1>
-                    <p>Xem và cập nhật thông tin tài khoản của bạn.</p>
+                    <h1>Há»“ sÆ¡ cÃ¡ nhÃ¢n</h1>
+                    <p>Xem vÃ  cáº­p nháº­t thÃ´ng tin tÃ i khoáº£n cá»§a báº¡n.</p>
                 </div>
 
                 <%-- ----- Toast feedback ----- --%>
                 <c:if test="${param.result eq 'success'}">
                     <div class="profile-toast is-success">
                         <i class="fa-solid fa-circle-check"></i>
-                        <span>Cập nhật hồ sơ thành công.</span>
+                        <span>Cáº­p nháº­t há»“ sÆ¡ thÃ nh cÃ´ng.</span>
                     </div>
                 </c:if>
                 <c:if test="${not empty param.error}">
@@ -140,11 +144,11 @@
                         <i class="fa-solid fa-circle-exclamation"></i>
                         <span>
                             <c:choose>
-                                <c:when test="${param.error eq 'name_required'}">Vui lòng nhập họ và tên.</c:when>
-                                <c:when test="${param.error eq 'name_too_long'}">Họ và tên vượt quá độ dài cho phép (tối đa 100 ký tự).</c:when>
-                                <c:when test="${param.error eq 'invalid_phone'}">Số điện thoại không hợp lệ. Định dạng: bắt đầu bằng 0, theo sau là 3/5/7/8/9 và 8 chữ số.</c:when>
-                                <c:when test="${param.error eq 'phone_exists'}">Số điện thoại đã được sử dụng bởi một tài khoản khác.</c:when>
-                                <c:otherwise>Đã có lỗi xảy ra. Vui lòng thử lại sau.</c:otherwise>
+                                <c:when test="${param.error eq 'name_required'}">Vui lÃ²ng nháº­p há» vÃ  tÃªn.</c:when>
+                                <c:when test="${param.error eq 'name_too_long'}">Há» vÃ  tÃªn vÆ°á»£t quÃ¡ Ä‘á»™ dÃ i cho phÃ©p (tá»‘i Ä‘a 100 kÃ½ tá»±).</c:when>
+                                <c:when test="${param.error eq 'invalid_phone'}">Sá»‘ Ä‘iá»‡n thoáº¡i khÃ´ng há»£p lá»‡. Äá»‹nh dáº¡ng: báº¯t Ä‘áº§u báº±ng 0, theo sau lÃ  3/5/7/8/9 vÃ  8 chá»¯ sá»‘.</c:when>
+                                <c:when test="${param.error eq 'phone_exists'}">Sá»‘ Ä‘iá»‡n thoáº¡i Ä‘Ã£ Ä‘Æ°á»£c sá»­ dá»¥ng bá»Ÿi má»™t tÃ i khoáº£n khÃ¡c.</c:when>
+                                <c:otherwise>ÄÃ£ cÃ³ lá»—i xáº£y ra. Vui lÃ²ng thá»­ láº¡i sau.</c:otherwise>
                             </c:choose>
                         </span>
                     </div>
@@ -163,7 +167,7 @@
                             <h2><c:out value="${profile.fullName}" /></h2>
                             <span class="profile-role-badge">${roleLabel}</span>
                             <span class="profile-status-dot ${profile.active ? '' : 'inactive'}">
-                                <span class="dot"></span>${profile.active ? 'Đang hoạt động' : 'Đã khoá'}
+                                <span class="dot"></span>${profile.active ? 'Äang hoáº¡t Ä‘á»™ng' : 'ÄÃ£ khoÃ¡'}
                             </span>
                         </div>
                     </div>
@@ -174,28 +178,28 @@
                                 <span class="value"><i class="fa-solid fa-envelope"></i><c:out value="${profile.email}" /></span>
                             </div>
                             <div class="profile-info-item">
-                                <label>Số điện thoại</label>
+                                <label>Sá»‘ Ä‘iá»‡n thoáº¡i</label>
                                 <c:choose>
                                     <c:when test="${not empty profile.phone}">
                                         <span class="value"><i class="fa-solid fa-phone"></i><c:out value="${profile.phone}" /></span>
                                     </c:when>
                                     <c:otherwise>
-                                        <span class="value muted"><i class="fa-solid fa-phone"></i>Chưa cập nhật</span>
+                                        <span class="value muted"><i class="fa-solid fa-phone"></i>ChÆ°a cáº­p nháº­t</span>
                                     </c:otherwise>
                                 </c:choose>
                             </div>
                             <div class="profile-info-item">
-                                <label>Vai trò</label>
+                                <label>Vai trÃ²</label>
                                 <span class="value"><i class="fa-solid fa-user-shield"></i>${roleLabel}</span>
                             </div>
                             <div class="profile-info-item">
-                                <label>Ngày tạo tài khoản</label>
+                                <label>NgÃ y táº¡o tÃ i khoáº£n</label>
                                 <span class="value"><i class="fa-solid fa-calendar-day"></i>
                                     <c:choose>
                                         <c:when test="${not empty profile.createdAt}">
                                             <fmt:formatDate value="${profile.createdAt}" pattern="dd/MM/yyyy" />
                                         </c:when>
-                                        <c:otherwise>—</c:otherwise>
+                                        <c:otherwise>â€”</c:otherwise>
                                     </c:choose>
                                 </span>
                             </div>
@@ -207,14 +211,14 @@
                                 <div class="profile-chip points">
                                     <div class="chip-icon"><i class="fa-solid fa-star"></i></div>
                                     <div class="chip-text">
-                                        <small>Điểm tích luỹ</small>
+                                        <small>Äiá»ƒm tÃ­ch luá»¹</small>
                                         <strong><fmt:formatNumber value="${profile.loyaltyPoints}" type="number" /></strong>
                                     </div>
                                 </div>
                                 <div class="profile-chip member">
                                     <div class="chip-icon"><i class="fa-solid fa-gem"></i></div>
                                     <div class="chip-text">
-                                        <small>Hạng thành viên</small>
+                                        <small>Háº¡ng thÃ nh viÃªn</small>
                                         <strong><c:out value="${empty profile.membershipLevel ? 'Standard' : profile.membershipLevel}" /></strong>
                                     </div>
                                 </div>
@@ -223,10 +227,10 @@
 
                         <div class="profile-actions" style="display: flex; gap: 12px; flex-wrap: wrap;">
                             <button type="button" class="profile-btn profile-btn-primary" onclick="profileShowEdit()">
-                                <i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa hồ sơ
+                                <i class="fa-solid fa-pen-to-square"></i> Chá»‰nh sá»­a há»“ sÆ¡
                             </button>
                             <button type="button" class="profile-btn profile-btn-ghost" onclick="openChangePasswordModal()" style="border: 1px solid var(--pf-border);">
-                                <i class="fa-solid fa-key" style="color: var(--pf-blue);"></i> Đổi mật khẩu
+                                <i class="fa-solid fa-key" style="color: var(--pf-blue);"></i> Äá»•i máº­t kháº©u
                             </button>
                         </div>
                     </div>
@@ -240,35 +244,35 @@
 
                             <%-- Account info --%>
                             <div class="profile-form-section">
-                                <h3 class="profile-section-title">Thông tin tài khoản</h3>
-                                <p class="profile-section-sub">Cập nhật họ tên và số điện thoại liên hệ của bạn.</p>
+                                <h3 class="profile-section-title">ThÃ´ng tin tÃ i khoáº£n</h3>
+                                <p class="profile-section-sub">Cáº­p nháº­t há» tÃªn vÃ  sá»‘ Ä‘iá»‡n thoáº¡i liÃªn há»‡ cá»§a báº¡n.</p>
                                 <div class="profile-form-grid">
                                     <div class="profile-field full">
-                                        <label>Họ và tên <span class="req">*</span></label>
+                                        <label>Há» vÃ  tÃªn <span class="req">*</span></label>
                                         <input type="text" name="fullName" id="pfFullName" maxlength="100"
                                                value="${fn:escapeXml(profile.fullName)}" required />
                                     </div>
                                     <div class="profile-field">
                                         <label>Email</label>
                                         <input type="email" value="${fn:escapeXml(profile.email)}" disabled />
-                                        <span class="hint">Email không thể thay đổi.</span>
+                                        <span class="hint">Email khÃ´ng thá»ƒ thay Ä‘á»•i.</span>
                                     </div>
                                     <div class="profile-field">
-                                        <label>Số điện thoại <span class="req">*</span></label>
+                                        <label>Sá»‘ Ä‘iá»‡n thoáº¡i <span class="req">*</span></label>
                                         <input type="text" name="phone" id="pfPhone" maxlength="10"
                                                value="${fn:escapeXml(profile.phone)}"
                                                placeholder="VD: 0901234567" required />
-                                        <span class="hint">Bắt đầu bằng 0, theo sau là 3/5/7/8/9 và 8 chữ số.</span>
+                                        <span class="hint">Báº¯t Ä‘áº§u báº±ng 0, theo sau lÃ  3/5/7/8/9 vÃ  8 chá»¯ sá»‘.</span>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="profile-actions">
                                 <button type="submit" class="profile-btn profile-btn-primary">
-                                    <i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi
+                                    <i class="fa-solid fa-floppy-disk"></i> LÆ°u thay Ä‘á»•i
                                 </button>
                                 <button type="button" class="profile-btn profile-btn-ghost" onclick="profileShowView()">
-                                    <i class="fa-solid fa-xmark"></i> Huỷ
+                                    <i class="fa-solid fa-xmark"></i> Huá»·
                                 </button>
                             </div>
                         </form>
@@ -297,12 +301,12 @@
     function profileValidate() {
         var name = document.getElementById('pfFullName').value.trim();
         if (name === '') {
-            alert('Vui lòng nhập họ và tên.');
+            alert('Vui lÃ²ng nháº­p há» vÃ  tÃªn.');
             return false;
         }
         var phone = document.getElementById('pfPhone').value.trim();
         if (!/^0[35789]\d{8}$/.test(phone)) {
-            alert('Số điện thoại không hợp lệ. Bắt đầu bằng 0, theo sau là 3/5/7/8/9 và 8 chữ số.');
+            alert('Sá»‘ Ä‘iá»‡n thoáº¡i khÃ´ng há»£p lá»‡. Báº¯t Ä‘áº§u báº±ng 0, theo sau lÃ  3/5/7/8/9 vÃ  8 chá»¯ sá»‘.');
             return false;
         }
         return true;

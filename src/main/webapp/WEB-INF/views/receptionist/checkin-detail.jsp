@@ -79,18 +79,104 @@
                 margin:30px 0;
                 border-top:1px solid #e5e7eb;
             }
-            /* ================= SECTION 1 LAYOUT ================= */
-            .grid-top{
+            /* ================= CARD HEADER ================= */
+            .card-detail-header{
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                gap:16px;
+                margin-bottom:22px;
+                padding-bottom:18px;
+                border-bottom:1px solid #e5e7eb;
+            }
+            .card-detail-title{
+                margin:0;
+                font-size:20px;
+                font-weight:700;
+                color:#1e293b;
+            }
+
+            /* ================= 2-COLUMN ROW LAYOUT ================= */
+            .detail-row{
+                display:grid;
+                gap:24px;
+                align-items:start;
+            }
+            .row-60-40{
+                grid-template-columns:3fr 2fr;
+            }
+            .row-50-50{
+                grid-template-columns:1fr 1fr;
+            }
+            .detail-col{
+                display:flex;
+                flex-direction:column;
+                min-width:0;
+            }
+            .info-list{
+                display:flex;
+                flex-direction:column;
+                gap:10px;
+            }
+            .info-item{
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                gap:12px;
+                background:#f8fbff;
+                border:1px solid #dbeafe;
+                border-radius:12px;
+                padding:12px 16px;
+                transition:.25s;
+            }
+            .info-item:hover{
+                border-color:#60a5fa;
+                box-shadow:0 6px 18px rgba(59,130,246,.08);
+            }
+            .info-item b{
+                color:#64748b;
+                font-size:12px;
+                font-weight:600;
+            }
+            .info-item span{
+                color:#1e293b;
+                font-weight:700;
+                font-size:14px;
+                text-align:right;
+            }
+
+            /* ================= TÓM TẮT ĐẶT PHÒNG ================= */
+            /* Đặt tên riêng (booking-summary-*) để tránh trùng với .summary-label/.summary-value
+               dùng cho khối tổng tiền walk-in trong receptionist.css (đó là layout hàng ngang
+               label-trái/value-phải, còn đây là layout xếp dọc theo từng cột). */
+            .booking-summary-box{
                 display:grid;
                 grid-template-columns:repeat(4,1fr);
                 gap:10px;
-                margin-bottom:10px;
+                background:#f8fafc;
+                border:1px solid #e2e8f0;
+                border-radius:12px;
+                padding:16px 18px;
             }
-
-            .grid-bottom{
-                display:grid;
-                grid-template-columns:repeat(2,1fr);
-                gap:10px;
+            .booking-summary-item{
+                display:flex;
+                flex-direction:column;
+                gap:6px;
+                text-align:left;
+            }
+            .booking-summary-label{
+                font-size:11px;
+                font-weight:700;
+                letter-spacing:.3px;
+                text-transform:uppercase;
+                color:#94a3b8;
+                text-align:left;
+            }
+            .booking-summary-value{
+                font-size:15px;
+                font-weight:700;
+                color:#1e293b;
+                text-align:left;
             }
 
             .field{
@@ -116,6 +202,11 @@
             }
 
             /* ================= TABLE PMS STYLE ================= */
+            .room-table-wrap{
+                border:1px solid #e2e8f0;
+                border-radius:12px;
+                overflow:hidden;
+            }
             .room-table{
                 width:100%;
                 border-collapse:collapse;
@@ -123,25 +214,27 @@
             }
 
             .room-table th{
-                background:#eff6ff;
-                color:#2563eb;
+                background:#f8fafc;
+                color:#475569;
                 font-weight:700;
-                font-size:13px;
+                font-size:12px;
+                text-transform:uppercase;
+                letter-spacing:.3px;
                 padding:14px;
-                border-bottom:2px solid #dbeafe;
-            }
-            .room-table th:not(:last-child),
-            .room-table td:not(:last-child){
-                border-right:2px solid #dbeafe;
+                border-bottom:1px solid #e2e8f0;
             }
 
             .room-table td{
                 padding:14px;
-                border-bottom:1px solid #edf2f7;
+                border-bottom:1px solid #f1f5f9;
             }
 
-            .room-table tr:hover{
-                background:#f8fabff;
+            .room-table tbody tr:last-child td{
+                border-bottom:none;
+            }
+
+            .room-table tbody tr:hover{
+                background:#f1f5f9;
                 transition:.2s;
             }
 
@@ -367,6 +460,7 @@
             input[type=text],
             textarea{
                 width:100%;
+                box-sizing:border-box;
                 border:1px solid #d6dce5;
                 border-radius:12px;
                 padding:12px 14px;
@@ -384,7 +478,8 @@
             }
             textarea{
                 resize:vertical;
-                min-height:90px;
+                min-height:80px;
+                max-height:220px;
                 line-height:1.6;
             }
             .extra-fee-box{
@@ -520,7 +615,7 @@
 
                     <li class="menu-item ${currentTab eq 'checkin' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin">
-                            <i class="fa-solid fa-key"></i> <span>Nhận phòng (Check-in)</span>
+                            <i class="fa-solid fa-key"></i> <span>Nhận phòng</span>
                         </a>
                     </li>
 
@@ -551,12 +646,6 @@
                             <i class="fa-solid fa-bell-concierge"></i> <span>Quản lý yêu cầu dịch vụ</span>
                         </a>
                     </li>
-                    <li class="menu-item ${currentTab eq 'add-booking-service' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/add-booking-service">
-                            <i class="fa-solid fa-circle-plus"></i>
-                            <span>Đặt dịch vụ cho khách</span>
-                        </a>
-                    </li>
                 </ul>
 
                 <div class="sidebar-footer">
@@ -584,7 +673,7 @@
 
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin"
                            style="text-decoration:none;color:var(--text-muted)">
-                            Nhận phòng (Check-in)
+                            Nhận phòng
                         </a>
 
                         <span class="separator">&gt;</span>
@@ -624,19 +713,79 @@
                             value="0"/>
                         <!-- ================= BOOKING INFO ================= -->
                         <div class="section-card">
-                            <h3>Chi tiết đặt phòng</h3>
 
-                            <div class="grid-top">
-                                <div class="field"><b>Mã:</b> #${booking.bookingId}</div>
-                                <div class="field"><b>Khách:</b> ${booking.customerName}</div>
-                                <div class="field"><b>SĐT:</b> ${booking.phone}</div>
-                                <div class="field"><b>Email:</b> ${booking.email}</div>
+                            <!-- ================= HEADER ================= -->
+                            <div class="card-detail-header">
+                                <h3 class="card-detail-title">Chi tiết đặt phòng #${booking.bookingId}</h3>
+                                <c:choose>
+                                    <c:when test="${booking.status eq 'Confirmed'}">
+                                        <span class="status-pill pill-confirmed">
+                                            <i class="fa-solid fa-circle"></i> Đã xác nhận
+                                        </span>
+                                    </c:when>
+                                    <c:when test="${booking.status eq 'CheckedIn'}">
+                                        <span class="status-pill pill-checkedin">
+                                            <i class="fa-solid fa-circle"></i> Đã nhận phòng
+                                        </span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="status-pill pill-cancelled">${booking.status}</span>
+                                    </c:otherwise>
+                                </c:choose>
                             </div>
 
-                            <div class="grid-bottom">
-                                <div class="field"><b>Ngày đến:</b> ${booking.checkInDate}</div>
-                                <div class="field"><b>Ngày đi:</b> ${booking.checkOutDate}</div>
-                                <div style="margin-top:20px;">
+                            <!-- ================= TÓM TẮT ĐẶT PHÒNG ================= -->
+                            <h3>Tóm tắt đặt phòng</h3>
+                            <div class="booking-summary-box">
+                                <div class="booking-summary-item">
+                                    <span class="booking-summary-label">Mã đặt phòng</span>
+                                    <span class="booking-summary-value">#${booking.bookingId}</span>
+                                </div>
+                                <div class="booking-summary-item">
+                                    <span class="booking-summary-label">Ngày đến</span>
+                                    <span class="booking-summary-value">${booking.checkInDate}</span>
+                                </div>
+                                <div class="booking-summary-item">
+                                    <span class="booking-summary-label">Ngày đi</span>
+                                    <span class="booking-summary-value">${booking.checkOutDate}</span>
+                                </div>
+                                <div class="booking-summary-item">
+                                    <span class="booking-summary-label">Số đêm</span>
+                                    <span class="booking-summary-value">${booking.nights} đêm</span>
+                                </div>
+                            </div>
+
+                            <div class="room-table-wrap" style="margin-top:14px;">
+                                <table class="room-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Số phòng</th>
+                                            <th>Loại phòng</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <c:forEach var="r" items="${rooms}">
+                                            <tr>
+                                                <td>${r.roomNumber}</td>
+                                                <td>${r.typeName}</td>
+                                            </tr>
+                                        </c:forEach>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- ================= XÁC MINH GIẤY TỜ ================= -->
+                            <div class="section-divider"></div>
+                            <h3>Xác minh giấy tờ</h3>
+                            <div class="detail-row row-60-40">
+                                <div class="detail-col">
+                                    <div class="info-list">
+                                        <div class="info-item"><b>Họ và tên</b><span>${booking.customerName}</span></div>
+                                        <div class="info-item"><b>Số điện thoại</b><span>${booking.phone}</span></div>
+                                        <div class="info-item"><b>Email</b><span>${booking.email}</span></div>
+                                    </div>
+                                </div>
+                                <div class="detail-col">
                                     <c:choose>
                                         <c:when test="${booking.status eq 'Confirmed'}">
                                             <label>
@@ -649,7 +798,6 @@
                                                         id="customerImage"
                                                         name="customerImage"
                                                         accept="image/*"
-                                                        required
                                                         onchange="
                                                                 previewCustomerImage(this);
                                                                 validateCheckIn();">
@@ -665,6 +813,7 @@
                                                     <img id="customerPreview" class="preview-image">
                                                 </label>
                                             </div>
+                                            <span id="customerImageError" class="error-message" style="display:none;">Khách phải có ảnh CCCD</span>
                                         </c:when>
                                         <c:when test="${booking.status eq 'CheckedIn'}">
                                             <label>
@@ -686,34 +835,13 @@
                                 </div>
                             </div>
 
-                            <!-- ================= ROOM ASSIGN ================= -->
-                            <div class="section-divider"></div>
-                            <h3>Danh sách phòng được xếp</h3>
-
-                            <table class="room-table">
-                                <thead>
-                                    <tr>
-                                        <th>Số phòng</th>
-                                        <th>Loại phòng</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <c:forEach var="r" items="${rooms}">
-                                        <tr>
-                                            <td>${r.roomNumber}</td>
-                                            <td>${r.typeName}</td>
-                                        </tr>
-                                    </c:forEach>
-                                </tbody>
-                            </table>
-
-                            <!-- ================= COMPANION ================= -->
+                            <!-- ================= BẠN ĐỒNG HÀNH ================= -->
                             <div class="section-divider"></div>
                             <div style="display:flex;justify-content:space-between;align-items:center;">
-                                <h3>Bạn đồng hành</h3>
+                                <h3>Bạn đồng hành <span id="companionError" class="error-message" style="display:none; margin-left:10px;"></span></h3>
                                 <c:if test="${booking.status eq 'Confirmed'}">
-                                    <button 
-                                        class="add-btn" 
+                                    <button
+                                        class="add-btn"
                                         type="button"
                                         onclick="addCompanion()">
                                         + Thêm bạn đồng hành
@@ -721,103 +849,112 @@
                                 </c:if>
                             </div>
 
-                            <table class="room-table">
-                                <thead>
-                                    <tr>
-                                        <th>Họ và tên</th>
-                                        <th>Ảnh CCCD / Giấy khai sinh</th>
-                                        <th>Độ tuổi</th>
-                                        <th>Thao tác</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="companionBody">
-                                    <c:choose>
-                                        <c:when test="${booking.status eq 'Confirmed'}">
-                                        </c:when>
-                                        <c:when test="${booking.status eq 'CheckedIn'}">
-                                            <c:forEach var="c" items="${companions}">
-                                                <tr>
-                                                    <td>
-                                                        ${c.fullName}
-                                                    </td>
-                                                    <td>
-                                                        <c:choose>
-                                                            <c:when test="${not empty c.imageUrl}">
-                                                                <img
-                                                                    src="${c.imageUrl}"
-                                                                    style="
-                                                                    width:120px;
-                                                                    height:90px;
-                                                                    object-fit:cover;
-                                                                    border-radius:10px;
-                                                                    "
-                                                                    />
-                                                            </c:when>
-                                                            <c:otherwise>
-                                                                Không có ảnh
-                                                            </c:otherwise>
-                                                        </c:choose>
-                                                    </td>
-                                                    <td>
-                                                        ${c.ageRange}
-                                                    </td>
-                                                    <td>
-                                                        <span style="
-                                                              color:#10b981;
-                                                              font-weight:600;
-                                                              ">
-                                                            Đã check in
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            </c:forEach>
-                                        </c:when>
-                                    </c:choose>
-                                </tbody>
-                            </table>
+                            <div class="room-table-wrap">
+                                <table class="room-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Họ và tên</th>
+                                            <th>Ảnh CCCD / Giấy khai sinh</th>
+                                            <th>Độ tuổi</th>
+                                            <th>Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="companionBody">
+                                        <c:choose>
+                                            <c:when test="${booking.status eq 'Confirmed'}">
+                                            </c:when>
+                                            <c:when test="${booking.status eq 'CheckedIn'}">
+                                                <c:forEach var="c" items="${companions}">
+                                                    <tr>
+                                                        <td>
+                                                            ${c.fullName}
+                                                        </td>
+                                                        <td>
+                                                            <c:choose>
+                                                                <c:when test="${not empty c.imageUrl}">
+                                                                    <img
+                                                                        src="${c.imageUrl}"
+                                                                        style="
+                                                                        width:120px;
+                                                                        height:90px;
+                                                                        object-fit:cover;
+                                                                        border-radius:10px;
+                                                                        "
+                                                                        />
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    Không có ảnh
+                                                                </c:otherwise>
+                                                            </c:choose>
+                                                        </td>
+                                                        <td>
+                                                            ${c.ageRange}
+                                                        </td>
+                                                        <td>
+                                                            <span style="
+                                                                  color:#10b981;
+                                                                  font-weight:600;
+                                                                  ">
+                                                                Đã nhận phòng
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                </c:forEach>
+                                            </c:when>
+                                        </c:choose>
+                                    </tbody>
+                                </table>
+                            </div>
                             <div id="extraFeeArea"
                                  style="margin-top:20px;">
                             </div>
-                            <!-- ================= REQUEST ================= -->
-                            <div class="section-divider"></div>
-                            <h3>Yêu cầu khách hàng</h3>
-                            <c:choose>
-                                <c:when test="${booking.status eq 'Confirmed'}">
-                                    <textarea
-                                        id="specialRequest"
-                                        name="specialRequest"
-                                        placeholder="Ví dụ: Phòng tầng cao...">
-                                    </textarea>
-                                </c:when>
-                                <c:when test="${booking.status eq 'CheckedIn'}">
-                                    <div class="field">
-                                        <b>Yêu cầu khách hàng</b>
-                                        <p>
-                                            ${checkIn.specialRequest}
-                                        </p>
-                                    </div>
-                                </c:when>
-                            </c:choose>
 
-                            <!-- ================= NOTES ================= -->
+                            <!-- ================= YÊU CẦU & GHI CHÚ (50/50) ================= -->
                             <div class="section-divider"></div>
-                            <h3>Ghi chú</h3>
-                            <c:choose>
-                                <c:when test="${booking.status eq 'Confirmed'}">
-                                    <textarea
-                                        id="notes"
-                                        name="notes">
-                                    </textarea>
-                                </c:when>
-                                <c:when test="${booking.status eq 'CheckedIn'}">
-                                    <div class="field">
-                                        <b>Ghi chú lễ tân</b>
-                                        <p>
-                                            ${checkIn.notes}
-                                        </p>
-                                    </div>
-                                </c:when>
-                            </c:choose>
+                            <div class="detail-row row-50-50">
+                                <div class="detail-col">
+                                    <h3>Yêu cầu khách hàng</h3>
+                                    <c:choose>
+                                        <c:when test="${booking.status eq 'Confirmed'}">
+                                            <textarea
+                                                id="specialRequest"
+                                                name="specialRequest"
+                                                placeholder="Ví dụ: Phòng tầng cao..."></textarea>
+                                        </c:when>
+                                        <c:when test="${booking.status eq 'CheckedIn'}">
+                                            <div class="field">
+                                                <p>
+                                                    <c:choose>
+                                                        <c:when test="${not empty checkIn.specialRequest}">${checkIn.specialRequest}</c:when>
+                                                        <c:otherwise><span style="color:#94a3b8;font-style:italic;">Không có yêu cầu</span></c:otherwise>
+                                                    </c:choose>
+                                                </p>
+                                            </div>
+                                        </c:when>
+                                    </c:choose>
+                                </div>
+                                <div class="detail-col">
+                                    <h3>Ghi chú nhân viên</h3>
+                                    <c:choose>
+                                        <c:when test="${booking.status eq 'Confirmed'}">
+                                            <textarea
+                                                id="notes"
+                                                name="notes"
+                                                placeholder="Ghi chú của nhân viên"></textarea>
+                                        </c:when>
+                                        <c:when test="${booking.status eq 'CheckedIn'}">
+                                            <div class="field">
+                                                <p>
+                                                    <c:choose>
+                                                        <c:when test="${not empty checkIn.notes}">${checkIn.notes}</c:when>
+                                                        <c:otherwise><span style="color:#94a3b8;font-style:italic;">Không có ghi chú</span></c:otherwise>
+                                                    </c:choose>
+                                                </p>
+                                            </div>
+                                        </c:when>
+                                    </c:choose>
+                                </div>
+                            </div>
 
                             <!-- ================= FOOTER ================= -->
                             <div class="footer-bar">
@@ -838,15 +975,14 @@
                                             <button
                                                 class="btn btn-disabled"
                                                 disabled>
-                                                ✓ Đã check in
+                                                ✓ Đã nhận phòng
                                             </button>
                                         </c:when>
                                         <c:otherwise>
                                             <button
                                                 id="checkinBtn"
                                                 type="submit"
-                                                class="btn-confirm"
-                                                disabled>
+                                                class="btn-confirm">
                                                 Xác nhận check in
                                             </button>
                                         </c:otherwise>
@@ -1013,7 +1149,7 @@
                 const btn = document.getElementById("checkinBtn");
 
                 btn.disabled = true;
-                btn.innerText = "Đã check in";
+                btn.innerText = "Đã nhận phòng";
                 btn.style.background = "#94a3b8";
                 btn.style.cursor = "not-allowed";
             }
@@ -1058,53 +1194,90 @@
                 reader.readAsDataURL(input.files[0]);
             }
 
+            let submitAttempted = false;
+
             function validateCheckIn() {
-                const btn = document.getElementById("checkinBtn");
-                if (!btn) {
-                    return;
-                }
+
                 let valid = true;
+
                 // CHECK CUSTOMER IMAGE
                 const customerImage =
                         document.getElementById("customerImage");
-                if (customerImage) {
-                    if (customerImage.files.length === 0) {
-                        valid = false;
-                    }
+                const customerImageError =
+                        document.getElementById("customerImageError");
+                let customerInvalid = false;
+
+                if (customerImage && customerImage.files.length === 0) {
+                    customerInvalid = true;
+                    valid = false;
                 }
+
+                if (customerImageError) {
+                    customerImageError.style.display =
+                            (submitAttempted && customerInvalid) ? "inline" : "none";
+                }
+
                 // CHECK COMPANIONS
-                const rows =
-                        document.querySelectorAll("#companionBody tr");
-                rows.forEach(row => {
-                    const name =
-                            row.querySelector(".companion-name");
-                    const image =
-                            row.querySelector(".companion-image");
-                    const age =
-                            row.querySelector(".age-select");
+                let missingName = false;
+                let missingImage = false;
+                let missingAge = false;
+
+                document.querySelectorAll("#companionBody tr").forEach(row => {
+                    const name = row.querySelector(".companion-name");
+                    const image = row.querySelector(".companion-image");
+                    const age = row.querySelector(".age-select");
+
                     if (!name || name.value.trim() === "") {
-                        valid = false;
+                        missingName = true;
                     }
                     if (!image || image.files.length === 0) {
-                        valid = false;
+                        missingImage = true;
                     }
                     if (!age || age.value === "") {
-                        valid = false;
+                        missingAge = true;
                     }
                 });
-                // UPDATE BUTTON
-                if (valid) {
-                    btn.disabled = false;
-                } else {
-                    btn.disabled = true;
+
+                const companionInvalid = missingName || missingImage || missingAge;
+                if (companionInvalid) {
+                    valid = false;
                 }
+
+                const companionError = document.getElementById("companionError");
+                if (companionError) {
+                    if (submitAttempted && companionInvalid) {
+                        const parts = [];
+                        if (missingName) {
+                            parts.push("Họ và tên");
+                        }
+                        if (missingImage) {
+                            parts.push("Ảnh CCCD / giấy khai sinh");
+                        }
+                        if (missingAge) {
+                            parts.push("Độ tuổi");
+                        }
+                        companionError.innerText = "Hãy điền đầy đủ " + parts.join(", ");
+                        companionError.style.display = "inline";
+                    } else {
+                        companionError.style.display = "none";
+                    }
+                }
+
+                return valid;
             }
 
-            document.addEventListener(
-                    "DOMContentLoaded",
-                    function () {
-                        validateCheckIn();
-                    });
+            document.addEventListener("DOMContentLoaded", function () {
+                const form = document.querySelector("form");
+                if (!form) {
+                    return;
+                }
+                form.addEventListener("submit", function (e) {
+                    submitAttempted = true;
+                    if (!validateCheckIn()) {
+                        e.preventDefault();
+                    }
+                });
+            });
         </script>
 
     </body>

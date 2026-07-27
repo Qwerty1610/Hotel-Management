@@ -1,12 +1,11 @@
 package com.mycompany.hotelmanagement.service;
 
 import com.mycompany.hotelmanagement.dal.RoomDAO;
-import com.mycompany.hotelmanagement.entity.Room;
 import com.mycompany.hotelmanagement.entity.RoomInfo;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,10 +39,6 @@ public class RoomService {
             "Available", "Cleaning", "Maintenance", "OutOfService", "Refilling"
     );
 
-    private static final Set<String> MANAGER_ASSIGNABLE_STATUSES = Set.of(
-            "Available", "Cleaning", "Maintenance", "OutOfService"
-    );
-
     public List<RoomInfo> getAllRooms() {
         return getRoomsByDate(LocalDate.now());
     }
@@ -56,6 +51,26 @@ public class RoomService {
             toDate = fromDate.plusDays(1);
         }
         return roomRepository.getRoomsByDateRange(java.sql.Date.valueOf(fromDate), java.sql.Date.valueOf(toDate));
+    }
+
+    public Map<Integer, Integer> getAvailableRoomCountsPerType(LocalDate checkIn, LocalDate checkOut) {
+        if (checkIn == null || checkOut == null || !checkOut.isAfter(checkIn)) {
+            return Collections.emptyMap();
+        }
+        List<RoomInfo> rooms = getRoomsByDateRange(checkIn, checkOut);
+        Map<Integer, Integer> counts = new HashMap<>();
+        for (RoomInfo r : rooms) {
+            boolean isOpAvailable = "Available".equalsIgnoreCase(r.getOperationalStatus())
+                    || "Cleaning".equalsIgnoreCase(r.getOperationalStatus())
+                    || "Refilling".equalsIgnoreCase(r.getOperationalStatus());
+            boolean isDispAvailable = "Available".equalsIgnoreCase(r.getDisplayStatus())
+                    || "Cleaning".equalsIgnoreCase(r.getDisplayStatus())
+                    || "Refilling".equalsIgnoreCase(r.getDisplayStatus());
+            if (isOpAvailable && isDispAvailable) {
+                counts.put(r.getTypeId(), counts.getOrDefault(r.getTypeId(), 0) + 1);
+            }
+        }
+        return counts;
     }
 
     public List<RoomInfo> getRoomsByDate(LocalDate date) {
@@ -83,10 +98,6 @@ public class RoomService {
         return roomRepository.deleteRoom(roomId);
     }
 
-    public boolean deleteRoom(int roomId) {
-        return "success".equals(roomRepository.deleteRoom(roomId));
-    }
-
     public String updateRoomStatus(int roomId, String status) {
         if (status == null || !VALID_OPERATIONAL_STATUSES.contains(status.trim())) {
             return "invalidStatus";
@@ -100,8 +111,8 @@ public class RoomService {
             }
         }
 
-        roomRepository.updateRoomStatus(roomId, status);
-        return "success";
+        boolean ok = roomRepository.updateRoomStatus(roomId, status);
+        return ok ? "success" : "error";
     }
 
     public String saveRoom(RoomInfo room) {

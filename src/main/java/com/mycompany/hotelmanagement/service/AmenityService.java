@@ -16,10 +16,6 @@ public class AmenityService {
         return amenityDAO.getAllAmenities(false);
     }
 
-    public List<AmenityInfo> getActiveAmenities() {
-        return amenityDAO.getAllAmenities(true);
-    }
-
     public void addAmenity(AmenityInfo amenity) {
         amenityDAO.insertAmenity(amenity);
     }

@@ -43,6 +43,10 @@ public class RoomInfo implements Serializable {
     private boolean currentlyOccupied;
     private boolean hasActiveOrFutureBooking;
 
+    // Gộp từ entity Room cũ (danh sách phòng hiển thị nhanh)
+    private String imageUrl;
+    private boolean hasGuest;
+
     public RoomInfo() {
     }
 
@@ -163,5 +167,21 @@ public class RoomInfo implements Serializable {
 
     public void setArea(String area) {
         this.area = area;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public boolean isHasGuest() {
+        return hasGuest;
+    }
+
+    public void setHasGuest(boolean hasGuest) {
+        this.hasGuest = hasGuest;
     }
 }

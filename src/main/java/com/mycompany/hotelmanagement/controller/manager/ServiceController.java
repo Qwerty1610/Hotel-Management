@@ -53,8 +53,12 @@ public class ServiceController extends HttpServlet {
         }
 
         if ("delete".equalsIgnoreCase(action) && serviceId != -1) {
-            hotelServiceService.deleteService(serviceId);
-            response.sendRedirect(request.getContextPath() + "/manager/services?success=deleted");
+            boolean success = hotelServiceService.deleteService(serviceId);
+            if (success) {
+                response.sendRedirect(request.getContextPath() + "/manager/services?success=deleted");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/manager/services?error=hasUsage");
+            }
             return;
         } else if ("toggle".equalsIgnoreCase(action) && serviceId != -1) {
             String statusParam = request.getParameter("status");
@@ -143,9 +147,15 @@ public class ServiceController extends HttpServlet {
                 }
             }
 
-            hotelServiceService.saveService(service);
+            boolean saved = hotelServiceService.saveService(service);
+            if (saved) {
+                response.sendRedirect(request.getContextPath() + "/manager/services?success=saved");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/manager/services?error=saveError");
+            }
+            return;
         }
 
-        response.sendRedirect(request.getContextPath() + "/manager/services?success=saved");
+        response.sendRedirect(request.getContextPath() + "/manager/services");
     }
 }

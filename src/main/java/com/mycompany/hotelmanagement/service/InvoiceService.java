@@ -14,9 +14,12 @@ import java.util.List;
  * thêm 2 hàm:
  * getInvoices: lấy ra danh sách hóa đơn theo bộ lọc
  * countInvoices: đếm tổng hóa đơn khớp bộ lọc
- * 
- * Date: 02/6/2026
- * version 1.0
+ *
+ * getUnpaidTotal/getRefundingTotal: đổi nguồn tính sang sumNetUnpaidTotal/sumPendingRefundTotal
+ * để 2 thẻ KPI phản ánh đúng số tiền thay vì tổng hóa đơn theo trạng thái.
+ *
+ * Date: 25/7/2026
+ * version 1.1
  * @author Pham Quoc Quy
  */
 public class InvoiceService {
@@ -53,14 +56,17 @@ public class InvoiceService {
         return invoiceDAO.getPendingRefunds(invoiceId);
     }
 
-    /** KPI: tổng tiền các hóa đơn chưa thanh toán. */
+    /**
+     * KPI: tổng tiền khách còn phải trả (đã trừ tiền cọc và phần đã hoàn),
+     * tính cả hóa đơn đang chờ hoàn vì đó vẫn là công nợ.
+     */
     public double getUnpaidTotal() {
-        return invoiceDAO.sumTotalByStatus("Pending");
+        return invoiceDAO.sumNetUnpaidTotal();
     }
 
-    /** KPI: tổng tiền các hóa đơn đang chờ hoàn (Refunding). */
+    /** KPI: tổng số tiền của các khoản đang chờ hoàn. */
     public double getRefundingTotal() {
-        return invoiceDAO.sumTotalByStatus("Refunding");
+        return invoiceDAO.sumPendingRefundTotal();
     }
 
     public boolean addSurcharge(int invoiceId, String description, int quantity, double unitPrice) {

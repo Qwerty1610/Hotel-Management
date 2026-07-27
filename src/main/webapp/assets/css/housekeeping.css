@@ -17,6 +17,13 @@
     padding: 22px 24px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
     border: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.hk-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+    border-color: #cbd5e1;
 }
 .hk-card h3 {
     font-size: 13px;
@@ -97,6 +104,9 @@
 .btn-filter[data-status="Maintenance"]::before {
     background: #ef4444;
 }  /* Đỏ */
+.btn-filter[data-status="HasGuest"]::before {
+    background: #2563eb;
+}  /* Xanh dương */
 
 .btn-filter:hover {
     background: #f8fafc;
@@ -132,6 +142,12 @@
     background-color: #fef2f2;
 }
 
+.btn-filter[data-status="HasGuest"]:hover {
+    border-color: #2563eb;
+    color: #2563eb;
+    background-color: #eff6ff;
+}
+
 .btn-filter.active:hover {
     color: #ffffff !important;
 }
@@ -149,6 +165,9 @@
 }
 .btn-filter.active[data-status="Maintenance"]:hover {
     background: #ef4444;
+}
+.btn-filter.active[data-status="HasGuest"]:hover {
+    background: #2563eb;
 }
 
 .btn-filter.active[data-status="ALL"] {
@@ -179,6 +198,11 @@
     background: #ef4444;
     color: #ffffff;
     border-color: #ef4444;
+}
+.btn-filter.active[data-status="HasGuest"] {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
 }
 .btn-filter.active::before {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
@@ -294,6 +318,16 @@
     height: 8px;
     border-radius: 50%;
     background: #ef4444;
+}
+
+.room-item .guest-dot {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2563eb;
 }
 
 .room-item.status-maintenance .maintenance-dot {
@@ -712,11 +746,15 @@
     resize:none;
     font-size:14px;
 }
+.description-box {
+    margin-left:12px;
+}
 .description-box textarea {
     height:42px;
 }
 .note-box {
     margin-top:20px;
+    margin-bottom:20px;
 }
 .remove-btn {
     height:40px;
@@ -1137,6 +1175,18 @@
 .status-completed {
     background: #dcfce7;
     color: #15803d;
+}
+
+/* Resolved - Đã xử lý */
+.status-resolved {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+/* Unresolvable - Không thể xử lý */
+.status-unresolvable {
+    background: #e5e7eb;
+    color: #374151;
 }
 
 /* Cancelled - Hủy */

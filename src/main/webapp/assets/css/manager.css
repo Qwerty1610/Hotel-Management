@@ -869,6 +869,10 @@ input:checked + .slider:before {
     background-color: #fef2f2;
     color: #dc2626;
 }
+.status-unresolvable {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
 .status-confirmed {
     background-color: #eff6ff;
     color: #1d4ed8;

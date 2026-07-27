@@ -75,8 +75,12 @@ public class PromotionController extends HttpServlet {
             } else {
                 newStatus = "Active";
             }
-            promotionService.togglePromotionStatus(promotionId, newStatus);
-            response.sendRedirect(request.getContextPath() + "/manager/promotions?success=toggled");
+            boolean success = promotionService.togglePromotionStatus(promotionId, newStatus);
+            if (success) {
+                response.sendRedirect(request.getContextPath() + "/manager/promotions?success=toggled");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/manager/promotions?error=saveError");
+            }
             return;
         }
 
@@ -216,7 +220,16 @@ public class PromotionController extends HttpServlet {
             }
         }
 
-        // 8. Duplicate code check
+        // 8. Usage limit check on edit: usageLimit must not be less than usedCount
+        if (promotionId > 0 && usageLimit != null) {
+            Promotion existing = promotionService.getPromotionById(promotionId);
+            if (existing != null && usageLimit < existing.getUsedCount()) {
+                response.sendRedirect(request.getContextPath() + "/manager/promotions?error=limitLessThanUsed");
+                return;
+            }
+        }
+
+        // 9. Duplicate code check
         if (promotionService.isCodeDuplicate(code, promotionId)) {
             response.sendRedirect(request.getContextPath() + "/manager/promotions?error=duplicateCode");
             return;
@@ -237,8 +250,12 @@ public class PromotionController extends HttpServlet {
         promotion.setMaxDiscountAmount(maxDiscountAmount);
         promotion.setUsageLimit(usageLimit);
 
-        promotionService.savePromotion(promotion);
-        response.sendRedirect(request.getContextPath() + "/manager/promotions?success=saved");
+        boolean saved = promotionService.savePromotion(promotion);
+        if (saved) {
+            response.sendRedirect(request.getContextPath() + "/manager/promotions?success=saved");
+        } else {
+            response.sendRedirect(request.getContextPath() + "/manager/promotions?error=saveError");
+        }
     }
 
     // ── Utility ───────────────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ include file="../../includes/taglibs.jsp" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ include file="../../includes/header.jsp" %>
@@ -127,12 +127,15 @@
 
     <%-- Header Navigation --%>
     <nav class="navbar-rooms">
-        <div class="logo">${hotelName}</div>
+<a href="${pageContext.request.contextPath}/" class="logo">${not empty hotelName ? hotelName : 'HotelOps'}</a>
         <ul class="nav-links">
-            <li><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
-            <li><a href="${pageContext.request.contextPath}/rooms">Phòng</a></li>
-            <li><a href="${pageContext.request.contextPath}/customer/bookings">Đặt phòng của tôi</a></li>
-            <li><a href="${pageContext.request.contextPath}/customer/payments">Thanh toán</a></li>
+            <li><a href="${pageContext.request.contextPath}/">Trang chá»§</a></li>
+            <li><a href="${pageContext.request.contextPath}/rooms">PhÃ²ng</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/bookings">Äáº·t phÃ²ng cá»§a tÃ´i</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/feedbacks" class="active">ÄÃ¡nh giÃ¡ lÆ°u trÃº</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/services">Dá»‹ch vá»¥</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/maintenance">Sá»± cá»‘</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/payments">Thanh toÃ¡n</a></li>
         </ul>
 
         <div class="nav-actions">
@@ -146,33 +149,34 @@
                         </button>
                         <div class="dropdown-menu">
                             <a href="${pageContext.request.contextPath}/customer/profile" class="dropdown-item">
-                                        <i class="fa-solid fa-id-card"></i> Hồ sơ
+                                        <i class="fa-solid fa-id-card"></i> Há»“ sÆ¡
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/bookings" class="dropdown-item">
-                                        <i class="fa-solid fa-calendar-check"></i> Đặt phòng của tôi
+                                        <i class="fa-solid fa-calendar-check"></i> Äáº·t phÃ²ng cá»§a tÃ´i
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/booking/change" class="dropdown-item">
-                                        <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
+                                        <i class="fa-solid fa-pen-to-square"></i> Thay Ä‘á»•i Ä‘áº·t phÃ²ng
+                                    </a>
                                     <a href="${pageContext.request.contextPath}/customer/feedbacks" class="dropdown-item">
-                                        <i class="fa-solid fa-star"></i> Đánh giá lưu trú
+                                        <i class="fa-solid fa-star"></i> ÄÃ¡nh giÃ¡ lÆ°u trÃº
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/services" class="dropdown-item">
-                                        <i class="fa-solid fa-bell-concierge"></i> Yêu cầu dịch vụ
+                                        <i class="fa-solid fa-bell-concierge"></i> YÃªu cáº§u dá»‹ch vá»¥
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/maintenance" class="dropdown-item">
-                                        <i class="fa-solid fa-screwdriver-wrench"></i> Yêu cầu sửa chữa
+                                        <i class="fa-solid fa-screwdriver-wrench"></i> YÃªu cáº§u sá»­a chá»¯a
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/payments" class="dropdown-item">
-                                        <i class="fa-solid fa-credit-card"></i> Thanh toán & Lịch sử
+                                        <i class="fa-solid fa-credit-card"></i> Thanh toÃ¡n & Lá»‹ch sá»­
                                     </a>
                             <a href="${pageContext.request.contextPath}/logout" class="dropdown-item logout-item">
-                                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                                <i class="fa-solid fa-right-from-bracket"></i> ÄÄƒng xuáº¥t
                             </a>
                         </div>
                     </div>
                 </c:when>
                 <c:otherwise>
-                    <a href="${pageContext.request.contextPath}/home/login" class="btn-login">Đăng nhập</a>
+                    <a href="${pageContext.request.contextPath}/home/login" class="btn-login">ÄÄƒng nháº­p</a>
                 </c:otherwise>
             </c:choose>
         </div>
@@ -180,8 +184,8 @@
 
     <div class="booking-container">
         <div class="booking-header">
-            <h1>Đánh Giá Lưu Trú</h1>
-            <p>Chia sẻ trải nghiệm của bạn sau những kỳ lưu trú đã hoàn thành.</p>
+            <h1>ÄÃ¡nh GiÃ¡ LÆ°u TrÃº</h1>
+            <p>Chia sáº» tráº£i nghiá»‡m cá»§a báº¡n sau nhá»¯ng ká»³ lÆ°u trÃº Ä‘Ã£ hoÃ n thÃ nh.</p>
         </div>
 
         <%-- Alerts --%>
@@ -189,7 +193,7 @@
             <div class="success-banner" id="serverSuccessMessage">
                 <i class="fa-solid fa-circle-check" style="font-size: 20px;"></i>
                 <div>
-                    <strong>Thành công:</strong> ${successMessage}
+                    <strong>ThÃ nh cÃ´ng:</strong> ${successMessage}
                 </div>
             </div>
         </c:if>
@@ -197,7 +201,7 @@
             <div class="error-banner" id="serverValidationError">
                 <i class="fa-solid fa-circle-exclamation" style="font-size: 20px;"></i>
                 <div>
-                    <strong>Lỗi:</strong> ${errorMessage}
+                    <strong>Lá»—i:</strong> ${errorMessage}
                 </div>
             </div>
         </c:if>
@@ -207,18 +211,18 @@
             <form action="${pageContext.request.contextPath}/customer/feedbacks" method="GET" id="filterForm">
                 <div class="filter-bar">
                     <div class="search-input-group">
-                        <input type="text" name="keyword" placeholder="Tìm theo Mã đơn, Số phòng, Loại phòng..." value="${fn:escapeXml(keyword)}" />
+                        <input type="text" name="keyword" placeholder="TÃ¬m theo MÃ£ Ä‘Æ¡n, Sá»‘ phÃ²ng, Loáº¡i phÃ²ng..." value="${fn:escapeXml(keyword)}" />
                         <input type="hidden" name="filter" value="${fn:escapeXml(filter)}" />
                         <button type="submit">
-                            <i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm
+                            <i class="fa-solid fa-magnifying-glass"></i> TÃ¬m kiáº¿m
                         </button>
                     </div>
 
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; align-items: center;">
-                        <span style="font-weight: 600; color: #475569; font-size: 14px;">Trạng thái:</span>
-                        <a href="?filter=All&keyword=${fn:escapeXml(keyword)}" class="filter-btn ${filter eq 'All' || empty filter ? 'active' : ''}">Tất cả</a>
-                        <a href="?filter=NotReviewed&keyword=${fn:escapeXml(keyword)}" class="filter-btn ${filter eq 'NotReviewed' ? 'active' : ''}">Chưa đánh giá</a>
-                        <a href="?filter=Reviewed&keyword=${fn:escapeXml(keyword)}" class="filter-btn ${filter eq 'Reviewed' ? 'active' : ''}">Đã đánh giá</a>
+                        <span style="font-weight: 600; color: #475569; font-size: 14px;">Tráº¡ng thÃ¡i:</span>
+                        <a href="?filter=All&keyword=${fn:escapeXml(keyword)}" class="filter-btn ${filter eq 'All' || empty filter ? 'active' : ''}">Táº¥t cáº£</a>
+                        <a href="?filter=NotReviewed&keyword=${fn:escapeXml(keyword)}" class="filter-btn ${filter eq 'NotReviewed' ? 'active' : ''}">ChÆ°a Ä‘Ã¡nh giÃ¡</a>
+                        <a href="?filter=Reviewed&keyword=${fn:escapeXml(keyword)}" class="filter-btn ${filter eq 'Reviewed' ? 'active' : ''}">ÄÃ£ Ä‘Ã¡nh giÃ¡</a>
                     </div>
                 </div>
             </form>
@@ -229,13 +233,13 @@
             <table class="booking-list-table">
                 <thead>
                     <tr>
-                        <th>Mã đơn</th>
-                        <th>Số phòng</th>
-                        <th>Loại phòng</th>
-                        <th>Thời gian nghỉ</th>
-                        <th>Thời điểm trả phòng</th>
-                        <th>Trạng thái</th>
-                        <th>Hành động / Đánh giá</th>
+                        <th>MÃ£ Ä‘Æ¡n</th>
+                        <th>Sá»‘ phÃ²ng</th>
+                        <th>Loáº¡i phÃ²ng</th>
+                        <th>Thá»i gian nghá»‰</th>
+                        <th>Thá»i Ä‘iá»ƒm tráº£ phÃ²ng</th>
+                        <th>Tráº¡ng thÃ¡i</th>
+                        <th>HÃ nh Ä‘á»™ng / ÄÃ¡nh giÃ¡</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -244,7 +248,7 @@
                             <c:forEach var="fb" items="${feedbacks}">
                                 <tr>
                                     <td style="font-weight: 700;">#${fb.bookingId}</td>
-                                    <td style="font-weight: 600;">Phòng ${fb.roomNumber}</td>
+                                    <td style="font-weight: 600;">PhÃ²ng ${fb.roomNumber}</td>
                                     <td>${fb.roomTypeName}</td>
                                     <td>
                                         <div style="color: var(--primary-indigo); font-weight: 500;">
@@ -259,10 +263,10 @@
                                     <td>
                                         <c:choose>
                                             <c:when test="${fb.reviewed}">
-                                                <span class="badge badge-confirmed">Đã đánh giá</span>
+                                                <span class="badge badge-confirmed">ÄÃ£ Ä‘Ã¡nh giÃ¡</span>
                                             </c:when>
                                             <c:otherwise>
-                                                <span class="badge badge-pending">Chưa đánh giá</span>
+                                                <span class="badge badge-pending">ChÆ°a Ä‘Ã¡nh giÃ¡</span>
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
@@ -283,13 +287,13 @@
                                                     </div>
                                                 </c:if>
                                                 <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">
-                                                    Gửi lúc: <fmt:formatDate value="${fb.createdAt}" pattern="dd/MM/yyyy HH:mm" />
+                                                    Gá»­i lÃºc: <fmt:formatDate value="${fb.createdAt}" pattern="dd/MM/yyyy HH:mm" />
                                                 </div>
                                             </c:when>
                                             <c:otherwise>
                                                 <button type="button" class="btn-review" 
                                                         onclick="openFeedbackModal('${fb.bookingId}', '${fb.roomId}', '${fb.roomNumber}', '${fb.roomTypeName}')">
-                                                    <i class="fa-solid fa-star"></i> Đánh giá
+                                                    <i class="fa-solid fa-star"></i> ÄÃ¡nh giÃ¡
                                                 </button>
                                             </c:otherwise>
                                         </c:choose>
@@ -301,7 +305,7 @@
                             <tr>
                                 <td colspan="7" style="text-align: center; padding: 40px; color: #64748b;">
                                     <i class="fa-solid fa-circle-info" style="font-size: 28px; color: #94a3b8; margin-bottom: 10px;"></i><br/>
-                                    Bạn chưa có kỳ lưu trú nào đã hoàn thành để đánh giá.
+                                    Báº¡n chÆ°a cÃ³ ká»³ lÆ°u trÃº nÃ o Ä‘Ã£ hoÃ n thÃ nh Ä‘á»ƒ Ä‘Ã¡nh giÃ¡.
                                 </td>
                             </tr>
                         </c:otherwise>
@@ -315,7 +319,7 @@
     <div id="feedbackModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Đánh Giá Lưu Trú</h3>
+                <h3>ÄÃ¡nh GiÃ¡ LÆ°u TrÃº</h3>
                 <button type="button" class="close-btn" onclick="closeFeedbackModal()">&times;</button>
             </div>
             <form action="${pageContext.request.contextPath}/customer/feedbacks" method="POST" onsubmit="return validateForm()">
@@ -324,12 +328,12 @@
                     <input type="hidden" name="roomId" id="modalRoomId" />
                     
                     <div style="margin-bottom: 15px; font-size: 14.5px; color: #475569;">
-                        <div>Đơn đặt phòng: <strong id="modalBookingText"></strong></div>
-                        <div>Phòng: <strong id="modalRoomText"></strong></div>
+                        <div>ÄÆ¡n Ä‘áº·t phÃ²ng: <strong id="modalBookingText"></strong></div>
+                        <div>PhÃ²ng: <strong id="modalRoomText"></strong></div>
                     </div>
 
                     <div style="margin-bottom: 10px;">
-                        <label style="font-weight: 600; display: block; margin-bottom: 5px; color: #334155;">Đánh giá của bạn:</label>
+                        <label style="font-weight: 600; display: block; margin-bottom: 5px; color: #334155;">ÄÃ¡nh giÃ¡ cá»§a báº¡n:</label>
                         <div class="rating-stars" style="display: flex; gap: 8px; font-size: 30px; margin: 10px 0;">
                             <i class="fa-regular fa-star star-btn" data-value="1" style="cursor: pointer; color: #fbbf24;"></i>
                             <i class="fa-regular fa-star star-btn" data-value="2" style="cursor: pointer; color: #fbbf24;"></i>
@@ -337,18 +341,26 @@
                             <i class="fa-regular fa-star star-btn" data-value="4" style="cursor: pointer; color: #fbbf24;"></i>
                             <i class="fa-regular fa-star star-btn" data-value="5" style="cursor: pointer; color: #fbbf24;"></i>
                         </div>
-                        <input type="hidden" name="rating" id="ratingInput" required />
-                        <div id="ratingText" style="font-weight: 600; color: #64748b; font-size: 14px;">Chọn số sao để đánh giá</div>
+                        <input type="hidden" name="rating" id="ratingInput" />
+                        <div id="ratingText" style="font-weight: 600; color: #64748b; font-size: 14px;">Chá»n sá»‘ sao Ä‘á»ƒ Ä‘Ã¡nh giÃ¡</div>
+                        <div id="ratingError" style="color: #ef4444; font-size: 12.5px; font-weight: 500; display: none; margin-top: 4px;">
+                            <i class="fa-solid fa-circle-exclamation"></i> Vui lÃ²ng chá»n sá»‘ sao Ä‘á»ƒ Ä‘Ã¡nh giÃ¡.
+                        </div>
                     </div>
 
                     <div style="margin-top: 15px;">
-                        <label style="font-weight: 600; display: block; margin-bottom: 8px; color: #334155;">Nhận xét của bạn (không bắt buộc):</label>
+                        <label style="font-weight: 600; display: block; margin-bottom: 8px; color: #334155;">Nháº­n xÃ©t cá»§a báº¡n (khÃ´ng báº¯t buá»™c):</label>
                         <textarea name="comment" id="commentText" class="form-control" rows="4" 
-                                  maxlength="1000" placeholder="Chia sẻ thêm chi tiết về kỳ nghỉ của bạn tại phòng này..." 
+                                  placeholder="Chia sáº» thÃªm chi tiáº¿t vá» ká»³ nghá»‰ cá»§a báº¡n táº¡i phÃ²ng nÃ y..." 
                                   style="width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; resize: none; box-sizing: border-box;"
                                   oninput="updateCharCount()"></textarea>
-                        <div style="text-align: right; font-size: 12px; color: #94a3b8; margin-top: 4px;">
-                            <span id="charCount">0</span> / 1000 ký tự
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                            <div id="commentError" style="color: #ef4444; font-size: 12.5px; font-weight: 500; display: none;">
+                                <i class="fa-solid fa-circle-exclamation"></i> Ná»™i dung Ä‘Ã¡nh giÃ¡ khÃ´ng Ä‘Æ°á»£c vÆ°á»£t quÃ¡ 1000 kÃ½ tá»±.
+                            </div>
+                            <div style="font-size: 12px; color: #94a3b8; margin-left: auto;">
+                                <span id="charCount">0</span> / 1000 kÃ½ tá»±
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -357,13 +369,13 @@
                     <div style="margin: 12px 20px 0 20px; padding: 10px 14px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; display: flex; align-items: flex-start; gap: 8px;">
                         <i class="fa-solid fa-triangle-exclamation" style="color: #f97316; font-size: 15px; margin-top: 2px; flex-shrink: 0;"></i>
                         <span style="font-size: 13px; color: #9a3412; line-height: 1.5;">
-                            <strong>Lưu ý:</strong> Sau khi gửi đánh giá, bạn <strong>sẽ không thể chỉnh sửa hoặc xóa</strong> đánh giá này. Vui lòng kiểm tra kỹ trước khi xác nhận.
+                            <strong>LÆ°u Ã½:</strong> Sau khi gá»­i Ä‘Ã¡nh giÃ¡, báº¡n <strong>sáº½ khÃ´ng thá»ƒ chá»‰nh sá»­a hoáº·c xÃ³a</strong> Ä‘Ã¡nh giÃ¡ nÃ y. Vui lÃ²ng kiá»ƒm tra ká»¹ trÆ°á»›c khi xÃ¡c nháº­n.
                         </span>
                     </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn-secondary" style="margin-top: 0; padding: 10px 20px;" onclick="closeFeedbackModal()">Hủy</button>
-                    <button type="submit" class="btn-primary" style="margin-top: 0; width: auto; padding: 10px 20px;">Gửi đánh giá</button>
+                    <button type="button" class="btn-secondary" style="margin-top: 0; padding: 10px 20px;" onclick="closeFeedbackModal()">Há»§y</button>
+                    <button type="submit" class="btn-primary" style="margin-top: 0; width: auto; padding: 10px 20px;">Gá»­i Ä‘Ã¡nh giÃ¡</button>
                 </div>
             </form>
         </div>
@@ -374,27 +386,27 @@
         <div class="footer-white-grid">
             <div class="footer-white-about">
                 <h3>HotelOps Pro</h3>
-                <p>Hệ thống quản lý và nghỉ dưỡng đẳng cấp quốc tế, đem lại trải nghiệm sang trọng vượt thời gian.</p>
+                <p>Há»‡ thá»‘ng quáº£n lÃ½ vÃ  nghá»‰ dÆ°á»¡ng Ä‘áº³ng cáº¥p quá»‘c táº¿, Ä‘em láº¡i tráº£i nghiá»‡m sang trá»ng vÆ°á»£t thá»i gian.</p>
             </div>
             <div class="footer-white-links">
-                <h4>Liên kết nhanh</h4>
+                <h4>LiÃªn káº¿t nhanh</h4>
                 <ul>
-                    <li><a href="#">Trang chủ</a></li>
-                    <li><a href="#">Phòng & Giá</a></li>
-                    <li><a href="#">Dịch vụ</a></li>
+                    <li><a href="#">Trang chá»§</a></li>
+                    <li><a href="#">PhÃ²ng & GiÃ¡</a></li>
+                    <li><a href="#">Dá»‹ch vá»¥</a></li>
                 </ul>
             </div>
             <div class="footer-white-links">
-                <h4>Chính sách</h4>
+                <h4>ChÃ­nh sÃ¡ch</h4>
                 <ul>
-                    <li><a href="#">Chính sách bảo mật</a></li>
-                    <li><a href="#">Điều khoản sử dụng</a></li>
-                    <li><a href="#">Chính sách hoàn tiền</a></li>
+                    <li><a href="#">ChÃ­nh sÃ¡ch báº£o máº­t</a></li>
+                    <li><a href="#">Äiá»u khoáº£n sá»­ dá»¥ng</a></li>
+                    <li><a href="#">ChÃ­nh sÃ¡ch hoÃ n tiá»n</a></li>
                 </ul>
             </div>
             <div class="footer-white-contact">
-                <h4>Thông tin liên hệ</h4>
-                <p><i class="fa-solid fa-location-dot"></i> 123 Đường Lê Lợi, Quận 1, TP. Hồ Chí Minh</p>
+                <h4>ThÃ´ng tin liÃªn há»‡</h4>
+                <p><i class="fa-solid fa-location-dot"></i> 123 ÄÆ°á»ng LÃª Lá»£i, Quáº­n 1, TP. Há»“ ChÃ­ Minh</p>
                 <p><i class="fa-solid fa-envelope"></i> contact@hotelopspro.com</p>
                 <span class="phone-number-white"><i class="fa-solid fa-phone"></i> 1900 6789</span>
             </div>
@@ -420,15 +432,28 @@
             document.getElementById('modalBookingId').value = bookingId;
             document.getElementById('modalRoomId').value = roomId;
             document.getElementById('modalBookingText').textContent = '#' + bookingId;
-            document.getElementById('modalRoomText').textContent = 'Phòng ' + roomNumber + ' (' + roomTypeName + ')';
+            document.getElementById('modalRoomText').textContent = 'PhÃ²ng ' + roomNumber + ' (' + roomTypeName + ')';
             
             // Reset modal values
             document.getElementById('ratingInput').value = '';
             document.getElementById('commentText').value = '';
-            document.getElementById('charCount').textContent = '0';
-            document.getElementById('ratingText').textContent = 'Chọn số sao để đánh giá';
+            document.getElementById('ratingText').textContent = 'Chá»n sá»‘ sao Ä‘á»ƒ Ä‘Ã¡nh giÃ¡';
             document.getElementById('ratingText').style.color = '#64748b';
             
+            const commentTextEl = document.getElementById('commentText');
+            commentTextEl.style.borderColor = '#cbd5e1';
+
+            const charCountEl = document.getElementById('charCount');
+            charCountEl.textContent = '0';
+            charCountEl.style.color = '#94a3b8';
+            charCountEl.style.fontWeight = 'normal';
+
+            const commentErrorEl = document.getElementById('commentError');
+            if (commentErrorEl) commentErrorEl.style.display = 'none';
+
+            const ratingErrorEl = document.getElementById('ratingError');
+            if (ratingErrorEl) ratingErrorEl.style.display = 'none';
+
             const stars = document.querySelectorAll('.star-btn');
             stars.forEach(s => {
                 s.classList.remove('fa-solid');
@@ -448,11 +473,11 @@
         const ratingText = document.getElementById('ratingText');
 
         const ratingMeanings = {
-            1: '1 sao - Rất không hài lòng',
-            2: '2 sao - Không hài lòng',
-            3: '3 sao - Bình thường',
-            4: '4 sao - Hài lòng',
-            5: '5 sao - Rất hài lòng'
+            1: '1 sao - Ráº¥t khÃ´ng hÃ i lÃ²ng',
+            2: '2 sao - KhÃ´ng hÃ i lÃ²ng',
+            3: '3 sao - BÃ¬nh thÆ°á»ng',
+            4: '4 sao - HÃ i lÃ²ng',
+            5: '5 sao - Ráº¥t hÃ i lÃ²ng'
         };
 
         stars.forEach(star => {
@@ -462,6 +487,9 @@
                 ratingText.textContent = ratingMeanings[val];
                 ratingText.style.color = '#1e293b';
                 
+                const ratingErrorEl = document.getElementById('ratingError');
+                if (ratingErrorEl) ratingErrorEl.style.display = 'none';
+
                 stars.forEach(s => {
                     const sVal = parseInt(s.getAttribute('data-value'));
                     if (sVal <= val) {
@@ -476,22 +504,53 @@
         });
 
         function updateCharCount() {
-            const comment = document.getElementById('commentText').value;
-            document.getElementById('charCount').textContent = comment.length;
+            const commentTextEl = document.getElementById('commentText');
+            const comment = commentTextEl.value;
+            const charCountEl = document.getElementById('charCount');
+            const commentErrorEl = document.getElementById('commentError');
+
+            charCountEl.textContent = comment.length;
+
+            if (comment.length > 1000) {
+                charCountEl.style.color = '#ef4444';
+                charCountEl.style.fontWeight = 'bold';
+                if (commentErrorEl) commentErrorEl.style.display = 'block';
+                commentTextEl.style.borderColor = '#ef4444';
+            } else {
+                charCountEl.style.color = '#94a3b8';
+                charCountEl.style.fontWeight = 'normal';
+                if (commentErrorEl) commentErrorEl.style.display = 'none';
+                commentTextEl.style.borderColor = '#cbd5e1';
+            }
         }
 
         function validateForm() {
+            let isValid = true;
+
             const rating = document.getElementById('ratingInput').value;
+            const ratingErrorEl = document.getElementById('ratingError');
             if (!rating || rating < 1 || rating > 5) {
-                alert('Vui lòng chọn số sao để đánh giá.');
-                return false;
+                if (ratingErrorEl) ratingErrorEl.style.display = 'block';
+                isValid = false;
+            } else {
+                if (ratingErrorEl) ratingErrorEl.style.display = 'none';
             }
-            const comment = document.getElementById('commentText').value;
+
+            const commentTextEl = document.getElementById('commentText');
+            const comment = commentTextEl.value;
+            const commentErrorEl = document.getElementById('commentError');
+            const charCountEl = document.getElementById('charCount');
+
             if (comment.length > 1000) {
-                alert('Nội dung đánh giá không được vượt quá 1000 ký tự.');
-                return false;
+                if (commentErrorEl) commentErrorEl.style.display = 'block';
+                commentTextEl.style.borderColor = '#ef4444';
+                charCountEl.style.color = '#ef4444';
+                charCountEl.style.fontWeight = 'bold';
+                commentTextEl.focus();
+                isValid = false;
             }
-            return true;
+
+            return isValid;
         }
     </script>
 </body>

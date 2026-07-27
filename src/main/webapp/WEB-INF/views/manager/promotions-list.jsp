@@ -104,6 +104,12 @@
                                                         Giới hạn sử dụng phải lớn hơn 0 nếu có nhập.
                                                     </div>
                                                 </c:if>
+                                                <c:if test="${param.error eq 'limitLessThanUsed'}">
+                                                    <div class="alert-banner alert-danger">
+                                                        <i class="fa-solid fa-circle-exclamation"></i>
+                                                        Giới hạn lượt dùng không được nhỏ hơn số lượt đã sử dụng hiện tại.
+                                                    </div>
+                                                </c:if>
                                                 <c:if test="${param.error eq 'invalidMin'}">
                                                     <div class="alert-banner alert-danger">
                                                         <i class="fa-solid fa-circle-exclamation"></i>
@@ -447,7 +453,11 @@
                                                     \${toggleIcon}
                                                  </button>`;
 
-                                            const deleteBtn = `<button class="btn-action delete" onclick="deletePromotion(\${promo.id})" title="Xóa">
+                                            const deleteBtn = (promo && promo.usedCount > 0)
+                                                ? `<button class="btn-action delete" style="opacity: 0.35; cursor: not-allowed;" title="Không thể xóa khuyến mãi đã được sử dụng">
+                                                       <i class="fa-solid fa-trash-can"></i>
+                                                   </button>`
+                                                : `<button class="btn-action delete" onclick="deletePromotion(\${promo ? promo.id : ''})" title="Xóa">
                                                        <i class="fa-solid fa-trash-can"></i>
                                                    </button>`;
 
@@ -526,6 +536,21 @@
                                     const label = newStatus === 'Active' ? 'kích hoạt' : 'tạm khóa';
                                     if (confirm(`Bạn có chắc muốn \${label} khuyến mãi này không?`)) {
                                         window.location.href = CTX + '/manager/promotions?action=toggle&id=' + id + '&status=' + newStatus;
+                                    }
+                                }
+
+                                // Delete Promotion
+                                function deletePromotion(id) {
+                                    if (!id) return;
+                                    const table = ManagerTable.tables.promotionsTable;
+                                    if (table && table.items) {
+                                        const item = table.items.find(p => p.id === id);
+                                        if (item && item.usedCount > 0) {
+                                            return;
+                                        }
+                                    }
+                                    if (confirm("Bạn có chắc chắn muốn xóa khuyến mãi này không?")) {
+                                        window.location.href = CTX + '/manager/promotions?action=delete&id=' + id;
                                     }
                                 }
 
@@ -630,6 +655,25 @@
                                         endInput.reportValidity();
                                         return;
                                     }
+
+                                    const promoIdVal = document.getElementById('promotionId').value;
+                                    const promoId = promoIdVal ? parseInt(promoIdVal) : -1;
+                                    const usageLimitInput = document.getElementById('modalUsageLimit');
+                                    const usageLimitVal = usageLimitInput ? usageLimitInput.value.trim() : '';
+
+                                    if (promoId > 0 && usageLimitVal !== '') {
+                                        const limit = parseInt(usageLimitVal);
+                                        const table = ManagerTable.tables.promotionsTable;
+                                        if (table && table.items) {
+                                            const promo = table.items.find(p => p.id === promoId);
+                                            if (promo && !isNaN(limit) && limit < promo.usedCount) {
+                                                e.preventDefault();
+                                                usageLimitInput.setCustomValidity('Giới hạn lượt dùng không được nhỏ hơn số lượt đã sử dụng hiện tại (' + promo.usedCount + ').');
+                                                usageLimitInput.reportValidity();
+                                                return;
+                                            }
+                                        }
+                                    }
                                 });
 
                                 // Unified Vietnamese HTML5 Validation Messages
@@ -652,7 +696,7 @@
                                 }, true);
 
                                 // Clear custom validity on input
-                                ['modalCode', 'modalName', 'modalDiscountValue', 'modalStartDate', 'modalEndDate'].forEach(function (id) {
+                                ['modalCode', 'modalName', 'modalDiscountValue', 'modalStartDate', 'modalEndDate', 'modalUsageLimit'].forEach(function (id) {
                                     const el = document.getElementById(id);
                                     if (el) el.addEventListener('input', function () { this.setCustomValidity(''); });
                                 });

@@ -2,7 +2,7 @@ package com.mycompany.hotelmanagement.dal;
 
 import com.mycompany.hotelmanagement.config.DBContext;
 import com.mycompany.hotelmanagement.entity.Booking;
-import com.mycompany.hotelmanagement.entity.Room;
+import com.mycompany.hotelmanagement.entity.RoomInfo;
 import com.mycompany.hotelmanagement.entity.CustomerDetails;
 import java.sql.*;
 import java.util.ArrayList;
@@ -51,9 +51,9 @@ public class BookingDAO {
     }
 
     private static final String BASE_SELECT = "SELECT b.booking_id, b.account_id, b.customer_name, b.phone, b.email, "
-            + "       b.room_type_id, rt.type_name AS room_type_name, "
+            + "       b.room_type_id, ISNULL(rt.type_name, N'Loại phòng cũ') AS room_type_name, "
             + "       b.room_quantity, b.check_in_date, b.check_out_date, "
-            + "       b.total_amount, b.status, b.note, b.group_booking_id, CAST(b.created_at AS DATE) AS created_at, "
+            + "       b.total_amount, b.status, b.note, b.group_booking_id, b.promotion_id, CAST(b.created_at AS DATE) AS created_at, "
             + "       (SELECT STRING_AGG(r.room_number, ', ') "
             + "        FROM dbo.RoomAssignment br "
             + "        JOIN dbo.Room r ON br.room_id = r.room_id "
@@ -105,11 +105,19 @@ public class BookingDAO {
             params.add(statusFilter);
         }
 
-        // Filter by keyword (tên khách hoặc mã)
+        // Filter by keyword (tên khách, mã đặt phòng hoặc số phòng đã gán)
         if (keyword != null && !keyword.trim().isEmpty()) {
             String sanitizedKw = sanitizeLikeKeyword(keyword.trim());
             String kw = "%" + sanitizedKw + "%";
-            sql.append("AND (b.customer_name LIKE ? OR CAST(b.booking_id AS NVARCHAR) LIKE ?) ");
+            sql.append("AND (b.customer_name LIKE ? OR CAST(b.booking_id AS NVARCHAR) LIKE ? "
+                    + "OR EXISTS ("
+                    + "    SELECT 1 FROM dbo.RoomAssignment ra "
+                    + "    JOIN dbo.Room r2 ON ra.room_id = r2.room_id "
+                    + "    JOIN dbo.Booking sb2 ON ra.booking_id = sb2.booking_id "
+                    + "    WHERE (sb2.booking_id = b.booking_id OR sb2.group_booking_id = b.booking_id) "
+                    + "      AND r2.room_number LIKE ?"
+                    + ")) ");
+            params.add(kw);
             params.add(kw);
             params.add(kw);
         }
@@ -281,6 +289,34 @@ public class BookingDAO {
         return false;
     }
 
+    /**
+     * Gắn (hoặc gỡ, nếu promotionId null) mã khuyến mãi cho một booking (cha).
+     * Đây là method duy nhất được phép thay đổi cột promotion_id — các UPDATE
+     * khác (updateBookingDetails, applyBookingChange...) không đụng tới cột
+     * này, nhờ vậy promotion_id luôn được giữ nguyên khi sửa ngày/loại phòng.
+     */
+    public boolean updateBookingPromotion(int bookingId, Integer promotionId) {
+        if (bookingId <= 0) {
+            return false;
+        }
+        String sql = "UPDATE dbo.Booking SET promotion_id = ?, updated_at = SYSDATETIME() WHERE booking_id = ?";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                if (promotionId != null) {
+                    ps.setInt(1, promotionId);
+                } else {
+                    ps.setNull(1, Types.INTEGER);
+                }
+                ps.setInt(2, bookingId);
+                return ps.executeUpdate() > 0;
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in updateBookingPromotion for id: " + bookingId, e);
+        }
+        return false;
+    }
+
     public boolean cancelBooking(int bookingId, String reason) {
         if (bookingId <= 0) {
             return false;
@@ -364,6 +400,10 @@ public class BookingDAO {
         int groupBookingId = rs.getInt("group_booking_id");
         if (!rs.wasNull()) {
             b.setGroupBookingId(groupBookingId);
+        }
+        int promotionId = rs.getInt("promotion_id");
+        if (!rs.wasNull()) {
+            b.setPromotionId(promotionId);
         }
         b.setCreatedAt(rs.getDate("created_at"));
         try {
@@ -520,11 +560,11 @@ public class BookingDAO {
         }
     }
 
-    public List<Room> getRoomsByTypeId(
+    public List<RoomInfo> getRoomsByTypeId(
             int typeId,
             Date checkIn,
             Date checkOut) {
-        List<Room> list = new ArrayList<>();
+        List<RoomInfo> list = new ArrayList<>();
         String sql = """
                 SELECT
                     r.room_id,
@@ -581,7 +621,7 @@ public class BookingDAO {
                 ps.setInt(3, typeId);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
-                        Room r = new Room();
+                        RoomInfo r = new RoomInfo();
                         r.setRoomId(rs.getInt("room_id"));
                         r.setRoomNumber(rs.getString("room_number"));
                         r.setStatus(rs.getString("display_status"));
@@ -597,8 +637,8 @@ public class BookingDAO {
         return list;
     }
 
-    public List<Room> getAllRooms(Date checkIn, Date checkOut) {
-        List<Room> list = new ArrayList<>();
+    public List<RoomInfo> getAllRooms(Date checkIn, Date checkOut) {
+        List<RoomInfo> list = new ArrayList<>();
 
         String sql = """
                 SELECT
@@ -646,7 +686,7 @@ public class BookingDAO {
 
             while (rs.next()) {
 
-                Room room = new Room();
+                RoomInfo room = new RoomInfo();
 
                 room.setRoomId(rs.getInt("room_id"));
                 room.setRoomNumber(rs.getString("room_number"));
@@ -756,8 +796,8 @@ public class BookingDAO {
         return false;
     }
 
-    public List<Room> getAssignedRoomsForBooking(int bookingId, Date checkIn, Date checkOut) {
-        List<Room> list = new ArrayList<>();
+    public List<RoomInfo> getAssignedRoomsForBooking(int bookingId, Date checkIn, Date checkOut) {
+        List<RoomInfo> list = new ArrayList<>();
         String sql = """
                 SELECT
 
@@ -809,7 +849,7 @@ public class BookingDAO {
                 ps.setInt(3, bookingId);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
-                        Room r = new Room();
+                        RoomInfo r = new RoomInfo();
                         r.setRoomId(rs.getInt("room_id"));
                         r.setRoomNumber(rs.getString("room_number"));
                         r.setStatus(rs.getString("display_status"));
@@ -900,7 +940,7 @@ public class BookingDAO {
      */
     public int checkRoomAvailability(int roomTypeId, Date checkIn, Date checkOut, Integer excludeBookingId) {
         int totalRooms = 0;
-        String countSql = "SELECT COUNT(*) FROM dbo.Room WHERE type_id = ? AND status <> N'Maintenance' AND is_deleted = 0";
+        String countSql = "SELECT COUNT(*) FROM dbo.Room WHERE type_id = ? AND status NOT IN (N'Maintenance', N'OutOfService') AND is_deleted = 0";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(countSql)) {
@@ -1184,9 +1224,9 @@ public class BookingDAO {
         return false;
     }
 
-    public List<Room> getAllAssignedRoomsForGroup(int bookingId) {
+    public List<RoomInfo> getAllAssignedRoomsForGroup(int bookingId) {
 
-        List<Room> list = new ArrayList<>();
+        List<RoomInfo> list = new ArrayList<>();
 
         String sql = """
                     SELECT
@@ -1221,7 +1261,7 @@ public class BookingDAO {
 
             while (rs.next()) {
 
-                Room r = new Room();
+                RoomInfo r = new RoomInfo();
 
                 r.setRoomId(rs.getInt("room_id"));
                 r.setRoomNumber(rs.getString("room_number"));

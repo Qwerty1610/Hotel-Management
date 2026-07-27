@@ -1,12 +1,18 @@
 package com.mycompany.hotelmanagement.dal;
 
-import com.mycompany.hotelmanagement.config.DBContext;
-import com.mycompany.hotelmanagement.entity.Promotion;
-
-import java.math.BigDecimal;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.mycompany.hotelmanagement.config.DBContext;
+import com.mycompany.hotelmanagement.entity.Promotion;
 
 /**
  * Project: Hotel Management System
@@ -29,6 +35,8 @@ import java.util.List;
  * @version 1.0
  */
 public class PromotionDAO {
+
+    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(PromotionDAO.class.getName());
 
     private void useDatabase(Connection conn) {
         try (Statement stmt = conn.createStatement()) {
@@ -99,13 +107,13 @@ public class PromotionDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error fetching promotions", e);
         }
         return list;
     }
 
     /**
-     * Lấy một khuyến mãi theo ID.
+     * Lấy một khuyến mãi theo PromotionID.
      */
     public Promotion getPromotionById(int promotionId) {
         String sql = "SELECT PromotionID, PromotionCode, PromotionName, Description, "
@@ -124,7 +132,7 @@ public class PromotionDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error fetching promotion by ID: " + promotionId, e);
         }
         return null;
     }
@@ -149,7 +157,7 @@ public class PromotionDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error fetching promotion by code: " + code, e);
         }
         return null;
     }
@@ -157,15 +165,16 @@ public class PromotionDAO {
     /**
      * Tăng số lượng đã sử dụng (UsedCount) của khuyến mãi lên 1.
      */
-    public void incrementUsedCount(int promotionId) {
+    public boolean incrementUsedCount(int promotionId) {
         String sql = "UPDATE Promotion SET UsedCount = UsedCount + 1, UpdatedAt = GETDATE() WHERE PromotionID = ?";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setInt(1, promotionId);
-            ps.executeUpdate();
+            return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error incrementing used count for promotion " + promotionId, e);
+            return false;
         }
     }
 
@@ -188,7 +197,7 @@ public class PromotionDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error checking duplicate code: " + code, e);
         }
         return false;
     }
@@ -196,7 +205,7 @@ public class PromotionDAO {
     /**
      * Thêm mới một khuyến mãi.
      */
-    public void insertPromotion(Promotion p) {
+    public boolean insertPromotion(Promotion p) {
         String sql = "INSERT INTO Promotion "
                 + "(PromotionCode, PromotionName, Description, DiscountType, DiscountValue, "
                 + "StartDate, EndDate, EventName, MinBookingAmount, MaxDiscountAmount, "
@@ -221,16 +230,24 @@ public class PromotionDAO {
             } else {
                 ps.setNull(11, Types.INTEGER);
             }
-            ps.executeUpdate();
+            return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error inserting promotion", e);
+            return false;
         }
     }
 
     /**
-     * Cập nhật thông tin khuyến mãi.
+     * Cập nhật thông tin khuyến mãi (không thay đổi UsedCount).
      */
-    public void updatePromotion(Promotion p) {
+    public boolean updatePromotion(Promotion p) {
+        if (p.getPromotionId() > 0 && p.getUsageLimit() != null) {
+            Promotion existing = getPromotionById(p.getPromotionId());
+            if (existing != null && p.getUsageLimit() < existing.getUsedCount()) {
+                LOGGER.warning("Block update for promotion ID " + p.getPromotionId() + ": usageLimit (" + p.getUsageLimit() + ") < usedCount (" + existing.getUsedCount() + ")");
+                return false;
+            }
+        }
         String sql = "UPDATE Promotion SET "
                 + "PromotionCode = ?, PromotionName = ?, Description = ?, "
                 + "DiscountType = ?, DiscountValue = ?, StartDate = ?, EndDate = ?, "
@@ -257,44 +274,62 @@ public class PromotionDAO {
                 ps.setNull(11, Types.INTEGER);
             }
             ps.setInt(12, p.getPromotionId());
-            ps.executeUpdate();
+            return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error updating promotion " + p.getPromotionId(), e);
+            return false;
         }
     }
 
     /**
      * Bật/Tắt trạng thái khuyến mãi (Active / Inactive).
      */
-    public void togglePromotionStatus(int promotionId, String newStatus) {
+    public boolean togglePromotionStatus(int promotionId, String newStatus) {
         String sql = "UPDATE Promotion SET Status = ?, UpdatedAt = GETDATE() WHERE PromotionID = ?";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setString(1, newStatus);
             ps.setInt(2, promotionId);
-            ps.executeUpdate();
+            return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error toggling status for promotion " + promotionId, e);
+            return false;
         }
     }
 
     /**
-     * Xóa khuyến mãi. Cho phép xóa kể cả khi đã được sử dụng.
-     * Booking cũ đã áp mã vẫn giữ nguyên số tiền giảm.
+     * Xóa khuyến mãi. Chỉ cho phép xóa khi UsedCount = 0.
+     * Kiểm tra bắt buộc ở phía Server.
      *
-     * @return true nếu xóa thành công, false nếu có lỗi hoặc không tìm thấy
+     * @return true nếu xóa thành công, false nếu UsedCount > 0 hoặc không tìm thấy hoặc có lỗi DB
      */
     public boolean deletePromotion(int promotionId) {
-        String deleteSql = "DELETE FROM Promotion WHERE PromotionID = ?";
+        String checkSql = "SELECT UsedCount FROM Promotion WHERE PromotionID = ?";
+        String deleteSql = "DELETE FROM Promotion WHERE PromotionID = ? AND UsedCount = 0";
         try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(deleteSql)) {
+             PreparedStatement psCheck = conn.prepareStatement(checkSql)) {
             useDatabase(conn);
-            ps.setInt(1, promotionId);
-            int affected = ps.executeUpdate();
-            return affected > 0;
+            psCheck.setInt(1, promotionId);
+            try (ResultSet rs = psCheck.executeQuery()) {
+                if (rs.next()) {
+                    int usedCount = rs.getInt("UsedCount");
+                    if (usedCount > 0) {
+                        LOGGER.warning("Block delete for promotion ID " + promotionId + " because UsedCount = " + usedCount);
+                        return false;
+                    }
+                } else {
+                    return false; // Not found
+                }
+            }
+
+            try (PreparedStatement psDelete = conn.prepareStatement(deleteSql)) {
+                psDelete.setInt(1, promotionId);
+                int affected = psDelete.executeUpdate();
+                return affected > 0;
+            }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error deleting promotion " + promotionId, e);
             return false;
         }
     }

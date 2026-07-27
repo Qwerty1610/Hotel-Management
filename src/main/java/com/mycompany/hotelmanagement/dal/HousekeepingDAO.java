@@ -1,7 +1,7 @@
 package com.mycompany.hotelmanagement.dal;
 
 import com.mycompany.hotelmanagement.config.DBContext;
-import com.mycompany.hotelmanagement.entity.Room;
+import com.mycompany.hotelmanagement.entity.RoomInfo;
 
 import java.sql.*;
 import java.util.*;
@@ -15,9 +15,9 @@ public class HousekeepingDAO {
     // =========================
     // MAIN: GET ALL ROOMS SORTED
     // =========================
-    public List<Room> getAllRooms() {
+    public List<RoomInfo> getAllRooms() {
 
-        List<Room> list = new ArrayList<>();
+        List<RoomInfo> list = new ArrayList<>();
 
         String sql = """
     SELECT r.room_id,
@@ -25,7 +25,15 @@ public class HousekeepingDAO {
            rt.type_name,
            r.status,
            r.floor,
-           ri.image_url
+           ri.image_url,
+           CASE WHEN EXISTS (
+               SELECT 1 FROM RoomAssignment ra
+               JOIN Booking b ON ra.booking_id = b.booking_id
+               WHERE ra.room_id = r.room_id
+                 AND b.status IN (N'Confirmed', N'CheckedIn')
+                 AND CAST(GETDATE() AS DATE) >= b.check_in_date
+                 AND CAST(GETDATE() AS DATE) < b.check_out_date
+           ) THEN 1 ELSE 0 END AS has_guest
     FROM Room r
     JOIN RoomType rt ON r.type_id = rt.type_id
     LEFT JOIN RoomImage ri ON ri.type_id = rt.type_id
@@ -37,13 +45,14 @@ public class HousekeepingDAO {
 
             while (rs.next()) {
 
-                Room room = new Room();
+                RoomInfo room = new RoomInfo();
                 room.setRoomId(rs.getInt("room_id"));
                 room.setRoomNumber(rs.getString("room_number"));
                 room.setTypeName(rs.getString("type_name"));
                 room.setStatus(rs.getString("status").trim());
                 room.setFloor(rs.getString("floor"));
                 room.setImageUrl(rs.getString("image_url"));
+                room.setHasGuest(rs.getBoolean("has_guest"));
 
                 list.add(room);
             }
@@ -55,9 +64,9 @@ public class HousekeepingDAO {
         // =========================
         // SORT (KHÔNG CẦN DB CHANGE)
         // =========================
-        list.sort(new Comparator<Room>() {
+        list.sort(new Comparator<RoomInfo>() {
             @Override
-            public int compare(Room a, Room b) {
+            public int compare(RoomInfo a, RoomInfo b) {
 
                 // 1. SORT FLOOR
                 int floorA = extractNumber(a.getFloor());
@@ -96,18 +105,18 @@ public class HousekeepingDAO {
     // =========================
     // CLEANING ROOMS
     // =========================
-    public List<Room> getCleaningRooms() {
+    public List<RoomInfo> getCleaningRooms() {
         return getRoomsByStatus("Cleaning",
                 "Refilling");
     }
 
-    public List<Room> getMaintenanceRooms() {
+    public List<RoomInfo> getMaintenanceRooms() {
         return getRoomsByStatus("Maintenance");
     }
 
-    private List<Room> getRoomsByStatus(String... status) {
+    private List<RoomInfo> getRoomsByStatus(String... status) {
 
-        List<Room> list = new ArrayList<>();
+        List<RoomInfo> list = new ArrayList<>();
 
         String placeholders = String.join(
                 ",",
@@ -136,7 +145,7 @@ public class HousekeepingDAO {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                Room room = new Room();
+                RoomInfo room = new RoomInfo();
                 room.setRoomId(rs.getInt("room_id"));
                 room.setRoomNumber(rs.getString("room_number"));
                 room.setTypeName(rs.getString("type_name"));
@@ -235,7 +244,7 @@ public class HousekeepingDAO {
         return 0;
     }
 
-    public Room getRoomById(int roomId) {
+    public RoomInfo getRoomById(int roomId) {
 
         String sql = """
 SELECT r.room_id,
@@ -257,7 +266,7 @@ WHERE r.room_id = ? AND r.is_deleted = 0
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                Room r = new Room();
+                RoomInfo r = new RoomInfo();
                 r.setRoomId(rs.getInt("room_id"));
                 r.setRoomNumber(rs.getString("room_number"));
                 r.setTypeName(rs.getString("type_name"));
@@ -272,30 +281,6 @@ WHERE r.room_id = ? AND r.is_deleted = 0
         }
 
         return null;
-    }
-
-    public boolean updateRoomAvailable(int roomId) {
-
-        String sql = """
-        UPDATE Room
-        SET status = 'Available'
-        WHERE room_id = ?
-    """;
-
-        try (
-                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, roomId);
-
-            return ps.executeUpdate() > 0;
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-        }
-
-        return false;
     }
 
     public boolean refreshRoomStatusByPendingIssues(int roomId) {
@@ -380,33 +365,6 @@ WHERE r.room_id = ? AND r.is_deleted = 0
             psUpdate.setInt(2, roomId);
 
             return psUpdate.executeUpdate() > 0;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return false;
-    }
-
-// HOUSEKEEPING SEND REQUEST COMPLETED
-    public boolean requestCompleteCustomerRequest(int requestId, int staffId) {
-
-        String sql = """
-    UPDATE CustomerRequest
-    SET status = N'Completed',
-        updated_at = SYSDATETIME()
-    WHERE request_id = ?
-      AND assigned_staff_id = ?
-      AND status = N'InProgress'
-""";
-
-        try (
-                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, requestId);
-            ps.setInt(2, staffId);
-
-            return ps.executeUpdate() > 0;
 
         } catch (Exception e) {
             e.printStackTrace();

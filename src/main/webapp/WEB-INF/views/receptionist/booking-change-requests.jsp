@@ -71,7 +71,7 @@
 
                     <li class="menu-item ${currentTab eq 'checkin' ? 'active' : ''}">
                         <a href="${pageContext.request.contextPath}/receptionist/dashboard?tab=checkin">
-                            <i class="fa-solid fa-key"></i> <span>Nhận phòng (Check-in)</span>
+                            <i class="fa-solid fa-key"></i> <span>Nhận phòng</span>
                         </a>
                     </li>
 
@@ -100,12 +100,6 @@
                         <a
                             href="${pageContext.request.contextPath}/receptionist/dashboard?tab=servicerequests">
                             <i class="fa-solid fa-bell-concierge"></i> <span>Quản lý yêu cầu dịch vụ</span>
-                        </a>
-                    </li>
-                    <li class="menu-item ${currentTab eq 'add-booking-service' ? 'active' : ''}">
-                        <a href="${pageContext.request.contextPath}/receptionist/add-booking-service">
-                            <i class="fa-solid fa-circle-plus"></i>
-                            <span>Đặt dịch vụ cho khách</span>
                         </a>
                     </li>
                 </ul>

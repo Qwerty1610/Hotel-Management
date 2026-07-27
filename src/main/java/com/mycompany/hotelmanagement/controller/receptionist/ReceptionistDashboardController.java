@@ -2,13 +2,11 @@ package com.mycompany.hotelmanagement.controller.receptionist;
 
 import com.mycompany.hotelmanagement.dal.BookingDAO;
 import com.mycompany.hotelmanagement.dal.BookingServiceRequestDAO;
-import com.mycompany.hotelmanagement.dal.RoomDAO;
 import com.mycompany.hotelmanagement.dal.RoomTypeDAO;
 import com.mycompany.hotelmanagement.dal.WalkInBookingDAO;
 import com.mycompany.hotelmanagement.dal.CheckOutDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.BookingServiceRequest;
-import com.mycompany.hotelmanagement.entity.Room;
 import com.mycompany.hotelmanagement.entity.RoomInfo;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import jakarta.servlet.ServletException;
@@ -26,7 +24,7 @@ import jakarta.servlet.http.HttpSession;
  * Booking Request) - checkin: Xem danh sách chờ nhận phòng và làm thủ tục
  * check-in (UC-14: Check In Customer) - checkout: Xem danh sách chờ trả phòng
  * và làm thủ tục check-out (UC-16: Check Out Customer) - servicerequests: Xem
- * danh sách yêu cầu dịch vụ của khách hàng để duyệt/hủy (UC-35: View Service
+ * danh sách yêu cầu dịch vụ của khách hàng để duyệt/hủy (UC-34: View Service
  * Requests) - roommap: Xem sơ đồ phòng theo thời gian thực (UC-38: View Room
  * Map) - walkin-bookings: Tạo đặt phòng trực tiếp tại quầy (UC-15: Create
  * Walk-in Booking)
@@ -50,12 +48,12 @@ import java.util.logging.Logger;
  *
  * Description: Controller chính cho dashboard của vai trò lễ tân. Quản lý điều
  * hướng qua các tab: danh sách đặt phòng (UC-12), danh sách chờ nhận phòng
- * (UC-14), danh sách chờ trả phòng (UC-16), yêu cầu dịch vụ (UC-35), sơ đồ
+ * (UC-14), danh sách chờ trả phòng (UC-16), yêu cầu dịch vụ (UC-34), sơ đồ
  * phòng (UC-38) và đặt phòng trực tiếp (UC-13). Tổng hợp dữ liệu từ BookingDAO,
  * CheckOutDAO, WalkInBookingDAO và BookingServiceRequestDAO.
  *
  * Related Use Cases: - UC-12 Process Booking Request - UC-13 Create Walk-in
- * Booking - UC-14 Check-In Customer - UC-16 Check-Out Customer - UC-35 View
+ * Booking - UC-14 Check-In Customer - UC-16 Check-Out Customer - UC-34 View
  * Service Requests - UC-38 View Room Map
  *
  * Date: 01-06-2026
@@ -141,9 +139,17 @@ public class ReceptionistDashboardController extends HttpServlet {
             BookingDAO dao = new BookingDAO();
             RoomTypeDAO roomTypeRepo = new RoomTypeDAO();
 
+            HttpSession session = request.getSession();
+
             // Tham số lọc
             String statusFilter = request.getParameter("status");
             String keyword = request.getParameter("keyword");
+
+            // Vào tab từ sidebar (không kèm tham số lọc) -> khôi phục bộ lọc đã lưu trước đó
+            if (statusFilter == null && keyword == null) {
+                statusFilter = (String) session.getAttribute("bookingsFilterStatus");
+                keyword = (String) session.getAttribute("bookingsFilterKeyword");
+            }
 
             int page = 1;
             try {
@@ -164,6 +170,10 @@ public class ReceptionistDashboardController extends HttpServlet {
             } else {
                 statusFilter = statusFilter.trim();
             }
+
+            // Lưu lại bộ lọc hiện tại để giữ nguyên khi chuyển tab rồi quay lại
+            session.setAttribute("bookingsFilterStatus", statusFilter);
+            session.setAttribute("bookingsFilterKeyword", keyword);
 
             // Load danh sách
             int totalItems = dao.countBookings(statusFilter, keyword);
@@ -195,6 +205,7 @@ public class ReceptionistDashboardController extends HttpServlet {
             int cntConfirmed = dao.countByStatus("Confirmed");
             int cntRejected = dao.countByStatus("Rejected");
             int cntCancelled = dao.countByStatus("Cancelled");
+            int cntCheckedIn = dao.countByStatus("CheckedIn");
 
             // Đẩy attribute sang JSP
             request.setAttribute("bookingList", bookingList);
@@ -206,6 +217,7 @@ public class ReceptionistDashboardController extends HttpServlet {
             request.setAttribute("cntConfirmed", cntConfirmed);
             request.setAttribute("cntRejected", cntRejected);
             request.setAttribute("cntCancelled", cntCancelled);
+            request.setAttribute("cntCheckedIn", cntCheckedIn);
 
             request.setAttribute("currentPage", page);
             request.setAttribute("totalPages", totalPages);
@@ -217,7 +229,7 @@ public class ReceptionistDashboardController extends HttpServlet {
     }
 
     /**
-     * UC-35: View Service Requests Tải danh sách yêu cầu dịch vụ của khách hàng
+     * UC-34: View Service Requests Tải danh sách yêu cầu dịch vụ của khách hàng
      * để hiển thị trên tab của Lễ tân, hỗ trợ tìm kiếm, lọc theo trạng thái và
      * phân trang.
      */
@@ -278,6 +290,10 @@ public class ReceptionistDashboardController extends HttpServlet {
             request.setAttribute("kpiPending", kpiPending);
             request.setAttribute("kpiCompleted", kpiCompleted);
             request.setAttribute("kpiCancelled", kpiCancelled);
+
+            // Dữ liệu cho popup "Đặt dịch vụ cho khách"
+            request.setAttribute("addServiceRooms", dao.getCheckedInRooms());
+            request.setAttribute("addServiceServices", dao.getActiveServices());
 
         } catch (Exception e) {
             throw new RuntimeException("Error in loadServiceRequestsTab of ReceptionistDashboardController", e);
@@ -350,13 +366,24 @@ public class ReceptionistDashboardController extends HttpServlet {
 
         BookingDAO dao = new BookingDAO();
 
+        HttpSession session = request.getSession();
+
         String keyword = request.getParameter("keyword");
 
         String status = request.getParameter("status");
 
+        // Vào tab từ sidebar (không kèm tham số lọc) -> khôi phục bộ lọc đã lưu trước đó
+        if (status == null && keyword == null) {
+            status = (String) session.getAttribute("checkinFilterStatus");
+            keyword = (String) session.getAttribute("checkinFilterKeyword");
+        }
+
         if (status == null || status.isBlank()) {
             status = "All";
         }
+
+        session.setAttribute("checkinFilterStatus", status);
+        session.setAttribute("checkinFilterKeyword", keyword);
 
         int page = 1;
         try {
@@ -402,8 +429,18 @@ public class ReceptionistDashboardController extends HttpServlet {
 
         com.mycompany.hotelmanagement.service.RoomService roomService = new com.mycompany.hotelmanagement.service.RoomService();
 
+        HttpSession session = request.getSession();
+
         String fromDateStr = request.getParameter("fromDate");
         String toDateStr = request.getParameter("toDate");
+        String statusParam = request.getParameter("status");
+
+        // Vào tab từ sidebar (không kèm tham số lọc) -> khôi phục bộ lọc đã lưu trước đó
+        if (fromDateStr == null && toDateStr == null && statusParam == null) {
+            fromDateStr = (String) session.getAttribute("roommapFilterFromDate");
+            toDateStr = (String) session.getAttribute("roommapFilterToDate");
+            statusParam = (String) session.getAttribute("roommapFilterStatus");
+        }
 
         java.time.LocalDate fromDate;
         java.time.LocalDate toDate;
@@ -438,12 +475,17 @@ public class ReceptionistDashboardController extends HttpServlet {
             roomList = new ArrayList<>();
         }
 
-        String status = request.getParameter("status");
+        String status = statusParam;
         if (status == null || status.isBlank()) {
             status = "All";
         } else {
             status = status.trim();
         }
+
+        // Lưu lại bộ lọc hiện tại để giữ nguyên khi chuyển tab rồi quay lại
+        session.setAttribute("roommapFilterFromDate", fromDate.toString());
+        session.setAttribute("roommapFilterToDate", toDate.toString());
+        session.setAttribute("roommapFilterStatus", status);
 
         List<RoomInfo> filtered = new ArrayList<>();
         for (RoomInfo room : roomList) {

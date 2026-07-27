@@ -37,13 +37,6 @@ public class PromotionService {
     }
 
     /**
-     * Lấy một khuyến mãi theo ID.
-     */
-    public Promotion getPromotionById(int promotionId) {
-        return promotionRepository.getPromotionById(promotionId);
-    }
-
-    /**
      * Kiểm tra mã khuyến mãi có bị trùng không.
      *
      * @param code      Mã cần kiểm tra
@@ -56,11 +49,11 @@ public class PromotionService {
     /**
      * Lưu khuyến mãi: thêm mới nếu promotionId <= 0, cập nhật nếu > 0.
      */
-    public void savePromotion(Promotion promotion) {
+    public boolean savePromotion(Promotion promotion) {
         if (promotion.getPromotionId() <= 0) {
-            promotionRepository.insertPromotion(promotion);
+            return promotionRepository.insertPromotion(promotion);
         } else {
-            promotionRepository.updatePromotion(promotion);
+            return promotionRepository.updatePromotion(promotion);
         }
     }
 
@@ -70,18 +63,24 @@ public class PromotionService {
      * @param promotionId ID khuyến mãi
      * @param newStatus   "Active" hoặc "Inactive"
      */
-    public void togglePromotionStatus(int promotionId, String newStatus) {
-        promotionRepository.togglePromotionStatus(promotionId, newStatus);
+    public boolean togglePromotionStatus(int promotionId, String newStatus) {
+        return promotionRepository.togglePromotionStatus(promotionId, newStatus);
     }
 
     /**
-     * Xóa khuyến mãi. Cho phép xóa kể cả khi đã được sử dụng.
-     * Booking cũ đã áp mã vẫn giữ nguyên số tiền giảm.
+     * Xóa khuyến mãi. Chỉ cho phép xóa khi UsedCount = 0.
      *
-     * @return true nếu xóa thành công, false nếu có lỗi
+     * @return true nếu xóa thành công, false nếu UsedCount > 0 hoặc lỗi
      */
     public boolean deletePromotion(int promotionId) {
         return promotionRepository.deletePromotion(promotionId);
+    }
+
+    /**
+     * Lấy một khuyến mãi theo ID.
+     */
+    public Promotion getPromotionById(int promotionId) {
+        return promotionRepository.getPromotionById(promotionId);
     }
 
     /**
@@ -94,8 +93,8 @@ public class PromotionService {
     /**
      * Tăng số lượng đã sử dụng của khuyến mãi lên 1.
      */
-    public void incrementUsedCount(int promotionId) {
-        promotionRepository.incrementUsedCount(promotionId);
+    public boolean incrementUsedCount(int promotionId) {
+        return promotionRepository.incrementUsedCount(promotionId);
     }
 
     public static class PromotionResult {
@@ -147,9 +146,28 @@ public class PromotionService {
             return new PromotionResult(false, "Đơn đặt phòng không đạt giá trị tối thiểu để áp dụng mã này.", 0, p);
         }
 
+        double discountAmount = calculateDiscountAmount(p, totalBookingAmount);
+
+        return new PromotionResult(true, "Áp dụng thành công", discountAmount, p);
+    }
+
+    /**
+     * Tính số tiền được giảm theo công thức của 1 Promotion (percent/fixed,
+     * có áp trần MaxDiscountAmount và không bao giờ vượt quá subtotal).
+     * Hàm thuần (không kiểm tra Active/ngày hiệu lực/UsageLimit/MinBookingAmount)
+     * — dùng để TÁI ÁP dụng lại discount mỗi khi subtotal đổi (đổi ngày/loại
+     * phòng) mà không làm mã giảm giá "biến mất" nếu subtotal mới tụt dưới
+     * MinBookingAmount ban đầu. Việc kiểm tra điều kiện hợp lệ chỉ thực hiện
+     * MỘT LẦN lúc khách nhập mã, ở {@link #validateAndCalculateDiscount}.
+     */
+    public double calculateDiscountAmount(Promotion p, double subtotal) {
+        if (p == null || subtotal <= 0) {
+            return 0;
+        }
+
         double discountAmount = 0;
         if ("PERCENT".equalsIgnoreCase(p.getDiscountType()) || "PERCENTAGE".equalsIgnoreCase(p.getDiscountType())) {
-            discountAmount = totalBookingAmount * (p.getDiscountValue().doubleValue() / 100.0);
+            discountAmount = subtotal * (p.getDiscountValue().doubleValue() / 100.0);
         } else if ("FIXED".equalsIgnoreCase(p.getDiscountType()) || "FIXED AMOUNT".equalsIgnoreCase(p.getDiscountType())) {
             discountAmount = p.getDiscountValue().doubleValue();
         }
@@ -160,10 +178,10 @@ public class PromotionService {
             }
         }
 
-        if (discountAmount > totalBookingAmount) {
-            discountAmount = totalBookingAmount;
+        if (discountAmount > subtotal) {
+            discountAmount = subtotal;
         }
 
-        return new PromotionResult(true, "Áp dụng thành công", discountAmount, p);
+        return discountAmount;
     }
 }

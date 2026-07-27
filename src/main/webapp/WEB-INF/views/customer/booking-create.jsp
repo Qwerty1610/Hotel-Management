@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ include file="../../includes/taglibs.jsp" %>
 <%@ include file="../../includes/header.jsp" %>
 
@@ -9,12 +9,15 @@
 
     <%-- Header Navigation --%>
     <nav class="navbar-rooms">
-        <div class="logo">${hotelName}</div>
+<a href="${pageContext.request.contextPath}/" class="logo">${not empty hotelName ? hotelName : 'HotelOps'}</a>
         <ul class="nav-links">
-            <li><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
-            <li><a href="${pageContext.request.contextPath}/rooms">Phòng</a></li>
-            <li><a href="${pageContext.request.contextPath}/customer/bookings" class="active">Đặt phòng của tôi</a></li>
-            <li><a href="${pageContext.request.contextPath}/customer/payments">Thanh toán</a></li>
+            <li><a href="${pageContext.request.contextPath}/">Trang chá»§</a></li>
+            <li><a href="${pageContext.request.contextPath}/rooms">PhÃ²ng</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/bookings" class="active">Äáº·t phÃ²ng cá»§a tÃ´i</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/feedbacks">ÄÃ¡nh giÃ¡ lÆ°u trÃº</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/services">Dá»‹ch vá»¥</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/maintenance">Sá»± cá»‘</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/payments">Thanh toÃ¡n</a></li>
         </ul>
 
         <div class="nav-actions">
@@ -30,24 +33,25 @@
                             <c:choose>
                                 <c:when test="${sessionScope.role eq 'CUSTOMER'}">
                                     <a href="${pageContext.request.contextPath}/customer/profile" class="dropdown-item">
-                                        <i class="fa-solid fa-id-card"></i> Hồ sơ
+                                        <i class="fa-solid fa-id-card"></i> Há»“ sÆ¡
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/bookings" class="dropdown-item">
-                                        <i class="fa-solid fa-calendar-check"></i> Đặt phòng của tôi
+                                        <i class="fa-solid fa-calendar-check"></i> Äáº·t phÃ²ng cá»§a tÃ´i
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/booking/change" class="dropdown-item">
-                                        <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
+                                        <i class="fa-solid fa-pen-to-square"></i> Thay Ä‘á»•i Ä‘áº·t phÃ²ng
+                                    </a>
                                     <a href="${pageContext.request.contextPath}/customer/feedbacks" class="dropdown-item">
-                                        <i class="fa-solid fa-star"></i> Đánh giá lưu trú
+                                        <i class="fa-solid fa-star"></i> ÄÃ¡nh giÃ¡ lÆ°u trÃº
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/services" class="dropdown-item">
-                                        <i class="fa-solid fa-bell-concierge"></i> Yêu cầu dịch vụ
+                                        <i class="fa-solid fa-bell-concierge"></i> YÃªu cáº§u dá»‹ch vá»¥
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/maintenance" class="dropdown-item">
-                                        <i class="fa-solid fa-screwdriver-wrench"></i> Yêu cầu sửa chữa
+                                        <i class="fa-solid fa-screwdriver-wrench"></i> YÃªu cáº§u sá»­a chá»¯a
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/payments" class="dropdown-item">
-                                        <i class="fa-solid fa-credit-card"></i> Thanh toán & Lịch sử
+                                        <i class="fa-solid fa-credit-card"></i> Thanh toÃ¡n & Lá»‹ch sá»­
                                     </a>
                                 </c:when>
                                 <c:otherwise>
@@ -77,13 +81,13 @@
                             </c:choose>
                             <div class="dropdown-divider"></div>
                             <a href="${pageContext.request.contextPath}/logout" class="dropdown-item logout-item">
-                                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                                <i class="fa-solid fa-right-from-bracket"></i> ÄÄƒng xuáº¥t
                             </a>
                         </div>
                     </div>
                 </c:when>
                 <c:otherwise>
-                    <a href="${pageContext.request.contextPath}/home/login" class="btn-login">Đăng nhập</a>
+                    <a href="${pageContext.request.contextPath}/home/login" class="btn-login">ÄÄƒng nháº­p</a>
                 </c:otherwise>
             </c:choose>
         </div>
@@ -91,8 +95,8 @@
 
     <div class="booking-container">
         <div class="booking-header">
-            <h1>Tạo Đặt Phòng Mới</h1>
-            <p>Trải nghiệm kỳ nghỉ hoàn hảo tại hệ thống khách sạn cao cấp HotelOps Pro</p>
+            <h1>Táº¡o Äáº·t PhÃ²ng Má»›i</h1>
+            <p>Tráº£i nghiá»‡m ká»³ nghá»‰ hoÃ n háº£o táº¡i há»‡ thá»‘ng khÃ¡ch sáº¡n cao cáº¥p HotelOps Pro</p>
         </div>
 
         <%-- Error Alert --%>
@@ -100,7 +104,7 @@
             <div class="error-banner" id="serverValidationError">
                 <i class="fa-solid fa-circle-exclamation" style="font-size: 20px;"></i>
                 <div>
-                    <strong>Lỗi đặt phòng:</strong> ${errorMessage}
+                    <strong>Lá»—i Ä‘áº·t phÃ²ng:</strong> ${errorMessage}
                 </div>
             </div>
         </c:if>
@@ -109,7 +113,7 @@
         <div class="error-banner" id="clientValidationError" style="display: none;">
             <i class="fa-solid fa-circle-exclamation" style="font-size: 20px;"></i>
             <div id="validationErrorMessage">
-                <strong>Cảnh báo:</strong> Số lượng khách vượt quá sức chứa tối đa của phòng đã chọn!
+                <strong>Cáº£nh bÃ¡o:</strong> Sá»‘ lÆ°á»£ng khÃ¡ch vÆ°á»£t quÃ¡ sá»©c chá»©a tá»‘i Ä‘a cá»§a phÃ²ng Ä‘Ã£ chá»n!
             </div>
         </div>
 
@@ -124,19 +128,19 @@
                         <div class="booking-section">
                             <h2 style="font-size: 18px; margin-top: 0; color: var(--primary-dark); margin-bottom: 20px;">
                                 <i class="fa-solid fa-bed" style="color: var(--accent-gold); margin-right: 8px;"></i>
-                                Hình thức đặt phòng
+                                HÃ¬nh thá»©c Ä‘áº·t phÃ²ng
                             </h2>
                             
                             <div class="type-selector">
                                 <div class="type-card ${bookingType eq 'multi' ? '' : 'active'}" id="typeSingleCard" onclick="switchBookingType('single')">
                                     <input type="radio" name="bookingType" id="typeSingle" value="single" ${bookingType eq 'multi' ? '' : 'checked'} />
-                                    <h3>Đặt phòng đơn</h3>
-                                    <p>Đặt 1 loại phòng phù hợp với số lượng khách tiêu chuẩn.</p>
+                                    <h3>Äáº·t phÃ²ng Ä‘Æ¡n</h3>
+                                    <p>Äáº·t 1 loáº¡i phÃ²ng phÃ¹ há»£p vá»›i sá»‘ lÆ°á»£ng khÃ¡ch tiÃªu chuáº©n.</p>
                                 </div>
                                 <div class="type-card ${bookingType eq 'multi' ? 'active' : ''}" id="typeMultiCard" onclick="switchBookingType('multi')">
                                     <input type="radio" name="bookingType" id="typeMulti" value="multi" ${bookingType eq 'multi' ? 'checked' : ''} />
-                                    <h3>Đặt nhiều phòng (Multi-room)</h3>
-                                    <p>Đăng ký nhiều phòng khác nhau trong cùng một đơn đặt phòng và phân chia danh sách khách đi cùng.</p>
+                                    <h3>Äáº·t nhiá»u phÃ²ng (Multi-room)</h3>
+                                    <p>ÄÄƒng kÃ½ nhiá»u phÃ²ng khÃ¡c nhau trong cÃ¹ng má»™t Ä‘Æ¡n Ä‘áº·t phÃ²ng vÃ  phÃ¢n chia danh sÃ¡ch khÃ¡ch Ä‘i cÃ¹ng.</p>
                                 </div>
                             </div>
                         </div>
@@ -145,31 +149,31 @@
                         <div class="booking-section">
                             <h2 style="font-size: 18px; margin-top: 0; color: var(--primary-dark); margin-bottom: 20px;">
                                 <i class="fa-solid fa-calendar-days" style="color: var(--accent-gold); margin-right: 8px;"></i>
-                                Thông tin thời gian & Liên hệ
+                                ThÃ´ng tin thá»i gian & LiÃªn há»‡
                             </h2>
                             
                             <div class="form-grid">
                                 <div class="form-group">
-                                    <label for="customerName">Họ tên người đặt *</label>
-                                    <input type="text" name="customerName" id="customerName" required placeholder="Nhập họ tên đầy đủ"
+                                    <label for="customerName">Há» tÃªn ngÆ°á»i Ä‘áº·t *</label>
+                                    <input type="text" name="customerName" id="customerName" required placeholder="Nháº­p há» tÃªn Ä‘áº§y Ä‘á»§"
                                            value="${not empty customerName ? customerName : sessionScope.user}" />
                                 </div>
                                 <div class="form-group">
-                                    <label for="phone">Số điện thoại *</label>
-                                    <input type="tel" name="phone" id="phone" required placeholder="Nhập số điện thoại"
+                                    <label for="phone">Sá»‘ Ä‘iá»‡n thoáº¡i *</label>
+                                    <input type="tel" name="phone" id="phone" required placeholder="Nháº­p sá»‘ Ä‘iá»‡n thoáº¡i"
                                            value="${phone}" />
                                 </div>
                                 <div class="form-group">
                                     <label for="email">Email *</label>
-                                    <input type="email" name="email" id="email" required placeholder="Nhập email liên hệ"
+                                    <input type="email" name="email" id="email" required placeholder="Nháº­p email liÃªn há»‡"
                                            value="${email}" />
                                 </div>
                                 <div class="form-group">
-                                    <label for="checkInDate">Ngày nhận phòng *</label>
+                                    <label for="checkInDate">NgÃ y nháº­n phÃ²ng *</label>
                                     <input type="date" name="checkInDate" id="checkInDate" required value="${checkInDate}" onchange="calculatePricing()" min="<%= new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()) %>" />
                                 </div>
                                 <div class="form-group">
-                                    <label for="checkOutDate">Ngày trả phòng *</label>
+                                    <label for="checkOutDate">NgÃ y tráº£ phÃ²ng *</label>
                                     <input type="date" name="checkOutDate" id="checkOutDate" required value="${checkOutDate}" onchange="calculatePricing()" />
                                 </div>
                             </div>
@@ -182,26 +186,26 @@
                             <div id="singleRoomFields" style="display: ${bookingType eq 'multi' ? 'none' : 'block'};">
                                 <h2 style="font-size: 18px; margin-top: 0; color: var(--primary-dark); margin-bottom: 20px;">
                                     <i class="fa-solid fa-circle-info" style="color: var(--accent-gold); margin-right: 8px;"></i>
-                                    Chọn loại phòng & Khách nghỉ
+                                    Chá»n loáº¡i phÃ²ng & KhÃ¡ch nghá»‰
                                 </h2>
                                 <div class="single-room-grid">
                                     <div class="form-group">
-                                        <label for="roomTypeId">Loại phòng</label>
+                                        <label for="roomTypeId">Loáº¡i phÃ²ng</label>
                                         <select name="roomTypeId" id="roomTypeId" onchange="calculatePricing(); validateForm()">
                                             <c:forEach var="rt" items="${roomTypes}">
                                                 <option value="${rt.typeId}" data-price="${rt.basePrice}" data-capacity="${rt.capacity}"
                                                         <c:if test="${not empty selectedRoomTypeId and selectedRoomTypeId eq rt.typeId}">selected</c:if>>
-                                                    ${rt.typeName} - <fmt:formatNumber value="${rt.basePrice}" type="number" pattern="#,##0" /> VND / đêm (Tối đa ${rt.capacity} khách)
+                                                    ${rt.typeName} - <fmt:formatNumber value="${rt.basePrice}" type="number" pattern="#,##0" /> VND / Ä‘Ãªm (Tá»‘i Ä‘a ${rt.capacity} khÃ¡ch)
                                                 </option>
                                             </c:forEach>
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label for="roomQuantity">Số lượng phòng</label>
+                                        <label for="roomQuantity">Sá»‘ lÆ°á»£ng phÃ²ng</label>
                                         <input type="number" name="roomQuantity" id="roomQuantity" min="1" max="10" value="1" required oninput="calculatePricing(); validateForm()" />
                                     </div>
                                     <div class="form-group">
-                                        <label for="guestCount">Lượng người ở *</label>
+                                        <label for="guestCount">LÆ°á»£ng ngÆ°á»i á»Ÿ *</label>
                                         <input type="number" name="guestCount" id="guestCount" min="1" value="1" required oninput="validateForm()" />
                                     </div>
                                 </div>
@@ -212,10 +216,10 @@
                                 <div class="room-selection-header" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
                                     <h2 style="font-size: 18px; margin-top: 0; margin-bottom: 0; color: var(--primary-dark); border-bottom: none; padding-bottom: 0;">
                                         <i class="fa-solid fa-circle-info" style="color: var(--accent-gold); margin-right: 8px;"></i>
-                                        Danh sách phòng chọn đặt
+                                        Danh sÃ¡ch phÃ²ng chá»n Ä‘áº·t
                                     </h2>
                                     <button type="button" class="btn-secondary" onclick="addRoomRow()">
-                                        <i class="fa-solid fa-plus"></i> Thêm phòng
+                                        <i class="fa-solid fa-plus"></i> ThÃªm phÃ²ng
                                     </button>
                                 </div>
                                 
@@ -229,12 +233,12 @@
                         <div class="booking-section" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
                             <h2 style="font-size: 18px; margin-top: 0; color: var(--primary-dark); margin-bottom: 20px;">
                                 <i class="fa-solid fa-comment-dots" style="color: var(--accent-gold); margin-right: 8px;"></i>
-                                Yêu cầu đặc biệt (Tùy chọn)
+                                YÃªu cáº§u Ä‘áº·c biá»‡t (TÃ¹y chá»n)
                             </h2>
                             
                             <div class="form-group form-group-full">
-                                <label for="note">Nội dung ghi chú / yêu cầu</label>
-                                <textarea name="note" id="note" rows="4" placeholder="Nhập các yêu cầu đặc biệt của bạn (ví dụ: phòng tầng cao, giường phụ, yên tĩnh...)">${note}</textarea>
+                                <label for="note">Ná»™i dung ghi chÃº / yÃªu cáº§u</label>
+                                <textarea name="note" id="note" rows="4" placeholder="Nháº­p cÃ¡c yÃªu cáº§u Ä‘áº·c biá»‡t cá»§a báº¡n (vÃ­ dá»¥: phÃ²ng táº§ng cao, giÆ°á»ng phá»¥, yÃªn tÄ©nh...)">${note}</textarea>
                             </div>
                         </div>
                         
@@ -244,47 +248,47 @@
                 <%-- Sticky Right Column Summary --%>
                 <div class="booking-sidebar">
                     <div class="receipt-card">
-                        <h3>Tóm tắt đặt phòng</h3>
+                        <h3>TÃ³m táº¯t Ä‘áº·t phÃ²ng</h3>
                         
                         <div class="receipt-row">
-                            <span>Số đêm nghỉ:</span>
+                            <span>Sá»‘ Ä‘Ãªm nghá»‰:</span>
                             <span id="summaryNights">--</span>
                         </div>
                         <div class="receipt-row">
-                            <span>Tổng tiền phòng:</span>
+                            <span>Tá»•ng tiá»n phÃ²ng:</span>
                             <span id="summarySubtotal">0 VND</span>
                         </div>
                         <div class="receipt-row" id="discountRow" style="display: none; color: #e74c3c;">
-                            <span>Giảm giá:</span>
+                            <span>Giáº£m giÃ¡:</span>
                             <span id="summaryDiscount">-0 VND</span>
                         </div>
                         
                         <div class="receipt-row total">
-                            <span>TỔNG CỘNG:</span>
+                            <span>Tá»”NG Cá»˜NG:</span>
                             <span id="summaryGrandTotal" class="grand-total-amount">0 VND</span>
                         </div>
                         
                         <div class="receipt-row deposit" style="margin-top: 15px;">
-                            <span class="deposit-label">Tiền đặt cọc (30%):</span>
+                            <span class="deposit-label">Tiá»n Ä‘áº·t cá»c (30%):</span>
                             <span id="summaryDeposit" class="deposit-amount">0 VND</span>
                         </div>
 
                         <div class="promo-code-section" style="margin-top: 20px; border-top: 1px dashed var(--border-color); padding-top: 15px; margin-bottom: 20px;">
                             <label for="promoCode" style="font-size: 14px; font-weight: 600; color: var(--primary-dark); display: block; margin-bottom: 8px;">
-                                <i class="fa-solid fa-ticket" style="color: var(--accent-gold); margin-right: 5px;"></i>Mã giảm giá
+                                <i class="fa-solid fa-ticket" style="color: var(--accent-gold); margin-right: 5px;"></i>MÃ£ giáº£m giÃ¡
                             </label>
                             <div style="display: flex; gap: 8px;">
-                                <input type="text" id="promoCode" name="promotionCode" placeholder="Nhập mã (nếu có)" style="flex: 1; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 14px; text-transform: uppercase; outline: none;">
-                                <button type="button" class="btn-secondary" style="padding: 10px 15px; font-size: 14px; margin: 0; white-space: nowrap; border-radius: var(--radius-sm); background-color: var(--brand-blue); color: white; border: none; box-shadow: none;" onclick="applyPromotionCode()">Áp dụng</button>
+                                <input type="text" id="promoCode" name="promotionCode" placeholder="Nháº­p mÃ£ (náº¿u cÃ³)" style="flex: 1; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 14px; text-transform: uppercase; outline: none;">
+                                <button type="button" class="btn-secondary" style="padding: 10px 15px; font-size: 14px; margin: 0; white-space: nowrap; border-radius: var(--radius-sm); background-color: var(--brand-blue); color: white; border: none; box-shadow: none;" onclick="applyPromotionCode()">Ãp dá»¥ng</button>
                             </div>
                             <div id="promoMessage" style="font-size: 13px; margin-top: 8px; display: none;"></div>
                         </div>
 
                         <button type="submit" class="btn-primary" id="submitBtn">
-                            <i class="fa-solid fa-credit-card"></i> Tiến hành đặt phòng
+                            <i class="fa-solid fa-credit-card"></i> Tiáº¿n hÃ nh Ä‘áº·t phÃ²ng
                         </button>
                         <a href="${pageContext.request.contextPath}/rooms" class="btn-secondary" style="margin-top: 10px; display: block; text-align: center; text-decoration: none; padding: 12px; border-radius: var(--radius-md);">
-                            Hủy đặt phòng
+                            Há»§y Ä‘áº·t phÃ²ng
                         </a>
                     </div>
                 </div>
@@ -299,30 +303,30 @@
         <div class="footer-white-grid">
             <div class="footer-white-about">
                 <h3>HotelOps Pro</h3>
-                <p>Hệ thống quản lý và nghỉ dưỡng đẳng cấp quốc tế, đem lại trải nghiệm sang trọng vượt thời gian.</p>
+                <p>Há»‡ thá»‘ng quáº£n lÃ½ vÃ  nghá»‰ dÆ°á»¡ng Ä‘áº³ng cáº¥p quá»‘c táº¿, Ä‘em láº¡i tráº£i nghiá»‡m sang trá»ng vÆ°á»£t thá»i gian.</p>
             </div>
             
             <div class="footer-white-links">
-                <h4>Liên kết nhanh</h4>
+                <h4>LiÃªn káº¿t nhanh</h4>
                 <ul>
-                    <li><a href="#">Trang chủ</a></li>
-                    <li><a href="#">Phòng & Giá</a></li>
-                    <li><a href="#">Dịch vụ</a></li>
+                    <li><a href="#">Trang chá»§</a></li>
+                    <li><a href="#">PhÃ²ng & GiÃ¡</a></li>
+                    <li><a href="#">Dá»‹ch vá»¥</a></li>
                 </ul>
             </div>
 
             <div class="footer-white-links">
-                <h4>Chính sách</h4>
+                <h4>ChÃ­nh sÃ¡ch</h4>
                 <ul>
-                    <li><a href="#">Chính sách bảo mật</a></li>
-                    <li><a href="#">Điều khoản sử dụng</a></li>
-                    <li><a href="#">Chính sách hoàn tiền</a></li>
+                    <li><a href="#">ChÃ­nh sÃ¡ch báº£o máº­t</a></li>
+                    <li><a href="#">Äiá»u khoáº£n sá»­ dá»¥ng</a></li>
+                    <li><a href="#">ChÃ­nh sÃ¡ch hoÃ n tiá»n</a></li>
                 </ul>
             </div>
 
             <div class="footer-white-contact">
-                <h4>Thông tin liên hệ</h4>
-                <p><i class="fa-solid fa-location-dot"></i> 123 Đường Lê Lợi, Quận 1, TP. Hồ Chí Minh</p>
+                <h4>ThÃ´ng tin liÃªn há»‡</h4>
+                <p><i class="fa-solid fa-location-dot"></i> 123 ÄÆ°á»ng LÃª Lá»£i, Quáº­n 1, TP. Há»“ ChÃ­ Minh</p>
                 <p><i class="fa-solid fa-envelope"></i> contact@hotelopspro.com</p>
                 <span class="phone-number-white"><i class="fa-solid fa-phone"></i> 1900 6789</span>
             </div>
@@ -432,23 +436,23 @@
             let optionsHtml = '';
             <c:forEach var="rt" items="${roomTypes}">
                 optionsHtml += '<option value="${rt.typeId}" data-price="${rt.basePrice}" data-capacity="${rt.capacity}" ' + (typeId == '${rt.typeId}' ? 'selected' : '') + '>' +
-                    '${rt.typeName} - <fmt:formatNumber value="${rt.basePrice}" type="number" pattern="#,##0" /> VND / đêm (Tối đa ${rt.capacity} khách)' +
+                    '${rt.typeName} - <fmt:formatNumber value="${rt.basePrice}" type="number" pattern="#,##0" /> VND / Ä‘Ãªm (Tá»‘i Ä‘a ${rt.capacity} khÃ¡ch)' +
                 '</option>';
             </c:forEach>
 
             row.innerHTML = 
                 '<div class="form-group">' +
-                '    <label>Loại phòng</label>' +
+                '    <label>Loáº¡i phÃ²ng</label>' +
                 '    <select name="roomTypeId[]" required onchange="calculatePricing(); validateForm()">' +
                 optionsHtml +
                 '    </select>' +
                 '</div>' +
                 '<div class="form-group">' +
-                '    <label>Số lượng</label>' +
+                '    <label>Sá»‘ lÆ°á»£ng</label>' +
                 '    <input type="number" name="roomQuantity[]" min="1" max="10" value="' + qty + '" required oninput="calculatePricing(); validateForm()" />' +
                 '</div>' +
                 '<div class="form-group">' +
-                '    <label>Lượng người ở</label>' +
+                '    <label>LÆ°á»£ng ngÆ°á»i á»Ÿ</label>' +
                 '    <input type="number" name="guestCount[]" min="1" value="' + guests + '" required oninput="validateForm()" />' +
                 '</div>' +
                 '<button type="button" class="btn-danger" style="margin-bottom: 2px;" onclick="removeRoomRow(' + index + ')">' +
@@ -498,14 +502,14 @@
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
             if (diffDays <= 0) {
-                nightsSpan.innerText = '0 đêm';
+                nightsSpan.innerText = '0 Ä‘Ãªm';
                 subtotalSpan.innerText = '0 VND';
                 totalSpan.innerText = '0 VND';
                 depositSpan.innerText = '0 VND';
                 return;
             }
 
-            nightsSpan.innerText = diffDays + ' đêm';
+            nightsSpan.innerText = diffDays + ' Ä‘Ãªm';
 
             let totalPrice = 0;
             const bookingType = document.querySelector('input[name="bookingType"]:checked').value;
@@ -537,7 +541,7 @@
 
             let unDiscountedTotal = totalPrice;
             if (window.currentDiscountAmount) {
-                // Đảm bảo không giảm quá tổng tiền
+                // Äáº£m báº£o khÃ´ng giáº£m quÃ¡ tá»•ng tiá»n
                 if (window.currentDiscountAmount > totalPrice) {
                     window.currentDiscountAmount = totalPrice;
                 }
@@ -574,11 +578,11 @@
             if (!promoInput) {
                 msgDiv.style.display = 'block';
                 msgDiv.style.color = '#e74c3c';
-                msgDiv.innerText = 'Vui lòng nhập mã giảm giá.';
+                msgDiv.innerText = 'Vui lÃ²ng nháº­p mÃ£ giáº£m giÃ¡.';
                 return;
             }
 
-            // Tính tổng tiền hiện tại trước khi giảm
+            // TÃ­nh tá»•ng tiá»n hiá»‡n táº¡i trÆ°á»›c khi giáº£m
             calculatePricing(); // update subtotal
             const subtotalText = document.getElementById('summarySubtotal').innerText;
             // Parse VND string back to number
@@ -586,13 +590,13 @@
             if (subtotal <= 0) {
                 msgDiv.style.display = 'block';
                 msgDiv.style.color = '#e74c3c';
-                msgDiv.innerText = 'Vui lòng chọn ngày và phòng trước khi áp dụng mã.';
+                msgDiv.innerText = 'Vui lÃ²ng chá»n ngÃ y vÃ  phÃ²ng trÆ°á»›c khi Ã¡p dá»¥ng mÃ£.';
                 return;
             }
 
             msgDiv.style.display = 'block';
             msgDiv.style.color = 'var(--brand-blue)';
-            msgDiv.innerText = 'Đang kiểm tra mã...';
+            msgDiv.innerText = 'Äang kiá»ƒm tra mÃ£...';
 
             try {
                 const formData = new URLSearchParams();
@@ -621,7 +625,7 @@
                 }
             } catch (error) {
                 msgDiv.style.color = '#e74c3c';
-                msgDiv.innerText = 'Có lỗi xảy ra khi kiểm tra mã.';
+                msgDiv.innerText = 'CÃ³ lá»—i xáº£y ra khi kiá»ƒm tra mÃ£.';
                 window.currentDiscountAmount = 0;
                 window.appliedPromoCode = "";
                 calculatePricing();
@@ -646,7 +650,7 @@
                 const todayStr = `${year}-${month}-${day}`;
                 if (checkInInput.value < todayStr) {
                     isValid = false;
-                    errorMsg = 'Ngày nhận phòng không được ở trong quá khứ so với ngày hiện tại.';
+                    errorMsg = 'NgÃ y nháº­n phÃ²ng khÃ´ng Ä‘Æ°á»£c á»Ÿ trong quÃ¡ khá»© so vá»›i ngÃ y hiá»‡n táº¡i.';
                 }
             }
             
@@ -667,13 +671,13 @@
                 
                 if (qty <= 0) {
                     isValid = false;
-                    errorMsg = 'Số lượng phòng phải lớn hơn hoặc bằng 1.';
+                    errorMsg = 'Sá»‘ lÆ°á»£ng phÃ²ng pháº£i lá»›n hÆ¡n hoáº·c báº±ng 1.';
                 } else if (guests <= 0) {
                     isValid = false;
-                    errorMsg = 'Lượng người ở phải lớn hơn hoặc bằng 1.';
+                    errorMsg = 'LÆ°á»£ng ngÆ°á»i á»Ÿ pháº£i lá»›n hÆ¡n hoáº·c báº±ng 1.';
                 } else if (guests > totalCapacity) {
                     isValid = false;
-                    errorMsg = 'Lượng người ở (' + guests + ' người) vượt quá sức chứa tối đa của phòng đã chọn.';
+                    errorMsg = 'LÆ°á»£ng ngÆ°á»i á»Ÿ (' + guests + ' ngÆ°á»i) vÆ°á»£t quÃ¡ sá»©c chá»©a tá»‘i Ä‘a cá»§a phÃ²ng Ä‘Ã£ chá»n.';
                 }
             } else {
                 const container = document.getElementById('multiRoomRowsContainer');
@@ -695,15 +699,15 @@
                         
                         if (qty <= 0) {
                             isValid = false;
-                            errorMsg = 'Phòng thứ ' + (i + 1) + ': Số lượng phòng phải lớn hơn hoặc bằng 1.';
+                            errorMsg = 'PhÃ²ng thá»© ' + (i + 1) + ': Sá»‘ lÆ°á»£ng phÃ²ng pháº£i lá»›n hÆ¡n hoáº·c báº±ng 1.';
                             break;
                         } else if (guests <= 0) {
                             isValid = false;
-                            errorMsg = 'Phòng thứ ' + (i + 1) + ': Lượng người ở phải lớn hơn hoặc bằng 1.';
+                            errorMsg = 'PhÃ²ng thá»© ' + (i + 1) + ': LÆ°á»£ng ngÆ°á»i á»Ÿ pháº£i lá»›n hÆ¡n hoáº·c báº±ng 1.';
                             break;
                         } else if (guests > totalCapacity) {
                             isValid = false;
-                            errorMsg = 'Phòng thứ ' + (i + 1) + ' (' + roomTypeName + '): Lượng người ở (' + guests + ' người) vượt quá sức chứa tối đa của số phòng đã chọn.';
+                            errorMsg = 'PhÃ²ng thá»© ' + (i + 1) + ' (' + roomTypeName + '): LÆ°á»£ng ngÆ°á»i á»Ÿ (' + guests + ' ngÆ°á»i) vÆ°á»£t quÃ¡ sá»©c chá»©a tá»‘i Ä‘a cá»§a sá»‘ phÃ²ng Ä‘Ã£ chá»n.';
                             break;
                         }
                     }
@@ -712,7 +716,7 @@
             
             if (!isValid) {
                 if (showErrorBanner) {
-                    errorMessageDiv.innerHTML = '<strong>Cảnh báo:</strong> ' + errorMsg;
+                    errorMessageDiv.innerHTML = '<strong>Cáº£nh bÃ¡o:</strong> ' + errorMsg;
                     errorBanner.style.display = 'flex';
                     
                     if (validationTimeoutId) {

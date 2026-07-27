@@ -403,8 +403,6 @@ BEGIN
         type_id INT IDENTITY(1,1) PRIMARY KEY,
         type_name NVARCHAR(100) NOT NULL UNIQUE,
         base_price DECIMAL(18,2) NOT NULL DEFAULT 0,
-        price_per_hour DECIMAL(18,2) NOT NULL DEFAULT 0,
-        deposit_percent DECIMAL(5,2) NOT NULL DEFAULT 0,
         capacity INT NOT NULL DEFAULT 2,
         description NVARCHAR(500) NULL,
         area NVARCHAR(50) NULL,
@@ -492,26 +490,26 @@ GO
 /* Seed RoomTypes */
 IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE type_name = N'Phòng Standard')
 BEGIN
-    INSERT INTO dbo.RoomType (type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type)
-    VALUES (N'Phòng Standard', 750000, 100000, 10, 2, N'Phòng tiêu chuẩn phù hợp cho khách đi công tác hoặc nghỉ ngắn ngày.', N'25 m²', N'1 Giường Queen');
+    INSERT INTO dbo.RoomType (type_name, base_price, capacity, description, area, bed_type)
+    VALUES (N'Phòng Standard', 750000, 2, N'Phòng tiêu chuẩn phù hợp cho khách đi công tác hoặc nghỉ ngắn ngày.', N'25 m²', N'1 Giường Queen');
 END
 
 IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE type_name = N'Phòng Deluxe')
 BEGIN
-    INSERT INTO dbo.RoomType (type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type)
-    VALUES (N'Phòng Deluxe', 1200000, 180000, 10, 2, N'Phòng rộng rãi, nội thất hiện đại, có view thành phố cực kỳ lung linh.', N'45 m²', N'1 Giường đôi lớn');
+    INSERT INTO dbo.RoomType (type_name, base_price, capacity, description, area, bed_type)
+    VALUES (N'Phòng Deluxe', 1200000, 2, N'Phòng rộng rãi, nội thất hiện đại, có view thành phố cực kỳ lung linh.', N'45 m²', N'1 Giường đôi lớn');
 END
 
 IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE type_name = N'Phòng Family')
 BEGIN
-    INSERT INTO dbo.RoomType (type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type)
-    VALUES (N'Phòng Family', 1800000, 250000, 10, 4, N'Phòng gia đình với không gian lớn, phù hợp nhóm bạn hoặc gia đình nhỏ.', N'60 m²', N'2 Giường đôi');
+    INSERT INTO dbo.RoomType (type_name, base_price, capacity, description, area, bed_type)
+    VALUES (N'Phòng Family', 1800000, 4, N'Phòng gia đình với không gian lớn, phù hợp nhóm bạn hoặc gia đình nhỏ.', N'60 m²', N'2 Giường đôi');
 END
 
 IF NOT EXISTS (SELECT 1 FROM dbo.RoomType WHERE type_name = N'Phòng Suite')
 BEGIN
-    INSERT INTO dbo.RoomType (type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type)
-    VALUES (N'Phòng Suite', 2800000, 400000, 20, 3, N'Phòng cao cấp có khu tiếp khách riêng, bồn tắm và ban công.', N'75 m²', N'1 Giường King');
+    INSERT INTO dbo.RoomType (type_name, base_price, capacity, description, area, bed_type)
+    VALUES (N'Phòng Suite', 2800000, 3, N'Phòng cao cấp có khu tiếp khách riêng, bồn tắm và ban công.', N'75 m²', N'1 Giường King');
 END
 GO
 
@@ -629,6 +627,7 @@ CREATE TABLE dbo.Booking (
 
     room_type_id INT NULL,
     room_quantity INT NOT NULL DEFAULT 1,
+    promotion_id INT NULL,
     check_in_date DATE NOT NULL,
     check_out_date DATE NOT NULL,
 
@@ -651,6 +650,12 @@ CREATE TABLE dbo.Booking (
     CONSTRAINT FK_Booking_Group
         FOREIGN KEY (group_booking_id)
         REFERENCES dbo.Booking(booking_id)
+
+    /* Tính DUY NHẤT của promotion_id KHÔNG dùng UNIQUE constraint ở đây, mà
+       được đảm bảo bằng FILTERED UNIQUE INDEX (UX_Booking_Promotion) tạo ở
+       mục 15 bên dưới. Lý do: trong SQL Server, UNIQUE constraint chỉ cho phép
+       DUY NHẤT 1 giá trị NULL, trong khi phần lớn booking không có khuyến mãi
+       (promotion_id = NULL) nên sẽ đụng ràng buộc ngay từ booking NULL thứ 2. */
 );
 END
 GO
@@ -749,36 +754,6 @@ IF COL_LENGTH(N'dbo.Account', N'work_status') IS NULL
     ALTER TABLE dbo.Account ADD work_status NVARCHAR(30) NOT NULL CONSTRAINT DF_Account_WorkStatus DEFAULT N'Offline';
 GO
 
-/* 5.2 Bảng yêu cầu của khách hàng.
-   - room_id        : phòng phát sinh yêu cầu
-   - title          : nội dung yêu cầu (vd: Thêm khăn tắm)
-   - priority       : Low / Medium / High / Urgent
-   - status         : Pending / InProgress / Completed / Cancelled
-   - assigned_staff_id : nhân viên Housekeeping được giao (NULL = chưa gán)
-   - created_at     : thời gian yêu cầu (dùng để sắp xếp mặc định)
-   - completed_at   : thời điểm hoàn thành (dùng đếm công việc theo ngày/tháng) */
-IF OBJECT_ID(N'dbo.CustomerRequest', N'U') IS NULL
-BEGIN
-    CREATE TABLE dbo.CustomerRequest (
-        request_id INT IDENTITY(1,1) PRIMARY KEY,
-        room_id INT NULL,
-        title NVARCHAR(200) NOT NULL,
-        description NVARCHAR(500) NULL,
-        priority NVARCHAR(20) NOT NULL DEFAULT N'Medium',
-        status NVARCHAR(20) NOT NULL DEFAULT N'Pending',
-        assigned_staff_id INT NULL,
-        created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
-        updated_at DATETIME2 NULL,
-        completed_at DATETIME2 NULL,
-        cancel_reason NVARCHAR(500) NULL,
-        CONSTRAINT FK_CustomerRequest_Room FOREIGN KEY (room_id) REFERENCES dbo.Room(room_id),
-        CONSTRAINT FK_CustomerRequest_Staff FOREIGN KEY (assigned_staff_id) REFERENCES dbo.Account(account_id),
-        CONSTRAINT CK_CustomerRequest_Priority CHECK (priority IN (N'Low', N'Medium', N'High', N'Urgent')),
-        CONSTRAINT CK_CustomerRequest_Status CHECK (status IN (N'Pending', N'InProgress', N'Completed', N'Cancelled'))
-    );
-END
-GO
-
 /* 5.3 Bảng yêu cầu dịch vụ của khách hàng (BookingServiceRequest) */
 IF OBJECT_ID(N'dbo.BookingServiceRequest', N'U') IS NULL
 BEGIN
@@ -829,63 +804,6 @@ GO
 /* Đảm bảo tài khoản housekeeping gốc cũng ở trạng thái Active để demo */
 UPDATE dbo.Account SET work_status = N'Active'
 WHERE email = N'housekeeping@hotel.com' AND work_status = N'Offline';
-GO
-
-/* 5.4 Seed yêu cầu khách hàng mẫu (chỉ thêm nếu bảng đang rỗng) */
-IF NOT EXISTS (SELECT 1 FROM dbo.CustomerRequest)
-BEGIN
-    INSERT INTO dbo.CustomerRequest (room_id, title, description, priority, status, assigned_staff_id, created_at, completed_at)
-    VALUES
-    -- Đang chờ xử lý (chưa gán)
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'204'), N'Yêu cầu thêm khăn tắm',
-        N'Khách yêu cầu thêm 2 khăn tắm lớn.', N'Medium', N'Pending', NULL,
-        DATEADD(MINUTE, -25, SYSDATETIME()), NULL),
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'301'), N'Điều hòa không mát',
-        N'Khách phản ánh điều hòa chạy nhưng không mát.', N'High', N'Pending', NULL,
-        DATEADD(MINUTE, -50, SYSDATETIME()), NULL),
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'101'), N'Nước nóng yếu',
-        N'Vòi sen ra nước nóng rất yếu vào buổi sáng.', N'Urgent', N'Pending', NULL,
-        DATEADD(HOUR, -2, SYSDATETIME()), NULL),
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'202'), N'Yêu cầu dọn phòng sớm',
-        N'Khách muốn được dọn phòng trước 11h.', N'Low', N'Pending', NULL,
-        DATEADD(HOUR, -3, SYSDATETIME()), NULL),
-    -- Đang thực hiện (đã gán)
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'102'), N'Thay ga giường',
-        N'Khách yêu cầu thay ga và vỏ gối mới.', N'Medium', N'InProgress',
-        (SELECT account_id FROM dbo.Account WHERE email = N'hk1@hotel.com'),
-        DATEADD(HOUR, -4, SYSDATETIME()), NULL),
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'305'), N'Bổ sung nước uống',
-        N'Bổ sung 4 chai nước suối trong minibar.', N'Low', N'InProgress',
-        (SELECT account_id FROM dbo.Account WHERE email = N'hk3@hotel.com'),
-        DATEADD(HOUR, -5, SYSDATETIME()), NULL),
-    -- Đã hoàn thành hôm nay (đếm theo ngày)
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'201'), N'Vệ sinh nhà tắm',
-        N'Khách yêu cầu vệ sinh lại nhà tắm.', N'Medium', N'Completed',
-        (SELECT account_id FROM dbo.Account WHERE email = N'hk1@hotel.com'),
-        DATEADD(HOUR, -8, SYSDATETIME()), DATEADD(HOUR, -6, SYSDATETIME())),
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'401'), N'Thay bóng đèn',
-        N'Bóng đèn phòng ngủ bị cháy.', N'High', N'Completed',
-        (SELECT account_id FROM dbo.Account WHERE email = N'hk3@hotel.com'),
-        DATEADD(HOUR, -10, SYSDATETIME()), DATEADD(HOUR, -9, SYSDATETIME())),
-    -- Đã hoàn thành trước đó trong tháng (đếm theo tháng)
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'101'), N'Giặt nhanh quần áo',
-        N'Khách gửi giặt nhanh 1 bộ vest.', N'Medium', N'Completed',
-        (SELECT account_id FROM dbo.Account WHERE email = N'hk1@hotel.com'),
-        DATEADD(DAY, -6, SYSDATETIME()), DATEADD(DAY, -6, SYSDATETIME())),
-    -- Đã huỷ
-    ((SELECT room_id FROM dbo.Room WHERE room_number = N'202'), N'Đặt thêm giường phụ',
-        N'Khách đổi ý, không cần giường phụ nữa.', N'Low', N'Cancelled', NULL,
-        DATEADD(DAY, -1, SYSDATETIME()), NULL);
-END
-GO
-
-/* Test query: danh sách yêu cầu kèm phòng và nhân viên được giao */
-SELECT cr.request_id, rm.room_number, cr.title, cr.priority, cr.status,
-       acc.full_name AS staff_name, cr.created_at, cr.completed_at
-FROM dbo.CustomerRequest cr
-LEFT JOIN dbo.Room rm ON cr.room_id = rm.room_id
-LEFT JOIN dbo.Account acc ON cr.assigned_staff_id = acc.account_id
-ORDER BY cr.created_at DESC;
 GO
 
 /* ============================================================
@@ -1303,21 +1221,6 @@ WHERE rf.status = N'Pending'
 GO
 
 /* ============================================================
-   11. ADD BOOKING_ID TO CUSTOMERREQUEST TABLE
-   ============================================================ */
-IF NOT EXISTS (
-    SELECT 1 
-    FROM sys.columns 
-    WHERE object_id = OBJECT_ID(N'dbo.CustomerRequest') 
-      AND name = N'booking_id'
-)
-BEGIN
-    ALTER TABLE dbo.CustomerRequest ADD booking_id INT NULL;
-    ALTER TABLE dbo.CustomerRequest ADD CONSTRAINT FK_CustomerRequest_Booking
-        FOREIGN KEY (booking_id) REFERENCES dbo.Booking(booking_id);
-END
-GO
-/* ============================================================
    11. CREATE 2 TABLE FOR STORE CHECK IN HISTORY
    ============================================================ */
 
@@ -1443,24 +1346,6 @@ GO
    Service requests (Receptionist duyet -> InvoiceItem): booking_id IS NOT NULL
    ============================================================ */
 
-/* Dam bao cac seed maintenance request khong bi gan booking_id nham (idempotent). */
-UPDATE dbo.CustomerRequest
-SET booking_id = NULL
-WHERE booking_id IS NOT NULL
-  AND title IN (
-      N'Yeu cau them khan tam',
-      N'Dieu hoa khong mat',
-      N'Nuoc nong yeu',
-      N'Yeu cau don phong som',
-      N'Thay ga giuong',
-      N'Bo sung nuoc uong',
-      N'Ve sinh nha tam',
-      N'Thay bong den',
-      N'Dat them giuong phu',
-      N'Giat nhanh quan ao'
-  );
-GO
-
 /* Seed mau: Service requests tu Customer de test Receptionist duyet -> Invoice.
    Chi chen khi chua co service request nao. */
 IF NOT EXISTS (SELECT 1 FROM dbo.BookingServiceRequest)
@@ -1576,7 +1461,7 @@ BEGIN
 
         description NVARCHAR(500) NULL,
 
-        priority NVARCHAR(20) NOT NULL DEFAULT N'Low',
+        priority NVARCHAR(20) NOT NULL,
 
         status NVARCHAR(20) NOT NULL DEFAULT N'Pending',
 
@@ -1707,6 +1592,55 @@ BEGIN
 END
 GO
 
+/* Đảm bảo cột promotion_id tồn tại trên Booking — dùng cho DB cũ đã có sẵn
+   bảng Booking từ trước (CREATE TABLE ở trên bị bỏ qua vì OBJECT_ID đã tồn
+   tại nên không tự thêm cột được, phải ALTER riêng ở đây). */
+IF COL_LENGTH(N'dbo.Booking', N'promotion_id') IS NULL
+BEGIN
+    ALTER TABLE dbo.Booking ADD promotion_id INT NULL;
+END
+GO
+
+/* Nếu DB cũ (hoặc lần chạy script trước) đã lỡ tạo UNIQUE constraint
+   UQ_Booking_Promotion thì gỡ bỏ, vì constraint này chỉ cho phép 1 giá trị
+   NULL — sẽ chặn các booking không có khuyến mãi. Thay bằng filtered unique
+   index bên dưới. */
+IF EXISTS (
+    SELECT 1 FROM sys.key_constraints
+    WHERE name = 'UQ_Booking_Promotion' AND parent_object_id = OBJECT_ID(N'dbo.Booking')
+)
+BEGIN
+    ALTER TABLE dbo.Booking DROP CONSTRAINT UQ_Booking_Promotion;
+END
+GO
+
+/* Đảm bảo tính DUY NHẤT của promotion_id (FK 1-1: mỗi Promotion chỉ gắn được
+   với đúng 1 Booking, chỉ dùng cho booking cha / root). Dùng FILTERED UNIQUE
+   INDEX thay vì UNIQUE constraint: với filter WHERE promotion_id IS NOT NULL,
+   ta cho phép NHIỀU booking không khuyến mãi (NULL) nhưng vẫn đảm bảo mỗi
+   promotion chỉ được dùng đúng 1 lần. Áp dụng cho cả DB mới lẫn DB cũ. */
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE name = 'UX_Booking_Promotion' AND object_id = OBJECT_ID(N'dbo.Booking')
+)
+BEGIN
+    CREATE UNIQUE INDEX UX_Booking_Promotion
+        ON dbo.Booking(promotion_id)
+        WHERE promotion_id IS NOT NULL;
+END
+GO
+
+/* Đảm bảo FK tới Promotion tồn tại — PHẢI đứng sau khi bảng Promotion đã
+   được tạo ở trên (không thể khai báo FK này ngay trong CREATE TABLE ban
+   đầu của Booking vì lúc đó Promotion chưa tồn tại — forward reference sẽ
+   lỗi). Check riêng theo tên FK, độc lập với 2 bước trên. */
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Booking_Promotion')
+BEGIN
+    ALTER TABLE dbo.Booking ADD CONSTRAINT FK_Booking_Promotion
+        FOREIGN KEY (promotion_id) REFERENCES dbo.Promotion(PromotionID);
+END
+GO
+
 /* ── Sample data for testing ── */
 IF NOT EXISTS (SELECT 1 FROM dbo.Promotion WHERE PromotionCode = 'SUMMER2025')
 BEGIN
@@ -1764,4 +1698,3 @@ BEGIN
     );
 END
 GO
-

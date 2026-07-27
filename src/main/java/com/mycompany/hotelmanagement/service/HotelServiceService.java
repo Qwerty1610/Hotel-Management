@@ -37,22 +37,31 @@ public class HotelServiceService {
      * @return danh sách đối tượng HotelService
      */
     public List<HotelService> getAllServices() {
-        return hotelServiceRepository.getAllServices();
+        List<HotelService> services = hotelServiceRepository.getAllServices();
+        java.util.Set<Integer> usedIds = hotelServiceRepository.getUsedServiceIds();
+        for (HotelService service : services) {
+            service.setHasUsage(usedIds.contains(service.getServiceId()));
+        }
+        return services;
     }
 
-    public void deleteService(int serviceId) {
-        hotelServiceRepository.deleteService(serviceId);
+    public boolean deleteService(int serviceId) {
+        java.util.Set<Integer> usedIds = hotelServiceRepository.getUsedServiceIds();
+        if (usedIds.contains(serviceId)) {
+            return false;
+        }
+        return hotelServiceRepository.deleteService(serviceId);
     }
 
-    public void toggleServiceStatus(int serviceId, boolean isActive) {
-        hotelServiceRepository.toggleServiceStatus(serviceId, isActive);
+    public boolean toggleServiceStatus(int serviceId, boolean isActive) {
+        return hotelServiceRepository.toggleServiceStatus(serviceId, isActive);
     }
 
-    public void saveService(HotelService service) {
+    public boolean saveService(HotelService service) {
         if (service.getServiceId() <= 0) {
-            hotelServiceRepository.insertService(service);
+            return hotelServiceRepository.insertService(service);
         } else {
-            hotelServiceRepository.updateService(service);
+            return hotelServiceRepository.updateService(service);
         }
     }
 }

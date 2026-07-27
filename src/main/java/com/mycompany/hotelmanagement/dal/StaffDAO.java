@@ -43,15 +43,15 @@ public class StaffDAO {
         String sql =
             "SELECT a.account_id, a.full_name, a.email, " +
             "       ISNULL(a.work_status, N'Offline') AS work_status, " +
-            "       (SELECT COUNT(*) FROM dbo.CustomerRequest cr " +
-            "          WHERE cr.assigned_staff_id = a.account_id AND cr.status = N'Completed' " +
-            "            AND CAST(cr.completed_at AS DATE) = CAST(GETDATE() AS DATE)) AS completed_today, " +
-            "       (SELECT COUNT(*) FROM dbo.CustomerRequest cr " +
-            "          WHERE cr.assigned_staff_id = a.account_id AND cr.status = N'Completed' " +
-            "            AND YEAR(cr.completed_at) = YEAR(GETDATE()) " +
-            "            AND MONTH(cr.completed_at) = MONTH(GETDATE())) AS completed_month, " +
-            "       (SELECT COUNT(*) FROM dbo.CustomerRequest cr " +
-            "          WHERE cr.assigned_staff_id = a.account_id AND cr.status = N'InProgress') AS active_assignments " +
+            "       (SELECT COUNT(*) FROM dbo.MaintenanceRequest mr " +
+            "          WHERE mr.assigned_staff_id = a.account_id AND mr.status = N'Resolved' " +
+            "            AND CAST(mr.completed_at AS DATE) = CAST(GETDATE() AS DATE)) AS completed_today, " +
+            "       (SELECT COUNT(*) FROM dbo.MaintenanceRequest mr " +
+            "          WHERE mr.assigned_staff_id = a.account_id AND mr.status = N'Resolved' " +
+            "            AND YEAR(mr.completed_at) = YEAR(GETDATE()) " +
+            "            AND MONTH(mr.completed_at) = MONTH(GETDATE())) AS completed_month, " +
+            "       (SELECT COUNT(*) FROM dbo.MaintenanceRequest mr " +
+            "          WHERE mr.assigned_staff_id = a.account_id AND mr.status = N'InProgress') AS active_assignments " +
             "FROM dbo.Account a " +
             "JOIN dbo.Role r ON a.role_id = r.role_id " +
             "WHERE r.role_name = N'Housekeeping' AND a.is_active = 1 " +
@@ -83,15 +83,15 @@ public class StaffDAO {
         String sql =
             "SELECT a.account_id, a.full_name, a.email, " +
             "       ISNULL(a.work_status, N'Offline') AS work_status, " +
-            "       (SELECT COUNT(*) FROM dbo.CustomerRequest cr " +
-            "          WHERE cr.assigned_staff_id = a.account_id AND cr.status = N'Completed' " +
-            "            AND CAST(cr.completed_at AS DATE) = CAST(GETDATE() AS DATE)) AS completed_today, " +
-            "       (SELECT COUNT(*) FROM dbo.CustomerRequest cr " +
-            "          WHERE cr.assigned_staff_id = a.account_id AND cr.status = N'Completed' " +
-            "            AND YEAR(cr.completed_at) = YEAR(GETDATE()) " +
-            "            AND MONTH(cr.completed_at) = MONTH(GETDATE())) AS completed_month, " +
-            "       (SELECT COUNT(*) FROM dbo.CustomerRequest cr " +
-            "          WHERE cr.assigned_staff_id = a.account_id AND cr.status = N'InProgress') AS active_assignments " +
+            "       (SELECT COUNT(*) FROM dbo.MaintenanceRequest mr " +
+            "          WHERE mr.assigned_staff_id = a.account_id AND mr.status = N'Resolved' " +
+            "            AND CAST(mr.completed_at AS DATE) = CAST(GETDATE() AS DATE)) AS completed_today, " +
+            "       (SELECT COUNT(*) FROM dbo.MaintenanceRequest mr " +
+            "          WHERE mr.assigned_staff_id = a.account_id AND mr.status = N'Resolved' " +
+            "            AND YEAR(mr.completed_at) = YEAR(GETDATE()) " +
+            "            AND MONTH(mr.completed_at) = MONTH(GETDATE())) AS completed_month, " +
+            "       (SELECT COUNT(*) FROM dbo.MaintenanceRequest mr " +
+            "          WHERE mr.assigned_staff_id = a.account_id AND mr.status = N'InProgress') AS active_assignments " +
             "FROM dbo.Account a WHERE a.account_id = ?";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);

@@ -1,8 +1,5 @@
 package com.mycompany.hotelmanagement.dal;
 
-import com.mycompany.hotelmanagement.config.DBContext;
-import com.mycompany.hotelmanagement.entity.RoomInfo;
-import com.mycompany.hotelmanagement.entity.RoomIssue;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,6 +7,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.mycompany.hotelmanagement.config.DBContext;
+import com.mycompany.hotelmanagement.entity.RoomInfo;
 
 /**
  * Project: Hotel Management System
@@ -62,7 +62,7 @@ public class RoomDAO {
                 rt.bed_type,
                 rt.area,
                 CASE 
-                    WHEN r.status IN ('OutOfService', 'Maintenance', 'Cleaning', 'Refilling') THEN r.status
+                    WHEN r.status IN ('OutOfService', 'Maintenance') THEN r.status
                     WHEN EXISTS (
                         SELECT 1 
                         FROM RoomAssignment ra
@@ -81,6 +81,7 @@ public class RoomDAO {
                           AND b.check_in_date < ?
                           AND b.check_out_date > ?
                     ) THEN 'Confirmed'
+                    WHEN r.status IN ('Cleaning', 'Refilling') THEN r.status
                     ELSE 'Available'
                 END AS display_status,
                 CASE 
@@ -172,10 +173,6 @@ public class RoomDAO {
         return getRoomsByDateRange(selectedDate, nextDate);
     }
 
-    public List<RoomInfo> getRoomMapByDate(java.sql.Date checkIn, java.sql.Date checkOut) {
-        return getRoomsByDateRange(checkIn, checkOut);
-    }
-
     public boolean isRoomCurrentlyOccupied(int roomId) {
         String sql = """
             SELECT COUNT(*)
@@ -237,7 +234,7 @@ public class RoomDAO {
                 if (rs.next()) {
                     String status = rs.getString("status");
                     int activeOrFutureCount = rs.getInt("active_or_future_booking_count");
-                    if (!"Available".equalsIgnoreCase(status)) {
+                    if (!"Available".equalsIgnoreCase(status) && !"OutOfService".equalsIgnoreCase(status)) {
                         return "roomNotAvailableForDelete";
                     }
                     if (activeOrFutureCount > 0) {
@@ -264,15 +261,16 @@ public class RoomDAO {
         }
     }
 
-    public void updateRoomStatus(int roomId, String status) {
+    public boolean updateRoomStatus(int roomId, String status) {
         String sql = "UPDATE Room SET status = ? WHERE room_id = ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setString(1, status);
             ps.setInt(2, roomId);
-            ps.executeUpdate();
+            return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error updating room status for room " + roomId, e);
+            return false;
         }
     }
 

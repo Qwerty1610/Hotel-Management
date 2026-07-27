@@ -1,7 +1,7 @@
 package com.mycompany.hotelmanagement.controller.housekeeping;
 
 import com.mycompany.hotelmanagement.dal.HousekeepingDAO;
-import com.mycompany.hotelmanagement.dal.CustomerRequestDAO;
+import com.mycompany.hotelmanagement.dal.MaintenanceRequestDAO;
 import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -25,7 +25,7 @@ public class HousekeepingDashboardController extends HttpServlet {
             return;
         }
         HousekeepingDAO dao = new HousekeepingDAO();
-        CustomerRequestDAO requestDAO = new CustomerRequestDAO();
+        MaintenanceRequestDAO requestDAO = new MaintenanceRequestDAO();
 
         request.setAttribute("cleaningRooms",
                 dao.getCleaningRooms());
@@ -51,16 +51,16 @@ public class HousekeepingDashboardController extends HttpServlet {
         Integer staffId = (Integer) session.getAttribute("accountId");
         if (staffId != null) {
             request.setAttribute(
-                    "customerRequests",
+                    "assignedRequests",
                     requestDAO.getRequestsByStaff(
                             staffId,
                             0,
-                            100
+                            5
                     )
             );
         } else {
             request.setAttribute(
-                    "customerRequests",
+                    "assignedRequests",
                     new ArrayList<>()
             );
         }
@@ -72,29 +72,6 @@ public class HousekeepingDashboardController extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        String action = request.getParameter("action");
-        if ("completeRequest".equals(action)) {
-            HttpSession session = request.getSession(false);
-            Integer staffId
-                    = (Integer) session.getAttribute("accountId");
-            String requestIdRaw
-                    = request.getParameter("requestId");
-            if (staffId != null && requestIdRaw != null) {
-                int requestId
-                        = Integer.parseInt(requestIdRaw);
-                HousekeepingDAO dao
-                        = new HousekeepingDAO();
-                dao.requestCompleteCustomerRequest(
-                        requestId,
-                        staffId
-                );
-            }
-            response.sendRedirect(
-                    request.getContextPath()
-                    + "/housekeeping/dashboard?tab=overview"
-            );
-            return;
-        }
         doGet(request, response);
     }
 }

@@ -4,6 +4,8 @@
  */
 package com.mycompany.hotelmanagement.entity;
 
+import java.time.LocalDateTime;
+
 /**
  *
  * @author MinhTDP
@@ -18,6 +20,11 @@ public class RoomIssue {
     private String note;
     private String status;
     private Integer reportedBy;
+    private LocalDateTime reportedAt;
+
+    // Dữ liệu join thêm, phục vụ hiển thị (không thuộc bảng RoomIssue)
+    private String roomNumber;
+    private String reporterName;
 
     public RoomIssue(int issueId, int roomId, String issueType, String severity, String description, String note, String status, Integer reportedBy) {
         this.issueId = issueId;
@@ -96,5 +103,29 @@ public class RoomIssue {
     public void setReportedBy(Integer reportedBy) {
         this.reportedBy = reportedBy;
     }
-    
+
+    public LocalDateTime getReportedAt() {
+        return reportedAt;
+    }
+
+    public void setReportedAt(LocalDateTime reportedAt) {
+        this.reportedAt = reportedAt;
+    }
+
+    public String getRoomNumber() {
+        return roomNumber;
+    }
+
+    public void setRoomNumber(String roomNumber) {
+        this.roomNumber = roomNumber;
+    }
+
+    public String getReporterName() {
+        return reporterName;
+    }
+
+    public void setReporterName(String reporterName) {
+        this.reporterName = reporterName;
+    }
+
 }

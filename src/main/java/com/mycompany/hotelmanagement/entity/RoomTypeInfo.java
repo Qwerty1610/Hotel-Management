@@ -29,8 +29,6 @@ public class RoomTypeInfo {
     private int typeId;
     private String typeName;
     private double basePrice;
-    private double pricePerHour;
-    private double depositPercent;
     private int capacity;
     private String description;
     private String imageUrl;
@@ -44,6 +42,9 @@ public class RoomTypeInfo {
     // Spec fields
     private String area;
     private String bedType;
+
+    // Delete guard: true if this room type currently has occupied guests
+    private boolean hasOccupiedGuests;
 
     public int getTypeId() {
         return typeId;
@@ -67,22 +68,6 @@ public class RoomTypeInfo {
 
     public void setBasePrice(double basePrice) {
         this.basePrice = basePrice;
-    }
-
-    public double getPricePerHour() {
-        return pricePerHour;
-    }
-
-    public void setPricePerHour(double pricePerHour) {
-        this.pricePerHour = pricePerHour;
-    }
-
-    public double getDepositPercent() {
-        return depositPercent;
-    }
-
-    public void setDepositPercent(double depositPercent) {
-        this.depositPercent = depositPercent;
     }
 
     public int getCapacity() {
@@ -155,5 +140,13 @@ public class RoomTypeInfo {
 
     public void setBedType(String bedType) {
         this.bedType = bedType;
+    }
+
+    public boolean isHasOccupiedGuests() {
+        return hasOccupiedGuests;
+    }
+
+    public void setHasOccupiedGuests(boolean hasOccupiedGuests) {
+        this.hasOccupiedGuests = hasOccupiedGuests;
     }
 }

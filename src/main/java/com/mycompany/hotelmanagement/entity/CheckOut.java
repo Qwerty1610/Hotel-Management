@@ -28,7 +28,8 @@ public class CheckOut {
 
     private double roomCharge;
     private double serviceCharge;
-    private double extraCharge;
+    private double extraCharge;       // Tổng phụ phí = checkInExtraFee + tổng Surcharge
+    private double checkInExtraFee;   // Phụ phí quá người ở từ bảng CheckIn
     private double totalAmount;
     private double amountPaid;
     private double remainingAmount;
@@ -97,6 +98,14 @@ public class CheckOut {
 
     public void setExtraCharge(double extraCharge) {
         this.extraCharge = extraCharge;
+    }
+
+    public double getCheckInExtraFee() {
+        return checkInExtraFee;
+    }
+
+    public void setCheckInExtraFee(double checkInExtraFee) {
+        this.checkInExtraFee = checkInExtraFee;
     }
 
     public double getTotalAmount() {
