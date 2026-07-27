@@ -700,7 +700,7 @@ public class WalkInBookingDAO {
                 rt.capacity,
                 rt.base_price
             FROM RoomType rt
-            WHERE EXISTS
+            WHERE ISNULL(rt.is_active, 1) = 1 AND EXISTS
             (
                 SELECT 1
                 FROM Room r

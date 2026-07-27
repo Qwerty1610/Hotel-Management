@@ -45,8 +45,22 @@ public class RoomTypeDAO {
         try (Statement stmt = conn.createStatement()) {
             stmt.execute("USE HotelManagementDB;");
             stmt.execute("IF COL_LENGTH(N'dbo.RoomType', N'is_deleted') IS NULL ALTER TABLE dbo.RoomType ADD is_deleted BIT NOT NULL DEFAULT 0;");
+            stmt.execute("IF COL_LENGTH(N'dbo.RoomType', N'is_active') IS NULL ALTER TABLE dbo.RoomType ADD is_active BIT NOT NULL DEFAULT 1;");
         } catch (SQLException e) {
             // Ignore
+        }
+    }
+
+    public boolean toggleRoomTypeStatus(int typeId, boolean isActive) {
+        String sql = "UPDATE RoomType SET is_active = ? WHERE type_id = ?";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            useDatabase(conn);
+            ps.setBoolean(1, isActive);
+            ps.setInt(2, typeId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 
@@ -126,7 +140,7 @@ public class RoomTypeDAO {
 
     public List<RoomTypeInfo> getAllRoomTypes() {
         List<RoomTypeInfo> list = new ArrayList<>();
-        String sql = "SELECT type_id, type_name, base_price, capacity, description, area, bed_type FROM RoomType WHERE ISNULL(is_deleted, 0) = 0 ORDER BY type_id";
+        String sql = "SELECT type_id, type_name, base_price, capacity, description, area, bed_type, ISNULL(is_active, 1) AS is_active FROM RoomType WHERE ISNULL(is_deleted, 0) = 0 ORDER BY type_id";
         try (Connection conn = DBContext.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {
@@ -140,6 +154,7 @@ public class RoomTypeDAO {
                 info.setDescription(rs.getString("description"));
                 info.setArea(rs.getString("area"));
                 info.setBedType(rs.getString("bed_type"));
+                info.setIsActive(rs.getBoolean("is_active"));
                 list.add(info);
             }
         } catch (Exception e) {
@@ -149,7 +164,7 @@ public class RoomTypeDAO {
     }
 
     public RoomTypeInfo getRoomTypeById(int typeId) {
-        String sql = "SELECT type_id, type_name, base_price, capacity, description, area, bed_type FROM RoomType WHERE type_id = ?";
+        String sql = "SELECT type_id, type_name, base_price, capacity, description, area, bed_type, ISNULL(is_active, 1) AS is_active FROM RoomType WHERE type_id = ?";
         try (Connection conn = DBContext.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
@@ -164,6 +179,7 @@ public class RoomTypeDAO {
                     info.setDescription(rs.getString("description"));
                     info.setArea(rs.getString("area"));
                     info.setBedType(rs.getString("bed_type"));
+                    info.setIsActive(rs.getBoolean("is_active"));
                     return info;
                 }
             }
@@ -174,7 +190,7 @@ public class RoomTypeDAO {
     }
 
     public int getAvailableRoomCount(int typeId) {
-        String sql = "SELECT COUNT(*) FROM Room WHERE type_id = ? AND status NOT IN ('Maintenance', 'OutOfService') AND is_deleted = 0";
+        String sql = "SELECT COUNT(*) FROM Room r JOIN RoomType rt ON r.type_id = rt.type_id WHERE r.type_id = ? AND r.status NOT IN ('Maintenance', 'OutOfService') AND r.is_deleted = 0 AND ISNULL(rt.is_active, 1) = 1";
         try (Connection conn = DBContext.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);

@@ -44,7 +44,8 @@
                             data-image-url="<c:out value="${rt.imageUrl}" />"
                             data-description="<c:out value="${rt.description}" />"
                             data-amenities="<c:forEach var="am" items="${rt.amenities}" varStatus="st">${am}${!st.last ? ',' : ''}</c:forEach>"
-                            data-has-occupied="${rt.hasOccupiedGuests}">
+                            data-has-occupied="${rt.hasOccupiedGuests}"
+                            data-active="${rt.isActive}">
                         </div>
                     </c:forEach>
                 </div>
@@ -56,28 +57,10 @@
                         Lưu thông tin loại phòng thành công.
                     </div>
                 </c:if>
-                <c:if test="${param.success eq 'deleted'}">
+                <c:if test="${param.success eq 'toggled'}">
                     <div class="alert-banner alert-success">
                         <i class="fa-solid fa-circle-check"></i>
-                        Xóa loại phòng thành công.
-                    </div>
-                </c:if>
-                <c:if test="${param.error eq 'hasOccupiedGuests'}">
-                    <div class="alert-banner alert-danger">
-                        <i class="fa-solid fa-circle-exclamation"></i>
-                        Không thể xóa do loại phòng này hiện đang có người ở.
-                    </div>
-                </c:if>
-                <c:if test="${param.error eq 'hasRooms'}">
-                    <div class="alert-banner alert-danger">
-                        <i class="fa-solid fa-circle-exclamation"></i>
-                        Không thể xóa loại phòng này vì đang có các phòng liên kết trong hệ thống.
-                    </div>
-                </c:if>
-                <c:if test="${param.error eq 'deleteError'}">
-                    <div class="alert-banner alert-danger">
-                        <i class="fa-solid fa-circle-exclamation"></i>
-                        Không thể xóa loại phòng này. Vui lòng thử lại sau.
+                        Cập nhật trạng thái loại phòng thành công.
                     </div>
                 </c:if>
                 <c:if test="${param.error eq 'duplicateName'}">
@@ -127,11 +110,12 @@
                         <thead>
                             <tr>
                                 <th style="width: 25%">Tên Loại Phòng</th>
-                                <th style="width: 15%">Sức chứa</th>
-                                <th style="width: 15%">Loại Giường</th>
+                                <th style="width: 12%">Sức chứa</th>
+                                <th style="width: 13%">Loại Giường</th>
                                 <th style="width: 20%">Tiện nghi</th>
                                 <th style="width: 15%">Giá Cơ Bản</th>
-                                <th style="width: 10%">Thao tác</th>
+                                <th style="width: 10%">Trạng thái</th>
+                                <th style="width: 5%">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody id="roomTypesTableBody">
@@ -303,7 +287,8 @@
                         imageUrl: (item.getAttribute("data-image-url") || "").trim(),
                         description: (item.getAttribute("data-description") || "").trim(),
                         amenities: amenitiesList,
-                        hasOccupied: item.getAttribute("data-has-occupied") === "true"
+                        hasOccupied: item.getAttribute("data-has-occupied") === "true",
+                        isActive: item.getAttribute("data-active") === "true"
                     };
                 },
                 renderRow: function (rt) {
@@ -324,14 +309,6 @@
                             amenitiesHtml += `<span class="roomtype-badge">\${badgeText}</span>`;
                         }
                     });
-
-                    const deleteBtnHtml = rt.hasOccupied
-                        ? `<button class="btn-action delete" style="opacity: 0.35; cursor: not-allowed;" title="Không thể xóa loại phòng đang có khách">
-                               <i class="fa-solid fa-trash-can"></i>
-                           </button>`
-                        : `<button class="btn-action delete" onclick="deleteRoomType(\${rt.id})" title="Xóa">
-                               <i class="fa-solid fa-trash-can"></i>
-                           </button>`;
 
                     return `
                         <td>
@@ -357,11 +334,16 @@
                             <span class="service-price-text" style="font-size: 16px; color: var(--brand-blue); font-weight: bold;">\${priceFormatted}đ</span>
                         </td>
                         <td>
+                            <label class="switch switch-active">
+                                <input type="checkbox" \${rt.isActive ? 'checked' : ''} onchange="toggleRoomTypeStatus(\${rt.id}, this.checked)" />
+                                <span class="slider"></span>
+                            </label>
+                        </td>
+                        <td>
                             <div class="table-actions">
                                 <button class="btn-action edit" onclick="openEditRoomTypeModal(\${rt.id})" title="Chỉnh sửa">
                                     <i class="fa-solid fa-pencil"></i>
                                 </button>
-                                \${deleteBtnHtml}
                             </div>
                         </td>
                     `;
@@ -496,10 +478,30 @@
             document.getElementById("roomTypeModal").style.display = "none";
         }
 
-        function deleteRoomType(id) {
-            if (confirm("Bạn có chắc chắn muốn xóa loại phòng này không?\nLưu ý: Hành động này sẽ xóa tất cả phòng thuộc loại phòng này.")) {
-                window.location.href = `${pageContext.request.contextPath}/manager/roomtypes?action=delete&id=` + id;
-            }
+        function toggleRoomTypeStatus(id, checked) {
+            const url = `${pageContext.request.contextPath}/manager/roomtypes?action=toggle&id=` + id + `&status=` + checked;
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        alert("Có lỗi xảy ra khi cập nhật trạng thái!");
+                        filterRoomTypes();
+                    } else {
+                        const table = ManagerTable.tables.roomTypesTable;
+                        if (table) {
+                            const rt = table.items.find(s => s.id === id);
+                            if (rt) {
+                                rt.isActive = checked;
+                                const el = document.querySelector(`.roomtype-data-item[data-id="${id}"]`);
+                                if (el) el.setAttribute("data-is-active", checked);
+                            }
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error("Error toggling room type status:", err);
+                    alert("Có lỗi xảy ra khi kết nối máy chủ!");
+                    filterRoomTypes();
+                });
         }
 
         // Input listeners for real-time validity clearing

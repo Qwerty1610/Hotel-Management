@@ -50,11 +50,14 @@ public class RoomTypeService {
                 info.setAvailableCount(counts.getOrDefault(info.getTypeId(), 0));
             }
         }
-        return allRoomTypes;
+        return allRoomTypes.stream().filter(RoomTypeInfo::getIsActive).collect(java.util.stream.Collectors.toList());
     }
 
     public RoomTypeInfo getRoomTypeDetail(int typeId, LocalDate checkIn, LocalDate checkOut) {
         RoomTypeInfo detail = getRoomTypeDetail(typeId);
+        if (detail != null && !detail.getIsActive()) {
+            return null; // Return null if room type is disabled (toggled OFF)
+        }
         if (detail != null && checkIn != null && checkOut != null && checkOut.isAfter(checkIn)) {
             Map<Integer, Integer> counts = roomService.getAvailableRoomCountsPerType(checkIn, checkOut);
             detail.setAvailableCount(counts.getOrDefault(typeId, 0));
@@ -184,15 +187,7 @@ public class RoomTypeService {
         }
     }
 
-    public boolean hasOccupiedGuests(int typeId) {
-        return roomTypeRepository.hasOccupiedGuests(typeId);
-    }
-
-    public boolean hasRooms(int typeId) {
-        return roomTypeRepository.hasRooms(typeId);
-    }
-
-    public boolean deleteRoomType(int typeId) {
-        return roomTypeRepository.deleteRoomType(typeId);
+    public boolean toggleRoomTypeStatus(int typeId, boolean isActive) {
+        return roomTypeRepository.toggleRoomTypeStatus(typeId, isActive);
     }
 }
