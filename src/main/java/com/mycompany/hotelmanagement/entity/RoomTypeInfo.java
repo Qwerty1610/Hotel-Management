@@ -29,8 +29,6 @@ public class RoomTypeInfo {
     private int typeId;
     private String typeName;
     private double basePrice;
-    private double pricePerHour;
-    private double depositPercent;
     private int capacity;
     private String description;
     private String imageUrl;
@@ -70,22 +68,6 @@ public class RoomTypeInfo {
 
     public void setBasePrice(double basePrice) {
         this.basePrice = basePrice;
-    }
-
-    public double getPricePerHour() {
-        return pricePerHour;
-    }
-
-    public void setPricePerHour(double pricePerHour) {
-        this.pricePerHour = pricePerHour;
-    }
-
-    public double getDepositPercent() {
-        return depositPercent;
-    }
-
-    public void setDepositPercent(double depositPercent) {
-        this.depositPercent = depositPercent;
     }
 
     public int getCapacity() {
