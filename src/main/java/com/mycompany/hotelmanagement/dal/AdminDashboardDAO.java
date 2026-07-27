@@ -21,18 +21,29 @@ import java.util.Map;
  * thống kê tài khoản, đặt phòng theo trạng thái, chuỗi doanh thu / lượt đặt phòng
  * theo thời gian (gom nhóm ngày / tháng / quý) và các danh sách chi tiết phân trang.
  *
- * Doanh thu chỉ tính các đơn đã ghi nhận (Confirmed / CheckedIn / CheckedOut),
- * lọc theo ngày tạo đơn (created_at) để phản ánh hoạt động trong khoảng.
+ * CHUẨN GHI NHẬN DOANH THU (dùng chung với trang Tổng quan của Manager —
+ * xem DashboardDAO): doanh thu chỉ tính các đơn đã ghi nhận
+ * (Confirmed / CheckedIn / CheckedOut) và được RẢI ĐỀU THEO TỪNG ĐÊM LƯU TRÚ,
+ * mỗi đơn chỉ đóng góp phần số đêm nằm trong khoảng lọc. Đơn được chọn theo
+ * điều kiện kỳ lưu trú giao với khoảng lọc, không theo created_at.
+ *
+ * Ngược lại, các chỉ số ĐO HOẠT ĐỘNG ĐẶT PHÒNG (lượt đặt phòng, phân bổ trạng
+ * thái) vẫn lọc theo ngày tạo đơn (created_at) vì chúng đo hành vi đặt phòng
+ * chứ không phải doanh thu.
  *
  * @author QuyPQ
  * Date: 08/07/2006
- * Version: 1.1 
+ * Version: 2.0
  */
 public class AdminDashboardDAO {
 
     /** Các trạng thái được tính vào doanh thu. */
     private static final String REVENUE_STATUS_IN =
             "b.status IN (N'Confirmed', N'CheckedIn', N'CheckedOut')";
+
+    /** Điều kiện kỳ lưu trú [check_in, check_out) giao với khoảng [?, ?] = [to, from]. */
+    private static final String STAY_OVERLAPS =
+            "b.check_in_date <= ? AND b.check_out_date > ?";
 
     /** Mức gom nhóm chuỗi thời gian (xem AdminDashboardService.granularityFor). */
     public static final String GRAN_DAY = "day";
@@ -90,32 +101,46 @@ public class AdminDashboardDAO {
         return countByDateRange(sql, from, to);
     }
 
-    /** Số đơn được tính doanh thu (Confirmed/CheckedIn/CheckedOut) tạo trong khoảng. */
+    /**
+     * Số đơn được tính doanh thu (Confirmed/CheckedIn/CheckedOut) có kỳ lưu trú
+     * giao với khoảng [from, to] — cùng tập với doanh thu rải theo đêm.
+     */
     public int getRevenueBookingCount(java.sql.Date from, java.sql.Date to) {
         String sql = "SELECT COUNT(*) FROM dbo.Booking b " +
-                "WHERE " + REVENUE_STATUS_IN +
-                "  AND CAST(b.created_at AS DATE) BETWEEN ? AND ?";
-        return countByDateRange(sql, from, to);
+                "WHERE " + REVENUE_STATUS_IN + " AND " + STAY_OVERLAPS;
+        // STAY_OVERLAPS nhận tham số theo thứ tự (to, from)
+        return countByDateRange(sql, to, from);
     }
 
-    /** Tổng doanh thu ghi nhận của các đơn tạo trong khoảng [from, to]. */
-    public double getTotalRevenue(java.sql.Date from, java.sql.Date to) {
-        String sql = "SELECT ISNULL(SUM(b.total_amount), 0) FROM dbo.Booking b " +
-                "WHERE " + REVENUE_STATUS_IN +
-                "  AND CAST(b.created_at AS DATE) BETWEEN ? AND ?";
+    /**
+     * Các kỳ lưu trú đã ghi nhận có giao với khoảng [from, to].
+     * Mỗi phần tử: [check_in_date, check_out_date, total_amount].
+     * Service dùng để rải doanh thu đều theo từng đêm (proration).
+     */
+    public List<Object[]> getStaysOverlapping(java.sql.Date from, java.sql.Date to) {
+        List<Object[]> list = new ArrayList<>();
+        String sql = "SELECT b.check_in_date, b.check_out_date, b.total_amount " +
+                "FROM dbo.Booking b " +
+                "WHERE " + REVENUE_STATUS_IN + " AND " + STAY_OVERLAPS;
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setDate(1, from);
-                ps.setDate(2, to);
+                ps.setDate(1, to);
+                ps.setDate(2, from);
                 try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) return rs.getDouble(1);
+                    while (rs.next()) {
+                        list.add(new Object[]{
+                            rs.getDate("check_in_date"),
+                            rs.getDate("check_out_date"),
+                            rs.getDouble("total_amount")
+                        });
+                    }
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return 0;
+        return list;
     }
 
     private int countByDateRange(String sql, java.sql.Date from, java.sql.Date to) {
@@ -137,41 +162,34 @@ public class AdminDashboardDAO {
     /* =====================================================================
        CHUỖI THỜI GIAN (gom nhóm ngày / tháng / quý ngay trong SQL)
 
+       Chỉ dùng cho chỉ số đo hoạt động đặt phòng — gom theo created_at.
+       Chuỗi doanh thu KHÔNG đi qua đây: doanh thu được rải theo đêm lưu trú
+       ở AdminDashboardService từ getStaysOverlapping().
+
        Khóa trả về theo dạng chuẩn để service điền 0 cho các nhóm trống:
        - day:     yyyy-MM-dd
        - month:   yyyy-MM
        - quarter: yyyy-Qn
        ===================================================================== */
 
-    /** Doanh thu ghi nhận cộng dồn theo nhóm thời gian (theo ngày tạo đơn). */
-    public Map<String, Double> getRevenueSeries(java.sql.Date from, java.sql.Date to, String granularity) {
-        return querySeries(from, to, granularity, REVENUE_STATUS_IN, "SUM(b.total_amount)");
-    }
-
-    /** Số lượt đặt phòng (mọi trạng thái) theo nhóm thời gian (theo ngày tạo đơn). */
+    /** Số lượt đặt phòng (mọi trạng thái) theo nhóm thời gian, theo ngày tạo đơn. */
     public Map<String, Double> getBookingSeries(java.sql.Date from, java.sql.Date to, String granularity) {
-        return querySeries(from, to, granularity, null, "COUNT(*)");
-    }
-
-    private Map<String, Double> querySeries(java.sql.Date from, java.sql.Date to,
-                                            String granularity, String statusFilter, String aggregate) {
         Map<String, Double> map = new LinkedHashMap<>();
-        String where = "CAST(b.created_at AS DATE) BETWEEN ? AND ?" +
-                (statusFilter != null ? " AND " + statusFilter : "");
+        String where = "CAST(b.created_at AS DATE) BETWEEN ? AND ?";
         String sql;
         switch (granularity) {
             case GRAN_MONTH:
-                sql = "SELECT YEAR(b.created_at) AS y, MONTH(b.created_at) AS p, " + aggregate + " AS total " +
+                sql = "SELECT YEAR(b.created_at) AS y, MONTH(b.created_at) AS p, COUNT(*) AS total " +
                         "FROM dbo.Booking b WHERE " + where + " " +
                         "GROUP BY YEAR(b.created_at), MONTH(b.created_at) ORDER BY y, p";
                 break;
             case GRAN_QUARTER:
-                sql = "SELECT YEAR(b.created_at) AS y, DATEPART(QUARTER, b.created_at) AS p, " + aggregate + " AS total " +
+                sql = "SELECT YEAR(b.created_at) AS y, DATEPART(QUARTER, b.created_at) AS p, COUNT(*) AS total " +
                         "FROM dbo.Booking b WHERE " + where + " " +
                         "GROUP BY YEAR(b.created_at), DATEPART(QUARTER, b.created_at) ORDER BY y, p";
                 break;
             default: // GRAN_DAY
-                sql = "SELECT CAST(b.created_at AS DATE) AS d, " + aggregate + " AS total " +
+                sql = "SELECT CAST(b.created_at AS DATE) AS d, COUNT(*) AS total " +
                         "FROM dbo.Booking b WHERE " + where + " " +
                         "GROUP BY CAST(b.created_at AS DATE) ORDER BY d";
                 break;
@@ -229,21 +247,34 @@ public class AdminDashboardDAO {
         return map;
     }
 
-    /** Doanh thu ghi nhận theo loại phòng trong khoảng (đơn không rõ loại gộp vào "Khác"). */
+    /**
+     * Doanh thu theo loại phòng trong khoảng [from, to], mỗi đơn chỉ tính phần
+     * tương ứng với số đêm lưu trú nằm trong khoảng (proration) — cùng chuẩn
+     * ghi nhận với chuỗi doanh thu theo thời gian.
+     * Đơn không rõ loại phòng gộp vào "Khác".
+     */
     public Map<String, Double> getRevenueByRoomType(java.sql.Date from, java.sql.Date to) {
         Map<String, Double> map = new LinkedHashMap<>();
-        String sql = "SELECT ISNULL(rt.type_name, N'Khác') AS name, SUM(b.total_amount) AS total " +
+        String sql = "SELECT ISNULL(rt.type_name, N'Khác') AS name, " +
+                "SUM(b.total_amount * " +
+                "    CAST(DATEDIFF(DAY, " +
+                "        CASE WHEN b.check_in_date > ? THEN b.check_in_date ELSE ? END, " +
+                "        CASE WHEN b.check_out_date < DATEADD(DAY, 1, ?) THEN b.check_out_date ELSE DATEADD(DAY, 1, ?) END) AS FLOAT) " +
+                "    / NULLIF(DATEDIFF(DAY, b.check_in_date, b.check_out_date), 0)) AS total " +
                 "FROM dbo.Booking b " +
                 "LEFT JOIN dbo.RoomType rt ON rt.type_id = b.room_type_id " +
-                "WHERE " + REVENUE_STATUS_IN +
-                "  AND CAST(b.created_at AS DATE) BETWEEN ? AND ? " +
+                "WHERE " + REVENUE_STATUS_IN + " AND " + STAY_OVERLAPS + " " +
                 "GROUP BY rt.type_name " +
                 "ORDER BY total DESC";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setDate(1, from);
-                ps.setDate(2, to);
+                ps.setDate(2, from);
+                ps.setDate(3, to);
+                ps.setDate(4, to);
+                ps.setDate(5, to);
+                ps.setDate(6, from);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         // Hai nhóm cùng hiển thị "Khác" (NULL và loại tên trùng) không xảy ra
@@ -305,24 +336,42 @@ public class AdminDashboardDAO {
 
     /**
      * Một trang danh sách đặt phòng tạo trong khoảng [from, to], mới tạo trước.
-     *
-     * @param revenueOnly true = chỉ các đơn được tính doanh thu
+     * Cùng tập với thẻ KPI "Lượt đặt phòng" ({@link #getBookingCount}).
      */
-    public List<BookingRow> getBookingsPage(java.sql.Date from, java.sql.Date to,
-                                            boolean revenueOnly, int offset, int limit) {
-        List<BookingRow> list = new ArrayList<>();
+    public List<BookingRow> getBookingsPage(java.sql.Date from, java.sql.Date to, int offset, int limit) {
         String sql = "SELECT b.booking_id, b.customer_name, b.check_in_date, b.check_out_date, " +
                 "       b.total_amount, b.status, b.created_at " +
                 "FROM dbo.Booking b " +
                 "WHERE CAST(b.created_at AS DATE) BETWEEN ? AND ? " +
-                (revenueOnly ? "  AND " + REVENUE_STATUS_IN + " " : "") +
                 "ORDER BY b.created_at DESC, b.booking_id DESC " +
                 "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+        return queryBookingsPage(sql, from, to, offset, limit);
+    }
+
+    /**
+     * Một trang các đơn được tính doanh thu có kỳ lưu trú giao với khoảng,
+     * mới nhận phòng trước. Cùng tập với thẻ KPI "Tổng doanh thu"
+     * ({@link #getRevenueBookingCount}) nên tổng số dòng luôn khớp KPI.
+     */
+    public List<BookingRow> getRevenueBookingsPage(java.sql.Date from, java.sql.Date to, int offset, int limit) {
+        String sql = "SELECT b.booking_id, b.customer_name, b.check_in_date, b.check_out_date, " +
+                "       b.total_amount, b.status, b.created_at " +
+                "FROM dbo.Booking b " +
+                "WHERE " + REVENUE_STATUS_IN + " AND " + STAY_OVERLAPS + " " +
+                "ORDER BY b.check_in_date DESC, b.booking_id DESC " +
+                "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+        // STAY_OVERLAPS nhận tham số theo thứ tự (to, from)
+        return queryBookingsPage(sql, to, from, offset, limit);
+    }
+
+    private List<BookingRow> queryBookingsPage(String sql, java.sql.Date p1, java.sql.Date p2,
+                                               int offset, int limit) {
+        List<BookingRow> list = new ArrayList<>();
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setDate(1, from);
-                ps.setDate(2, to);
+                ps.setDate(1, p1);
+                ps.setDate(2, p2);
                 ps.setInt(3, offset);
                 ps.setInt(4, limit);
                 try (ResultSet rs = ps.executeQuery()) {

@@ -17,6 +17,16 @@ import java.util.Map;
  * AdminDashboardService
  * Tổng hợp số liệu giám sát toàn hệ thống cho Bảng điều khiển của Admin (UC 2.7.4).
  *
+ * CHUẨN GHI NHẬN DOANH THU (thống nhất với trang Tổng quan của Manager —
+ * xem DashboardService): doanh thu của mỗi đơn đã ghi nhận được RẢI ĐỀU THEO
+ * TỪNG ĐÊM LƯU TRÚ (total_amount / số đêm), và chỉ phần số đêm nằm trong khoảng
+ * lọc mới được cộng vào kỳ. Nhờ vậy một đơn vắt qua hai tháng được chia đúng
+ * cho hai tháng, và số liệu của Admin luôn khớp với số liệu của Manager.
+ *
+ * Ngược lại, thẻ "Lượt đặt phòng", biểu đồ "Xu hướng lượt đặt phòng" và biểu đồ
+ * "Phân bổ trạng thái đặt phòng" đo HOẠT ĐỘNG ĐẶT PHÒNG nên lọc theo ngày tạo
+ * đơn (created_at).
+ *
  * Mỗi thẻ KPI (đặt phòng / doanh thu) và mỗi biểu đồ có khoảng lọc riêng.
  * Chuỗi thời gian được gom nhóm tự động để biểu đồ luôn đọc được:
  * đến ~3 tháng hiển thị theo ngày, đến ~3 năm theo tháng, rộng hơn theo quý.
@@ -24,7 +34,7 @@ import java.util.Map;
  *
  * @author QuyPQ
  * Date: 08/07/2006
- * version: 1.1
+ * version: 2.0
  */
 public class AdminDashboardService {
 
@@ -60,18 +70,19 @@ public class AdminDashboardService {
         stats.setActiveAccounts(repo.getActiveAccounts());
         stats.setLockedAccounts(repo.getLockedAccounts());
 
-        // KPI đặt phòng / doanh thu theo kỳ riêng của từng thẻ
+        // KPI đặt phòng (theo ngày tạo đơn) / doanh thu (rải theo đêm lưu trú),
+        // mỗi thẻ một kỳ lọc riêng
         stats.setTotalBookings(repo.getBookingCount(Date.valueOf(q.bookingFrom), Date.valueOf(q.bookingTo)));
-        stats.setTotalRevenue(repo.getTotalRevenue(Date.valueOf(q.revenueFrom), Date.valueOf(q.revenueTo)));
+        stats.setTotalRevenue(sumValues(revenueByDay(q.revenueFrom, q.revenueTo)));
 
-        // Biểu đồ 1: doanh thu theo thời gian (gom nhóm tự động)
-        stats.setRevenueSeries(buildTimeSeries(q.c1From, q.c1To, true));
+        // Biểu đồ 1: doanh thu theo thời gian (rải theo đêm, gom nhóm tự động)
+        stats.setRevenueSeries(bucketizeDaily(q.c1From, q.c1To, revenueByDay(q.c1From, q.c1To)));
 
         // Biểu đồ 2: phân bổ trạng thái đặt phòng
         stats.setStatusSeries(buildStatusSeries(q.c2From, q.c2To));
 
         // Biểu đồ 3: xu hướng lượt đặt phòng (gom nhóm tự động)
-        stats.setBookingTrendSeries(buildTimeSeries(q.c3From, q.c3To, false));
+        stats.setBookingTrendSeries(buildBookingTrendSeries(q.c3From, q.c3To));
 
         // Biểu đồ 4: doanh thu theo loại phòng
         stats.setRoomTypeRevenueSeries(buildRoomTypeSeries(q.c4From, q.c4To));
@@ -108,16 +119,96 @@ public class AdminDashboardService {
     }
 
     /**
-     * Chuỗi theo thời gian trong [from, to]: doanh thu (revenue=true)
-     * hoặc số lượt đặt phòng (revenue=false), điền 0 cho nhóm trống.
+     * Doanh thu rải đều theo từng đêm lưu trú trong [from, to] (key yyyy-MM-dd).
+     *
+     * Mỗi đơn đã ghi nhận đóng góp {@code total_amount / số đêm} cho mỗi đêm,
+     * và chỉ những đêm nằm trong khoảng lọc mới được cộng — nên một đơn vắt qua
+     * biên kỳ được chia đúng tỷ lệ giữa hai kỳ. Đơn 0 đêm bị bỏ qua.
+     * Đây là chuẩn dùng chung với DashboardService của Manager.
      */
-    private ChartSeries buildTimeSeries(LocalDate from, LocalDate to, boolean revenue) {
+    private Map<String, Double> revenueByDay(LocalDate from, LocalDate to) {
+        Map<String, Double> daily = new LinkedHashMap<>();
+        for (Object[] stay : repo.getStaysOverlapping(Date.valueOf(from), Date.valueOf(to))) {
+            LocalDate checkIn = ((Date) stay[0]).toLocalDate();
+            LocalDate checkOut = ((Date) stay[1]).toLocalDate();
+            double amount = (Double) stay[2];
+
+            long nights = ChronoUnit.DAYS.between(checkIn, checkOut);
+            if (nights <= 0) {
+                continue;
+            }
+            double perNight = amount / nights;
+
+            LocalDate start = checkIn.isBefore(from) ? from : checkIn;
+            LocalDate end = checkOut.isAfter(to.plusDays(1)) ? to.plusDays(1) : checkOut;
+            for (LocalDate d = start; d.isBefore(end); d = d.plusDays(1)) {
+                daily.merge(d.toString(), perNight, Double::sum);
+            }
+        }
+        return daily;
+    }
+
+    private double sumValues(Map<String, Double> daily) {
+        double total = 0d;
+        for (Double v : daily.values()) {
+            total += v;
+        }
+        return total;
+    }
+
+    /**
+     * Gom chuỗi doanh thu theo ngày (key yyyy-MM-dd) thành chuỗi biểu đồ theo
+     * mức gom nhóm tự động, cộng dồn trong nhóm; nhóm trống điền 0.
+     */
+    private ChartSeries bucketizeDaily(LocalDate from, LocalDate to, Map<String, Double> daily) {
         String gran = granularityFor(from, to);
-        Date sqlFrom = Date.valueOf(from);
-        Date sqlTo = Date.valueOf(to);
-        Map<String, Double> raw = revenue
-                ? repo.getRevenueSeries(sqlFrom, sqlTo, gran)
-                : repo.getBookingSeries(sqlFrom, sqlTo, gran);
+        ChartSeries s = new ChartSeries();
+        s.setFromDate(from.toString());
+        s.setToDate(to.toString());
+        s.setGranularity(gran);
+
+        if (AdminDashboardDAO.GRAN_DAY.equals(gran)) {
+            s.setGranularityLabel("Theo ngày");
+            DateTimeFormatter fmt = from.getYear() == to.getYear() ? DAY_LABEL_FMT : DAY_LABEL_FULL_FMT;
+            for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {
+                s.getLabels().add(d.format(fmt));
+                s.getValues().add(daily.getOrDefault(d.toString(), 0d));
+            }
+            return s;
+        }
+
+        // Gom theo tháng / quý: cộng dồn giá trị từng ngày vào nhóm tương ứng
+        Map<String, Double> buckets = new LinkedHashMap<>();
+        for (LocalDate d = from; !d.isAfter(to); d = d.plusDays(1)) {
+            String key = AdminDashboardDAO.GRAN_MONTH.equals(gran)
+                    ? YearMonth.from(d).toString()
+                    : d.getYear() + "-Q" + ((d.getMonthValue() - 1) / 3 + 1);
+            buckets.merge(key, daily.getOrDefault(d.toString(), 0d), Double::sum);
+        }
+
+        s.setGranularityLabel(AdminDashboardDAO.GRAN_MONTH.equals(gran) ? "Theo tháng" : "Theo quý");
+        for (Map.Entry<String, Double> e : buckets.entrySet()) {
+            String label;
+            if (AdminDashboardDAO.GRAN_MONTH.equals(gran)) {
+                YearMonth ym = YearMonth.parse(e.getKey());
+                label = String.format("%02d/%d", ym.getMonthValue(), ym.getYear());
+            } else {
+                String[] parts = e.getKey().split("-");
+                label = parts[1] + "/" + parts[0];
+            }
+            s.getLabels().add(label);
+            s.getValues().add(e.getValue());
+        }
+        return s;
+    }
+
+    /**
+     * Chuỗi số lượt đặt phòng theo thời gian trong [from, to] (theo ngày tạo
+     * đơn), điền 0 cho nhóm trống.
+     */
+    private ChartSeries buildBookingTrendSeries(LocalDate from, LocalDate to) {
+        String gran = granularityFor(from, to);
+        Map<String, Double> raw = repo.getBookingSeries(Date.valueOf(from), Date.valueOf(to), gran);
 
         ChartSeries s = new ChartSeries();
         s.setFromDate(from.toString());
@@ -242,6 +333,8 @@ public class AdminDashboardService {
                 from = q.revenueFrom;
                 to = q.revenueTo;
                 revenueOnly = true;
+                // Cùng điều kiện lọc với getRevenueBookingsPage bên dưới nên
+                // tổng số dòng luôn khớp danh sách hiển thị.
                 total = repo.getRevenueBookingCount(Date.valueOf(from), Date.valueOf(to));
                 break;
             default:
@@ -263,9 +356,12 @@ public class AdminDashboardService {
         if (total > 0) {
             if (d.isAccountView()) {
                 d.setAccounts(repo.getAccountsPage("active".equals(q.view), offset, PAGE_SIZE));
+            } else if (revenueOnly) {
+                d.setBookings(repo.getRevenueBookingsPage(Date.valueOf(from), Date.valueOf(to),
+                        offset, PAGE_SIZE));
             } else {
                 d.setBookings(repo.getBookingsPage(Date.valueOf(from), Date.valueOf(to),
-                        revenueOnly, offset, PAGE_SIZE));
+                        offset, PAGE_SIZE));
             }
         }
         return d;
