@@ -1,7 +1,6 @@
 package com.mycompany.hotelmanagement.service;
 
 import com.mycompany.hotelmanagement.dal.RoomDAO;
-import com.mycompany.hotelmanagement.entity.Room;
 import com.mycompany.hotelmanagement.entity.RoomInfo;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;

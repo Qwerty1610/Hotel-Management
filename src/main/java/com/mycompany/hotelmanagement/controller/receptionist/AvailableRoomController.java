@@ -1,7 +1,7 @@
 package com.mycompany.hotelmanagement.controller.receptionist;
 
 import com.mycompany.hotelmanagement.dal.WalkInBookingDAO;
-import com.mycompany.hotelmanagement.entity.Room;
+import com.mycompany.hotelmanagement.entity.RoomInfo;
 
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
@@ -39,7 +39,7 @@ public class AvailableRoomController extends HttpServlet {
             WalkInBookingDAO dao =
                     new WalkInBookingDAO();
 
-            List<Room> rooms =
+            List<RoomInfo> rooms =
                     dao.getAvailableRoomsByType(
                             typeId,
                             checkIn,
@@ -50,7 +50,7 @@ public class AvailableRoomController extends HttpServlet {
 
             for (int i = 0; i < rooms.size(); i++) {
 
-                Room room = rooms.get(i);
+                RoomInfo room = rooms.get(i);
 
                 if (i > 0) {
                     json.append(",");

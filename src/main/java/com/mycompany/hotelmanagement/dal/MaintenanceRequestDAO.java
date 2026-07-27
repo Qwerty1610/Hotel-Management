@@ -10,7 +10,6 @@ import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.IssueType;
 import com.mycompany.hotelmanagement.entity.MaintenanceRequest;
 import com.mycompany.hotelmanagement.entity.MaintenanceRequestDetail;
-import com.mycompany.hotelmanagement.entity.Room;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

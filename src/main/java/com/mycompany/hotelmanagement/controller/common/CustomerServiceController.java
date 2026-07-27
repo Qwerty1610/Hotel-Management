@@ -4,7 +4,7 @@ import com.mycompany.hotelmanagement.dal.BookingServiceRequestDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.BookingServiceRequest;
 import com.mycompany.hotelmanagement.entity.HotelService;
-import com.mycompany.hotelmanagement.entity.Room;
+import com.mycompany.hotelmanagement.entity.RoomInfo;
 import com.mycompany.hotelmanagement.service.BookingService;
 import com.mycompany.hotelmanagement.service.HotelServiceService;
 
@@ -297,7 +297,7 @@ public class CustomerServiceController extends HttpServlet {
 
             // Get room assignment if checked in
             Integer roomId = null;
-            List<Room> assignedRooms = bookingService.getAssignedRoomsForBooking(bookingId,
+            List<RoomInfo> assignedRooms = bookingService.getAssignedRoomsForBooking(bookingId,
                     booking.getCheckInDate(),
                     booking.getCheckOutDate());
             if (assignedRooms != null && !assignedRooms.isEmpty()) {

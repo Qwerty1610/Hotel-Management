@@ -2,7 +2,7 @@ package com.mycompany.hotelmanagement.dal;
 
 import com.mycompany.hotelmanagement.config.DBContext;
 import com.mycompany.hotelmanagement.entity.Booking;
-import com.mycompany.hotelmanagement.entity.Room;
+import com.mycompany.hotelmanagement.entity.RoomInfo;
 import com.mycompany.hotelmanagement.entity.CustomerDetails;
 import java.sql.*;
 import java.util.ArrayList;
@@ -528,11 +528,11 @@ public class BookingDAO {
         }
     }
 
-    public List<Room> getRoomsByTypeId(
+    public List<RoomInfo> getRoomsByTypeId(
             int typeId,
             Date checkIn,
             Date checkOut) {
-        List<Room> list = new ArrayList<>();
+        List<RoomInfo> list = new ArrayList<>();
         String sql = """
                 SELECT
                     r.room_id,
@@ -589,7 +589,7 @@ public class BookingDAO {
                 ps.setInt(3, typeId);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
-                        Room r = new Room();
+                        RoomInfo r = new RoomInfo();
                         r.setRoomId(rs.getInt("room_id"));
                         r.setRoomNumber(rs.getString("room_number"));
                         r.setStatus(rs.getString("display_status"));
@@ -605,8 +605,8 @@ public class BookingDAO {
         return list;
     }
 
-    public List<Room> getAllRooms(Date checkIn, Date checkOut) {
-        List<Room> list = new ArrayList<>();
+    public List<RoomInfo> getAllRooms(Date checkIn, Date checkOut) {
+        List<RoomInfo> list = new ArrayList<>();
 
         String sql = """
                 SELECT
@@ -654,7 +654,7 @@ public class BookingDAO {
 
             while (rs.next()) {
 
-                Room room = new Room();
+                RoomInfo room = new RoomInfo();
 
                 room.setRoomId(rs.getInt("room_id"));
                 room.setRoomNumber(rs.getString("room_number"));
@@ -764,8 +764,8 @@ public class BookingDAO {
         return false;
     }
 
-    public List<Room> getAssignedRoomsForBooking(int bookingId, Date checkIn, Date checkOut) {
-        List<Room> list = new ArrayList<>();
+    public List<RoomInfo> getAssignedRoomsForBooking(int bookingId, Date checkIn, Date checkOut) {
+        List<RoomInfo> list = new ArrayList<>();
         String sql = """
                 SELECT
 
@@ -817,7 +817,7 @@ public class BookingDAO {
                 ps.setInt(3, bookingId);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
-                        Room r = new Room();
+                        RoomInfo r = new RoomInfo();
                         r.setRoomId(rs.getInt("room_id"));
                         r.setRoomNumber(rs.getString("room_number"));
                         r.setStatus(rs.getString("display_status"));
@@ -1192,9 +1192,9 @@ public class BookingDAO {
         return false;
     }
 
-    public List<Room> getAllAssignedRoomsForGroup(int bookingId) {
+    public List<RoomInfo> getAllAssignedRoomsForGroup(int bookingId) {
 
-        List<Room> list = new ArrayList<>();
+        List<RoomInfo> list = new ArrayList<>();
 
         String sql = """
                     SELECT
@@ -1229,7 +1229,7 @@ public class BookingDAO {
 
             while (rs.next()) {
 
-                Room r = new Room();
+                RoomInfo r = new RoomInfo();
 
                 r.setRoomId(rs.getInt("room_id"));
                 r.setRoomNumber(rs.getString("room_number"));

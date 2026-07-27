@@ -3,7 +3,7 @@ package com.mycompany.hotelmanagement.dal;
 import com.mycompany.hotelmanagement.config.DBContext;
 import com.mycompany.hotelmanagement.entity.Account;
 import com.mycompany.hotelmanagement.entity.Booking;
-import com.mycompany.hotelmanagement.entity.Room;
+import com.mycompany.hotelmanagement.entity.RoomInfo;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 
 import java.sql.*;
@@ -18,10 +18,10 @@ public class WalkInBookingDAO {
         }
     }
 
-    public List<Room> getAvailableRoomsByType(
+    public List<RoomInfo> getAvailableRoomsByType(
             int typeId) {
 
-        List<Room> list = new ArrayList<>();
+        List<RoomInfo> list = new ArrayList<>();
 
         String sql = """
         SELECT
@@ -54,7 +54,7 @@ public class WalkInBookingDAO {
 
             while (rs.next()) {
 
-                Room r = new Room();
+                RoomInfo r = new RoomInfo();
 
                 r.setRoomId(rs.getInt("room_id"));
                 r.setRoomNumber(rs.getString("room_number"));
@@ -72,12 +72,12 @@ public class WalkInBookingDAO {
         return list;
     }
 
-    public List<Room> getAvailableRoomsByType(
+    public List<RoomInfo> getAvailableRoomsByType(
             int typeId,
             Date checkIn,
             Date checkOut) {
 
-        List<Room> list = new ArrayList<>();
+        List<RoomInfo> list = new ArrayList<>();
 
         String sql = """
         SELECT
@@ -124,7 +124,7 @@ public class WalkInBookingDAO {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                Room room = new Room();
+                RoomInfo room = new RoomInfo();
                 room.setRoomId(
                         rs.getInt("room_id"));
                 room.setRoomNumber(

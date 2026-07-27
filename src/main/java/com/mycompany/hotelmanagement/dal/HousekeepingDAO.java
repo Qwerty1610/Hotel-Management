@@ -1,7 +1,7 @@
 package com.mycompany.hotelmanagement.dal;
 
 import com.mycompany.hotelmanagement.config.DBContext;
-import com.mycompany.hotelmanagement.entity.Room;
+import com.mycompany.hotelmanagement.entity.RoomInfo;
 
 import java.sql.*;
 import java.util.*;
@@ -15,9 +15,9 @@ public class HousekeepingDAO {
     // =========================
     // MAIN: GET ALL ROOMS SORTED
     // =========================
-    public List<Room> getAllRooms() {
+    public List<RoomInfo> getAllRooms() {
 
-        List<Room> list = new ArrayList<>();
+        List<RoomInfo> list = new ArrayList<>();
 
         String sql = """
     SELECT r.room_id,
@@ -45,7 +45,7 @@ public class HousekeepingDAO {
 
             while (rs.next()) {
 
-                Room room = new Room();
+                RoomInfo room = new RoomInfo();
                 room.setRoomId(rs.getInt("room_id"));
                 room.setRoomNumber(rs.getString("room_number"));
                 room.setTypeName(rs.getString("type_name"));
@@ -64,9 +64,9 @@ public class HousekeepingDAO {
         // =========================
         // SORT (KHÔNG CẦN DB CHANGE)
         // =========================
-        list.sort(new Comparator<Room>() {
+        list.sort(new Comparator<RoomInfo>() {
             @Override
-            public int compare(Room a, Room b) {
+            public int compare(RoomInfo a, RoomInfo b) {
 
                 // 1. SORT FLOOR
                 int floorA = extractNumber(a.getFloor());
@@ -105,18 +105,18 @@ public class HousekeepingDAO {
     // =========================
     // CLEANING ROOMS
     // =========================
-    public List<Room> getCleaningRooms() {
+    public List<RoomInfo> getCleaningRooms() {
         return getRoomsByStatus("Cleaning",
                 "Refilling");
     }
 
-    public List<Room> getMaintenanceRooms() {
+    public List<RoomInfo> getMaintenanceRooms() {
         return getRoomsByStatus("Maintenance");
     }
 
-    private List<Room> getRoomsByStatus(String... status) {
+    private List<RoomInfo> getRoomsByStatus(String... status) {
 
-        List<Room> list = new ArrayList<>();
+        List<RoomInfo> list = new ArrayList<>();
 
         String placeholders = String.join(
                 ",",
@@ -145,7 +145,7 @@ public class HousekeepingDAO {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                Room room = new Room();
+                RoomInfo room = new RoomInfo();
                 room.setRoomId(rs.getInt("room_id"));
                 room.setRoomNumber(rs.getString("room_number"));
                 room.setTypeName(rs.getString("type_name"));
@@ -244,7 +244,7 @@ public class HousekeepingDAO {
         return 0;
     }
 
-    public Room getRoomById(int roomId) {
+    public RoomInfo getRoomById(int roomId) {
 
         String sql = """
 SELECT r.room_id,
@@ -266,7 +266,7 @@ WHERE r.room_id = ? AND r.is_deleted = 0
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                Room r = new Room();
+                RoomInfo r = new RoomInfo();
                 r.setRoomId(rs.getInt("room_id"));
                 r.setRoomNumber(rs.getString("room_number"));
                 r.setTypeName(rs.getString("type_name"));

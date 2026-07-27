@@ -49,11 +49,14 @@ body {
     font-size: 28px;
     font-weight: 800;
     letter-spacing: -0.5px;
+    text-decoration: none;
+    cursor: pointer;
 }
 .navbar-rooms .nav-links {
     display: flex;
+    flex-wrap: wrap;
     list-style: none;
-    gap: 36px;
+    gap: 12px 26px;
     margin: 0;
     padding: 0;
 }

@@ -2,7 +2,7 @@ package com.mycompany.hotelmanagement.controller.receptionist;
 
 import com.mycompany.hotelmanagement.service.BookingService;
 import com.mycompany.hotelmanagement.entity.Booking;
-import com.mycompany.hotelmanagement.entity.Room;
+import com.mycompany.hotelmanagement.entity.RoomInfo;
 import com.mycompany.hotelmanagement.entity.CustomerDetails;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -74,7 +74,7 @@ public class ReceptionistBookingDetailController extends HttpServlet {
             }
 
             // Load assigned rooms for parent booking
-            java.util.List<Room> assignedRooms = bookingService.getAssignedRoomsForBooking(bookingId,
+            java.util.List<RoomInfo> assignedRooms = bookingService.getAssignedRoomsForBooking(bookingId,
                     booking.getCheckInDate(),
                     booking.getCheckOutDate());
 
@@ -82,9 +82,9 @@ public class ReceptionistBookingDetailController extends HttpServlet {
             java.util.List<Booking> childBookings = bookingService.getChildBookings(bookingId);
 
             // Load assigned rooms for each child booking
-            Map<Integer, java.util.List<Room>> childAssignedRoomsMap = new HashMap<>();
+            Map<Integer, java.util.List<RoomInfo>> childAssignedRoomsMap = new HashMap<>();
             for (Booking child : childBookings) {
-                java.util.List<Room> childRooms = bookingService.getAssignedRoomsForBooking(child.getBookingId(),
+                java.util.List<RoomInfo> childRooms = bookingService.getAssignedRoomsForBooking(child.getBookingId(),
                         booking.getCheckInDate(),
                         booking.getCheckOutDate());
                 childAssignedRoomsMap.put(child.getBookingId(), childRooms);

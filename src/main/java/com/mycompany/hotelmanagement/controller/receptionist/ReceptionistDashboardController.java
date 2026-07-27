@@ -7,7 +7,6 @@ import com.mycompany.hotelmanagement.dal.WalkInBookingDAO;
 import com.mycompany.hotelmanagement.dal.CheckOutDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.BookingServiceRequest;
-import com.mycompany.hotelmanagement.entity.Room;
 import com.mycompany.hotelmanagement.entity.RoomInfo;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import jakarta.servlet.ServletException;
