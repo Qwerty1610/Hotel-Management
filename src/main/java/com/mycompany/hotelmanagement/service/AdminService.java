@@ -1,5 +1,7 @@
 package com.mycompany.hotelmanagement.service;
 
+import com.mycompany.hotelmanagement.config.ConfigUtil;
+import com.mycompany.hotelmanagement.config.EmailUtil;
 import com.mycompany.hotelmanagement.dal.AccountDAO;
 import com.mycompany.hotelmanagement.entity.Account;
 import com.mycompany.hotelmanagement.entity.CustomerInfo;
@@ -130,6 +132,7 @@ public class AdminService {
         boolean success = accountRepository.insertStaffAccount(email.trim(), passwordHash, fullName.trim(), phone, roleId);
         if (success) {
             logger.info("Admin created new staff account: {} with role ID: {}", email, roleId);
+            sendNewStaffEmail(email.trim(), fullName.trim(), password, targetRoleName);
             return "success";
         }
         return "create_failed";
@@ -182,16 +185,20 @@ public class AdminService {
         }
         
         String passwordHash = null;
+        String rawPasswordForEmail = null;
         if (password != null && !password.trim().isEmpty()) {
-            if (isWeakPassword(password)) {
+            if (password.trim().length() < 6) {
                 return "weak_password";
             }
             passwordHash = BCrypt.hashpw(password.trim(), BCrypt.gensalt(12));
+            rawPasswordForEmail = password.trim();
         }
         
         boolean success = accountRepository.updateStaffAccount(accountId, email.trim(), fullName.trim(), phone, roleId, passwordHash);
         if (success) {
             logger.info("Admin updated staff account: {}, Name: {}, Phone: {}, Role: {}", email, fullName, phone, roleId);
+            String targetRoleName = accountRepository.getRoleNameById(roleId);
+            sendStaffUpdateEmail(email.trim(), fullName.trim(), rawPasswordForEmail, targetRoleName);
             return "success";
         }
         return "update_failed";
@@ -274,6 +281,10 @@ public class AdminService {
      * @param membershipLevel Hạng thành viên
      * @return Chuỗi mã kết quả
      */
+    public String updateCustomerAccount(int accountId, String email, String fullName, String phone, int loyaltyPoints, String membershipLevel) {
+        return updateCustomerAccount(accountId, email, fullName, phone, null, loyaltyPoints, membershipLevel);
+    }
+
     public String updateCustomerAccount(int accountId, String email, String fullName, String phone, String password, int loyaltyPoints, String membershipLevel) {
         if (email == null || email.trim().isEmpty() || fullName == null || fullName.trim().isEmpty()) {
             return "invalid_input";
@@ -300,8 +311,51 @@ public class AdminService {
             passwordHash = BCrypt.hashpw(password.trim(), BCrypt.gensalt(12));
         }
         
+        CustomerInfo oldCustomer = accountRepository.getCustomerByAccountId(accountId);
+        int oldPoints = (oldCustomer != null) ? oldCustomer.getLoyaltyPoints() : loyaltyPoints;
+        String oldMembership = (oldCustomer != null && oldCustomer.getMembershipLevel() != null) ? oldCustomer.getMembershipLevel() : membershipLevel;
+
         boolean success = accountRepository.updateCustomerAccount(accountId, email.trim(), fullName.trim(), phone, loyaltyPoints, membershipLevel, passwordHash);
-        return success ? "success" : "update_failed";
+        if (success) {
+            sendCustomerUpdateEmail(email.trim(), fullName.trim(), phone, oldPoints, loyaltyPoints, oldMembership, membershipLevel);
+            return "success";
+        }
+        return "update_failed";
+    }
+
+    /**
+     * Gửi email tự động thông báo cập nhật thông tin tài khoản (Hạng thành viên & Điểm tích lũy) cho khách hàng.
+     */
+    private void sendCustomerUpdateEmail(String email, String fullName, String phone, int oldPoints, int newPoints, String oldMembership, String newMembership) {
+        if (email == null || email.trim().isEmpty()) {
+            return;
+        }
+        final String safeEmail = email.trim();
+        final String safeName = (fullName != null) ? fullName.trim() : "";
+        final String safePhone = (phone != null) ? phone.trim() : "";
+        final String safeOldMem = (oldMembership != null) ? oldMembership.trim() : "Standard";
+        final String safeNewMem = (newMembership != null) ? newMembership.trim() : "Standard";
+
+        new Thread(() -> {
+            try {
+                String hotelName = ConfigUtil.get("hotel.name", "HotelOps Pro");
+                boolean isLevelOrPointsChanged = (!safeOldMem.equalsIgnoreCase(safeNewMem) || oldPoints != newPoints);
+                String subject = isLevelOrPointsChanged
+                        ? "[" + hotelName + "] Cập nhật Hạng thành viên & Điểm tích lũy"
+                        : "[" + hotelName + "] Thông tin tài khoản của bạn đã được cập nhật";
+                
+                String htmlBody = EmailUtil.buildCustomerUpdateEmail(safeName, safeEmail, safePhone, oldPoints, newPoints, safeOldMem, safeNewMem);
+
+                boolean sent = EmailUtil.sendEmail(safeEmail, subject, htmlBody);
+                if (sent) {
+                    logger.info("Đã gửi email thông báo cập nhật tài khoản/điểm/hạng tới khách hàng: {}", safeEmail);
+                } else {
+                    logger.warn("Không thể gửi email cập nhật tài khoản tới khách hàng: {}", safeEmail);
+                }
+            } catch (Exception e) {
+                logger.error("Lỗi gửi email cập nhật tài khoản khách hàng cho: " + safeEmail, e);
+            }
+        }).start();
     }
 
     /**
@@ -353,5 +407,49 @@ public class AdminService {
         String hashedPassword = BCrypt.hashpw(newPassword.trim(), BCrypt.gensalt(12));
         boolean success = accountRepository.updatePassword(email.trim(), hashedPassword);
         return success ? "success" : "update_failed";
+    }
+
+    /**
+     * Gửi email tự động thông báo thông tin tài khoản và mật khẩu khởi tạo cho nhân viên mới.
+     */
+    private void sendNewStaffEmail(String email, String fullName, String rawPassword, String roleName) {
+        String hotelName = ConfigUtil.get("hotel.name", "HotelOps Pro");
+        String subject = "[" + hotelName + "] Thông tin tài khoản nhân viên mới của bạn";
+        String htmlBody = EmailUtil.buildStaffAccountEmail(fullName, email, rawPassword, roleName);
+
+        new Thread(() -> {
+            try {
+                boolean sent = EmailUtil.sendEmail(email, subject, htmlBody);
+                if (sent) {
+                    logger.info("Đã gửi email thông tin tài khoản nhân viên tới: {}", email);
+                } else {
+                    logger.warn("Không thể gửi email thông tin tài khoản nhân viên tới: {}", email);
+                }
+            } catch (Exception e) {
+                logger.error("Lỗi gửi email tạo tài khoản nhân viên cho: " + email, e);
+            }
+        }).start();
+    }
+
+    /**
+     * Gửi email tự động thông báo cập nhật thông tin/mật khẩu tài khoản nhân viên.
+     */
+    private void sendStaffUpdateEmail(String email, String fullName, String newRawPassword, String roleName) {
+        String hotelName = ConfigUtil.get("hotel.name", "HotelOps Pro");
+        String subject = "[" + hotelName + "] Thông tin tài khoản nhân viên của bạn đã được cập nhật";
+        String htmlBody = EmailUtil.buildStaffUpdateEmail(fullName, email, newRawPassword, roleName);
+
+        new Thread(() -> {
+            try {
+                boolean sent = EmailUtil.sendEmail(email, subject, htmlBody);
+                if (sent) {
+                    logger.info("Đã gửi email thông báo cập nhật tài khoản tới nhân viên: {}", email);
+                } else {
+                    logger.warn("Không thể gửi email cập nhật tài khoản tới nhân viên: {}", email);
+                }
+            } catch (Exception e) {
+                logger.error("Lỗi gửi email cập nhật tài khoản nhân viên cho: " + email, e);
+            }
+        }).start();
     }
 }

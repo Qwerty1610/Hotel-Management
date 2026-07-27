@@ -15,7 +15,7 @@
     </div>
     <header class="hero-section" id="trang-chu">
         <nav class="navbar">
-            <a href="#trang-chu" class="logo">HotelOps</a>
+            <a href="#trang-chu" class="logo">${hotelName}</a>
             <ul class="nav-links">
                 <li><a href="#trang-chu" class="active"><fmt:message key="nav.home" /></a></li>
                 <li><a href="#gioi-thieu"><fmt:message key="nav.about" /></a></li>
