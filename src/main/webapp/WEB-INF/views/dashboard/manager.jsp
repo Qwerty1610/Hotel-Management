@@ -15,8 +15,13 @@
       (render backend, 20 dòng/trang).
     - 4 biểu đồ, mỗi biểu đồ một khoảng lọc riêng; chuỗi thời gian tự gom nhóm
       ngày → tháng → quý khi khoảng lọc rộng để không bị chi chít.
-    - Doanh thu được rải đều theo đêm lưu trú nên chuỗi doanh thu phản ánh đúng
-      phần doanh thu thuộc về từng ngày.
+
+    CHUẨN GHI NHẬN SỐ LIỆU (thống nhất với admin-system.jsp):
+    - Doanh thu: rải đều theo từng đêm lưu trú, chỉ tính phần đêm trong khoảng lọc.
+    - Tỷ lệ hủy: đếm theo ngày tạo đơn (created_at).
+    - Cơ cấu doanh thu: nguồn RIÊNG (dòng hóa đơn theo ngày lập) nên KHÔNG khớp
+      thẻ "Tổng doanh thu" — chỉ dùng xem tỷ trọng, không dùng để đối chiếu tổng.
+    Hai thẻ KPI bấm được ghi rõ cơ sở đếm ở dòng .stat-foot.
     @author Pham Quoc Quy
 --%>
 <body class="dashboard-body">
@@ -64,7 +69,12 @@
                         <div class="content-header-row">
                             <div>
                                 <h1>Tổng quan vận hành</h1>
-                                <p>Hiệu suất kinh doanh của khách sạn theo kỳ báo cáo. Bấm vào thẻ Doanh thu / Tỷ lệ hủy để xem danh sách chi tiết.</p>
+                                <p>
+                                    Hiệu suất kinh doanh của khách sạn theo kỳ báo cáo.
+                                    Bấm vào thẻ Doanh thu / Tỷ lệ hủy để xem danh sách chi tiết.
+                                    Doanh thu được phân bổ theo đêm lưu trú — cùng chuẩn với Bảng điều khiển
+                                    hệ thống của Quản trị viên, nên hai trang luôn cho cùng một con số trên cùng kỳ.
+                                </p>
                             </div>
                         </div>
 
@@ -149,8 +159,9 @@
                                     <i class="fa-solid fa-chevron-right stat-open-icon"></i>
                                 </a>
                                 <div class="stat-foot">
-                                    <i class="fa-solid fa-file-invoice"></i>
-                                    <fmt:formatNumber value="${stats.revenueBookings}" type="number" /> đơn được tính trong kỳ
+                                    <i class="fa-solid fa-moon"></i>
+                                    <fmt:formatNumber value="${stats.revenueBookings}" type="number" /> đơn •
+                                    Phân bổ theo đêm lưu trú trong kỳ
                                 </div>
                             </div>
 
@@ -208,8 +219,8 @@
                                     <i class="fa-solid fa-chevron-right stat-open-icon"></i>
                                 </a>
                                 <div class="stat-foot">
-                                    <i class="fa-solid fa-circle-info"></i>
-                                    Đơn Cancelled / Rejected trên tổng đơn tạo trong kỳ
+                                    <i class="fa-solid fa-calendar-plus"></i>
+                                    Đơn Cancelled / Rejected trên tổng đơn, đếm theo ngày tạo đơn
                                 </div>
                             </div>
                         </div>
