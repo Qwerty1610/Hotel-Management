@@ -63,7 +63,7 @@ public class RoomTypeService {
     }
 
     /**
-     * UC-30: View Room Types
+     * UC-29 Browse Available Room Types
      * Lấy toàn bộ danh sách loại phòng từ cơ sở dữ liệu kèm theo hình ảnh đầu tiên và danh sách tiện nghi.
      *
      * @return danh sách đối tượng RoomTypeInfo đầy đủ thông tin
@@ -101,7 +101,7 @@ public class RoomTypeService {
     }
 
     /**
-     * UC-31: View Room Type Detail
+     * UC-30: View Room Type Detail
      * Lấy thông tin chi tiết của một loại phòng cụ thể, bao gồm toàn bộ danh sách hình ảnh, tiện nghi chi tiết và số phòng hiện tại còn trống.
      *
      * @param typeId ID loại phòng cần lấy thông tin chi tiết
