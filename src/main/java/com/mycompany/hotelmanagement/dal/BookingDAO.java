@@ -51,7 +51,7 @@ public class BookingDAO {
     }
 
     private static final String BASE_SELECT = "SELECT b.booking_id, b.account_id, b.customer_name, b.phone, b.email, "
-            + "       b.room_type_id, rt.type_name AS room_type_name, "
+            + "       b.room_type_id, ISNULL(rt.type_name, N'Loại phòng cũ') AS room_type_name, "
             + "       b.room_quantity, b.check_in_date, b.check_out_date, "
             + "       b.total_amount, b.status, b.note, b.group_booking_id, CAST(b.created_at AS DATE) AS created_at, "
             + "       (SELECT STRING_AGG(r.room_number, ', ') "

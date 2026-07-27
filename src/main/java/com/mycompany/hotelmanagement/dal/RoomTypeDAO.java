@@ -43,7 +43,8 @@ public class RoomTypeDAO {
 
     private void useDatabase(Connection conn) {
         try (Statement stmt = conn.createStatement()) {
-            stmt.execute("USE HotelManagementDB");
+            stmt.execute("USE HotelManagementDB;");
+            stmt.execute("IF COL_LENGTH(N'dbo.RoomType', N'is_deleted') IS NULL ALTER TABLE dbo.RoomType ADD is_deleted BIT NOT NULL DEFAULT 0;");
         } catch (SQLException e) {
             // Ignore
         }
@@ -125,7 +126,7 @@ public class RoomTypeDAO {
 
     public List<RoomTypeInfo> getAllRoomTypes() {
         List<RoomTypeInfo> list = new ArrayList<>();
-        String sql = "SELECT type_id, type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type FROM RoomType ORDER BY type_id";
+        String sql = "SELECT type_id, type_name, base_price, price_per_hour, deposit_percent, capacity, description, area, bed_type FROM RoomType WHERE ISNULL(is_deleted, 0) = 0 ORDER BY type_id";
         try (Connection conn = DBContext.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {
@@ -368,17 +369,96 @@ public class RoomTypeDAO {
         return false;
     }
 
-    public boolean deleteRoomType(int typeId) {
-        String sql = "DELETE FROM RoomType WHERE type_id = ?";
-        try (Connection conn = DBContext.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+
+    public boolean hasBookings(int typeId) {
+        String sql = "SELECT COUNT(*) FROM dbo.Booking WHERE room_type_id = ?";
+        try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
-            ps.setInt(1, typeId);
-            int affected = ps.executeUpdate();
-            return affected > 0;
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, typeId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt(1) > 0;
+                    }
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean deleteRoomType(int typeId) {
+        Connection conn = null;
+        try {
+            conn = DBContext.getConnection();
+            useDatabase(conn);
+            conn.setAutoCommit(false);
+
+            if (hasBookings(typeId)) {
+                // Soft-delete RoomType and Rooms so past bookings, service requests & reviews retain 100% full details
+                String sqlSoftDeleteRooms = "UPDATE dbo.Room SET is_deleted = 1 WHERE type_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sqlSoftDeleteRooms)) {
+                    ps.setInt(1, typeId);
+                    ps.executeUpdate();
+                }
+
+                String sqlSoftDeleteType = "UPDATE dbo.RoomType SET is_deleted = 1 WHERE type_id = ?";
+                int affected = 0;
+                try (PreparedStatement ps = conn.prepareStatement(sqlSoftDeleteType)) {
+                    ps.setInt(1, typeId);
+                    affected = ps.executeUpdate();
+                }
+                conn.commit();
+                return affected > 0;
+            } else {
+                // Hard-delete newly created RoomType that has no past booking history
+                String sql1 = "DELETE FROM dbo.RoomImage WHERE type_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sql1)) {
+                    ps.setInt(1, typeId);
+                    ps.executeUpdate();
+                }
+
+                String sql2 = "DELETE FROM dbo.RoomType_Amenity WHERE type_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sql2)) {
+                    ps.setInt(1, typeId);
+                    ps.executeUpdate();
+                }
+
+                String sql3 = "DELETE FROM dbo.Room WHERE type_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sql3)) {
+                    ps.setInt(1, typeId);
+                    ps.executeUpdate();
+                }
+
+                String sql4 = "DELETE FROM dbo.RoomType WHERE type_id = ?";
+                int affected = 0;
+                try (PreparedStatement ps = conn.prepareStatement(sql4)) {
+                    ps.setInt(1, typeId);
+                    affected = ps.executeUpdate();
+                }
+                conn.commit();
+                return affected > 0;
+            }
+        } catch (Exception e) {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    // Ignore
+                }
+            }
+            e.printStackTrace();
             return false;
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException ex) {
+                    // Ignore
+                }
+            }
         }
     }
 }
