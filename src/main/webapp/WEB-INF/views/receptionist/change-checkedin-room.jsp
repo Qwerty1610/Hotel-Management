@@ -32,38 +32,35 @@
                 font-weight:700;
             }
 
-            .change-room-table{
-                width:100%;
-                border-collapse:collapse;
-                font-size:13px;
+            /* Card phòng nhỏ dạng vuông, giống sơ đồ phòng / phân phòng đặt phòng
+               tại quầy (room-grid / room-card đã có sẵn trong receptionist.css) —
+               chỉ thêm phần tương tác click-để-chọn riêng cho màn đổi phòng. */
+            .change-room-box .room-grid{
+                grid-template-columns:repeat(auto-fill, minmax(110px, 1fr));
             }
 
-            .change-room-table th{
-                text-align:left;
-                padding:8px 12px;
-                background:#f8fafc;
-                border-bottom:2px solid var(--border-color);
-                font-weight:700;
-                color:var(--text-navy);
-            }
-
-            .change-room-table td{
-                padding:10px 12px;
-                border-bottom:1px solid #f1f5f9;
-            }
-
-            .change-room-table .room-row{
+            .change-room-box .room-card{
                 cursor:pointer;
-                transition:background .15s;
+                text-align:center;
+                min-height:64px;
             }
 
-            .change-room-table .room-row:hover{
-                background:#f8fafc;
+            .change-room-box .room-card:hover{
+                border-color:var(--brand-blue);
+                box-shadow:0 4px 6px -1px rgba(0,0,0,.05);
             }
 
-            .change-room-table .room-row.selected{
+            .change-room-box .room-card.selected{
+                border-color:#2563eb;
                 background:#eff6ff;
-                box-shadow:inset 3px 0 0 #2563eb;
+                box-shadow:0 0 0 2px #2563eb;
+            }
+
+            .change-room-box .room-card-header{
+                flex-direction:column;
+                align-items:center;
+                gap:2px;
+                margin-bottom:0;
             }
 
             #targetRoomContext{
@@ -439,33 +436,25 @@
                                             <i class="fa-solid fa-bed"></i>
                                             Phòng hiện tại
                                         </h4>
-                                        <table class="change-room-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Số phòng</th>
-                                                    <th>Loại phòng</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <c:forEach var="room" items="${assignedRooms}">
-                                                    <tr class="room-row"
-                                                        data-room-id="${room.roomId}"
-                                                        data-room-type="${room.typeName}"
-                                                        data-room-number="${room.roomNumber}"
-                                                        onclick="selectOldRoom(this)">
-                                                        <td>${room.roomNumber}</td>
-                                                        <td>${room.typeName}</td>
-                                                    </tr>
-                                                </c:forEach>
-                                                <c:if test="${empty assignedRooms}">
-                                                    <tr>
-                                                        <td colspan="2" style="text-align:center;color:var(--text-muted);">
-                                                            Không có phòng nào.
-                                                        </td>
-                                                    </tr>
-                                                </c:if>
-                                            </tbody>
-                                        </table>
+                                        <div class="room-grid">
+                                            <c:forEach var="room" items="${assignedRooms}">
+                                                <div class="room-card"
+                                                     data-room-id="${room.roomId}"
+                                                     data-room-type="${room.typeName}"
+                                                     data-room-number="${room.roomNumber}"
+                                                     onclick="selectOldRoom(this)">
+                                                    <div class="room-card-header">
+                                                        <span class="room-number">P. ${room.roomNumber}</span>
+                                                        <span class="room-floor">${room.typeName}</span>
+                                                    </div>
+                                                </div>
+                                            </c:forEach>
+                                        </div>
+                                        <c:if test="${empty assignedRooms}">
+                                            <p style="text-align:center;color:var(--text-muted);margin:8px 0 0;">
+                                                Không có phòng nào.
+                                            </p>
+                                        </c:if>
                                     </div>
 
                                     <!-- BẢNG 2: PHÒNG MUỐN ĐỔI SANG (ẩn cho tới khi chọn phòng ở bảng 1) -->
@@ -477,27 +466,21 @@
                                         </h4>
 
                                         <c:forEach var="entry" items="${availableRoomMap}">
-                                            <table class="change-room-table target-room-group"
-                                                   data-type="${entry.key}"
-                                                   style="display:none;">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Số phòng</th>
-                                                        <th>Loại phòng</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <c:forEach var="room" items="${entry.value}">
-                                                        <tr class="room-row"
-                                                            data-room-id="${room.roomId}"
-                                                            data-room-number="${room.roomNumber}"
-                                                            onclick="selectNewRoom(this)">
-                                                            <td>${room.roomNumber}</td>
-                                                            <td>${room.typeName}</td>
-                                                        </tr>
-                                                    </c:forEach>
-                                                </tbody>
-                                            </table>
+                                            <div class="room-grid target-room-group"
+                                                 data-type="${entry.key}"
+                                                 style="display:none;">
+                                                <c:forEach var="room" items="${entry.value}">
+                                                    <div class="room-card"
+                                                         data-room-id="${room.roomId}"
+                                                         data-room-number="${room.roomNumber}"
+                                                         onclick="selectNewRoom(this)">
+                                                        <div class="room-card-header">
+                                                            <span class="room-number">P. ${room.roomNumber}</span>
+                                                            <span class="room-floor">${room.typeName}</span>
+                                                        </div>
+                                                    </div>
+                                                </c:forEach>
+                                            </div>
                                         </c:forEach>
                                         <p id="noAvailableRoomMsg" style="display:none;color:var(--text-muted);font-style:italic;">
                                             Không còn phòng trống cùng loại trong thời gian khách ở.
@@ -551,23 +534,23 @@
         let selectedOldRoomId = null;
         let selectedOldRoomType = null;
 
-        function selectOldRoom(tr) {
+        function selectOldRoom(card) {
 
-            document.querySelectorAll(".change-room-table .room-row.selected")
+            document.querySelectorAll(".change-room-box .room-card.selected")
                     .forEach(r => r.classList.remove("selected"));
-            tr.classList.add("selected");
+            card.classList.add("selected");
 
-            selectedOldRoomId = tr.dataset.roomId;
-            selectedOldRoomType = tr.dataset.roomType;
-            const roomNumber = tr.dataset.roomNumber;
+            selectedOldRoomId = card.dataset.roomId;
+            selectedOldRoomType = card.dataset.roomType;
+            const roomNumber = card.dataset.roomNumber;
 
             document.getElementById("targetRoomContext").innerText = "— cho phòng " + roomNumber;
 
             let hasAvailable = false;
             document.querySelectorAll(".target-room-group").forEach(group => {
                 const match = group.dataset.type === selectedOldRoomType;
-                group.style.display = match ? "table" : "none";
-                if (match && group.querySelector("tbody tr")) {
+                group.style.display = match ? "grid" : "none";
+                if (match && group.querySelector(".room-card")) {
                     hasAvailable = true;
                 }
             });
@@ -576,10 +559,10 @@
             document.getElementById("targetRoomSection").style.display = "block";
         }
 
-        function selectNewRoom(tr) {
+        function selectNewRoom(card) {
 
-            const newRoomId = tr.dataset.roomId;
-            const newRoomNumber = tr.dataset.roomNumber;
+            const newRoomId = card.dataset.roomId;
+            const newRoomNumber = card.dataset.roomNumber;
 
             document.getElementById("oldRoomIdInput").value = selectedOldRoomId;
             document.getElementById("newRoomIdInput").value = newRoomId;

@@ -205,6 +205,7 @@ public class ReceptionistDashboardController extends HttpServlet {
             int cntConfirmed = dao.countByStatus("Confirmed");
             int cntRejected = dao.countByStatus("Rejected");
             int cntCancelled = dao.countByStatus("Cancelled");
+            int cntCheckedIn = dao.countByStatus("CheckedIn");
 
             // Đẩy attribute sang JSP
             request.setAttribute("bookingList", bookingList);
@@ -216,6 +217,7 @@ public class ReceptionistDashboardController extends HttpServlet {
             request.setAttribute("cntConfirmed", cntConfirmed);
             request.setAttribute("cntRejected", cntRejected);
             request.setAttribute("cntCancelled", cntCancelled);
+            request.setAttribute("cntCheckedIn", cntCheckedIn);
 
             request.setAttribute("currentPage", page);
             request.setAttribute("totalPages", totalPages);
