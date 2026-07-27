@@ -260,6 +260,7 @@
                         <select id="modalRoomStatus" name="status" class="modal-select" required>
                             <option value="Available">Trống (Available)</option>
                             <option value="Cleaning">Đang dọn (Cleaning)</option>
+                            <option value="Refilling">Bổ sung vật dụng (Refilling)</option>
                             <option value="Maintenance">Bảo trì (Maintenance)</option>
                             <option value="OutOfService">Ngừng hoạt động (OutOfService)</option>
                         </select>
