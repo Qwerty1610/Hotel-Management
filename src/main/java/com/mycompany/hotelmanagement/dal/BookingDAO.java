@@ -164,6 +164,37 @@ public class BookingDAO {
         return null;
     }
 
+    /**
+     * Toàn bộ lịch sử đặt phòng của một phòng cụ thể (qua RoomAssignment), ưu
+     * tiên các đơn Confirmed/CheckedIn lên đầu, còn lại xếp theo ngày check-in.
+     * Dùng cho trang chi tiết phòng ở sơ đồ phòng của lễ tân.
+     */
+    public List<Booking> getBookingHistoryByRoomId(int roomId) {
+        List<Booking> list = new ArrayList<>();
+
+        String sql = BASE_SELECT
+                + "JOIN dbo.RoomAssignment ra ON ra.booking_id = b.booking_id "
+                + "WHERE ra.room_id = ? "
+                + "ORDER BY CASE WHEN b.status IN (N'Confirmed', N'CheckedIn') THEN 0 ELSE 1 END, "
+                + "         b.check_in_date ASC";
+
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, roomId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        list.add(mapRow(rs));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in getBookingHistoryByRoomId: roomId=" + roomId, e);
+        }
+
+        return list;
+    }
+
     public boolean updateBookingStatus(int bookingId, String newStatus, String note) {
         if (bookingId <= 0) {
             return false;

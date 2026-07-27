@@ -172,6 +172,86 @@ public class RoomDAO {
         return getRoomsByDateRange(selectedDate, nextDate);
     }
 
+    /**
+     * Giống getRoomsByDateRange nhưng chỉ lấy 1 phòng theo roomId, kèm ảnh
+     * phòng (image_url) — dùng cho trang chi tiết phòng ở sơ đồ phòng của
+     * lễ tân, để display_status hiển thị giống HỆT với sơ đồ phòng (cùng
+     * công thức tính theo khoảng ngày đang lọc), thay vì chỉ đọc status thô.
+     */
+    public RoomInfo getRoomByIdForDateRange(int roomId, java.sql.Date fromDate, java.sql.Date toDate) {
+        String sql = """
+            SELECT
+                r.room_id,
+                r.room_number,
+                r.type_id,
+                r.status AS operational_status,
+                r.floor,
+                rt.type_name,
+                rt.base_price,
+                rt.bed_type,
+                rt.area,
+                ri.image_url,
+                CASE
+                    WHEN r.status IN ('OutOfService', 'Maintenance', 'Cleaning', 'Refilling') THEN r.status
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM RoomAssignment ra
+                        JOIN Booking b ON ra.booking_id = b.booking_id
+                        WHERE ra.room_id = r.room_id
+                          AND b.status = 'CheckedIn'
+                          AND b.check_in_date < ?
+                          AND b.check_out_date > ?
+                    ) THEN 'Occupied'
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM RoomAssignment ra
+                        JOIN Booking b ON ra.booking_id = b.booking_id
+                        WHERE ra.room_id = r.room_id
+                          AND b.status = 'Confirmed'
+                          AND b.check_in_date < ?
+                          AND b.check_out_date > ?
+                    ) THEN 'Confirmed'
+                    ELSE 'Available'
+                END AS display_status
+            FROM Room r
+            JOIN RoomType rt ON r.type_id = rt.type_id
+            LEFT JOIN RoomImage ri ON ri.type_id = rt.type_id
+            WHERE r.room_id = ? AND r.is_deleted = 0
+            """;
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            useDatabase(conn);
+            ps.setDate(1, toDate);
+            ps.setDate(2, fromDate);
+            ps.setDate(3, toDate);
+            ps.setDate(4, fromDate);
+            ps.setInt(5, roomId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    RoomInfo room = new RoomInfo();
+                    room.setRoomId(rs.getInt("room_id"));
+                    room.setRoomNumber(rs.getString("room_number"));
+                    room.setTypeId(rs.getInt("type_id"));
+                    String opStatus = rs.getString("operational_status");
+                    room.setStatus(opStatus);
+                    room.setOperationalStatus(opStatus);
+                    room.setDisplayStatus(rs.getString("display_status"));
+                    room.setFloor(rs.getString("floor"));
+                    room.setTypeName(rs.getString("type_name"));
+                    room.setBasePrice(rs.getDouble("base_price"));
+                    room.setBedType(rs.getString("bed_type"));
+                    room.setArea(rs.getString("area"));
+                    room.setImageUrl(rs.getString("image_url"));
+                    return room;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public boolean isRoomCurrentlyOccupied(int roomId) {
         String sql = """
             SELECT COUNT(*)
@@ -484,8 +564,10 @@ public class RoomDAO {
             return 3;
         }
 
+        // Cleaning ở mức độ Low, thấp hơn Refill (thiếu vật tư, mức Medium)
+        // nên phải có số ưu tiên LỚN hơn (ít khẩn cấp hơn) Refill.
         if ("Cleaning".equals(issueType)) {
-            return 3;
+            return 4;
         }
 
         return Integer.MAX_VALUE;
@@ -502,7 +584,7 @@ public class RoomDAO {
                 return 3;
 
             case "Cleaning":
-                return 3;
+                return 4;
 
             case "Available":
                 return 4;

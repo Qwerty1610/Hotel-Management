@@ -694,7 +694,9 @@
                                                            items="${entry.value}">
 
                                                     <div
-                                                        class="room-card status-${room.displayStatus}">
+                                                        class="room-card status-${room.displayStatus}"
+                                                        style="cursor:pointer;"
+                                                        onclick="window.location.href='${pageContext.request.contextPath}/receptionist/roomDetail?roomId=${room.roomId}';">
 
                                                         <c:if test="${room.displayStatus eq 'Maintenance'}">
                                                             <div class="room-maintenance-dot"></div>
@@ -935,12 +937,23 @@
                                                     <c:when
                                                         test="${b.status eq 'Confirmed'}">
 
-                                                        <a class="btn-action-icon btn-checkin"
-                                                           href="${pageContext.request.contextPath}/receptionist/checkin-detail?bookingId=${b.bookingId}">
-                                                            <i
-                                                                class="fa-solid fa-key"></i>
-                                                            Check In
-                                                        </a>
+                                                        <c:choose>
+                                                            <c:when test="${b.checkOutDate lt todayDate}">
+                                                                <span class="btn-action-icon"
+                                                                      style="color:#dc2626;border-color:#fecaca;background:#fef2f2;cursor:not-allowed;">
+                                                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                                                    Đã quá hạn
+                                                                </span>
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <a class="btn-action-icon btn-checkin"
+                                                                   href="${pageContext.request.contextPath}/receptionist/checkin-detail?bookingId=${b.bookingId}">
+                                                                    <i
+                                                                        class="fa-solid fa-key"></i>
+                                                                    Check In
+                                                                </a>
+                                                            </c:otherwise>
+                                                        </c:choose>
                                                     </c:when>
 
                                                     <c:when test="${b.status eq 'CheckedIn'}">

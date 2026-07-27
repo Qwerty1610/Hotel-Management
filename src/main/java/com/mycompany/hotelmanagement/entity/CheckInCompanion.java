@@ -5,7 +5,6 @@ public class CheckInCompanion {
     private int companionId;
     private int checkInId;
     private String fullName;
-    private String ageRange;
     private String imageUrl;
 
     public int getCompanionId() {
@@ -30,14 +29,6 @@ public class CheckInCompanion {
 
     public void setFullName(String fullName) {
         this.fullName = fullName;
-    }
-
-    public String getAgeRange() {
-        return ageRange;
-    }
-
-    public void setAgeRange(String ageRange) {
-        this.ageRange = ageRange;
     }
 
     public String getImageUrl() {

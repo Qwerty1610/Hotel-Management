@@ -128,7 +128,6 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
             extraFee = new BigDecimal(extraFeeStr);
         }
         String[] companions = request.getParameterValues("companions");
-        String[] ageRanges = request.getParameterValues("ageRanges");
         List<Part> companionParts = new ArrayList<>();
 
         for (Part part : request.getParts()) {
@@ -172,6 +171,23 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
 
         Booking booking = bookingDAO.getBookingById(bookingId);
 
+        // Chỉ cho phép check-in khi hôm nay nằm trong khoảng check_in_date -
+        // check_out_date của đơn — không cho check-in trước ngày đặt (đến sớm)
+        // lẫn sau khi đơn đã hết hạn lưu trú.
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDate bookingCheckInDate = booking.getCheckInDate().toLocalDate();
+        java.time.LocalDate bookingCheckOutDate = booking.getCheckOutDate().toLocalDate();
+        if (today.isBefore(bookingCheckInDate)) {
+            response.sendRedirect(request.getContextPath()
+                    + "/receptionist/checkin-detail?bookingId=" + bookingId + "&error=tooearly");
+            return;
+        }
+        if (today.isAfter(bookingCheckOutDate)) {
+            response.sendRedirect(request.getContextPath()
+                    + "/receptionist/checkin-detail?bookingId=" + bookingId + "&error=expired");
+            return;
+        }
+
         int rootBookingId = booking.getGroupBookingId() != null
                 ? booking.getGroupBookingId()
                 : booking.getBookingId();
@@ -193,8 +209,7 @@ public class ReceptionistCheckInDetailController extends HttpServlet {
                         customerUrl,
                         extraFee,
                         companions,
-                        companionUrls,
-                        ageRanges
+                        companionUrls
                 );
 
                 if (!result) {

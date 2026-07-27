@@ -1263,7 +1263,6 @@ CREATE TABLE dbo.CheckInCompanion (
     check_in_id INT NOT NULL,
 
     full_name NVARCHAR(100) NOT NULL,
-    age_range VARCHAR(20) NOT NULL,
     image_url NVARCHAR(500) NULL,
     created_at DATETIME NOT NULL DEFAULT GETDATE(),
 
