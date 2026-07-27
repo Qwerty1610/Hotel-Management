@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ include file="../../includes/taglibs.jsp" %>
 <%@ include file="../../includes/header.jsp" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
@@ -171,15 +171,15 @@
 
     <%-- Header Navigation --%>
     <nav class="navbar-rooms">
-<a href="${pageContext.request.contextPath}/" class="logo">${not empty hotelName ? hotelName : 'HotelOps'}</a>
+        <a href="${pageContext.request.contextPath}/" class="logo">HotelOps</a>
         <ul class="nav-links">
-            <li><a href="${pageContext.request.contextPath}/">Trang chá»§</a></li>
-            <li><a href="${pageContext.request.contextPath}/rooms">PhÃ²ng</a></li>
-            <li><a href="${pageContext.request.contextPath}/customer/bookings">Äáº·t phÃ²ng cá»§a tÃ´i</a></li>
-            <li><a href="${pageContext.request.contextPath}/customer/feedbacks">ÄÃ¡nh giÃ¡ lÆ°u trÃº</a></li>
-            <li><a href="${pageContext.request.contextPath}/customer/services">Dá»‹ch vá»¥</a></li>
-            <li><a href="${pageContext.request.contextPath}/customer/maintenance" class="active">Sá»± cá»‘</a></li>
-            <li><a href="${pageContext.request.contextPath}/customer/payments">Thanh toÃ¡n</a></li>
+            <li><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
+            <li><a href="${pageContext.request.contextPath}/rooms">Phòng</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/bookings">Đặt phòng của tôi</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/feedbacks">Đánh giá lưu trú</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/services">Dịch vụ</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/maintenance" class="active">Sự cố</a></li>
+            <li><a href="${pageContext.request.contextPath}/customer/payments">Thanh toán</a></li>
         </ul>
 
         <div class="nav-actions">
@@ -197,27 +197,27 @@
                                 <c:when test="${sessionScope.role eq 'CUSTOMER'}">
                                     <a href="${pageContext.request.contextPath}/customer/profile"
                                        class="dropdown-item">
-                                        <i class="fa-solid fa-id-card"></i> Há»“ sÆ¡
+                                        <i class="fa-solid fa-id-card"></i> Hồ sơ
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/bookings"
                                        class="dropdown-item">
-                                        <i class="fa-solid fa-calendar-check"></i> Äáº·t phÃ²ng cá»§a tÃ´i
+                                        <i class="fa-solid fa-calendar-check"></i> Đặt phòng của tôi
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/feedbacks"
                                        class="dropdown-item">
-                                        <i class="fa-solid fa-star"></i> ÄÃ¡nh giÃ¡ lÆ°u trÃº
+                                        <i class="fa-solid fa-star"></i> Đánh giá lưu trú
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/services"
                                        class="dropdown-item">
-                                        <i class="fa-solid fa-bell-concierge"></i> YÃªu cáº§u dá»‹ch vá»¥
+                                        <i class="fa-solid fa-bell-concierge"></i> Yêu cầu dịch vụ
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/maintenance"
                                        class="dropdown-item">
-                                        <i class="fa-solid fa-screwdriver-wrench"></i> YÃªu cáº§u sá»­a chá»¯a
+                                        <i class="fa-solid fa-screwdriver-wrench"></i> Yêu cầu sửa chữa
                                     </a>
                                     <a href="${pageContext.request.contextPath}/customer/payments"
                                        class="dropdown-item">
-                                        <i class="fa-solid fa-credit-card"></i> Thanh toÃ¡n &amp; Lá»‹ch sá»­
+                                        <i class="fa-solid fa-credit-card"></i> Thanh toán &amp; Lịch sử
                                     </a>
                                 </c:when>
                                 <c:otherwise>
@@ -254,14 +254,14 @@
                             <div class="dropdown-divider"></div>
                             <a href="${pageContext.request.contextPath}/logout"
                                class="dropdown-item logout-item">
-                                <i class="fa-solid fa-right-from-bracket"></i> ÄÄƒng xuáº¥t
+                                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
                             </a>
                         </div>
                     </div>
                 </c:when>
                 <c:otherwise>
-                    <a href="${pageContext.request.contextPath}/home/login" class="btn-login">ÄÄƒng
-                        nháº­p</a>
+                    <a href="${pageContext.request.contextPath}/home/login" class="btn-login">Đăng
+                        nhập</a>
                     </c:otherwise>
                 </c:choose>
         </div>
@@ -273,7 +273,7 @@
             <div class="success-banner" id="serverSuccessMessage">
                 <i class="fa-solid fa-circle-check" style="font-size: 20px;"></i>
                 <div>
-                    <strong>ThÃ nh cÃ´ng:</strong> ${successMessage}
+                    <strong>Thành công:</strong> ${successMessage}
                 </div>
             </div>
         </c:if>
@@ -281,7 +281,7 @@
             <div class="error-banner" id="serverValidationError">
                 <i class="fa-solid fa-circle-exclamation" style="font-size: 20px;"></i>
                 <div>
-                    <strong>Lá»—i:</strong> ${errorMessage}
+                    <strong>Lỗi:</strong> ${errorMessage}
                 </div>
             </div>
         </c:if>
@@ -292,20 +292,20 @@
                  style="width: 260px; flex-shrink: 0; background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.04);">
                 <h3
                     style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-top: 0; margin-bottom: 20px;">
-                    Báº£o trÃ¬</h3>
+                    Bảo trì</h3>
                 <ul
                     style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px;">
                     <li>
                         <a href="${pageContext.request.contextPath}/customer/maintenance">
                             <i class="fa-solid fa-screwdriver-wrench"
-                               style="width: 20px; text-align: center;"></i> YÃªu cáº§u sá»­a chá»¯a
+                               style="width: 20px; text-align: center;"></i> Yêu cầu sửa chữa
                         </a>
                     </li>
                     <li>
                         <a href="${pageContext.request.contextPath}/customer/maintenance/history"
                            class="active-sidebar-item">
                             <i class="fa-solid fa-clock-rotate-left"
-                               style="width: 20px; text-align: center;"></i> Lá»‹ch sá»­ sá»­a chá»¯a
+                               style="width: 20px; text-align: center;"></i> Lịch sử sửa chữa
                         </a>
                     </li>
                 </ul>
@@ -318,7 +318,7 @@
 
                         <h3>
                             <i class="fa-solid fa-clock-rotate-left"></i>
-                            Lá»‹ch sá»­ yÃªu cáº§u sá»­a chá»¯a
+                            Lịch sử yêu cầu sửa chữa
                         </h3>
 
                         <div class="history-pagination">
@@ -342,13 +342,13 @@
                                 <table class="maintenance-table">
                                     <thead>
                                         <tr>
-                                            <th>MÃ£ YC</th>
-                                            <th>PhÃ²ng</th>
-                                            <th>Sá»± cá»‘</th>
-                                            <th>MÃ´ táº£</th>
-                                            <th>Ghi chÃº nhÃ¢n viÃªn</th>
-                                            <th>NgÃ y táº¡o</th>
-                                            <th>Tráº¡ng thÃ¡i</th>
+                                            <th>Mã YC</th>
+                                            <th>Phòng</th>
+                                            <th>Sự cố</th>
+                                            <th>Mô tả</th>
+                                            <th>Ghi chú nhân viên</th>
+                                            <th>Ngày tạo</th>
+                                            <th>Trạng thái</th>
                                         </tr>
                                     </thead>
                                     <tbody id="historyTableBody">
@@ -370,7 +370,7 @@
                                                     <c:choose>
                                                         <c:when test="${empty item.description}">
                                                             <span style="color:#94a3b8;">
-                                                                KhÃ´ng cÃ³
+                                                                Không có
                                                             </span>
                                                         </c:when>
                                                         <c:otherwise>
@@ -382,7 +382,7 @@
                                                     <c:choose>
                                                         <c:when test="${empty item.resolutionNote}">
                                                             <span style="color:#94a3b8;">
-                                                                ChÆ°a cÃ³
+                                                                Chưa có
                                                             </span>
                                                         </c:when>
                                                         <c:otherwise>
@@ -398,31 +398,31 @@
                                                     <c:choose>
                                                         <c:when test="${item.status eq 'Pending'}">
                                                             <span class="status-badge status-pending">
-                                                                Chá» xá»­ lÃ½
+                                                                Chờ xử lý
                                                             </span>
                                                         </c:when>
 
                                                         <c:when test="${item.status eq 'InProgress'}">
                                                             <span class="status-badge status-progress">
-                                                                Äang xá»­ lÃ½
+                                                                Đang xử lý
                                                             </span>
                                                         </c:when>
 
                                                         <c:when test="${item.status eq 'Resolved'}">
                                                             <span class="status-badge status-resolved">
-                                                                ÄÃ£ xá»­ lÃ½
+                                                                Đã xử lý
                                                             </span>
                                                         </c:when>
 
                                                         <c:when test="${item.status eq 'Unresolvable'}">
                                                             <span class="status-badge status-unresolvable">
-                                                                KhÃ´ng thá»ƒ xá»­ lÃ½
+                                                                Không thể xử lý
                                                             </span>
                                                         </c:when>
 
                                                         <c:when test="${item.status eq 'Cancelled'}">
                                                             <span class="status-badge status-cancelled">
-                                                                ÄÃ£ há»§y
+                                                                Đã hủy
                                                             </span>
                                                         </c:when>
 
@@ -444,11 +444,11 @@
                                        style="font-size:60px;margin-bottom:18px;color:#cbd5e1;"></i>
 
                                     <h3 style="margin-bottom:8px;">
-                                        ChÆ°a cÃ³ bÃ¡o cÃ¡o sá»± cá»‘ nÃ o
+                                        Chưa có báo cáo sự cố nào
                                     </h3>
 
                                     <p>
-                                        Khi báº¡n gá»­i yÃªu cáº§u sá»­a chá»¯a, lá»‹ch sá»­ sáº½ hiá»ƒn thá»‹ táº¡i Ä‘Ã¢y.
+                                        Khi bạn gửi yêu cầu sửa chữa, lịch sử sẽ hiển thị tại đây.
                                     </p>
                                 </div>
                             </c:otherwise>
@@ -464,31 +464,31 @@
         <div class="footer-white-grid">
             <div class="footer-white-about">
                 <h3>HotelOps Pro</h3>
-                <p>Há»‡ thá»‘ng quáº£n lÃ½ vÃ  nghá»‰ dÆ°á»¡ng Ä‘áº³ng cáº¥p quá»‘c táº¿, Ä‘em láº¡i tráº£i nghiá»‡m sang trá»ng
-                    vÆ°á»£t thá»i gian.</p>
+                <p>Hệ thống quản lý và nghỉ dưỡng đẳng cấp quốc tế, đem lại trải nghiệm sang trọng
+                    vượt thời gian.</p>
             </div>
 
             <div class="footer-white-links">
-                <h4>LiÃªn káº¿t nhanh</h4>
+                <h4>Liên kết nhanh</h4>
                 <ul>
-                    <li><a href="#">Trang chá»§</a></li>
-                    <li><a href="#">PhÃ²ng & GiÃ¡</a></li>
-                    <li><a href="#">Dá»‹ch vá»¥</a></li>
+                    <li><a href="#">Trang chủ</a></li>
+                    <li><a href="#">Phòng & Giá</a></li>
+                    <li><a href="#">Dịch vụ</a></li>
                 </ul>
             </div>
 
             <div class="footer-white-links">
-                <h4>ChÃ­nh sÃ¡ch</h4>
+                <h4>Chính sách</h4>
                 <ul>
-                    <li><a href="#">ChÃ­nh sÃ¡ch báº£o máº­t</a></li>
-                    <li><a href="#">Äiá»u khoáº£n sá»­ dá»¥ng</a></li>
-                    <li><a href="#">ChÃ­nh sÃ¡ch hoÃ n tiá»n</a></li>
+                    <li><a href="#">Chính sách bảo mật</a></li>
+                    <li><a href="#">Điều khoản sử dụng</a></li>
+                    <li><a href="#">Chính sách hoàn tiền</a></li>
                 </ul>
             </div>
 
             <div class="footer-white-contact">
-                <h4>ThÃ´ng tin liÃªn há»‡</h4>
-                <p><i class="fa-solid fa-location-dot"></i> 123 ÄÆ°á»ng LÃª Lá»£i, Quáº­n 1, TP. Há»“ ChÃ­
+                <h4>Thông tin liên hệ</h4>
+                <p><i class="fa-solid fa-location-dot"></i> 123 Đường Lê Lợi, Quận 1, TP. Hồ Chí
                     Minh</p>
                 <p><i class="fa-solid fa-envelope"></i> contact@hotelopspro.com</p>
                 <span class="phone-number-white"><i class="fa-solid fa-phone"></i> 1900 6789</span>
