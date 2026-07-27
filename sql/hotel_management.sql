@@ -627,6 +627,7 @@ CREATE TABLE dbo.Booking (
 
     room_type_id INT NULL,
     room_quantity INT NOT NULL DEFAULT 1,
+    promotion_id INT NULL,
     check_in_date DATE NOT NULL,
     check_out_date DATE NOT NULL,
 
@@ -649,6 +650,12 @@ CREATE TABLE dbo.Booking (
     CONSTRAINT FK_Booking_Group
         FOREIGN KEY (group_booking_id)
         REFERENCES dbo.Booking(booking_id)
+
+    /* Tính DUY NHẤT của promotion_id KHÔNG dùng UNIQUE constraint ở đây, mà
+       được đảm bảo bằng FILTERED UNIQUE INDEX (UX_Booking_Promotion) tạo ở
+       mục 15 bên dưới. Lý do: trong SQL Server, UNIQUE constraint chỉ cho phép
+       DUY NHẤT 1 giá trị NULL, trong khi phần lớn booking không có khuyến mãi
+       (promotion_id = NULL) nên sẽ đụng ràng buộc ngay từ booking NULL thứ 2. */
 );
 END
 GO
@@ -1585,6 +1592,55 @@ BEGIN
 END
 GO
 
+/* Đảm bảo cột promotion_id tồn tại trên Booking — dùng cho DB cũ đã có sẵn
+   bảng Booking từ trước (CREATE TABLE ở trên bị bỏ qua vì OBJECT_ID đã tồn
+   tại nên không tự thêm cột được, phải ALTER riêng ở đây). */
+IF COL_LENGTH(N'dbo.Booking', N'promotion_id') IS NULL
+BEGIN
+    ALTER TABLE dbo.Booking ADD promotion_id INT NULL;
+END
+GO
+
+/* Nếu DB cũ (hoặc lần chạy script trước) đã lỡ tạo UNIQUE constraint
+   UQ_Booking_Promotion thì gỡ bỏ, vì constraint này chỉ cho phép 1 giá trị
+   NULL — sẽ chặn các booking không có khuyến mãi. Thay bằng filtered unique
+   index bên dưới. */
+IF EXISTS (
+    SELECT 1 FROM sys.key_constraints
+    WHERE name = 'UQ_Booking_Promotion' AND parent_object_id = OBJECT_ID(N'dbo.Booking')
+)
+BEGIN
+    ALTER TABLE dbo.Booking DROP CONSTRAINT UQ_Booking_Promotion;
+END
+GO
+
+/* Đảm bảo tính DUY NHẤT của promotion_id (FK 1-1: mỗi Promotion chỉ gắn được
+   với đúng 1 Booking, chỉ dùng cho booking cha / root). Dùng FILTERED UNIQUE
+   INDEX thay vì UNIQUE constraint: với filter WHERE promotion_id IS NOT NULL,
+   ta cho phép NHIỀU booking không khuyến mãi (NULL) nhưng vẫn đảm bảo mỗi
+   promotion chỉ được dùng đúng 1 lần. Áp dụng cho cả DB mới lẫn DB cũ. */
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE name = 'UX_Booking_Promotion' AND object_id = OBJECT_ID(N'dbo.Booking')
+)
+BEGIN
+    CREATE UNIQUE INDEX UX_Booking_Promotion
+        ON dbo.Booking(promotion_id)
+        WHERE promotion_id IS NOT NULL;
+END
+GO
+
+/* Đảm bảo FK tới Promotion tồn tại — PHẢI đứng sau khi bảng Promotion đã
+   được tạo ở trên (không thể khai báo FK này ngay trong CREATE TABLE ban
+   đầu của Booking vì lúc đó Promotion chưa tồn tại — forward reference sẽ
+   lỗi). Check riêng theo tên FK, độc lập với 2 bước trên. */
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Booking_Promotion')
+BEGIN
+    ALTER TABLE dbo.Booking ADD CONSTRAINT FK_Booking_Promotion
+        FOREIGN KEY (promotion_id) REFERENCES dbo.Promotion(PromotionID);
+END
+GO
+
 /* ── Sample data for testing ── */
 IF NOT EXISTS (SELECT 1 FROM dbo.Promotion WHERE PromotionCode = 'SUMMER2025')
 BEGIN
@@ -1642,4 +1698,3 @@ BEGIN
     );
 END
 GO
-

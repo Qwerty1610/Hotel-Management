@@ -146,9 +146,28 @@ public class PromotionService {
             return new PromotionResult(false, "Đơn đặt phòng không đạt giá trị tối thiểu để áp dụng mã này.", 0, p);
         }
 
+        double discountAmount = calculateDiscountAmount(p, totalBookingAmount);
+
+        return new PromotionResult(true, "Áp dụng thành công", discountAmount, p);
+    }
+
+    /**
+     * Tính số tiền được giảm theo công thức của 1 Promotion (percent/fixed,
+     * có áp trần MaxDiscountAmount và không bao giờ vượt quá subtotal).
+     * Hàm thuần (không kiểm tra Active/ngày hiệu lực/UsageLimit/MinBookingAmount)
+     * — dùng để TÁI ÁP dụng lại discount mỗi khi subtotal đổi (đổi ngày/loại
+     * phòng) mà không làm mã giảm giá "biến mất" nếu subtotal mới tụt dưới
+     * MinBookingAmount ban đầu. Việc kiểm tra điều kiện hợp lệ chỉ thực hiện
+     * MỘT LẦN lúc khách nhập mã, ở {@link #validateAndCalculateDiscount}.
+     */
+    public double calculateDiscountAmount(Promotion p, double subtotal) {
+        if (p == null || subtotal <= 0) {
+            return 0;
+        }
+
         double discountAmount = 0;
         if ("PERCENT".equalsIgnoreCase(p.getDiscountType()) || "PERCENTAGE".equalsIgnoreCase(p.getDiscountType())) {
-            discountAmount = totalBookingAmount * (p.getDiscountValue().doubleValue() / 100.0);
+            discountAmount = subtotal * (p.getDiscountValue().doubleValue() / 100.0);
         } else if ("FIXED".equalsIgnoreCase(p.getDiscountType()) || "FIXED AMOUNT".equalsIgnoreCase(p.getDiscountType())) {
             discountAmount = p.getDiscountValue().doubleValue();
         }
@@ -159,10 +178,10 @@ public class PromotionService {
             }
         }
 
-        if (discountAmount > totalBookingAmount) {
-            discountAmount = totalBookingAmount;
+        if (discountAmount > subtotal) {
+            discountAmount = subtotal;
         }
 
-        return new PromotionResult(true, "Áp dụng thành công", discountAmount, p);
+        return discountAmount;
     }
 }

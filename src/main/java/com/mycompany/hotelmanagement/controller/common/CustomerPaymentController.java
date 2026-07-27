@@ -102,7 +102,10 @@ public class CustomerPaymentController extends HttpServlet {
             }
             double remaining = paymentService.getRemainingAmount(invoice);
             if (remaining <= 0) {
-                response.sendRedirect(request.getContextPath() + "/customer/payments?error=nothingdue");
+                if (!"Paid".equals(invoice.getStatus())) {
+                    paymentService.markInvoicePaidDirectly(invoice.getInvoiceId());
+                }
+                response.sendRedirect(request.getContextPath() + "/customer/payments?success=paid");
                 return;
             }
             String content = paymentService.buildTransferContent(invoiceId);
@@ -119,7 +122,7 @@ public class CustomerPaymentController extends HttpServlet {
             }
             double remaining = paymentService.getDepositRemaining(booking);
             if (remaining <= 0) {
-                response.sendRedirect(request.getContextPath() + "/customer/payments?error=nothingdue");
+                response.sendRedirect(request.getContextPath() + "/customer/payments?success=deposit_paid");
                 return;
             }
             String content = paymentService.buildDepositTransferContent(bookingId);

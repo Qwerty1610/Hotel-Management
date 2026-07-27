@@ -39,6 +39,7 @@ public class Booking {
     private String status;
     private String note;
     private Integer groupBookingId;
+    private Integer promotionId;
     private Date createdAt;
     private String assignedRoomsStr;
 
@@ -182,6 +183,14 @@ public class Booking {
 
     public void setGroupBookingId(Integer v) {
         this.groupBookingId = v;
+    }
+
+    public Integer getPromotionId() {
+        return promotionId;
+    }
+
+    public void setPromotionId(Integer v) {
+        this.promotionId = v;
     }
 
     public Date getCreatedAt() {

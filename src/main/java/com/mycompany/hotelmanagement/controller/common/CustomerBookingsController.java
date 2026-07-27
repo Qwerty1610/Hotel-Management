@@ -431,7 +431,7 @@ public class CustomerBookingsController extends HttpServlet {
                         .validateAndCalculateDiscount(promotionCode, totalGroupAmount);
                 if (promoRes.success && promoRes.discountAmount > 0) {
                     bookingService.applyDiscountToGroup(booking.getBookingId(), promoRes.discountAmount,
-                            promoRes.promotion.getPromotionCode());
+                            promoRes.promotion.getPromotionId(), promoRes.promotion.getPromotionCode());
                     promotionService.incrementUsedCount(promoRes.promotion.getPromotionId());
                 }
             }
