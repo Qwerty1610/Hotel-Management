@@ -74,7 +74,7 @@ public class ProfileService {
             final String name = fullName;
             String hotelName = com.mycompany.hotelmanagement.config.ConfigUtil.get("hotel.name", "HotelOps Pro");
             String subject = "[" + hotelName + "] Thông tin cá nhân của bạn đã được cập nhật";
-            String htmlBody = com.mycompany.hotelmanagement.config.EmailUtil.buildCustomerUpdateEmail(name, email, null, null);
+            String htmlBody = com.mycompany.hotelmanagement.config.EmailUtil.buildCustomerUpdateEmail(name, email, phone);
             new Thread(() -> {
                 try {
                     com.mycompany.hotelmanagement.config.EmailUtil.sendEmail(email, subject, htmlBody);

@@ -10,8 +10,6 @@ public class CustomerInfo implements Serializable {
     private String phone;
     private boolean isActive;
     private Timestamp createdAt;
-    private int loyaltyPoints;
-    private String membershipLevel;
 
     public CustomerInfo() {
     }
@@ -62,21 +60,5 @@ public class CustomerInfo implements Serializable {
 
     public void setCreatedAt(Timestamp createdAt) {
         this.createdAt = createdAt;
-    }
-
-    public int getLoyaltyPoints() {
-        return loyaltyPoints;
-    }
-
-    public void setLoyaltyPoints(int loyaltyPoints) {
-        this.loyaltyPoints = loyaltyPoints;
-    }
-
-    public String getMembershipLevel() {
-        return membershipLevel;
-    }
-
-    public void setMembershipLevel(String membershipLevel) {
-        this.membershipLevel = membershipLevel;
     }
 }

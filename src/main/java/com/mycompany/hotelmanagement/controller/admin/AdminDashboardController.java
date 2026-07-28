@@ -153,10 +153,8 @@ public class AdminDashboardController extends HttpServlet {
                 String email = request.getParameter("email");
                 String fullName = request.getParameter("fullName");
                 String phone = request.getParameter("phone");
-                int loyaltyPoints = Integer.parseInt(request.getParameter("loyaltyPoints"));
-                String membershipLevel = request.getParameter("membershipLevel");
-                
-                String result = adminService.updateCustomerAccount(accountId, email, fullName, phone, loyaltyPoints, membershipLevel);
+
+                String result = adminService.updateCustomerAccount(accountId, email, fullName, phone);
                 
                 if ("success".equals(result)) {
                     response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=customers&success=updated");
