@@ -75,18 +75,7 @@ public class RoomController extends HttpServlet {
             return;
         }
 
-        if ("delete".equalsIgnoreCase(action) && roomId != -1) {
-            String delResult = roomService.deleteRoomResult(roomId);
-            if ("roomHasActiveOrFutureBooking".equals(delResult)) {
-                response.sendRedirect(request.getContextPath() + "/manager/rooms?selectedDate=" + selectedDateStr + "&error=roomHasActiveOrFutureBooking");
-                return;
-            } else if (!"success".equals(delResult)) {
-                response.sendRedirect(request.getContextPath() + "/manager/rooms?selectedDate=" + selectedDateStr + "&error=deleteError");
-                return;
-            }
-            response.sendRedirect(request.getContextPath() + "/manager/rooms?selectedDate=" + selectedDateStr + "&success=deleted");
-            return;
-        } else if ("updateStatus".equalsIgnoreCase(action) && roomId != -1) {
+        if ("updateStatus".equalsIgnoreCase(action) && roomId != -1) {
             String status = request.getParameter("status");
             if (status != null && !status.trim().isEmpty()) {
                 String result = roomService.updateRoomStatus(roomId, status.trim());

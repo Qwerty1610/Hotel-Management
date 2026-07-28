@@ -43,8 +43,23 @@ public class RoomTypeInfo {
     private String area;
     private String bedType;
 
+    // Active status toggle field
+    private boolean isActive = true;
+
     // Delete guard: true if this room type currently has occupied guests
     private boolean hasOccupiedGuests;
+
+    public boolean isIsActive() {
+        return isActive;
+    }
+
+    public boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(boolean isActive) {
+        this.isActive = isActive;
+    }
 
     public int getTypeId() {
         return typeId;

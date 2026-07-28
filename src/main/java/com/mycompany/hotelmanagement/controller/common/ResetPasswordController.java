@@ -44,8 +44,22 @@ public class ResetPasswordController extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
+        String action = request.getParameter("action");
         String email = request.getParameter("email");
         String otp = request.getParameter("otp");
+
+        if ("verify_otp".equals(action)) {
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            boolean isValid = authService.verifyOtp(email, otp);
+            if (isValid) {
+                response.getWriter().write("{\"valid\": true}");
+            } else {
+                response.getWriter().write("{\"valid\": false, \"message\": \"Mã OTP không chính xác hoặc đã hết hạn!\"}");
+            }
+            return;
+        }
+
         String newPassword = request.getParameter("newPassword");
         String confirmPassword = request.getParameter("confirmPassword");
         String portal = request.getParameter("portal");
