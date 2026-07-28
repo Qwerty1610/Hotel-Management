@@ -212,16 +212,20 @@ public class AdminService {
      * @return Chuỗi mã kết quả
      */
     public String toggleAccountStatus(int accountId, boolean active) {
+        Account account = accountRepository.getAccountById(accountId);
+        if (account == null) {
+            return "account_not_found";
+        }
         // BR-65 validation: Cannot lock/deactivate the Admin account
         if (!active) {
-            Account account = accountRepository.getAccountById(accountId);
-            if (account != null && "Admin".equals(account.getRoleName())) {
+            if ("Admin".equals(account.getRoleName())) {
                 return "cannot_lock_admin";
             }
         }
         boolean success = accountRepository.toggleAccountStatus(accountId, active);
         if (success) {
             logger.info("Admin toggled account status: ID {}, Active: {}", accountId, active);
+            sendAccountStatusEmail(account.getEmail(), account.getFullName(), active);
             return "success";
         }
         return "failed";
@@ -436,6 +440,34 @@ public class AdminService {
                 }
             } catch (Exception e) {
                 logger.error("Lỗi gửi email cập nhật tài khoản nhân viên cho: " + email, e);
+            }
+        }).start();
+    }
+
+    /**
+     * Gửi email tự động thông báo khóa hoặc mở khóa tài khoản.
+     */
+    private void sendAccountStatusEmail(String email, String fullName, boolean active) {
+        if (email == null || email.trim().isEmpty()) {
+            return;
+        }
+        final String safeEmail = email.trim();
+        final String safeName = (fullName != null) ? fullName.trim() : "Thành viên";
+        
+        new Thread(() -> {
+            try {
+                String hotelName = ConfigUtil.get("hotel.name", "HotelOps Pro");
+                String subject = "[" + hotelName + "] " + (active ? "Thông báo mở khóa tài khoản" : "Thông báo khóa tài khoản");
+                String htmlBody = EmailUtil.buildAccountStatusEmail(safeName, safeEmail, active);
+
+                boolean sent = EmailUtil.sendEmail(safeEmail, subject, htmlBody);
+                if (sent) {
+                    logger.info("Đã gửi email thông báo trạng thái tài khoản tới: {}", safeEmail);
+                } else {
+                    logger.warn("Không thể gửi email thông báo trạng thái tài khoản tới: {}", safeEmail);
+                }
+            } catch (Exception e) {
+                logger.error("Lỗi gửi email thông báo trạng thái tài khoản cho: " + safeEmail, e);
             }
         }).start();
     }

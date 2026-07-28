@@ -258,4 +258,36 @@ public class EmailUtil {
 
         return buildEmailWrapper("Cập nhật thông tin tài khoản khách hàng", content.toString());
     }
+
+    /**
+     * Mẫu Email thông báo khóa hoặc mở khóa tài khoản.
+     */
+    public static String buildAccountStatusEmail(String fullName, String email, boolean active) {
+        String nameStr = (fullName != null && !fullName.trim().isEmpty()) ? fullName.trim() : "Thành viên";
+        String statusClass = active ? "color: #10b981; font-weight: bold;" : "color: #ef4444; font-weight: bold;";
+        
+        StringBuilder content = new StringBuilder();
+        content.append("<h3 style=\"margin-top: 0; color: #0b132b; font-size: 18px;\">Thông báo trạng thái tài khoản</h3>");
+        content.append("<p style=\"font-size: 15px; color: #334155;\">Xin chào <strong>").append(nameStr).append("</strong>,</p>");
+        
+        if (active) {
+            content.append("<p style=\"font-size: 15px; color: #334155;\">Tài khoản của bạn trên hệ thống <strong>HotelOps Pro</strong> đã được <span style=\"").append(statusClass).append("\">MỞ KHÓA</span> bởi Quản trị viên.</p>");
+            content.append("<p style=\"font-size: 15px; color: #334155;\">Hiện tại, bạn đã có thể đăng nhập vào hệ thống và tiếp tục sử dụng các dịch vụ của chúng tôi bình thường.</p>");
+        } else {
+            content.append("<p style=\"font-size: 15px; color: #334155;\">Tài khoản của bạn trên hệ thống <strong>HotelOps Pro</strong> đã bị <span style=\"").append(statusClass).append("\">TẠM KHÓA</span> bởi Quản trị viên.</p>");
+            content.append("<p style=\"font-size: 15px; color: #334155;\">Do đó, bạn sẽ tạm thời không thể đăng nhập hoặc thực hiện các giao dịch trên hệ thống.</p>");
+            content.append("<p style=\"font-size: 13px; color: #64748b; background-color: #f8fafc; padding: 12px 16px; border-left: 4px solid #ef4444; border-radius: 4px; margin-top: 15px;\">");
+            content.append("  <strong>Lưu ý:</strong> Nếu bạn tin rằng đây là một sự nhầm lẫn hoặc cần hỗ trợ, vui lòng liên hệ trực tiếp với bộ phận chăm sóc khách hàng của chúng tôi để được giải đáp.");
+            content.append("</p>");
+        }
+        
+        content.append("<div style=\"background-color: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid #c29a30; border-radius: 6px; padding: 18px; margin: 24px 0;\">");
+        content.append("  <p style=\"margin: 4px 0; font-size: 14px;\"><strong>Email tài khoản:</strong> ").append(email).append("</p>");
+        content.append("  <p style=\"margin: 4px 0; font-size: 14px;\"><strong>Trạng thái hiện tại:</strong> <span style=\"").append(statusClass).append("\">").append(active ? "Đang hoạt động" : "Đang bị khóa").append("</span></p>");
+        content.append("</div>");
+        
+        content.append("<p style=\"font-size: 14px; color: #64748b; margin-bottom: 0;\">Cảm ơn bạn đã luôn đồng hành cùng <strong>HotelOps Pro</strong>.</p>");
+
+        return buildEmailWrapper("Thông báo trạng thái tài khoản", content.toString());
+    }
 }
