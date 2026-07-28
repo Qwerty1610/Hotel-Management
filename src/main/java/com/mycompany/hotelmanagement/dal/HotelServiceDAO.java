@@ -40,22 +40,6 @@ public class HotelServiceDAO {
         }
     }
 
-    public java.util.Set<Integer> getUsedServiceIds() {
-        java.util.Set<Integer> usedIds = new java.util.HashSet<>();
-        String sql = "SELECT DISTINCT service_id FROM dbo.BookingServiceRequest WHERE status IN (N'Pending', N'InProgress', 'Pending', 'InProgress')";
-        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            useDatabase(conn);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    usedIds.add(rs.getInt("service_id"));
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return usedIds;
-    }
-
     public List<HotelService> getAllServices() {
         List<HotelService> list = new ArrayList<>();
         String sql = "SELECT service_id, service_name, description, price, unit, is_active FROM HotelService ORDER BY service_id";
@@ -81,41 +65,6 @@ public class HotelServiceDAO {
     }
 
     private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(HotelServiceDAO.class.getName());
-
-    public boolean deleteService(int serviceId) {
-        String checkUsageSql = "SELECT COUNT(*) FROM dbo.BookingServiceRequest WHERE service_id = ?";
-        try (Connection conn = DBContext.getConnection()) {
-            useDatabase(conn);
-            boolean isUsed = false;
-            try (PreparedStatement psCheck = conn.prepareStatement(checkUsageSql)) {
-                psCheck.setInt(1, serviceId);
-                try (ResultSet rs = psCheck.executeQuery()) {
-                    if (rs.next() && rs.getInt(1) > 0) {
-                        isUsed = true;
-                    }
-                }
-            }
-
-            if (isUsed) {
-                // Service has usage history -> Soft delete (deactivate) so historical requests & invoices retain full details
-                String sqlSoftDelete = "UPDATE HotelService SET is_active = 0, updated_at = SYSDATETIME() WHERE service_id = ?";
-                try (PreparedStatement ps = conn.prepareStatement(sqlSoftDelete)) {
-                    ps.setInt(1, serviceId);
-                    return ps.executeUpdate() > 0;
-                }
-            } else {
-                // Service has no history -> Clean hard delete
-                String sqlHardDelete = "DELETE FROM HotelService WHERE service_id = ?";
-                try (PreparedStatement ps = conn.prepareStatement(sqlHardDelete)) {
-                    ps.setInt(1, serviceId);
-                    return ps.executeUpdate() > 0;
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.log(java.util.logging.Level.SEVERE, "Error deleting hotel service " + serviceId, e);
-            return false;
-        }
-    }
 
     public boolean toggleServiceStatus(int serviceId, boolean isActive) {
         String sql = "UPDATE HotelService SET is_active = ?, updated_at = SYSDATETIME() WHERE service_id = ?";
