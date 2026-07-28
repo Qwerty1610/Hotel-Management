@@ -33,8 +33,9 @@ public class InvoiceService {
     /**
      * Một trang hóa đơn theo bộ lọc (server-side).
      *
-     * @param stay lọc theo tình trạng lưu trú: "open" (khách chưa trả phòng),
-     *             "closed" (đã trả phòng / hóa đơn đã chốt), "all" hoặc null = tất cả
+     * @param stay lọc theo tình trạng lưu trú: "notin" (chưa nhận phòng), "staying"
+     *             (đang ở), "open" (chưa trả phòng = notin + staying), "closed"
+     *             (đã trả phòng / hóa đơn đã chốt), "all" hoặc null = tất cả
      */
     public List<Invoice> getInvoices(String keyword, String status, String stay, int offset, int pageSize) {
         return invoiceDAO.getInvoices(keyword, status, stay, offset, pageSize);

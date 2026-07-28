@@ -225,6 +225,22 @@ public class Booking {
         this.groupRoomTypeNames = v;
     }
 
+    /**
+     * Bản rút gọn của getGroupRoomTypeNames() cho các bảng hẹp: giữ 2 loại phòng
+     * đầu, từ loại thứ 3 trở đi thay bằng ",..." (vd "test1, test2,...").
+     */
+    public String getGroupRoomTypeNamesShort() {
+        String names = getGroupRoomTypeNames();
+        if (names == null) {
+            return null;
+        }
+        String[] parts = names.split(",");
+        if (parts.length <= 2) {
+            return names;
+        }
+        return parts[0].trim() + ", " + parts[1].trim() + ",...";
+    }
+
     public double getOverallTotalAmount() {
         return overallTotalAmount > 0 ? overallTotalAmount : totalAmount;
     }

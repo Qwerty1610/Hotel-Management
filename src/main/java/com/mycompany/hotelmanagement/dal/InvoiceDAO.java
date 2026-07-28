@@ -72,23 +72,36 @@ public class InvoiceDAO {
             "  " + PAID_EXPR + " AS paid_amount ";
 
     /**
-     * "Hóa đơn còn mở" dưới dạng SQL (1 = còn mở, 0 = đã chốt) — NGUỒN SỰ THẬT DUY NHẤT.
+     * Tình trạng lưu trú của hóa đơn dưới dạng SQL — NGUỒN SỰ THẬT DUY NHẤT.
      * isInvoiceOpen(), cột hiển thị trên danh sách và bộ lọc "tình trạng lưu trú" đều
-     * đọc từ đây, nên không thể lệch định nghĩa với nhau.
+     * đọc từ đây, nên không thể lệch định nghĩa với nhau. Ba giá trị:
+     *   'NotCheckedIn' — khách chưa nhận phòng (booking Pending/Confirmed)
+     *   'Staying'      — khách đang ở (CheckedIn); hóa đơn rời không gắn booking cũng
+     *                    xếp vào đây khi chưa Paid (giữ hành vi cũ: còn thao tác được)
+     *   'Closed'       — đã chốt: khách trả phòng / đơn hủy / đơn bị từ chối, hoặc
+     *                    hóa đơn Cancelled/Refunded
+     * "Hóa đơn còn mở" (được thêm phụ phí / khoản hoàn / dịch vụ) = khác 'Closed'.
      *
      * Mọi truy vấn dùng lại phải đặt alias bảng Invoice là "i". Dùng subquery tương quan
      * (alias "bo") thay vì JOIN để không đụng alias "b" ở các truy vấn đã join Booking sẵn.
      */
-    private static final String OPEN_EXPR =
+    private static final String STAY_EXPR =
             "CASE " +
-            "  WHEN i.status IN (N'Cancelled', N'Refunded') THEN 0 " +
+            "  WHEN i.status IN (N'Cancelled', N'Refunded') THEN N'Closed' " +
             "  WHEN NOT EXISTS (SELECT 1 FROM dbo.Booking bo WHERE bo.booking_id = i.booking_id) " +
-            "       THEN CASE WHEN i.status = N'Paid' THEN 0 ELSE 1 END " +
+            "       THEN CASE WHEN i.status = N'Paid' THEN N'Closed' ELSE N'Staying' END " +
             "  WHEN EXISTS (SELECT 1 FROM dbo.Booking bo WHERE bo.booking_id = i.booking_id " +
-            "               AND bo.status IN (N'CheckedOut', N'Cancelled', N'Rejected')) THEN 0 " +
-            "  ELSE 1 END";
+            "               AND bo.status IN (N'CheckedOut', N'Cancelled', N'Rejected')) THEN N'Closed' " +
+            "  WHEN EXISTS (SELECT 1 FROM dbo.Booking bo WHERE bo.booking_id = i.booking_id " +
+            "               AND bo.status = N'CheckedIn') THEN N'Staying' " +
+            "  ELSE N'NotCheckedIn' END";
 
-    private static final String STATE_COLUMNS = ", " + OPEN_EXPR + " AS is_open ";
+    /** Dẫn xuất từ STAY_EXPR để không tồn tại định nghĩa "còn mở" thứ hai. */
+    private static final String OPEN_EXPR =
+            "CASE WHEN (" + STAY_EXPR + ") = N'Closed' THEN 0 ELSE 1 END";
+
+    private static final String STATE_COLUMNS =
+            ", " + OPEN_EXPR + " AS is_open, " + STAY_EXPR + " AS stay_state ";
 
     private static final String BASE_SELECT =
             "SELECT i.invoice_id, i.booking_id, i.customer_name, i.room_number, i.status, i.created_at, " +
@@ -139,9 +152,13 @@ public class InvoiceDAO {
             params.add(status);
         }
         if ("open".equalsIgnoreCase(stay)) {
-            w.append(" AND (").append(OPEN_EXPR).append(") = 1 ");
+            w.append(" AND (").append(STAY_EXPR).append(") <> N'Closed' ");
         } else if ("closed".equalsIgnoreCase(stay)) {
-            w.append(" AND (").append(OPEN_EXPR).append(") = 0 ");
+            w.append(" AND (").append(STAY_EXPR).append(") = N'Closed' ");
+        } else if ("staying".equalsIgnoreCase(stay)) {
+            w.append(" AND (").append(STAY_EXPR).append(") = N'Staying' ");
+        } else if ("notin".equalsIgnoreCase(stay)) {
+            w.append(" AND (").append(STAY_EXPR).append(") = N'NotCheckedIn' ");
         }
         return w.toString();
     }
@@ -962,6 +979,7 @@ public class InvoiceDAO {
         inv.setPendingRefundAmount(rs.getDouble("pending_refund_amount"));
         inv.setPaidAmount(rs.getDouble("paid_amount"));
         inv.setOpen(rs.getInt("is_open") == 1);
+        inv.setStayState(rs.getString("stay_state"));
         return inv;
     }
 }

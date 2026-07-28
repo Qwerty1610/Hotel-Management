@@ -99,7 +99,8 @@
                     <c:forEach var="item" items="${depositItems}">
                         <tr>
                             <td><b>#${item.booking.bookingId}</b></td>
-                            <td>${item.booking.groupRoomTypeNames}</td>
+                            <%-- title = danh sách đầy đủ để rê chuột xem khi đã rút gọn --%>
+                            <td title="<c:out value='${item.booking.groupRoomTypeNames}' />">${item.booking.groupRoomTypeNamesShort}</td>
                             <td>
                                 <fmt:formatDate value="${item.booking.checkInDate}" pattern="dd/MM/yyyy" />
                                 &rarr;
@@ -164,7 +165,8 @@
                     <c:forEach var="inv" items="${unpaidInvoices}">
                         <tr>
                             <td><b>#${inv.invoiceId}</b></td>
-                            <td>${empty inv.roomNumber ? '—' : inv.roomNumber}</td>
+                            <%-- title = danh sách phòng đầy đủ để rê chuột xem khi đã rút gọn --%>
+                            <td title="<c:out value='${inv.roomNumber}' />">${empty inv.roomNumber ? '—' : inv.roomNumberShort}</td>
                             <td><fmt:formatDate value="${inv.createdAt}" pattern="dd/MM/yyyy HH:mm" /></td>
                             <td><fmt:formatNumber value="${inv.totalAmount}" maxFractionDigits="0" /> đ</td>
                             <td><fmt:formatNumber value="${inv.depositAmount}" maxFractionDigits="0" /> đ</td>
