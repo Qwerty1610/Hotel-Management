@@ -149,18 +149,7 @@ public class AdminDashboardController extends HttpServlet {
                 }
                 
             } else if ("update-customer".equals(action)) {
-                int accountId = Integer.parseInt(request.getParameter("accountId"));
-                String email = request.getParameter("email");
-                String fullName = request.getParameter("fullName");
-                String phone = request.getParameter("phone");
-
-                String result = adminService.updateCustomerAccount(accountId, email, fullName, phone);
-                
-                if ("success".equals(result)) {
-                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=customers&success=updated");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=customers&error=" + result);
-                }
+                response.sendRedirect(request.getContextPath() + "/admin/dashboard?tab=customers&error=action_not_allowed");
                 
             } else if ("toggle-staff".equals(action) || "toggle-customer".equals(action)) {
                 int accountId = Integer.parseInt(request.getParameter("accountId"));
