@@ -30,14 +30,19 @@ public class InvoiceService {
         return invoiceDAO.getAllInvoices();
     }
 
-    /** Một trang hóa đơn theo bộ lọc (server-side). */
-    public List<Invoice> getInvoices(String keyword, String status, int offset, int pageSize) {
-        return invoiceDAO.getInvoices(keyword, status, offset, pageSize);
+    /**
+     * Một trang hóa đơn theo bộ lọc (server-side).
+     *
+     * @param stay lọc theo tình trạng lưu trú: "open" (khách chưa trả phòng),
+     *             "closed" (đã trả phòng / hóa đơn đã chốt), "all" hoặc null = tất cả
+     */
+    public List<Invoice> getInvoices(String keyword, String status, String stay, int offset, int pageSize) {
+        return invoiceDAO.getInvoices(keyword, status, stay, offset, pageSize);
     }
 
     /** Tổng số hóa đơn khớp bộ lọc (server-side). */
-    public int countInvoices(String keyword, String status) {
-        return invoiceDAO.countInvoices(keyword, status);
+    public int countInvoices(String keyword, String status, String stay) {
+        return invoiceDAO.countInvoices(keyword, status, stay);
     }
 
     public Invoice getInvoiceById(int id) {
@@ -69,14 +74,20 @@ public class InvoiceService {
         return invoiceDAO.sumPendingRefundTotal();
     }
 
+    /** Hóa đơn còn cho phép thêm phụ phí / khoản hoàn hay không (khách chưa trả phòng). */
+    public boolean isInvoiceOpen(int invoiceId) {
+        return invoiceDAO.isInvoiceOpen(invoiceId);
+    }
+
     public boolean addSurcharge(int invoiceId, String description, int quantity, double unitPrice) {
         if (description == null || description.trim().isEmpty()) return false;
         // Đơn giá phụ phí phải lớn hơn 1
         if (quantity <= 0 || unitPrice <= 1) return false;
         Invoice inv = invoiceDAO.getInvoiceById(invoiceId);
         if (inv == null) return false;
-        // Chỉ hóa đơn đã thanh toán mới không được thêm phụ phí
-        if ("Paid".equals(inv.getStatus())) return false;
+        // Chốt theo lúc khách trả phòng, không theo trạng thái Paid: khách thanh toán
+        // hết phần còn lại giữa kỳ lưu trú vẫn phải ghi thêm phụ phí được.
+        if (!invoiceDAO.isInvoiceOpen(invoiceId)) return false;
         return invoiceDAO.addSurcharge(invoiceId, description.trim(), quantity, unitPrice);
     }
 
@@ -85,8 +96,9 @@ public class InvoiceService {
         // Số tiền cần hoàn phải lớn hơn 1
         if (amount <= 1) return false;
         Invoice inv = invoiceDAO.getInvoiceById(invoiceId);
-        // Chỉ hóa đơn đã thanh toán mới không được thêm khoản hoàn
-        if (inv == null || "Paid".equals(inv.getStatus())) return false;
+        if (inv == null) return false;
+        // Cùng ranh giới với addSurcharge: mở tới khi khách trả phòng.
+        if (!invoiceDAO.isInvoiceOpen(invoiceId)) return false;
         // Không cho tạo khoản hoàn vượt quá phần còn có thể hoàn
         if (amount > inv.getRefundableAmount()) return false;
         return invoiceDAO.addPendingRefund(invoiceId, amount, reason != null ? reason.trim() : "");

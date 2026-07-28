@@ -80,6 +80,14 @@
                                         <option value="Cancelled" ${statusFilter eq 'Cancelled' ? 'selected' : '' }>Đã
                                             huỷ</option>
                                     </select>
+                                    <select name="stay" class="status-select" onchange="this.form.submit()">
+                                        <option value="all" ${stayFilter eq 'all' ? 'selected' : '' }>Tất cả lưu
+                                            trú</option>
+                                        <option value="open" ${stayFilter eq 'open' ? 'selected' : '' }>Chưa trả
+                                            phòng</option>
+                                        <option value="closed" ${stayFilter eq 'closed' ? 'selected' : '' }>Đã trả
+                                            phòng</option>
+                                    </select>
                                     <button type="submit" class="btn-add-service" style="height:40px;">
                                         <i class="fa-solid fa-magnifying-glass"></i> Tìm
                                     </button>
@@ -88,12 +96,13 @@
                                 <table class="services-table-element">
                                     <thead>
                                         <tr>
-                                            <th style="width:14%">Mã HĐ</th>
-                                            <th style="width:30%">Khách hàng</th>
-                                            <th style="width:18%">Ngày tạo</th>
-                                            <th style="width:16%">Tổng tiền</th>
-                                            <th style="width:12%">Trạng thái</th>
-                                            <th style="width:10%">Thao tác</th>
+                                            <th style="width:12%">Mã HĐ</th>
+                                            <th style="width:25%">Khách hàng</th>
+                                            <th style="width:16%">Ngày tạo</th>
+                                            <th style="width:14%">Tổng tiền</th>
+                                            <th style="width:11%">Trạng thái</th>
+                                            <th style="width:13%">Lưu trú</th>
+                                            <th style="width:9%">Thao tác</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -139,6 +148,15 @@
                                                     </c:choose>
                                                 </td>
                                                 <td>
+                                                    <%-- Hóa đơn "còn mở" = khách chưa trả phòng: vẫn thêm được phụ phí
+                                                         và khoản cần hoàn. Đây là ranh giới chốt hóa đơn, không phải
+                                                         trạng thái đã/chưa thanh toán. --%>
+                                                    <c:choose>
+                                                        <c:when test="${inv.open}"><span class="inv-badge inv-refunded">ĐANG Ở</span></c:when>
+                                                        <c:otherwise><span class="inv-badge inv-cancelled">ĐÃ TRẢ PHÒNG</span></c:otherwise>
+                                                    </c:choose>
+                                                </td>
+                                                <td>
                                                     <a class="btn-detail"
                                                         href="${pageContext.request.contextPath}/manager/invoices?id=${inv.invoiceId}">
                                                         <i class="fa-solid fa-eye"></i> Chi tiết
@@ -148,7 +166,7 @@
                                         </c:forEach>
                                         <c:if test="${empty invoices}">
                                             <tr>
-                                                <td colspan="6"
+                                                <td colspan="7"
                                                     style="text-align:center; padding:40px; color:var(--text-muted);">
                                                     <i class="fa-solid fa-folder-open"
                                                         style="font-size:32px; margin-bottom:12px; display:block;"></i>
@@ -176,6 +194,7 @@
                                                 <c:url var="prevUrl" value="/manager/invoices">
                                                     <c:param name="q" value="${q}" />
                                                     <c:param name="status" value="${statusFilter}" />
+                                                    <c:param name="stay" value="${stayFilter}" />
                                                     <c:param name="page" value="${page-1}" />
                                                 </c:url>
                                                 <a class="btn-page" href="${prevUrl}"><i
@@ -189,6 +208,7 @@
                                             <c:url var="pUrl" value="/manager/invoices">
                                                 <c:param name="q" value="${q}" />
                                                 <c:param name="status" value="${statusFilter}" />
+                                                <c:param name="stay" value="${stayFilter}" />
                                                 <c:param name="page" value="${p}" />
                                             </c:url>
                                             <a class="btn-page ${p == page ? 'active' : ''}" href="${pUrl}">${p}</a>
@@ -199,6 +219,7 @@
                                                 <c:url var="nextUrl" value="/manager/invoices">
                                                     <c:param name="q" value="${q}" />
                                                     <c:param name="status" value="${statusFilter}" />
+                                                    <c:param name="stay" value="${stayFilter}" />
                                                     <c:param name="page" value="${page+1}" />
                                                 </c:url>
                                                 <a class="btn-page" href="${nextUrl}"><i

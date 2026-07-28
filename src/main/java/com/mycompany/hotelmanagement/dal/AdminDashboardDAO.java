@@ -45,10 +45,23 @@ public class AdminDashboardDAO {
     private static final String STAY_OVERLAPS =
             "b.check_in_date <= ? AND b.check_out_date > ?";
 
+    /**
+     * Loại các đơn được sinh ra để THAY THẾ một đơn cũ (khi lễ tân duyệt yêu
+     * cầu thay đổi đặt phòng). Chúng không phải lượt đặt phòng mới của khách,
+     * chỉ là hình thức kỹ thuật để áp thay đổi — đếm vào sẽ thổi mọi chỉ số đo
+     * hoạt động đặt phòng lên mỗi lần có khách đổi đơn.
+     */
+    private static final String NOT_A_REPLACEMENT = "b.replaces_booking_id IS NULL";
+
     /** Mức gom nhóm chuỗi thời gian (xem AdminDashboardService.granularityFor). */
     public static final String GRAN_DAY = "day";
     public static final String GRAN_MONTH = "month";
     public static final String GRAN_QUARTER = "quarter";
+
+    public AdminDashboardDAO() {
+        // Các truy vấn dưới đây tham chiếu thẳng replaces_booking_id.
+        BookingDAO.ensureChangeTrackingColumns();
+    }
 
     private void useDatabase(Connection conn) {
         try (Statement stmt = conn.createStatement()) {
@@ -97,7 +110,7 @@ public class AdminDashboardDAO {
     /** Tổng số lượt đặt phòng được tạo trong khoảng [from, to]. */
     public int getBookingCount(java.sql.Date from, java.sql.Date to) {
         String sql = "SELECT COUNT(*) FROM dbo.Booking b " +
-                "WHERE CAST(b.created_at AS DATE) BETWEEN ? AND ?";
+                "WHERE CAST(b.created_at AS DATE) BETWEEN ? AND ? AND " + NOT_A_REPLACEMENT;
         return countByDateRange(sql, from, to);
     }
 
@@ -175,7 +188,7 @@ public class AdminDashboardDAO {
     /** Số lượt đặt phòng (mọi trạng thái) theo nhóm thời gian, theo ngày tạo đơn. */
     public Map<String, Double> getBookingSeries(java.sql.Date from, java.sql.Date to, String granularity) {
         Map<String, Double> map = new LinkedHashMap<>();
-        String where = "CAST(b.created_at AS DATE) BETWEEN ? AND ?";
+        String where = "CAST(b.created_at AS DATE) BETWEEN ? AND ? AND " + NOT_A_REPLACEMENT;
         String sql;
         switch (granularity) {
             case GRAN_MONTH:
@@ -227,7 +240,7 @@ public class AdminDashboardDAO {
     public Map<String, Integer> getBookingStatusCounts(java.sql.Date from, java.sql.Date to) {
         Map<String, Integer> map = new LinkedHashMap<>();
         String sql = "SELECT b.status AS st, COUNT(*) AS cnt FROM dbo.Booking b " +
-                "WHERE CAST(b.created_at AS DATE) BETWEEN ? AND ? " +
+                "WHERE CAST(b.created_at AS DATE) BETWEEN ? AND ? AND " + NOT_A_REPLACEMENT + " " +
                 "GROUP BY b.status " +
                 "ORDER BY cnt DESC";
         try (Connection conn = DBContext.getConnection()) {
@@ -342,7 +355,7 @@ public class AdminDashboardDAO {
         String sql = "SELECT b.booking_id, b.customer_name, b.check_in_date, b.check_out_date, " +
                 "       b.total_amount, b.status, b.created_at " +
                 "FROM dbo.Booking b " +
-                "WHERE CAST(b.created_at AS DATE) BETWEEN ? AND ? " +
+                "WHERE CAST(b.created_at AS DATE) BETWEEN ? AND ? AND " + NOT_A_REPLACEMENT + " " +
                 "ORDER BY b.created_at DESC, b.booking_id DESC " +
                 "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
         return queryBookingsPage(sql, from, to, offset, limit);

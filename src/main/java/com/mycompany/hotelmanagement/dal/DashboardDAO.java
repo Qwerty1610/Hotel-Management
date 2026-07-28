@@ -36,13 +36,26 @@ public class DashboardDAO {
     private static final String REVENUE_STATUS_IN =
             "b.status IN (N'Confirmed', N'CheckedIn', N'CheckedOut')";
 
-    /** Các trạng thái được tính là hủy khi đo tỷ lệ hủy. */
+    /**
+     * Các trạng thái được tính là hủy khi đo tỷ lệ hủy.
+     * <p>
+     * Đơn bị thay bởi một yêu cầu thay đổi đã duyệt cũng mang trạng thái
+     * Cancelled, nhưng đó không phải là khách bỏ cuộc — nó chỉ nhường chỗ cho
+     * đơn thay thế. Đếm nó vào đây sẽ thổi tỷ lệ hủy lên mỗi lần có khách đổi
+     * đơn.
+     */
     private static final String CANCELLED_STATUS_IN =
-            "b.status IN (N'Cancelled', N'Rejected')";
+            "b.status IN (N'Cancelled', N'Rejected') AND b.replaced_by_booking_id IS NULL";
 
     /** Điều kiện kỳ lưu trú [check_in, check_out) giao với khoảng [?, ?] = [to, from]. */
     private static final String STAY_OVERLAPS =
             "b.check_in_date <= ? AND b.check_out_date > ?";
+
+    public DashboardDAO() {
+        // Các KPI dưới đây tham chiếu thẳng replaced_by_booking_id /
+        // replaces_booking_id trong mệnh đề WHERE.
+        BookingDAO.ensureChangeTrackingColumns();
+    }
 
     private void useDatabase(Connection conn) {
         try (Statement stmt = conn.createStatement()) {
@@ -116,10 +129,17 @@ public class DashboardDAO {
        KPI TỶ LỆ HỦY (theo ngày tạo đơn)
        ===================================================================== */
 
-    /** Tổng số đơn (mọi trạng thái) được tạo trong khoảng [from, to]. */
+    /**
+     * Tổng số đơn (mọi trạng thái) được tạo trong khoảng [from, to].
+     * <p>
+     * Đơn sinh ra để thay thế một đơn cũ (khi lễ tân duyệt yêu cầu thay đổi)
+     * không phải nhu cầu đặt phòng mới — nó chỉ là hình thức kỹ thuật để áp
+     * thay đổi, nên bị loại khỏi mẫu số của tỷ lệ hủy.
+     */
     public int getCreatedBookingCount(Date from, Date to) {
         String sql = "SELECT COUNT(*) FROM dbo.Booking b " +
-                "WHERE CAST(b.created_at AS DATE) BETWEEN ? AND ?";
+                "WHERE CAST(b.created_at AS DATE) BETWEEN ? AND ? " +
+                "  AND b.replaces_booking_id IS NULL";
         return countByRange(sql, from, to);
     }
 

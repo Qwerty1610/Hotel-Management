@@ -50,6 +50,17 @@ public class BookingDAO {
         }
     }
 
+    /**
+     * Điều kiện phụ dùng trong các subquery gộp theo nhóm đặt phòng. Khi khách
+     * bỏ bớt một loại phòng khỏi đơn nhiều phòng, dòng con tương ứng bị chuyển
+     * sang Cancelled nhưng vẫn nằm lại trong nhóm để phục vụ tra soát — nó
+     * không được tính vào tổng số phòng / tổng tiền của đơn nữa. Ngược lại, khi
+     * cả đơn đã bị huỷ thì mọi dòng đều Cancelled và ta vẫn hiển thị đầy đủ
+     * như trước.
+     */
+    private static final String GROUP_ROW_ALIVE =
+            " AND (sb.status <> N'Cancelled' OR b.status = N'Cancelled') ";
+
     private static final String BASE_SELECT = "SELECT b.booking_id, b.account_id, b.customer_name, b.phone, b.email, "
             + "       b.room_type_id, ISNULL(rt.type_name, N'Loại phòng cũ') AS room_type_name, "
             + "       b.room_quantity, b.check_in_date, b.check_out_date, "
@@ -60,20 +71,24 @@ public class BookingDAO {
             + "        WHERE br.booking_id IN (SELECT sb.booking_id FROM dbo.Booking sb WHERE sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id)) AS assigned_rooms, "
             + "       (SELECT SUM(sb.room_quantity) "
             + "        FROM dbo.Booking sb "
-            + "        WHERE sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) AS total_room_quantity, "
+            + "        WHERE (sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) "
+            + GROUP_ROW_ALIVE + ") AS total_room_quantity, "
             + "       (SELECT STRING_AGG(type_name, ', ') "
             + "        FROM ( "
             + "            SELECT DISTINCT srt.type_name "
             + "            FROM dbo.Booking sb "
             + "            JOIN dbo.RoomType srt ON sb.room_type_id = srt.type_id "
-            + "            WHERE sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id "
+            + "            WHERE (sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) "
+            + GROUP_ROW_ALIVE
             + "        ) AS dt) AS group_room_type_names, "
             + "       (SELECT COUNT(DISTINCT sb.room_type_id) "
             + "        FROM dbo.Booking sb "
-            + "        WHERE sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) AS total_room_types, "
+            + "        WHERE (sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) "
+            + GROUP_ROW_ALIVE + ") AS total_room_types, "
             + "       (SELECT SUM(sb.total_amount) "
             + "        FROM dbo.Booking sb "
-            + "        WHERE sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) AS overall_total_amount "
+            + "        WHERE (sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) "
+            + GROUP_ROW_ALIVE + ") AS overall_total_amount "
             + "FROM dbo.Booking b "
             + "LEFT JOIN dbo.RoomType rt ON b.room_type_id = rt.type_id ";
 
@@ -543,13 +558,24 @@ public class BookingDAO {
         return list;
     }
 
+    /**
+     * Các dòng con của một đơn nhiều loại phòng. Dòng con đã bị khách bỏ khỏi
+     * đơn (Cancelled trong khi đơn cha vẫn còn hiệu lực) được lọc ra, để màn
+     * hình xếp phòng / nhận phòng không hiển thị và không xếp phòng cho một
+     * loại phòng khách đã bỏ. Khi cả đơn bị huỷ thì vẫn trả về đầy đủ.
+     */
     public List<Booking> getChildBookings(int parentBookingId) {
         List<Booking> list = new ArrayList<>();
-        String sql = BASE_SELECT + "WHERE b.group_booking_id = ?";
+        String sql = BASE_SELECT
+                + "WHERE b.group_booking_id = ? "
+                + "  AND (b.status <> N'Cancelled' "
+                + "       OR EXISTS (SELECT 1 FROM dbo.Booking p "
+                + "                  WHERE p.booking_id = ? AND p.status = N'Cancelled'))";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setInt(1, parentBookingId);
+                ps.setInt(2, parentBookingId);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         list.add(mapRow(rs));
@@ -585,6 +611,52 @@ public class BookingDAO {
 
     public BookingDAO() {
         ensureRoomAssignmentTableExists();
+        ensureChangeTrackingColumns();
+    }
+
+    /**
+     * Chỉ chạy DDL kiểm tra cột một lần cho mỗi lần nạp classloader —
+     * {@code BookingDAO} được {@code new()} ở hàng chục nơi nên không thể để
+     * lệnh ALTER chạy theo từng instance.
+     */
+    private static final java.util.concurrent.atomic.AtomicBoolean CHANGE_COLUMNS_ENSURED =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+
+    /**
+     * Tạo ba cột truy vết "đơn cũ ↔ đơn thay thế" nếu CSDL đang chạy chưa có.
+     * Đây chỉ là lưới an toàn cho máy dev — bản triển khai thật phải chạy
+     * {@code sql/hotel_management.sql} trước, vì {@code DashboardDAO} và
+     * {@code PaymentDAO} tham chiếu thẳng các cột này trong mệnh đề WHERE.
+     */
+    public static void ensureChangeTrackingColumns() {
+        if (!CHANGE_COLUMNS_ENSURED.compareAndSet(false, true)) {
+            return;
+        }
+        // EXEC(N'...') là bắt buộc: trong MỘT batch JDBC (không có GO), câu
+        // ALTER ... ADD được biên dịch cùng lúc với các câu sau nó, nên mọi
+        // tham chiếu tới cột vừa thêm sẽ báo "Invalid column name".
+        String sql = "IF COL_LENGTH(N'dbo.Booking', N'replaces_booking_id') IS NULL "
+                + "  EXEC(N'ALTER TABLE dbo.Booking ADD replaces_booking_id INT NULL'); "
+                + "IF COL_LENGTH(N'dbo.Booking', N'replaced_by_booking_id') IS NULL "
+                + "  EXEC(N'ALTER TABLE dbo.Booking ADD replaced_by_booking_id INT NULL'); "
+                + "IF COL_LENGTH(N'dbo.BookingChangeRequest', N'new_booking_id') IS NULL "
+                + "  EXEC(N'ALTER TABLE dbo.BookingChangeRequest ADD new_booking_id INT NULL');";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabaseStatic(conn);
+            try (Statement stmt = conn.createStatement()) {
+                stmt.execute(sql);
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error ensuring booking change-tracking columns", e);
+        }
+    }
+
+    private static void useDatabaseStatic(Connection conn) {
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("USE HotelManagementDB");
+        } catch (SQLException e) {
+            // Ignore
+        }
     }
 
     private void ensureRoomAssignmentTableExists() {
@@ -848,6 +920,464 @@ public class BookingDAO {
         return false;
     }
 
+    /** Id các phòng vật lý đang được xếp cho một dòng booking. */
+    public List<Integer> getAssignedRoomIds(int bookingId) {
+        List<Integer> list = new ArrayList<>();
+        if (bookingId <= 0) {
+            return list;
+        }
+        String sql = "SELECT room_id FROM dbo.RoomAssignment WHERE booking_id = ?";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, bookingId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        list.add(rs.getInt("room_id"));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in getAssignedRoomIds: bookingId=" + bookingId, e);
+        }
+        return list;
+    }
+
+    /**
+     * Áp một thay đổi lên TOÀN BỘ nhóm đặt phòng trong một transaction duy nhất:
+     * sửa các dòng hiện có, thêm dòng cho loại phòng mới, huỷ dòng khách đã bỏ,
+     * gỡ xếp phòng của những dòng không còn phù hợp, và (nếu có) chuyển yêu cầu
+     * sang Approved.
+     * <p>
+     * Gộp vào một transaction là bắt buộc: nếu chỉ dòng cha được ghi mà dòng con
+     * thì không, đơn sẽ có hai khoảng ngày khác nhau; còn nếu đơn đã đổi mà
+     * trạng thái yêu cầu chưa chuyển thì lễ tân duyệt lại lần nữa là đơn bị đổi
+     * chồng lên.
+     *
+     * @param requestIdToApprove id yêu cầu cần chuyển sang Approved, hoặc 0 nếu
+     *        không gắn với yêu cầu nào (lễ tân sửa trực tiếp). Nếu yêu cầu đã
+     *        được xử lý bởi người khác, toàn bộ transaction bị huỷ bỏ.
+     * @return true nếu đã commit thành công
+     */
+    public boolean applyGroupChange(List<Booking> updates, List<Booking> inserts,
+            List<Integer> cancelIds, List<Integer> clearAssignmentIds, int requestIdToApprove) {
+
+        String updateSql = "UPDATE dbo.Booking "
+                + "SET room_type_id = ?, room_quantity = ?, check_in_date = ?, check_out_date = ?, "
+                + "    total_amount = ?, updated_at = SYSDATETIME() "
+                + "WHERE booking_id = ?";
+        String insertSql = "INSERT INTO dbo.Booking (account_id, customer_name, phone, email, room_type_id, "
+                + "room_quantity, check_in_date, check_out_date, total_amount, status, note, group_booking_id, "
+                + "created_at, updated_at) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATETIME(), SYSDATETIME())";
+        String cancelSql = "UPDATE dbo.Booking "
+                + "SET status = N'Cancelled', total_amount = 0, "
+                + "    note = ISNULL(note, '') + CHAR(13) + CHAR(10) + ?, updated_at = SYSDATETIME() "
+                + "WHERE booking_id = ?";
+        String clearAssignmentSql = "DELETE FROM dbo.RoomAssignment WHERE booking_id = ?";
+        String approveSql = "UPDATE dbo.BookingChangeRequest SET status = N'Approved' "
+                + "WHERE request_id = ? AND status = N'Pending'";
+
+        Connection conn = null;
+        try {
+            conn = DBContext.getConnection();
+            useDatabase(conn);
+            conn.setAutoCommit(false);
+
+            if (updates != null && !updates.isEmpty()) {
+                try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
+                    for (Booking b : updates) {
+                        if (b.getRoomTypeId() != null) {
+                            ps.setInt(1, b.getRoomTypeId());
+                        } else {
+                            ps.setNull(1, Types.INTEGER);
+                        }
+                        ps.setInt(2, b.getRoomQuantity());
+                        ps.setDate(3, b.getCheckInDate());
+                        ps.setDate(4, b.getCheckOutDate());
+                        ps.setDouble(5, b.getTotalAmount());
+                        ps.setInt(6, b.getBookingId());
+                        ps.addBatch();
+                    }
+                    ps.executeBatch();
+                }
+            }
+
+            if (inserts != null && !inserts.isEmpty()) {
+                try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
+                    for (Booking b : inserts) {
+                        if (b.getAccountId() != null) {
+                            ps.setInt(1, b.getAccountId());
+                        } else {
+                            ps.setNull(1, Types.INTEGER);
+                        }
+                        ps.setString(2, b.getCustomerName());
+                        ps.setString(3, b.getPhone());
+                        ps.setString(4, b.getEmail());
+                        if (b.getRoomTypeId() != null) {
+                            ps.setInt(5, b.getRoomTypeId());
+                        } else {
+                            ps.setNull(5, Types.INTEGER);
+                        }
+                        ps.setInt(6, b.getRoomQuantity());
+                        ps.setDate(7, b.getCheckInDate());
+                        ps.setDate(8, b.getCheckOutDate());
+                        ps.setDouble(9, b.getTotalAmount());
+                        ps.setString(10, b.getStatus() != null ? b.getStatus() : "Pending");
+                        ps.setString(11, b.getNote() != null ? b.getNote().trim() : "");
+                        if (b.getGroupBookingId() != null) {
+                            ps.setInt(12, b.getGroupBookingId());
+                        } else {
+                            ps.setNull(12, Types.INTEGER);
+                        }
+                        ps.addBatch();
+                    }
+                    ps.executeBatch();
+                }
+            }
+
+            if (cancelIds != null && !cancelIds.isEmpty()) {
+                try (PreparedStatement ps = conn.prepareStatement(cancelSql)) {
+                    for (Integer id : cancelIds) {
+                        ps.setString(1, "Đã bỏ khỏi đơn theo yêu cầu thay đổi của khách.");
+                        ps.setInt(2, id);
+                        ps.addBatch();
+                    }
+                    ps.executeBatch();
+                }
+            }
+
+            if (clearAssignmentIds != null && !clearAssignmentIds.isEmpty()) {
+                try (PreparedStatement ps = conn.prepareStatement(clearAssignmentSql)) {
+                    for (Integer id : clearAssignmentIds) {
+                        ps.setInt(1, id);
+                        ps.addBatch();
+                    }
+                    ps.executeBatch();
+                }
+            }
+
+            if (requestIdToApprove > 0) {
+                try (PreparedStatement ps = conn.prepareStatement(approveSql)) {
+                    ps.setInt(1, requestIdToApprove);
+                    if (ps.executeUpdate() != 1) {
+                        // Yêu cầu vừa bị người khác duyệt/từ chối -> không áp thay đổi
+                        conn.rollback();
+                        return false;
+                    }
+                }
+            }
+
+            conn.commit();
+            return true;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in applyGroupChange", e);
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "Error rolling back applyGroupChange", ex);
+                }
+            }
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                } catch (SQLException ignored) {
+                    // Connection sắp trả về pool
+                }
+                try {
+                    conn.close();
+                } catch (SQLException ignored) {
+                    // idem
+                }
+            }
+        }
+        return false;
+    }
+
+    /** Kết quả {@link #applyChangeAsNewBooking}: hoá đơn đang trong quy trình hoàn tiền. */
+    public static final int CHANGE_ERR_INVOICE_LOCKED = -2;
+
+    /**
+     * Duyệt một yêu cầu thay đổi theo mô hình <b>đơn thay thế</b>: tạo một nhóm
+     * Booking mới mang cấu hình khách yêu cầu (luôn ở trạng thái Pending),
+     * chuyển tiền cọc và hoá đơn sang đơn mới, rồi huỷ nhóm cũ — tất cả trong
+     * MỘT transaction.
+     * <p>
+     * Thứ tự các câu lệnh dưới đây là bắt buộc, không đảo được:
+     * <ul>
+     *   <li>Chuyển trạng thái yêu cầu <b>trước tiên</b>: câu UPDATE đó giữ khoá
+     *       trên dòng yêu cầu tới hết transaction nên hai lễ tân bấm duyệt cùng
+     *       lúc chỉ một người thắng; đồng thời fail sớm thì không đốt số
+     *       IDENTITY của bảng Booking.</li>
+     *   <li>Gỡ {@code promotion_id} khỏi nhóm cũ <b>trước khi</b> chèn dòng cha
+     *       mới: {@code UX_Booking_Promotion} là filtered unique index trên
+     *       {@code Booking(promotion_id)}, mà đơn cũ dù đã Cancelled vẫn giữ mã
+     *       — chèn trước sẽ vi phạm ràng buộc và rollback cả transaction.</li>
+     *   <li>Chuyển {@code Payment} và {@code Invoice} <b>cùng nhau</b>:
+     *       {@code InvoiceDAO.DEPOSIT_EXPR} khớp hai bảng qua {@code booking_id},
+     *       nên chuyển một bên thôi là tiền cọc trên hoá đơn sai.</li>
+     * </ul>
+     *
+     * @param newRoot dòng cha mới (chưa có id, status đã là Pending)
+     * @param newChildren các dòng con mới (chưa có id)
+     * @param promotionId mã khuyến mãi đang gắn trên đơn cũ, null nếu không có
+     * @param requestIdToApprove yêu cầu cần chuyển sang Approved, 0 nếu không có
+     * @return booking_id của dòng cha mới, {@link #CHANGE_ERR_INVOICE_LOCKED}
+     *         nếu hoá đơn đang hoàn tiền, hoặc -1 nếu thất bại (đã rollback)
+     */
+    public int applyChangeAsNewBooking(Booking newRoot, List<Booking> newChildren,
+            int oldRootBookingId, Integer promotionId, int requestIdToApprove, String cancelNote) {
+
+        if (newRoot == null || oldRootBookingId <= 0) {
+            return -1;
+        }
+
+        String approveSql = "UPDATE dbo.BookingChangeRequest SET status = N'Approved' "
+                + "WHERE request_id = ? AND status = N'Pending'";
+        String invoiceGuardSql = "SELECT invoice_id, status FROM dbo.Invoice WHERE booking_id = ?";
+        String serviceGuardSql = "SELECT TOP 1 1 FROM dbo.BookingServiceRequest sr "
+                + "JOIN dbo.Booking b ON sr.booking_id = b.booking_id "
+                + "WHERE b.booking_id = ? OR b.group_booking_id = ?";
+        String clearPromotionSql = "UPDATE dbo.Booking SET promotion_id = NULL, updated_at = SYSDATETIME() "
+                + "WHERE (booking_id = ? OR group_booking_id = ?) AND promotion_id IS NOT NULL";
+        String cancelOldSql = "UPDATE dbo.Booking "
+                + "SET status = N'Cancelled', "
+                + "    note = LEFT(ISNULL(note, '') + CHAR(13) + CHAR(10) + ?, 500), "
+                + "    updated_at = SYSDATETIME() "
+                + "WHERE (booking_id = ? OR group_booking_id = ?) "
+                + "  AND status NOT IN (N'CheckedIn', N'CheckedOut')";
+        String clearAssignmentSql = "DELETE ra FROM dbo.RoomAssignment ra "
+                + "JOIN dbo.Booking b ON ra.booking_id = b.booking_id "
+                + "WHERE b.booking_id = ? OR b.group_booking_id = ?";
+        String insertSql = "INSERT INTO dbo.Booking (account_id, customer_name, phone, email, room_type_id, "
+                + "room_quantity, promotion_id, check_in_date, check_out_date, total_amount, status, note, "
+                + "group_booking_id, replaces_booking_id, created_at, updated_at) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATETIME(), SYSDATETIME())";
+        String markReplacedSql = "UPDATE dbo.Booking SET replaced_by_booking_id = ?, updated_at = SYSDATETIME() "
+                + "WHERE booking_id = ? OR group_booking_id = ?";
+        String moveDepositSql = "UPDATE dbo.Payment SET booking_id = ? "
+                + "WHERE booking_id IN (SELECT booking_id FROM dbo.Booking "
+                + "                     WHERE booking_id = ? OR group_booking_id = ?) "
+                + "  AND invoice_id IS NULL";
+        String moveInvoiceSql = "UPDATE dbo.Invoice SET booking_id = ?, updated_at = SYSDATETIME() "
+                + "WHERE invoice_id = ?";
+        String linkRequestSql = "UPDATE dbo.BookingChangeRequest SET new_booking_id = ? WHERE request_id = ?";
+
+        Connection conn = null;
+        try {
+            conn = DBContext.getConnection();
+            useDatabase(conn);
+            conn.setAutoCommit(false);
+
+            // 1. Chiếm quyền xử lý yêu cầu trước khi đụng tới dữ liệu đặt phòng
+            if (requestIdToApprove > 0) {
+                try (PreparedStatement ps = conn.prepareStatement(approveSql)) {
+                    ps.setInt(1, requestIdToApprove);
+                    if (ps.executeUpdate() != 1) {
+                        conn.rollback();
+                        return -1;
+                    }
+                }
+            }
+
+            // 2. Hoá đơn đang hoàn tiền thì không được tự động dời tiền cọc:
+            //    làm vậy sẽ biến một hoá đơn đã đóng thành hoá đơn thiếu tiền.
+            Integer invoiceId = null;
+            try (PreparedStatement ps = conn.prepareStatement(invoiceGuardSql)) {
+                ps.setInt(1, oldRootBookingId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        String invoiceStatus = rs.getString("status");
+                        if ("Refunding".equalsIgnoreCase(invoiceStatus)
+                                || "Refunded".equalsIgnoreCase(invoiceStatus)
+                                || "Cancelled".equalsIgnoreCase(invoiceStatus)) {
+                            conn.rollback();
+                            return CHANGE_ERR_INVOICE_LOCKED;
+                        }
+                        invoiceId = rs.getInt("invoice_id");
+                    }
+                }
+            }
+
+            // 3. Chốt chặn phòng xa: yêu cầu dịch vụ chỉ tạo được khi đã nhận
+            //    phòng, mà luồng này chỉ chạy với đơn Pending/Confirmed — nếu có
+            //    thì luồng nghiệp vụ đã đổi và huỷ đơn cũ sẽ làm mất dữ liệu.
+            try (PreparedStatement ps = conn.prepareStatement(serviceGuardSql)) {
+                ps.setInt(1, oldRootBookingId);
+                ps.setInt(2, oldRootBookingId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        LOGGER.log(Level.SEVERE, "Booking {0} still has service requests; "
+                                + "refusing to replace it", oldRootBookingId);
+                        conn.rollback();
+                        return -1;
+                    }
+                }
+            }
+
+            // 4. Gỡ khuyến mãi khỏi nhóm cũ (bắt buộc trước bước 7)
+            try (PreparedStatement ps = conn.prepareStatement(clearPromotionSql)) {
+                ps.setInt(1, oldRootBookingId);
+                ps.setInt(2, oldRootBookingId);
+                ps.executeUpdate();
+            }
+
+            // 5. Huỷ nhóm cũ. Cố tình KHÔNG xoá total_amount: đơn cũ vẫn phải
+            //    tra soát được, và doanh thu đã loại trạng thái Cancelled.
+            try (PreparedStatement ps = conn.prepareStatement(cancelOldSql)) {
+                ps.setString(1, cancelNote != null ? cancelNote : "Đã thay bằng đơn mới.");
+                ps.setInt(2, oldRootBookingId);
+                ps.setInt(3, oldRootBookingId);
+                if (ps.executeUpdate() < 1) {
+                    // Không huỷ được dòng nào: đơn vừa được nhận phòng/trả phòng
+                    // ngay giữa lúc lễ tân bấm duyệt. Tạo tiếp đơn mới sẽ thành
+                    // hai đơn cùng tồn tại cho một lần lưu trú.
+                    LOGGER.log(Level.WARNING, "Booking {0} is no longer cancellable; "
+                            + "aborting replacement", oldRootBookingId);
+                    conn.rollback();
+                    return -1;
+                }
+            }
+
+            // 6. Trả phòng đã xếp về kho (cancelBooking không làm việc này)
+            try (PreparedStatement ps = conn.prepareStatement(clearAssignmentSql)) {
+                ps.setInt(1, oldRootBookingId);
+                ps.setInt(2, oldRootBookingId);
+                ps.executeUpdate();
+            }
+
+            // 7. Dòng cha mới — nơi duy nhất giữ khuyến mãi của nhóm
+            int newRootId;
+            try (PreparedStatement ps = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+                bindNewBookingRow(ps, newRoot, null, promotionId, oldRootBookingId);
+                ps.executeUpdate();
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (!rs.next()) {
+                        conn.rollback();
+                        return -1;
+                    }
+                    newRootId = rs.getInt(1);
+                }
+            }
+
+            // 8. Các dòng con mới
+            if (newChildren != null && !newChildren.isEmpty()) {
+                try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
+                    for (Booking child : newChildren) {
+                        bindNewBookingRow(ps, child, newRootId, null, oldRootBookingId);
+                        ps.addBatch();
+                    }
+                    ps.executeBatch();
+                }
+            }
+
+            // 9. Nối nhóm cũ sang nhóm mới (đánh dấu mọi dòng, kể cả dòng con,
+            //    vì KPI của Dashboard đếm cả dòng con)
+            try (PreparedStatement ps = conn.prepareStatement(markReplacedSql)) {
+                ps.setInt(1, newRootId);
+                ps.setInt(2, oldRootBookingId);
+                ps.setInt(3, oldRootBookingId);
+                ps.executeUpdate();
+            }
+
+            // 10. Chuyển tiền cọc. invoice_id IS NULL chính là định nghĩa "giao
+            //     dịch cọc" mà DEPOSIT_EXPR và sumPaidForBooking đang dùng;
+            //     giao dịch có invoice_id là trả hoá đơn, đi theo Invoice.
+            try (PreparedStatement ps = conn.prepareStatement(moveDepositSql)) {
+                ps.setInt(1, newRootId);
+                ps.setInt(2, oldRootBookingId);
+                ps.setInt(3, oldRootBookingId);
+                ps.executeUpdate();
+            }
+
+            // 11. Chuyển hoá đơn + dựng lại các dòng tiền phòng theo đơn MỚI.
+            //     Hoá đơn có MỘT DÒNG CHO MỖI PHÒNG, và đơn mới có thể khác số phòng
+            //     so với đơn cũ, nên phải dựng lại cả bộ chứ không UPDATE tại chỗ —
+            //     một câu UPDATE ... WHERE item_type = N'Room' sẽ gán trọn tổng tiền
+            //     cho TỪNG dòng, tức nhân tiền phòng lên đúng bằng số phòng.
+            if (invoiceId != null) {
+                try (PreparedStatement ps = conn.prepareStatement(moveInvoiceSql)) {
+                    ps.setInt(1, newRootId);
+                    ps.setInt(2, invoiceId);
+                    ps.executeUpdate();
+                }
+                new InvoiceDAO().rebuildRoomItems(conn, invoiceId, newRootId);
+            }
+
+            // 12. Truy vết cho màn hình lễ tân và khách
+            if (requestIdToApprove > 0) {
+                try (PreparedStatement ps = conn.prepareStatement(linkRequestSql)) {
+                    ps.setInt(1, newRootId);
+                    ps.setInt(2, requestIdToApprove);
+                    ps.executeUpdate();
+                }
+            }
+
+            conn.commit();
+            return newRootId;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error in applyChangeAsNewBooking for booking " + oldRootBookingId, e);
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "Error rolling back applyChangeAsNewBooking", ex);
+                }
+            }
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                } catch (SQLException ignored) {
+                    // Connection sắp trả về pool
+                }
+                try {
+                    conn.close();
+                } catch (SQLException ignored) {
+                    // idem
+                }
+            }
+        }
+        return -1;
+    }
+
+    /** Nạp tham số cho câu INSERT dòng Booking của nhóm thay thế. */
+    private void bindNewBookingRow(PreparedStatement ps, Booking b, Integer groupBookingId,
+            Integer promotionId, int replacesBookingId) throws SQLException {
+        if (b.getAccountId() != null) {
+            ps.setInt(1, b.getAccountId());
+        } else {
+            ps.setNull(1, Types.INTEGER);
+        }
+        ps.setString(2, b.getCustomerName());
+        ps.setString(3, b.getPhone());
+        ps.setString(4, b.getEmail());
+        if (b.getRoomTypeId() != null) {
+            ps.setInt(5, b.getRoomTypeId());
+        } else {
+            ps.setNull(5, Types.INTEGER);
+        }
+        ps.setInt(6, b.getRoomQuantity());
+        if (promotionId != null) {
+            ps.setInt(7, promotionId);
+        } else {
+            ps.setNull(7, Types.INTEGER);
+        }
+        ps.setDate(8, b.getCheckInDate());
+        ps.setDate(9, b.getCheckOutDate());
+        ps.setDouble(10, b.getTotalAmount());
+        ps.setString(11, b.getStatus() != null ? b.getStatus() : "Pending");
+        ps.setString(12, b.getNote() != null ? b.getNote().trim() : "");
+        if (groupBookingId != null) {
+            ps.setInt(13, groupBookingId);
+        } else {
+            ps.setNull(13, Types.INTEGER);
+        }
+        ps.setInt(14, replacesBookingId);
+    }
+
     public List<RoomInfo> getAssignedRoomsForBooking(int bookingId, Date checkIn, Date checkOut) {
         List<RoomInfo> list = new ArrayList<>();
         String sql = """
@@ -985,12 +1515,18 @@ public class BookingDAO {
 
     /**
      * Số phòng trống của một loại phòng trong khoảng [checkIn, checkOut), tính
-     * theo ngày cao điểm. {@code excludeBookingId} (nullable) loại chính booking
-     * đó và các booking con trong nhóm của nó khỏi phép đếm — dùng khi kiểm tra
-     * yêu cầu thay đổi ngày của một booking hiện hữu, để đơn của chính khách
-     * không tự chặn mình trên những ngày hai khoảng giao nhau.
+     * theo ngày cao điểm.
+     * <p>
+     * {@code excludeBookingIds} (nullable) là tập các dòng Booking <b>sẽ bị ghi
+     * đè</b> bởi thay đổi đang xét — thường là toàn bộ dòng của một nhóm đặt
+     * phòng — nên không được tính là đang chiếm phòng. Lưu ý bắt buộc: đã loại
+     * cả nhóm khỏi phép đếm thì phải so sánh với <b>tổng nhu cầu của cả nhóm</b>
+     * theo từng loại phòng, chứ không so theo từng dòng. So theo từng dòng sẽ
+     * bỏ sót phần phòng mà các dòng còn lại trong nhóm vẫn đang giữ và dẫn tới
+     * nhận quá số phòng thực có.
      */
-    public int checkRoomAvailability(int roomTypeId, Date checkIn, Date checkOut, Integer excludeBookingId) {
+    public int checkRoomAvailability(int roomTypeId, Date checkIn, Date checkOut,
+            java.util.Collection<Integer> excludeBookingIds) {
         int totalRooms = 0;
         String countSql = "SELECT COUNT(*) FROM dbo.Room r JOIN dbo.RoomType rt ON r.type_id = rt.type_id WHERE r.type_id = ? AND r.status NOT IN (N'Maintenance', N'OutOfService') AND r.is_deleted = 0 AND ISNULL(rt.is_active, 1) = 1";
         try (Connection conn = DBContext.getConnection()) {
@@ -1008,12 +1544,28 @@ public class BookingDAO {
             return 0;
         }
 
+        List<Integer> excluded = new ArrayList<>();
+        if (excludeBookingIds != null) {
+            for (Integer id : excludeBookingIds) {
+                if (id != null && id > 0) {
+                    excluded.add(id);
+                }
+            }
+        }
+
+        StringBuilder excludeClause = new StringBuilder();
+        if (!excluded.isEmpty()) {
+            excludeClause.append(" AND booking_id NOT IN (");
+            for (int i = 0; i < excluded.size(); i++) {
+                excludeClause.append(i == 0 ? "?" : ",?");
+            }
+            excludeClause.append(")");
+        }
+
         String overlapSql = "SELECT check_in_date, check_out_date, room_quantity FROM dbo.Booking "
                 + "WHERE room_type_id = ? AND status IN (N'Pending', N'Confirmed', N'CheckedIn') "
                 + "AND check_in_date < ? AND check_out_date > ?"
-                + (excludeBookingId != null
-                        ? " AND booking_id <> ? AND (group_booking_id IS NULL OR group_booking_id <> ?)"
-                        : "");
+                + excludeClause;
 
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
@@ -1021,9 +1573,8 @@ public class BookingDAO {
                 ps.setInt(1, roomTypeId);
                 ps.setDate(2, checkOut);
                 ps.setDate(3, checkIn);
-                if (excludeBookingId != null) {
-                    ps.setInt(4, excludeBookingId);
-                    ps.setInt(5, excludeBookingId);
+                for (int i = 0; i < excluded.size(); i++) {
+                    ps.setInt(4 + i, excluded.get(i));
                 }
 
                 List<BookingOverlap> overlaps = new ArrayList<>();

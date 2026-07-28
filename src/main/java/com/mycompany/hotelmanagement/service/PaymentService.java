@@ -12,6 +12,8 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,6 +33,8 @@ import java.util.regex.Pattern;
  * version: 1.0
  */
 public class PaymentService {
+
+    private static final Logger LOGGER = Logger.getLogger(PaymentService.class.getName());
 
     /** Kết quả xử lý một webhook tiền vào (để log / trả lời SePay). */
     public enum WebhookResult {
@@ -194,6 +198,15 @@ public class PaymentService {
         return b;
     }
 
+    /**
+     * Đơn còn hiệu lực ở cuối chuỗi thay thế của {@code bookingId} (xem
+     * {@link PaymentDAO#resolveActiveBookingId(int)}). Dùng khi khách mở lại
+     * một liên kết thanh toán cũ sau khi đơn đã được thay bằng đơn mới.
+     */
+    public Integer resolveActiveBookingId(int bookingId) {
+        return paymentDAO.resolveActiveBookingId(bookingId);
+    }
+
     /** Tiền cọc còn thiếu của một đặt phòng (không âm). */
     public double getDepositRemaining(Booking b) {
         double remaining = getDepositAmount(b) - paymentDAO.sumPaidForBooking(b.getBookingId());
@@ -276,9 +289,21 @@ public class PaymentService {
      */
     private WebhookResult handleDepositTransfer(long sepayTxId, int bookingId, String content, double amount,
                                                 String gateway, String referenceCode, Timestamp txDate) {
-        if (paymentDAO.getBookingIdIfExists(bookingId) == null) {
+        // Mã QR cọc mang mã đơn TẠI THỜI ĐIỂM tạo mã. Nếu đơn đó đã bị thay bởi
+        // một yêu cầu thay đổi được duyệt thì tiền phải chảy vào đơn thay thế —
+        // ghi vào đơn đã huỷ là mất dấu tiền của khách.
+        Integer target = paymentDAO.resolveActiveBookingId(bookingId);
+        if (target == null) {
             return WebhookResult.INVOICE_NOT_PAYABLE;
         }
+        if (target != bookingId) {
+            LOGGER.log(Level.INFO, "Deposit for booking {0} routed to replacement booking {1}",
+                    new Object[] { bookingId, target });
+            bookingId = target;
+        }
+        // Cố tình KHÔNG từ chối khi đơn đích đã Cancelled (khách tự huỷ): từ chối
+        // sẽ khiến SePay gửi lại vô hạn, mà tiền thì đã vào tài khoản khách sạn
+        // nên bắt buộc phải có bản ghi để đối chiếu và hoàn.
         // Tạo sẵn hóa đơn cho booking (nếu chưa có). Cố tình KHÔNG gắn invoice_id
         // vào giao dịch cọc: tiền cọc đã được phản ánh vào hóa đơn qua cột dẫn xuất
         // deposit_amount (30% tiền phòng), nên nếu gắn thêm ở đây thì mọi phép

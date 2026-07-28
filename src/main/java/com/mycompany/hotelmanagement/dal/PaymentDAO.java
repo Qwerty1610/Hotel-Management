@@ -33,6 +33,11 @@ public class PaymentDAO {
         ERROR
     }
 
+    public PaymentDAO() {
+        // resolveActiveBookingId đọc cột replaced_by_booking_id
+        BookingDAO.ensureChangeTrackingColumns();
+    }
+
     private void useDatabase(Connection conn) {
         try (Statement stmt = conn.createStatement()) {
             stmt.execute("USE HotelManagementDB");
@@ -322,6 +327,45 @@ public class PaymentDAO {
                         b.setOverallTotalAmount(rs.getDouble("overall_total"));
                         return b;
                     }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Đơn còn hiệu lực ở cuối chuỗi thay thế bắt đầu từ {@code bookingId}.
+     * <p>
+     * Khi lễ tân duyệt một yêu cầu thay đổi, đơn cũ bị huỷ và một đơn mới ra
+     * đời, nên mã đơn của khách thay đổi. Mã QR đặt cọc ({@code COC<id>}) mà
+     * khách đã lưu vẫn mang id cũ, và tiền chuyển trễ phải chảy về đơn đang
+     * thực sự có hiệu lực chứ không phải đơn đã huỷ. Khách có thể đổi nhiều lần
+     * nên phải đi hết chuỗi.
+     *
+     * @return id đơn đích, hoặc null nếu {@code bookingId} không tồn tại
+     */
+    public Integer resolveActiveBookingId(int bookingId) {
+        // depth < 20 và MAXRECURSION 20 là hai lớp chặn độc lập: nếu dữ liệu
+        // hỏng tạo thành vòng lặp thì truy vấn dừng chứ không treo connection.
+        String sql = "WITH chain AS ("
+                + "    SELECT booking_id, replaced_by_booking_id, 0 AS depth "
+                + "    FROM dbo.Booking WHERE booking_id = ? "
+                + "    UNION ALL "
+                + "    SELECT b.booking_id, b.replaced_by_booking_id, c.depth + 1 "
+                + "    FROM dbo.Booking b "
+                + "    JOIN chain c ON b.booking_id = c.replaced_by_booking_id "
+                + "    WHERE c.depth < 20"
+                + ") "
+                + "SELECT TOP 1 booking_id FROM chain ORDER BY depth DESC "
+                + "OPTION (MAXRECURSION 20)";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, bookingId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getInt(1);
                 }
             }
         } catch (Exception e) {

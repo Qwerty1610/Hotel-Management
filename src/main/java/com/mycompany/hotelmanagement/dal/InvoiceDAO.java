@@ -55,6 +55,11 @@ public class InvoiceDAO {
             "(SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Done')";
     private static final String PENDING_REFUND_EXPR =
             "(SELECT ISNULL(SUM(rf.amount),0) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Pending')";
+    /* Phần khách đã thanh toán THẲNG vào hóa đơn. Khác DEPOSIT_EXPR ở chỗ khoản cọc
+       là Payment có invoice_id IS NULL (gắn với booking), còn đây là Payment đã gắn
+       invoice_id. Hai biểu thức không bao giờ đếm trùng một dòng Payment. */
+    private static final String PAID_EXPR =
+            "(SELECT ISNULL(SUM(pi.amount),0) FROM dbo.Payment pi WHERE pi.invoice_id = i.invoice_id)";
 
     /** Thực thu của một hóa đơn = Tổng − Cọc − Đã hoàn. Bản SQL của Invoice.netAmount(). */
     private static final String NET_EXPR = TOTAL_EXPR + " - " + DEPOSIT_EXPR + " - " + REFUNDED_EXPR;
@@ -63,11 +68,31 @@ public class InvoiceDAO {
             "  " + TOTAL_EXPR + " AS total_amount, " +
             "  " + DEPOSIT_EXPR + " AS deposit_amount, " +
             "  " + REFUNDED_EXPR + " AS refunded_amount, " +
-            "  " + PENDING_REFUND_EXPR + " AS pending_refund_amount ";
+            "  " + PENDING_REFUND_EXPR + " AS pending_refund_amount, " +
+            "  " + PAID_EXPR + " AS paid_amount ";
+
+    /**
+     * "Hóa đơn còn mở" dưới dạng SQL (1 = còn mở, 0 = đã chốt) — NGUỒN SỰ THẬT DUY NHẤT.
+     * isInvoiceOpen(), cột hiển thị trên danh sách và bộ lọc "tình trạng lưu trú" đều
+     * đọc từ đây, nên không thể lệch định nghĩa với nhau.
+     *
+     * Mọi truy vấn dùng lại phải đặt alias bảng Invoice là "i". Dùng subquery tương quan
+     * (alias "bo") thay vì JOIN để không đụng alias "b" ở các truy vấn đã join Booking sẵn.
+     */
+    private static final String OPEN_EXPR =
+            "CASE " +
+            "  WHEN i.status IN (N'Cancelled', N'Refunded') THEN 0 " +
+            "  WHEN NOT EXISTS (SELECT 1 FROM dbo.Booking bo WHERE bo.booking_id = i.booking_id) " +
+            "       THEN CASE WHEN i.status = N'Paid' THEN 0 ELSE 1 END " +
+            "  WHEN EXISTS (SELECT 1 FROM dbo.Booking bo WHERE bo.booking_id = i.booking_id " +
+            "               AND bo.status IN (N'CheckedOut', N'Cancelled', N'Rejected')) THEN 0 " +
+            "  ELSE 1 END";
+
+    private static final String STATE_COLUMNS = ", " + OPEN_EXPR + " AS is_open ";
 
     private static final String BASE_SELECT =
             "SELECT i.invoice_id, i.booking_id, i.customer_name, i.room_number, i.status, i.created_at, " +
-            MONEY_COLUMNS +
+            MONEY_COLUMNS + STATE_COLUMNS +
             "FROM dbo.Invoice i ";
 
     /** Toàn bộ hóa đơn, sắp xếp mặc định theo ngày tạo (mới nhất trước). */
@@ -88,8 +113,14 @@ public class InvoiceDAO {
         return list;
     }
 
-    /** Xây mệnh đề WHERE lọc theo từ khóa (mã/khách/phòng) và trạng thái. */
-    private String buildWhere(String keyword, String status, List<Object> params) {
+    /**
+     * Xây mệnh đề WHERE lọc theo từ khóa (mã/khách/phòng), trạng thái thanh toán và
+     * tình trạng lưu trú.
+     *
+     * @param stay "open" = khách chưa trả phòng, "closed" = đã trả phòng / hóa đơn đã
+     *             chốt, còn lại (null/"all") = không lọc
+     */
+    private String buildWhere(String keyword, String status, String stay, List<Object> params) {
         StringBuilder w = new StringBuilder(" WHERE 1 = 1 ");
         if (keyword != null && !keyword.trim().isEmpty()) {
             String kw = "%" + keyword.trim() + "%";
@@ -107,14 +138,19 @@ public class InvoiceDAO {
             w.append(" AND i.status = ? ");
             params.add(status);
         }
+        if ("open".equalsIgnoreCase(stay)) {
+            w.append(" AND (").append(OPEN_EXPR).append(") = 1 ");
+        } else if ("closed".equalsIgnoreCase(stay)) {
+            w.append(" AND (").append(OPEN_EXPR).append(") = 0 ");
+        }
         return w.toString();
     }
 
     /** Một trang hóa đơn theo bộ lọc, sắp xếp theo ngày tạo mới nhất. */
-    public List<Invoice> getInvoices(String keyword, String status, int offset, int pageSize) {
+    public List<Invoice> getInvoices(String keyword, String status, String stay, int offset, int pageSize) {
         List<Invoice> list = new ArrayList<>();
         List<Object> params = new ArrayList<>();
-        String sql = BASE_SELECT + buildWhere(keyword, status, params)
+        String sql = BASE_SELECT + buildWhere(keyword, status, stay, params)
                 + " ORDER BY i.created_at DESC, i.invoice_id DESC "
                 + " OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
         params.add(offset);
@@ -134,9 +170,9 @@ public class InvoiceDAO {
     }
 
     /** Tổng số hóa đơn khớp bộ lọc (để phân trang). */
-    public int countInvoices(String keyword, String status) {
+    public int countInvoices(String keyword, String status, String stay) {
         List<Object> params = new ArrayList<>();
-        String sql = "SELECT COUNT(*) FROM dbo.Invoice i" + buildWhere(keyword, status, params);
+        String sql = "SELECT COUNT(*) FROM dbo.Invoice i" + buildWhere(keyword, status, stay, params);
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -275,23 +311,136 @@ public class InvoiceDAO {
         return 0;
     }
 
-    /** Thêm một dòng phụ phí (Surcharge) vào hóa đơn. */
+    /* ============================================================
+       Vòng đời "hóa đơn còn mở" (§ thanh toán trong lúc lưu trú)
+       ------------------------------------------------------------
+       Trạng thái Paid KHÔNG còn là ranh giới đóng hóa đơn: khách có thể trả hết
+       phần còn lại ngay khi đang ở, rồi vẫn tiếp tục dùng dịch vụ. Ranh giới thật
+       là lúc khách TRẢ PHÒNG. Vì vậy:
+         - isInvoiceOpen()          quyết định còn được thêm phụ phí / khoản hoàn không
+         - syncSettlementStatus()   quyết định hóa đơn hiển thị Đã/Chưa thanh toán
+       ============================================================ */
+
+    private static final double MONEY_EPSILON = 0.005; // dưới 1 xu -> coi như bằng 0
+
+    /**
+     * Hóa đơn còn mở để ghi thêm khoản (phụ phí, dịch vụ, khoản chờ hoàn) hay không.
+     * Nguồn sự thật là trạng thái ĐẶT PHÒNG chứ không phải trạng thái hóa đơn: chừng
+     * nào khách chưa trả phòng thì quầy vẫn phải ghi thêm được, kể cả khi khách đã
+     * thanh toán hết phần còn lại từ trước.
+     *
+     * Quy tắc:
+     *   - hóa đơn không tồn tại, hoặc đã Cancelled/Refunded  -> đóng
+     *   - có booking  -> mở khi booking chưa CheckedOut/Cancelled/Rejected
+     *   - không booking (hóa đơn rời) -> giữ nguyên hành vi cũ: mở khi chưa Paid
+     */
+    public boolean isInvoiceOpen(int invoiceId) {
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            return isInvoiceOpen(conn, invoiceId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /** Bản dùng lại connection/transaction của lời gọi. Đọc thẳng từ OPEN_EXPR. */
+    private boolean isInvoiceOpen(Connection conn, int invoiceId) throws SQLException {
+        String sql = "SELECT " + OPEN_EXPR + " AS is_open FROM dbo.Invoice i WHERE i.invoice_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, invoiceId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt("is_open") == 1;
+            }
+        }
+    }
+
+    /**
+     * Đồng bộ trạng thái tất toán của hóa đơn với số tiền thực sự còn phải trả.
+     * Chạy TRONG transaction của lời gọi, ngay sau khi tiền của hóa đơn thay đổi.
+     *
+     *   còn phải trả = max(0, max(0, Tổng − Cọc − Đã hoàn) − Đã thanh toán)
+     *
+     *   - còn phải trả > 0 và đang Paid   -> Pending  (khách phát sinh thêm dịch vụ/phụ phí)
+     *   - còn phải trả = 0 và đang Pending -> Paid    (khoản hoàn vừa xác nhận đã xóa hết công nợ)
+     *
+     * Hóa đơn đang Refunding KHÔNG bị đụng tới: còn khoản chờ manager duyệt thì
+     * trạng thái phải giữ nguyên để không mất dấu quy trình hoàn tiền. Refunded và
+     * Cancelled cũng vậy — đó là các trạng thái kết thúc.
+     */
+    private void syncSettlementStatus(Connection conn, int invoiceId) throws SQLException {
+        String sql = "SELECT i.status AS inv_status, "
+                + TOTAL_EXPR + " AS t, " + DEPOSIT_EXPR + " AS d, "
+                + REFUNDED_EXPR + " AS r, " + PAID_EXPR + " AS p, "
+                + "(SELECT COUNT(*) FROM dbo.Refund rf WHERE rf.invoice_id = i.invoice_id AND rf.status = N'Pending') AS pending_cnt "
+                + "FROM dbo.Invoice i WHERE i.invoice_id = ?";
+
+        String status;
+        double remaining;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, invoiceId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return;
+                status = rs.getString("inv_status");
+                if (rs.getInt("pending_cnt") > 0) return; // còn khoản chờ hoàn -> giữ Refunding
+                double net = rs.getDouble("t") - rs.getDouble("d") - rs.getDouble("r");
+                if (net < 0) net = 0;
+                remaining = net - rs.getDouble("p");
+                if (remaining < 0) remaining = 0;
+            }
+        }
+
+        String target = null;
+        if (remaining > MONEY_EPSILON && "Paid".equals(status)) {
+            target = "Pending";
+        } else if (remaining <= MONEY_EPSILON && "Pending".equals(status)) {
+            target = "Paid";
+        }
+        if (target == null) return;
+
+        try (PreparedStatement ps = conn.prepareStatement(
+                "UPDATE dbo.Invoice SET status = ?, updated_at = SYSDATETIME() WHERE invoice_id = ? AND status = ?")) {
+            ps.setString(1, target);
+            ps.setInt(2, invoiceId);
+            ps.setString(3, status);
+            ps.executeUpdate();
+        }
+    }
+
+    /**
+     * Thêm một dòng phụ phí (Surcharge) vào hóa đơn.
+     * Chèn dòng và đồng bộ lại trạng thái tất toán trong CÙNG một transaction — phụ phí
+     * làm tổng hóa đơn tăng nên một hóa đơn đã Paid phải quay về Pending.
+     */
     public boolean addSurcharge(int invoiceId, String description, int quantity, double unitPrice) {
         String sql = "INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount) " +
                 "VALUES (?, N'Surcharge', ?, ?, ?, ?)";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setInt(1, invoiceId);
-                ps.setString(2, description);
-                ps.setInt(3, quantity);
-                ps.setDouble(4, unitPrice);
-                ps.setDouble(5, quantity * unitPrice);
-                int rows = ps.executeUpdate();
-                if (rows > 0) {
-                    touchInvoice(conn, invoiceId);
-                    return true;
+            conn.setAutoCommit(false);
+            try {
+                int rows;
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setInt(1, invoiceId);
+                    ps.setString(2, description);
+                    ps.setInt(3, quantity);
+                    ps.setDouble(4, unitPrice);
+                    ps.setDouble(5, quantity * unitPrice);
+                    rows = ps.executeUpdate();
                 }
+                if (rows <= 0) {
+                    conn.rollback();
+                    return false;
+                }
+                touchInvoice(conn, invoiceId);
+                syncSettlementStatus(conn, invoiceId);
+                conn.commit();
+                return true;
+            } catch (SQLException ex) {
+                conn.rollback();
+                throw ex;
+            } finally {
+                conn.setAutoCommit(true);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -335,8 +484,9 @@ public class InvoiceDAO {
 
     /**
      * Xác nhận đã hoàn cho các khoản chờ hoàn (chuyển status sang Done, ghi confirmed_at).
-     * Sau khi xác nhận, nếu hóa đơn không còn khoản Pending nào thì chuyển về Pending
-     * (chưa thanh toán).
+     * Sau khi xác nhận, nếu hóa đơn không còn khoản Pending nào thì thoát trạng thái
+     * Refunding: về Pending nếu khách còn nợ, hoặc Paid nếu khoản vừa hoàn đã xóa hết
+     * công nợ (trường hợp này chỉ có thể xảy ra khi khách đã thanh toán trước đó).
      */
     public boolean confirmRefunds(int invoiceId, List<Integer> refundIds) {
         if (refundIds == null || refundIds.isEmpty()) return false;
@@ -373,6 +523,9 @@ public class InvoiceDAO {
                         ps.setInt(1, invoiceId);
                         ps.executeUpdate();
                     }
+                    // Đã ra khỏi Refunding -> để syncSettlementStatus quyết định
+                    // Pending hay Paid dựa trên số tiền còn phải trả thực tế.
+                    syncSettlementStatus(conn, invoiceId);
                 }
                 conn.commit();
                 return true;
@@ -394,7 +547,7 @@ public class InvoiceDAO {
      */
     public Invoice getInvoiceByBookingId(int bookingId) {
         String sql = "SELECT TOP 1 i.invoice_id, i.booking_id, i.customer_name, i.room_number, i.status, i.created_at, "
-                + MONEY_COLUMNS
+                + MONEY_COLUMNS + STATE_COLUMNS
                 + "FROM dbo.Invoice i "
                 + "JOIN dbo.Booking b ON i.booking_id = b.booking_id OR i.booking_id = b.group_booking_id "
                 + "WHERE b.booking_id = ? "
@@ -414,10 +567,143 @@ public class InvoiceDAO {
     }
 
     /**
-     * Tạo hóa đơn ở trạng thái Pending (Chưa thanh toán) kèm khoản tiền phòng cho một đặt phòng
-     * nếu đặt phòng chưa có hóa đơn. Nếu đã có thì cập nhật lại số phòng nếu phòng đã phân.
+     * Toàn bộ số phòng ĐÃ PHÂN của một nhóm đặt phòng, gộp thành "103, 104".
      *
-     * @param bookingId ID của đặt phòng cần tạo/cập nhật hóa đơn
+     * Không dùng Booking.getAssignedRoomsStr() cho việc này: cột assigned_rooms trong
+     * BookingDAO.BASE_SELECT chỉ gom phòng của ĐÚNG MỘT dòng Booking (WHERE
+     * ra.booking_id = b.booking_id), nên với đơn nhiều phòng nó chỉ trả về phòng của
+     * dòng cha. Ở đây phải quét cả nhóm.
+     *
+     * Bỏ qua các dòng con đã Cancelled (bị gỡ khỏi đơn khi khách đổi đặt phòng) để
+     * hóa đơn không kê phòng mà khách không còn ở.
+     *
+     * @param rootBookingId booking cha của nhóm
+     * @return chuỗi số phòng, hoặc null nếu chưa phân phòng nào
+     */
+    private String getGroupAssignedRooms(Connection conn, int rootBookingId) throws SQLException {
+        String sql = "SELECT STRING_AGG(r.room_number, N', ') WITHIN GROUP (ORDER BY r.room_number) "
+                + "FROM dbo.RoomAssignment ra "
+                + "JOIN dbo.Room r ON r.room_id = ra.room_id "
+                + "WHERE ra.booking_id IN ( "
+                + "    SELECT sb.booking_id FROM dbo.Booking sb "
+                + "    WHERE (sb.booking_id = ? OR sb.group_booking_id = ?) AND sb.status <> N'Cancelled')";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, rootBookingId);
+            ps.setInt(2, rootBookingId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String s = rs.getString(1);
+                    return (s != null && !s.trim().isEmpty()) ? s.trim() : null;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Nhãn phòng cho hóa đơn: số phòng nếu đã phân, ngược lại là tên (các) loại phòng. */
+    private String buildRoomLabel(String groupRooms, Booking root) {
+        if (groupRooms != null) return groupRooms;
+        String types = root.getGroupRoomTypeNames();
+        return (types != null && !types.trim().isEmpty()) ? types.trim() : "";
+    }
+
+    /**
+     * Dựng lại TOÀN BỘ các dòng tiền phòng của hóa đơn: MỘT DÒNG CHO MỖI PHÒNG, kèm
+     * giá của riêng phòng đó. Chạy trong transaction của lời gọi.
+     *
+     * Số phòng thật của một dòng Booking = max(room_quantity, số phòng đã xếp) — dùng
+     * max để đơn mới xếp được một nửa số phòng vẫn chia tiền theo đúng số phòng khách đặt.
+     * Tiền của dòng Booking được chia đều cho các phòng của nó; phần dư (do chia không
+     * hết) dồn vào phòng cuối cùng nên TỔNG các dòng luôn khớp tuyệt đối với tổng đơn —
+     * đây là bất biến quan trọng nhất của hàm này.
+     *
+     * Xóa rồi chèn lại thay vì UPDATE: số phòng có thể thay đổi giữa hai lần gọi (khách
+     * đổi đặt phòng, lễ tân xếp thêm phòng) nên số dòng cũng phải thay đổi theo.
+     *
+     * Nếu nhóm không còn dòng Booking nào sống thì KHÔNG xóa gì cả — thà giữ hóa đơn cũ
+     * còn hơn âm thầm xóa sạch tiền phòng.
+     *
+     * @param invoiceId     hóa đơn cần dựng lại
+     * @param rootBookingId booking cha của nhóm
+     */
+    public void rebuildRoomItems(Connection conn, int invoiceId, int rootBookingId) throws SQLException {
+        String sql = "SELECT sb.room_quantity, sb.total_amount, "
+                + "       ISNULL(rt.type_name, N'Phòng') AS type_name, "
+                + "       DATEDIFF(day, sb.check_in_date, sb.check_out_date) AS nights, "
+                + "       (SELECT STRING_AGG(r.room_number, N'|') WITHIN GROUP (ORDER BY r.room_number) "
+                + "          FROM dbo.RoomAssignment ra JOIN dbo.Room r ON r.room_id = ra.room_id "
+                + "         WHERE ra.booking_id = sb.booking_id) AS rooms "
+                + "FROM dbo.Booking sb "
+                + "LEFT JOIN dbo.RoomType rt ON rt.type_id = sb.room_type_id "
+                + "WHERE (sb.booking_id = ? OR sb.group_booking_id = ?) AND sb.status <> N'Cancelled' "
+                + "ORDER BY sb.booking_id";
+
+        List<String> descs = new ArrayList<>();
+        List<Double> amounts = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, rootBookingId);
+            ps.setInt(2, rootBookingId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int quantity = Math.max(1, rs.getInt("room_quantity"));
+                    long rowTotal = Math.round(rs.getDouble("total_amount"));
+                    String typeName = rs.getString("type_name");
+                    int nights = rs.getInt("nights");
+                    String roomsStr = rs.getString("rooms");
+
+                    String[] rooms = (roomsStr == null || roomsStr.trim().isEmpty())
+                            ? new String[0]
+                            : roomsStr.split("\\|");
+                    int n = Math.max(quantity, rooms.length);
+                    long each = rowTotal / n;
+                    String nightPart = nights > 0 ? ", " + nights + " đêm" : "";
+
+                    for (int i = 0; i < n; i++) {
+                        // Phòng cuối gánh phần dư để tổng không bị hụt/dư vài đồng.
+                        long amount = (i == n - 1) ? rowTotal - each * (n - 1) : each;
+                        descs.add(i < rooms.length
+                                ? "Tiền phòng " + rooms[i] + " (" + typeName + nightPart + ")"
+                                : "Tiền phòng " + typeName + " (chưa xếp phòng" + nightPart + ")");
+                        amounts.add((double) amount);
+                    }
+                }
+            }
+        }
+        if (descs.isEmpty()) return;
+
+        try (PreparedStatement ps = conn.prepareStatement(
+                "DELETE FROM dbo.InvoiceItem WHERE invoice_id = ? AND item_type = N'Room'")) {
+            ps.setInt(1, invoiceId);
+            ps.executeUpdate();
+        }
+        try (PreparedStatement ps = conn.prepareStatement(
+                "INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount) "
+                + "VALUES (?, N'Room', ?, 1, ?, ?)")) {
+            for (int i = 0; i < descs.size(); i++) {
+                ps.setInt(1, invoiceId);
+                ps.setString(2, descs.get(i));
+                ps.setDouble(3, amounts.get(i));
+                ps.setDouble(4, amounts.get(i));
+                ps.addBatch();
+            }
+            ps.executeBatch();
+        }
+        touchInvoice(conn, invoiceId);
+    }
+
+    /**
+     * Tạo hóa đơn ở trạng thái Pending (Chưa thanh toán) kèm khoản tiền phòng cho một
+     * đặt phòng nếu chưa có; nếu đã có thì ĐỒNG BỘ LẠI dòng tiền phòng.
+     *
+     * Luôn quy về booking CHA và tính theo CẢ NHÓM. Trước đây hàm này lấy số phòng của
+     * đúng dòng Booking được truyền vào, nên với đơn nhiều phòng:
+     *   - luồng check-in gọi hàm cho từng dòng con, mỗi lần lại ghi đè room_number bằng
+     *     phòng của riêng dòng đó -> hóa đơn chỉ còn MỘT phòng (phòng của dòng cuối);
+     *   - dòng "Tiền phòng" chỉ được chèn một lần lúc xác nhận booking, khi phòng chưa
+     *     phân, nên mô tả kẹt ở tên loại phòng và không bao giờ được cập nhật.
+     * Nay cả room_number lẫn dòng InvoiceItem loại Room đều được đồng bộ ở mỗi lần gọi.
+     *
+     * @param bookingId ID của đặt phòng (dòng cha hoặc dòng con đều được)
      * @return invoice_id vừa tạo hoặc đã tồn tại, -1 nếu thất bại
      */
     public synchronized int createInvoiceForBooking(int bookingId) {
@@ -432,67 +718,56 @@ public class InvoiceDAO {
                 ? b.getGroupBookingId()
                 : b.getBookingId();
 
-        String assignedRooms = b.getAssignedRoomsStr();
-        if (existing != null) {
-            if (assignedRooms != null && !assignedRooms.trim().isEmpty()
-                    && !assignedRooms.equals(existing.getRoomNumber())) {
-                String updateRoom = "UPDATE dbo.Invoice SET room_number = ?, updated_at = SYSDATETIME() WHERE invoice_id = ?";
-                try (Connection conn = DBContext.getConnection()) {
-                    useDatabase(conn);
-                    try (PreparedStatement ps = conn.prepareStatement(updateRoom)) {
-                        ps.setString(1, assignedRooms);
-                        ps.setInt(2, existing.getInvoiceId());
-                        ps.executeUpdate();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            return existing.getInvoiceId();
-        }
+        // Mọi con số trên hóa đơn đều lấy từ dòng CHA (tổng cả nhóm), không phải dòng được truyền vào.
+        Booking root = (rootBookingId == bookingId) ? b : bookingDAO.getBookingById(rootBookingId);
+        if (root == null) return -1;
 
-        if (rootBookingId != bookingId) {
-            b = bookingDAO.getBookingById(rootBookingId);
-            if (b == null) return -1;
-            assignedRooms = b.getAssignedRoomsStr();
-        }
-
-        String customerName = b.getCustomerName() != null ? b.getCustomerName() : "Khách hàng";
-        String roomNumber = (assignedRooms != null && !assignedRooms.trim().isEmpty())
-                ? assignedRooms
-                : (b.getRoomTypeName() != null ? b.getRoomTypeName() : "");
-        double totalAmount = b.getOverallTotalAmount() > 0 ? b.getOverallTotalAmount() : b.getTotalAmount();
+        String customerName = root.getCustomerName() != null ? root.getCustomerName() : "Khách hàng";
+        // Không tính tổng tiền ở đây: rebuildRoomItems dựng từng dòng phòng và tổng
+        // hóa đơn là SUM(InvoiceItem.amount), nên chỉ có một nơi quyết định số tiền.
 
         String insertInvoice = "INSERT INTO dbo.Invoice (booking_id, customer_name, room_number, status, created_at) "
                 + "VALUES (?, ?, ?, N'Pending', SYSDATETIME())";
-        String insertRoomItem = "INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount) "
-                + "VALUES (?, N'Room', ?, 1, ?, ?)";
 
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             conn.setAutoCommit(false);
             try {
-                int invoiceId = -1;
-                try (PreparedStatement ps = conn.prepareStatement(insertInvoice, Statement.RETURN_GENERATED_KEYS)) {
-                    ps.setInt(1, rootBookingId);
-                    ps.setString(2, customerName);
-                    ps.setString(3, roomNumber);
-                    ps.executeUpdate();
-                    try (ResultSet rs = ps.getGeneratedKeys()) {
-                        if (rs.next()) invoiceId = rs.getInt(1);
+                String roomLabel = buildRoomLabel(getGroupAssignedRooms(conn, rootBookingId), root);
+
+                int invoiceId;
+                if (existing != null) {
+                    invoiceId = existing.getInvoiceId();
+                    if (!roomLabel.equals(existing.getRoomNumber())) {
+                        try (PreparedStatement ps = conn.prepareStatement(
+                                "UPDATE dbo.Invoice SET room_number = ?, updated_at = SYSDATETIME() WHERE invoice_id = ?")) {
+                            ps.setString(1, roomLabel);
+                            ps.setInt(2, invoiceId);
+                            ps.executeUpdate();
+                        }
+                    }
+                } else {
+                    invoiceId = -1;
+                    try (PreparedStatement ps = conn.prepareStatement(insertInvoice, Statement.RETURN_GENERATED_KEYS)) {
+                        ps.setInt(1, rootBookingId);
+                        ps.setString(2, customerName);
+                        ps.setString(3, roomLabel);
+                        ps.executeUpdate();
+                        try (ResultSet rs = ps.getGeneratedKeys()) {
+                            if (rs.next()) invoiceId = rs.getInt(1);
+                        }
+                    }
+                    if (invoiceId <= 0) {
+                        conn.rollback();
+                        return -1;
                     }
                 }
 
-                if (invoiceId > 0) {
-                    String itemDesc = "Tiền phòng " + (roomNumber.isEmpty() ? "" : roomNumber)
-                            + (b.getNights() > 0 ? " (" + b.getNights() + " đêm)" : "");
-                    try (PreparedStatement ps = conn.prepareStatement(insertRoomItem)) {
-                        ps.setInt(1, invoiceId);
-                        ps.setString(2, itemDesc.trim());
-                        ps.setDouble(3, totalAmount);
-                        ps.setDouble(4, totalAmount);
-                        ps.executeUpdate();
-                    }
+                rebuildRoomItems(conn, invoiceId, rootBookingId);
+                if (existing != null) {
+                    // Tiền phòng có thể vừa đổi -> tính lại còn nợ hay đã tất toán.
+                    // Chỉ làm với hóa đơn đã tồn tại; hóa đơn vừa tạo luôn là Pending.
+                    syncSettlementStatus(conn, invoiceId);
                 }
                 conn.commit();
                 return invoiceId;
@@ -562,7 +837,11 @@ public class InvoiceDAO {
     /**
      * Thêm một dòng dịch vụ (Service) vào hóa đơn.
      * Được gọi khi Receptionist duyệt (approve) một Service request của khách hàng.
-     * Hóa đơn phải ở trạng thái Pending (chưa thanh toán) thì mới cho phép thêm.
+     *
+     * Điều kiện là hóa đơn CÒN MỞ (khách chưa trả phòng), không phải là hóa đơn chưa
+     * Paid: khách trả hết phần còn lại giữa kỳ lưu trú rồi vẫn gọi thêm dịch vụ là
+     * việc bình thường. Dịch vụ mới làm hóa đơn phát sinh công nợ nên trạng thái được
+     * đưa về Pending trong cùng transaction với câu INSERT.
      *
      * @param invoiceId   ID hóa đơn cần cập nhật
      * @param description Tên dịch vụ (title từ BookingServiceRequest)
@@ -571,34 +850,38 @@ public class InvoiceDAO {
      * @return true nếu thêm thành công
      */
     public boolean addServiceItem(int invoiceId, String description, int quantity, double unitPrice) {
-        // Chỉ thêm khi hóa đơn chưa Paid (cho phép Pending, Refunding)
-        String checkSql = "SELECT status FROM dbo.Invoice WHERE invoice_id = ?";
         String insertSql = "INSERT INTO dbo.InvoiceItem (invoice_id, item_type, description, quantity, unit_price, amount) "
                 + "VALUES (?, N'Service', ?, ?, ?, ?)";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
-            // Kiểm tra trạng thái hóa đơn
-            String invoiceStatus = null;
-            try (PreparedStatement ps = conn.prepareStatement(checkSql)) {
-                ps.setInt(1, invoiceId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) invoiceStatus = rs.getString("status");
+            conn.setAutoCommit(false);
+            try {
+                if (!isInvoiceOpen(conn, invoiceId)) {
+                    conn.rollback();
+                    return false; // khách đã trả phòng -> hóa đơn đã chốt
                 }
-            }
-            if (invoiceStatus == null || "Paid".equals(invoiceStatus) || "Cancelled".equals(invoiceStatus)) {
-                return false; // Không thêm vào hóa đơn đã đóng
-            }
-            try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
-                ps.setInt(1, invoiceId);
-                ps.setString(2, description);
-                ps.setInt(3, quantity);
-                ps.setDouble(4, unitPrice);
-                ps.setDouble(5, quantity * unitPrice);
-                int rows = ps.executeUpdate();
-                if (rows > 0) {
-                    touchInvoice(conn, invoiceId);
-                    return true;
+                int rows;
+                try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
+                    ps.setInt(1, invoiceId);
+                    ps.setString(2, description);
+                    ps.setInt(3, quantity);
+                    ps.setDouble(4, unitPrice);
+                    ps.setDouble(5, quantity * unitPrice);
+                    rows = ps.executeUpdate();
                 }
+                if (rows <= 0) {
+                    conn.rollback();
+                    return false;
+                }
+                touchInvoice(conn, invoiceId);
+                syncSettlementStatus(conn, invoiceId);
+                conn.commit();
+                return true;
+            } catch (SQLException ex) {
+                conn.rollback();
+                throw ex;
+            } finally {
+                conn.setAutoCommit(true);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -677,6 +960,8 @@ public class InvoiceDAO {
         inv.setDepositAmount(rs.getDouble("deposit_amount"));
         inv.setRefundedAmount(rs.getDouble("refunded_amount"));
         inv.setPendingRefundAmount(rs.getDouble("pending_refund_amount"));
+        inv.setPaidAmount(rs.getDouble("paid_amount"));
+        inv.setOpen(rs.getInt("is_open") == 1);
         return inv;
     }
 }
