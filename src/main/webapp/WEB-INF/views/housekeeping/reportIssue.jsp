@@ -50,12 +50,6 @@
                 </li>
             </ul>
             <div class="sidebar-footer">
-                <div class="menu-item">
-                    <a href="#" style="display:flex;align-items:center;gap:12px;padding:12px 16px;color:#475569;text-decoration:none;font-weight:600;font-size:14px;">
-                        <i class="fa-solid fa-gear"></i>
-                        <span>Cài đặt</span>
-                    </a>
-                </div>
                 <a href="${pageContext.request.contextPath}/profile" class="user-profile-card" title="Xem hồ sơ cá nhân" style="text-decoration:none;cursor:pointer;">
                     <div class="profile-avatar">HK</div>
                     <div class="profile-info">
@@ -335,8 +329,7 @@
 
             <textarea name="description"
                       rows="2"
-                      placeholder="Mô tả chi tiết sự cố...">
-            </textarea>
+                      placeholder="Mô tả chi tiết sự cố..."></textarea>
         </div>
         <button type="button"
                 class="remove-btn"

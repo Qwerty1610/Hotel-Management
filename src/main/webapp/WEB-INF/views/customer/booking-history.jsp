@@ -2,7 +2,7 @@
 <%@ include file="../../includes/taglibs.jsp" %>
 <%@ include file="../../includes/header.jsp" %>
 
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/customer_booking.css?v=21" />
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/customer_booking.css?v=22" />
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/booking-requests.css?v=3" />
 <fmt:setLocale value="vi_VN" />
 
@@ -193,7 +193,7 @@
                         <th>Ngày đặt</th>
                         <th>Thời gian nghỉ</th>
                         <th>Loại phòng</th>
-                        <th>Số phòng</th>
+                        <th>Số lượng</th>
                         <th>Tổng tiền</th>
                         <th>Đặt cọc (30%)</th>
                         <th>Trạng thái</th>
@@ -221,7 +221,7 @@
                                      </td>
                                      <td style="font-weight: 600;">${b.totalRoomQuantity} phòng</td>
                                      <td style="font-weight: 700; color: var(--primary-indigo);">
-                                         <fmt:formatNumber value="${b.overallTotalAmount}" type="currency" currencySymbol="" /> VND
+                                         <fmt:formatNumber value="${b.overallTotalAmount}" type="currency" currencySymbol="" maxFractionDigits="2" /> VND
                                      </td>
                                      <td style="font-weight: 600; color: var(--accent-gold);">
                                          <fmt:formatNumber value="${b.overallTotalAmount * 0.3}" type="currency" currencySymbol="" /> VND

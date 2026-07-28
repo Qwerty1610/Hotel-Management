@@ -625,14 +625,6 @@
                                 <span class="validation-msg" id="editCustomerPhone-validation-msg"
                                     style="color: #ef4444; font-size: 12.5px; margin-top: 5px; font-weight: 500; display: none;"></span>
                             </div>
-                            <div class="modal-form-group">
-                                <label for="editCustomerPassword">Mật khẩu mới (Để trống nếu không
-                                    đổi)</label>
-                                <input type="password" id="editCustomerPassword" name="password"
-                                    class="modal-input"
-                                    placeholder="Nhập mật khẩu mới nếu muốn thay đổi..."
-                                    minlength="8" />
-                            </div>
                             <div class="modal-grid-2">
                                 <div class="modal-form-group">
                                     <label for="editCustomerMembership">Hạng thành viên <span
@@ -844,7 +836,6 @@
                     document.getElementById('editCustomerPhone').value = displayPhone;
                     document.getElementById('editCustomerLoyaltyPoints').value = loyaltyPoints;
                     document.getElementById('editCustomerMembership').value = membershipLevel;
-                    document.getElementById('editCustomerPassword').value = '';
                     modal.style.display = 'flex';
                 }
                 function closeEditCustomerModal() {

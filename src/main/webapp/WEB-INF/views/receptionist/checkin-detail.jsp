@@ -267,22 +267,6 @@
                 border-color:#3b82f6;
                 box-shadow:0 0 0 3px rgba(59,130,246,.15);
             }
-            #companionBody select{
-                width:100%;
-                padding:10px 12px;
-                border:1px solid #cbd5e1;
-                border-radius:8px;
-                background:#fff;
-            }
-
-            #companionBody select:invalid{
-                border:1px solid #ef4444;
-            }
-
-            #companionBody select:focus{
-                outline:none;
-                border-color:#3b82f6;
-            }
             /* ================= BUTTON STYLE ================= */
 
             /* ---------- Add Companion ---------- */
@@ -690,6 +674,18 @@
                 </header>
 
                 <main class="workspace-content">
+                    <c:if test="${param.error eq 'tooearly'}">
+                        <div class="toast-notify toast-error" style="margin-bottom: 20px;">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                            Không thể check in trước ngày đặt.
+                        </div>
+                    </c:if>
+                    <c:if test="${param.error eq 'expired'}">
+                        <div class="toast-notify toast-error" style="margin-bottom: 20px;">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                            Không thể check in, đơn đặt phòng đã hết hạn lưu trú.
+                        </div>
+                    </c:if>
                     <form method="post"
                           enctype="multipart/form-data"
                           action="${pageContext.request.contextPath}/receptionist/checkin-detail">
@@ -841,6 +837,7 @@
                                 <h3>Bạn đồng hành <span id="companionError" class="error-message" style="display:none; margin-left:10px;"></span></h3>
                                 <c:if test="${booking.status eq 'Confirmed'}">
                                     <button
+                                        id="addCompanionBtn"
                                         class="add-btn"
                                         type="button"
                                         onclick="addCompanion()">
@@ -855,7 +852,6 @@
                                         <tr>
                                             <th>Họ và tên</th>
                                             <th>Ảnh CCCD / Giấy khai sinh</th>
-                                            <th>Độ tuổi</th>
                                             <th>Thao tác</th>
                                         </tr>
                                     </thead>
@@ -886,9 +882,6 @@
                                                                     Không có ảnh
                                                                 </c:otherwise>
                                                             </c:choose>
-                                                        </td>
-                                                        <td>
-                                                            ${c.ageRange}
                                                         </td>
                                                         <td>
                                                             <span style="
@@ -997,11 +990,7 @@
 
         <script>
             let companionIndex = 0;
-            const FEE = {
-                Baby: 0,
-                Child: 150000,
-                Adult: 300000
-            };
+            const EXTRA_GUEST_FEE = 300000;
             function calculateExtraFee() {
 
                 const capacity = parseInt(document.getElementById("totalCapacity").value);
@@ -1025,57 +1014,61 @@
                     return;
                 }
 
-                const ages = [];
-
-                document.querySelectorAll(".age-select").forEach(s => {
-                    if (s.value)
-                        ages.push(s.value);
-                });
-
-                const order = {
-                    Baby: 1,
-                    Child: 2,
-                    Adult: 3
-                };
-
-                ages.sort((a, b) => order[a] - order[b]);
-
-                const charged = ages.slice(0, extra);
-
-                let html = `
-                    <div class="extra-fee-box">
-                        <h4>Phụ phí phát sinh</h4>
-                        <ul>
-                    `;
-
-                let feePerNight = 0;
-                charged.forEach(type => {
-                    feePerNight += FEE[type];
-                });
+                const feePerNight = extra * EXTRA_GUEST_FEE;
                 const total = feePerNight * nights;
 
-                html += `
-                    </ul>
-                    <div class="extra-fee-total">
-                        Phụ phí mỗi đêm: \${feePerNight.toLocaleString()} VNĐ
-                        <br>
+                const html = `
+                    <div class="extra-fee-box">
+                        <h4>Phụ phí phát sinh</h4>
+                        <div class="extra-fee-total">
+                            Số khách vượt tiêu chuẩn: \${extra} người (\${EXTRA_GUEST_FEE.toLocaleString()} VNĐ/người/đêm)
+                            <br>
 
-                        Số đêm lưu trú: \${nights}
-                        <br>
+                            Phụ phí mỗi đêm: \${feePerNight.toLocaleString()} VNĐ
+                            <br>
 
-                        <strong>
-                            Tổng phụ phí: \${total.toLocaleString()} VNĐ
-                        </strong>
+                            Số đêm lưu trú: \${nights}
+                            <br>
+
+                            <strong>
+                                Tổng phụ phí: \${total.toLocaleString()} VNĐ
+                            </strong>
+                        </div>
                     </div>
-
                     `;
 
                 area.innerHTML = html;
                 document.getElementById("extraFee").value = total;
 
             }
+            function getMaxCompanions() {
+                const capacity = parseInt(document.getElementById("totalCapacity").value) || 0;
+                // Tối đa (capacity x 1.5, làm tròn xuống) - 1 (trừ khách đại diện).
+                return Math.max(0, Math.floor(capacity * 1.5) - 1);
+            }
+
+            function updateAddCompanionButtonState() {
+                const btn = document.getElementById("addCompanionBtn");
+                if (!btn) {
+                    return;
+                }
+                const count = document.querySelectorAll("#companionBody tr").length;
+                const max = getMaxCompanions();
+                btn.disabled = count >= max;
+                btn.title = btn.disabled
+                        ? "Đã đạt số lượng bạn đồng hành tối đa (" + max + " người) cho sức chứa phòng hiện tại."
+                        : "";
+            }
+
             function addCompanion() {
                 const body = document.getElementById("companionBody");
+
+                const max = getMaxCompanions();
+                if (body.querySelectorAll("tr").length >= max) {
+                    alert("Đã đạt số lượng bạn đồng hành tối đa (" + max + " người) cho sức chứa phòng hiện tại.");
+                    updateAddCompanionButtonState();
+                    return;
+                }
 
                 const index = companionIndex++;
                 const row = document.createElement("tr");
@@ -1109,21 +1102,6 @@
                         </div>
                     </td>
                     <td>
-                        <select
-                            name="ageRanges"
-                            class="age-select"
-                            onchange="
-                                calculateExtraFee();
-                                validateCheckIn();">
-
-                            <option value="">-- Chọn --</option>
-                            <option value="Baby">Dưới 6 tuổi</option>
-                            <option value="Child">Trẻ em (6 - 14 tuổi)</option>
-                            <option value="Adult">Người lớn (Từ 15 tuổi)</option>
-
-                        </select>
-                    </td>
-                    <td>
                         <button
                             type="button"
                             class="danger-btn"
@@ -1131,6 +1109,7 @@
                                 this.closest('tr').remove();
                                 calculateExtraFee();
                                 validateCheckIn();
+                                updateAddCompanionButtonState();
                             ">
                             Xóa
                         </button>
@@ -1140,6 +1119,7 @@
                 body.appendChild(row);
                 calculateExtraFee();
                 validateCheckIn();
+                updateAddCompanionButtonState();
             }
 
             function goBack() {
@@ -1220,12 +1200,10 @@
                 // CHECK COMPANIONS
                 let missingName = false;
                 let missingImage = false;
-                let missingAge = false;
 
                 document.querySelectorAll("#companionBody tr").forEach(row => {
                     const name = row.querySelector(".companion-name");
                     const image = row.querySelector(".companion-image");
-                    const age = row.querySelector(".age-select");
 
                     if (!name || name.value.trim() === "") {
                         missingName = true;
@@ -1233,12 +1211,9 @@
                     if (!image || image.files.length === 0) {
                         missingImage = true;
                     }
-                    if (!age || age.value === "") {
-                        missingAge = true;
-                    }
                 });
 
-                const companionInvalid = missingName || missingImage || missingAge;
+                const companionInvalid = missingName || missingImage;
                 if (companionInvalid) {
                     valid = false;
                 }
@@ -1253,9 +1228,6 @@
                         if (missingImage) {
                             parts.push("Ảnh CCCD / giấy khai sinh");
                         }
-                        if (missingAge) {
-                            parts.push("Độ tuổi");
-                        }
                         companionError.innerText = "Hãy điền đầy đủ " + parts.join(", ");
                         companionError.style.display = "inline";
                     } else {
@@ -1267,6 +1239,8 @@
             }
 
             document.addEventListener("DOMContentLoaded", function () {
+                updateAddCompanionButtonState();
+
                 const form = document.querySelector("form");
                 if (!form) {
                     return;

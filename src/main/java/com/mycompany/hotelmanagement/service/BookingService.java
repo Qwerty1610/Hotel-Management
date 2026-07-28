@@ -161,6 +161,10 @@ public class BookingService {
         return bookingDAO.getChildBookings(parentBookingId);
     }
 
+    public String getAssignedRoomsForBookingSelf(int bookingId) {
+        return bookingDAO.getAssignedRoomsForBookingSelf(bookingId);
+    }
+
     // getBookingRooms removed in simplification
     /**
      * Delegates updateBookingDetails to DAO.

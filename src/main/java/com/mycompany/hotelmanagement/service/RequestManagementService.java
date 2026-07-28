@@ -92,8 +92,8 @@ public class RequestManagementService {
         return requestDAO.updatePriority(requestId, priority);
     }
 
-    /** Báo cáo sự cố phòng do nhân viên gửi (bảng RoomIssue) — cho Manager xem. */
-    public List<RoomIssue> getAllRoomIssues() {
-        return roomIssueDAO.getAllForManager();
+    /** Báo cáo sự cố phòng do nhân viên gửi (bảng RoomIssue) — cho Manager xem, có lọc. */
+    public List<RoomIssue> getAllRoomIssues(String keyword, String severity, String status, String staffFilter) {
+        return roomIssueDAO.getAllForManager(keyword, severity, status, staffFilter);
     }
 }

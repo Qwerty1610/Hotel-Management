@@ -1,5 +1,6 @@
 /target/
-/.vscode/
+/.vscode/*
+!/.vscode/settings.json
 *.class
 # Bổ sung các file cấu hình của NetBeans và các IDE khác
 nb-configuration.xml

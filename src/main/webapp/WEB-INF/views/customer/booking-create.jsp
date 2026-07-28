@@ -124,26 +124,7 @@
                 <div class="booking-main">
                     <div class="booking-card">
                         
-                        <%-- 1. Selection Mode --%>
-                        <div class="booking-section">
-                            <h2 style="font-size: 18px; margin-top: 0; color: var(--primary-dark); margin-bottom: 20px;">
-                                <i class="fa-solid fa-bed" style="color: var(--accent-gold); margin-right: 8px;"></i>
-                                Hình thức đặt phòng
-                            </h2>
-                            
-                            <div class="type-selector">
-                                <div class="type-card ${bookingType eq 'multi' ? '' : 'active'}" id="typeSingleCard" onclick="switchBookingType('single')">
-                                    <input type="radio" name="bookingType" id="typeSingle" value="single" ${bookingType eq 'multi' ? '' : 'checked'} />
-                                    <h3>Đặt phòng đơn</h3>
-                                    <p>Đặt 1 loại phòng phù hợp với số lượng khách tiêu chuẩn.</p>
-                                </div>
-                                <div class="type-card ${bookingType eq 'multi' ? 'active' : ''}" id="typeMultiCard" onclick="switchBookingType('multi')">
-                                    <input type="radio" name="bookingType" id="typeMulti" value="multi" ${bookingType eq 'multi' ? 'checked' : ''} />
-                                    <h3>Đặt nhiều phòng (Multi-room)</h3>
-                                    <p>Đăng ký nhiều phòng khác nhau trong cùng một đơn đặt phòng và phân chia danh sách khách đi cùng.</p>
-                                </div>
-                            </div>
-                        </div>
+
 
                         <%-- 2. General Stay Information --%>
                         <div class="booking-section">
@@ -182,37 +163,8 @@
                         <%-- 3. Room & Guests Selection --%>
                         <div class="booking-section" id="roomSelectionSection">
                             
-                            <%-- Single Room Selection Form --%>
-                            <div id="singleRoomFields" style="display: ${bookingType eq 'multi' ? 'none' : 'block'};">
-                                <h2 style="font-size: 18px; margin-top: 0; color: var(--primary-dark); margin-bottom: 20px;">
-                                    <i class="fa-solid fa-circle-info" style="color: var(--accent-gold); margin-right: 8px;"></i>
-                                    Chọn loại phòng & Khách nghỉ
-                                </h2>
-                                <div class="single-room-grid">
-                                    <div class="form-group">
-                                        <label for="roomTypeId">Loại phòng</label>
-                                        <select name="roomTypeId" id="roomTypeId" onchange="calculatePricing(); validateForm()">
-                                            <c:forEach var="rt" items="${roomTypes}">
-                                                <option value="${rt.typeId}" data-price="${rt.basePrice}" data-capacity="${rt.capacity}"
-                                                        <c:if test="${not empty selectedRoomTypeId and selectedRoomTypeId eq rt.typeId}">selected</c:if>>
-                                                    ${rt.typeName} - <fmt:formatNumber value="${rt.basePrice}" type="number" pattern="#,##0" /> VND / đêm (Tối đa ${rt.capacity} khách)
-                                                </option>
-                                            </c:forEach>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="roomQuantity">Số lượng phòng</label>
-                                        <input type="number" name="roomQuantity" id="roomQuantity" min="1" max="10" value="1" required oninput="calculatePricing(); validateForm()" />
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="guestCount">Lượng người ở *</label>
-                                        <input type="number" name="guestCount" id="guestCount" min="1" value="1" required oninput="validateForm()" />
-                                    </div>
-                                </div>
-                            </div>
-
                             <%-- Multi Room Selection Form --%>
-                            <div id="multiRoomFields" style="display: ${bookingType eq 'multi' ? 'block' : 'none'};">
+                            <div id="multiRoomFields" style="display: block;">
                                 <div class="room-selection-header" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
                                     <h2 style="font-size: 18px; margin-top: 0; margin-bottom: 0; color: var(--primary-dark); border-bottom: none; padding-bottom: 0;">
                                         <i class="fa-solid fa-circle-info" style="color: var(--accent-gold); margin-right: 8px;"></i>
@@ -354,20 +306,16 @@
                 checkOutInput.value = `${tYear}-${tMonth}-${tDay}`;
             }
 
-            // If we are in multi mode initially, initialize rows
-            const initialType = document.querySelector('input[name="bookingType"]:checked').value;
-            if (initialType === 'multi') {
-                <c:choose>
-                    <c:when test="${not empty paramValues['roomTypeId[]']}">
-                        <c:forEach var="rtId" items="${paramValues['roomTypeId[]']}" varStatus="status">
-                            addRoomRow('${rtId}', '${paramValues["roomQuantity[]"][status.index]}', '${paramValues["guestCount[]"][status.index]}');
-                        </c:forEach>
-                    </c:when>
-                    <c:otherwise>
-                        addRoomRow(); // add at least one row
-                    </c:otherwise>
-                </c:choose>
-            }
+            <c:choose>
+                <c:when test="${not empty paramValues['roomTypeId[]']}">
+                    <c:forEach var="rtId" items="${paramValues['roomTypeId[]']}" varStatus="status">
+                        addRoomRow('${rtId}', '${paramValues["roomQuantity[]"][status.index]}', '${paramValues["guestCount[]"][status.index]}');
+                    </c:forEach>
+                </c:when>
+                <c:otherwise>
+                    addRoomRow('${selectedRoomTypeId}'); // add at least one row
+                </c:otherwise>
+            </c:choose>
 
             calculatePricing();
             validateForm(); // Run initial validation
@@ -381,48 +329,6 @@
             }
         });
 
-        function switchBookingType(type) {
-            const singleCard = document.getElementById('typeSingleCard');
-            const multiCard = document.getElementById('typeMultiCard');
-            const singleRadio = document.getElementById('typeSingle');
-            const multiRadio = document.getElementById('typeMulti');
-            const singleFields = document.getElementById('singleRoomFields');
-            const multiFields = document.getElementById('multiRoomFields');
-
-            if (type === 'single') {
-                singleCard.classList.add('active');
-                multiCard.classList.remove('active');
-                singleRadio.checked = true;
-                singleFields.style.display = 'block';
-                multiFields.style.display = 'none';
-                
-                // Clear validation requirements on multi rows
-                document.querySelectorAll('#multiRoomRowsContainer select, #multiRoomRowsContainer input').forEach(el => {
-                    el.removeAttribute('required');
-                });
-                document.getElementById('guestCount').setAttribute('required', 'required');
-            } else {
-                multiCard.classList.add('active');
-                singleCard.classList.remove('active');
-                multiRadio.checked = true;
-                singleFields.style.display = 'none';
-                multiFields.style.display = 'block';
-                
-                // Set requirements on multi rows
-                document.querySelectorAll('#multiRoomRowsContainer select, #multiRoomRowsContainer input').forEach(el => {
-                    el.setAttribute('required', 'required');
-                });
-                document.getElementById('guestCount').removeAttribute('required');
-
-                // If no rows are added, add one
-                const container = document.getElementById('multiRoomRowsContainer');
-                if (container.children.length === 0) {
-                    addRoomRow();
-                }
-            }
-            calculatePricing();
-            validateForm();
-        }
 
         // Add room selection row for multi-room booking
         function addRoomRow(typeId = '', qty = '1', guests = '1') {
@@ -512,32 +418,19 @@
             nightsSpan.innerText = diffDays + ' đêm';
 
             let totalPrice = 0;
-            const bookingType = document.querySelector('input[name="bookingType"]:checked').value;
-
-            if (bookingType === 'single') {
-                const roomSelect = document.getElementById('roomTypeId');
-                const quantitySelect = document.getElementById('roomQuantity');
-                
-                const selectedOption = roomSelect.options[roomSelect.selectedIndex];
-                const price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
-                const qty = parseInt(quantitySelect.value) || 1;
-
-                totalPrice = price * qty * diffDays;
-            } else {
-                const container = document.getElementById('multiRoomRowsContainer');
-                const rows = container.querySelectorAll('.room-row');
-                
-                rows.forEach(row => {
-                    const select = row.querySelector('select[name="roomTypeId[]"]');
-                    const qtySelect = row.querySelector('input[name="roomQuantity[]"]');
-                    if (select && qtySelect) {
-                        const selectedOption = select.options[select.selectedIndex];
-                        const price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
-                        const qty = parseInt(qtySelect.value) || 1;
-                        totalPrice += price * qty * diffDays;
-                    }
-                });
-            }
+            const container = document.getElementById('multiRoomRowsContainer');
+            const rows = container.querySelectorAll('.room-row');
+            
+            rows.forEach(row => {
+                const select = row.querySelector('select[name="roomTypeId[]"]');
+                const qtySelect = row.querySelector('input[name="roomQuantity[]"]');
+                if (select && qtySelect) {
+                    const selectedOption = select.options[select.selectedIndex];
+                    const price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
+                    const qty = parseInt(qtySelect.value) || 1;
+                    totalPrice += price * qty * diffDays;
+                }
+            });
 
             let unDiscountedTotal = totalPrice;
             if (window.currentDiscountAmount) {
@@ -654,62 +547,35 @@
                 }
             }
             
-            const bookingType = document.querySelector('input[name="bookingType"]:checked').value;
+            const container = document.getElementById('multiRoomRowsContainer');
+            const rows = container.querySelectorAll('.room-row');
             
-            if (bookingType === 'single') {
-                const roomSelect = document.getElementById('roomTypeId');
-                const qtyInput = document.getElementById('roomQuantity');
-                const guestInput = document.getElementById('guestCount');
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const roomSelect = row.querySelector('select[name="roomTypeId[]"]');
+                const qtyInput = row.querySelector('input[name="roomQuantity[]"]');
+                const guestInput = row.querySelector('input[name="guestCount[]"]');
                 
-                if (!roomSelect || !qtyInput || !guestInput) return;
-                
-                const selectedOpt = roomSelect.options[roomSelect.selectedIndex];
-                const capacity = parseInt(selectedOpt.getAttribute('data-capacity')) || 2;
-                const qty = parseInt(qtyInput.value) || 0;
-                const guests = parseInt(guestInput.value) || 0;
-                const totalCapacity = capacity * qty;
-                
-                if (qty <= 0) {
-                    isValid = false;
-                    errorMsg = 'Số lượng phòng phải lớn hơn hoặc bằng 1.';
-                } else if (guests <= 0) {
-                    isValid = false;
-                    errorMsg = 'Lượng người ở phải lớn hơn hoặc bằng 1.';
-                } else if (guests > totalCapacity) {
-                    isValid = false;
-                    errorMsg = 'Lượng người ở (' + guests + ' người) vượt quá sức chứa tối đa của phòng đã chọn.';
-                }
-            } else {
-                const container = document.getElementById('multiRoomRowsContainer');
-                const rows = container.querySelectorAll('.room-row');
-                
-                for (let i = 0; i < rows.length; i++) {
-                    const row = rows[i];
-                    const roomSelect = row.querySelector('select[name="roomTypeId[]"]');
-                    const qtyInput = row.querySelector('input[name="roomQuantity[]"]');
-                    const guestInput = row.querySelector('input[name="guestCount[]"]');
+                if (roomSelect && qtyInput && guestInput) {
+                    const selectedOpt = roomSelect.options[roomSelect.selectedIndex];
+                    const capacity = parseInt(selectedOpt.getAttribute('data-capacity')) || 2;
+                    const qty = parseInt(qtyInput.value) || 0;
+                    const guests = parseInt(guestInput.value) || 0;
+                    const totalCapacity = capacity * qty;
+                    const roomTypeName = selectedOpt.text.split('(')[0].trim();
                     
-                    if (roomSelect && qtyInput && guestInput) {
-                        const selectedOpt = roomSelect.options[roomSelect.selectedIndex];
-                        const capacity = parseInt(selectedOpt.getAttribute('data-capacity')) || 2;
-                        const qty = parseInt(qtyInput.value) || 0;
-                        const guests = parseInt(guestInput.value) || 0;
-                        const totalCapacity = capacity * qty;
-                        const roomTypeName = selectedOpt.text.split('(')[0].trim();
-                        
-                        if (qty <= 0) {
-                            isValid = false;
-                            errorMsg = 'Phòng thứ ' + (i + 1) + ': Số lượng phòng phải lớn hơn hoặc bằng 1.';
-                            break;
-                        } else if (guests <= 0) {
-                            isValid = false;
-                            errorMsg = 'Phòng thứ ' + (i + 1) + ': Lượng người ở phải lớn hơn hoặc bằng 1.';
-                            break;
-                        } else if (guests > totalCapacity) {
-                            isValid = false;
-                            errorMsg = 'Phòng thứ ' + (i + 1) + ' (' + roomTypeName + '): Lượng người ở (' + guests + ' người) vượt quá sức chứa tối đa của số phòng đã chọn.';
-                            break;
-                        }
+                    if (qty <= 0) {
+                        isValid = false;
+                        errorMsg = 'Phòng thứ ' + (i + 1) + ': Số lượng phòng phải lớn hơn hoặc bằng 1.';
+                        break;
+                    } else if (guests <= 0) {
+                        isValid = false;
+                        errorMsg = 'Phòng thứ ' + (i + 1) + ': Lượng người ở phải lớn hơn hoặc bằng 1.';
+                        break;
+                    } else if (guests > totalCapacity) {
+                        isValid = false;
+                        errorMsg = 'Phòng thứ ' + (i + 1) + ' (' + roomTypeName + '): Lượng người ở (' + guests + ' người) vượt quá sức chứa tối đa của số phòng đã chọn.';
+                        break;
                     }
                 }
             }

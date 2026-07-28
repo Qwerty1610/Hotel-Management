@@ -134,12 +134,6 @@
                                                         Lưu thông tin khuyến mãi thành công.
                                                     </div>
                                                 </c:if>
-                                                <c:if test="${param.success eq 'deleted'}">
-                                                    <div class="alert-banner alert-success">
-                                                        <i class="fa-solid fa-circle-check"></i>
-                                                        Xóa khuyến mãi thành công.
-                                                    </div>
-                                                </c:if>
                                                 <c:if test="${param.success eq 'toggled'}">
                                                     <div class="alert-banner alert-success">
                                                         <i class="fa-solid fa-circle-check"></i>
@@ -433,11 +427,11 @@
 
                                             let statusBadge = '';
                                             if (promo.effectiveStatus === 'Active') {
-                                                statusBadge = `<span style="background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">Kích hoạt</span>`;
+                                                statusBadge = `<span style="background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;display:inline-block;">Kích hoạt</span>`;
                                             } else if (promo.effectiveStatus === 'Inactive') {
-                                                statusBadge = `<span style="background:#fee2e2;color:#b91c1c;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">Tạm khóa</span>`;
+                                                statusBadge = `<span style="background:#fee2e2;color:#b91c1c;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;display:inline-block;">Tạm khóa</span>`;
                                             } else {
-                                                statusBadge = `<span style="background:#f1f5f9;color:#475569;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">Hết hạn</span>`;
+                                                statusBadge = `<span style="background:#f1f5f9;color:#475569;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;display:inline-block;">Hết hạn</span>`;
                                             }
 
                                             const isExpired = promo.effectiveStatus === 'Expired';
@@ -452,14 +446,6 @@
                                                 `<button class="btn-action edit" onclick="toggleStatus(\${promo.id}, '\${toggleNewStat}')" title="\${toggleTitle}" style="background:transparent;border:none;cursor:pointer;padding:4px;">
                                                     \${toggleIcon}
                                                  </button>`;
-
-                                            const deleteBtn = (promo && promo.usedCount > 0)
-                                                ? `<button class="btn-action delete" style="opacity: 0.35; cursor: not-allowed;" title="Không thể xóa khuyến mãi đã được sử dụng">
-                                                       <i class="fa-solid fa-trash-can"></i>
-                                                   </button>`
-                                                : `<button class="btn-action delete" onclick="deletePromotion(\${promo ? promo.id : ''})" title="Xóa">
-                                                       <i class="fa-solid fa-trash-can"></i>
-                                                   </button>`;
 
                                             return `
                                                 <td>
@@ -482,7 +468,6 @@
                                                             <i class="fa-solid fa-pencil"></i>
                                                         </button>
                                                         \${toggleBtn}
-                                                        \${deleteBtn}
                                                     </div>
                                                 </td>
                                             `;
@@ -531,28 +516,43 @@
                                     }
                                 }
 
-                                // Toggle status
+                                // Toggle status via background fetch
                                 function toggleStatus(id, newStatus) {
-                                    const label = newStatus === 'Active' ? 'kích hoạt' : 'tạm khóa';
-                                    if (confirm(`Bạn có chắc muốn \${label} khuyến mãi này không?`)) {
-                                        window.location.href = CTX + '/manager/promotions?action=toggle&id=' + id + '&status=' + newStatus;
-                                    }
+                                    const url = CTX + '/manager/promotions?action=toggle&id=' + id + '&status=' + newStatus;
+                                    fetch(url)
+                                        .then(response => {
+                                            if (!response.ok) {
+                                                alert("Có lỗi xảy ra khi cập nhật trạng thái!");
+                                                ManagerTable.filter("promotionsTable");
+                                            } else {
+                                                const table = ManagerTable.tables.promotionsTable;
+                                                if (table) {
+                                                    const promo = table.items.find(p => p.id === id);
+                                                    if (promo) {
+                                                        promo.status = newStatus;
+                                                        if (promo.effectiveStatus !== 'Expired') {
+                                                            promo.effectiveStatus = newStatus;
+                                                        }
+                                                        
+                                                        const el = document.querySelector(`.promotion-data-item[data-id="${id}"]`);
+                                                        if (el) {
+                                                            el.setAttribute("data-status", newStatus);
+                                                            el.setAttribute("data-effective-status", promo.effectiveStatus);
+                                                        }
+
+                                                        sessionStorage.setItem("ManagerTable_page_promotionsTable", table.currentPage);
+                                                        ManagerTable.filter("promotionsTable");
+                                                    }
+                                                }
+                                            }
+                                        })
+                                        .catch(err => {
+                                            console.error("Error toggling promotion status:", err);
+                                            alert("Có lỗi xảy ra khi kết nối máy chủ!");
+                                        });
                                 }
 
-                                // Delete Promotion
-                                function deletePromotion(id) {
-                                    if (!id) return;
-                                    const table = ManagerTable.tables.promotionsTable;
-                                    if (table && table.items) {
-                                        const item = table.items.find(p => p.id === id);
-                                        if (item && item.usedCount > 0) {
-                                            return;
-                                        }
-                                    }
-                                    if (confirm("Bạn có chắc chắn muốn xóa khuyến mãi này không?")) {
-                                        window.location.href = CTX + '/manager/promotions?action=delete&id=' + id;
-                                    }
-                                }
+
 
                                 // Modal Handlers
                                 function clearFormValidation() {
@@ -597,13 +597,6 @@
 
                                 function closeModal() {
                                     document.getElementById("promotionModal").style.display = "none";
-                                }
-
-                                // Delete promotion
-                                function deletePromotion(id) {
-                                    if (confirm("Bạn có chắc chắn muốn xóa khuyến mãi này không?")) {
-                                        window.location.href = CTX + '/manager/promotions?action=delete&id=' + id;
-                                    }
                                 }
 
                                 // Client-side form validation before submit

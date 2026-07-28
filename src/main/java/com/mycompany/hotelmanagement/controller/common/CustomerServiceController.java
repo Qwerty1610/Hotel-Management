@@ -149,14 +149,8 @@ public class CustomerServiceController extends HttpServlet {
             paginatedServices = activeServices.subList(startIndex, endIndex);
         }
 
-        // Fetch customer's active bookings - only CheckedIn bookings are eligible for service requests
-        List<Booking> allBookings = bookingService.getBookingsByAccount(accountId, "All", null);
-        List<Booking> activeBookings = new ArrayList<>();
-        for (Booking b : allBookings) {
-            if ("CheckedIn".equalsIgnoreCase(b.getStatus())) {
-                activeBookings.add(b);
-            }
-        }
+        // Fetch customer's active bookings - only CheckedIn bookings are eligible for service requests (includes group/multi-room child bookings)
+        List<Booking> activeBookings = customerRequestDAO.getCheckedInBookingsByCustomer(accountId);
 
         request.setAttribute("services", paginatedServices);
         request.setAttribute("allActiveServices", activeServices);

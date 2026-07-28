@@ -68,15 +68,6 @@ public class PromotionService {
     }
 
     /**
-     * Xóa khuyến mãi. Chỉ cho phép xóa khi UsedCount = 0.
-     *
-     * @return true nếu xóa thành công, false nếu UsedCount > 0 hoặc lỗi
-     */
-    public boolean deletePromotion(int promotionId) {
-        return promotionRepository.deletePromotion(promotionId);
-    }
-
-    /**
      * Lấy một khuyến mãi theo ID.
      */
     public Promotion getPromotionById(int promotionId) {

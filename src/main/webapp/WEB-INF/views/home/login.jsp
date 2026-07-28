@@ -154,6 +154,11 @@
                                 Chưa có tài khoản? <a href="${pageContext.request.contextPath}/home/register">Đăng ký ngay</a>
                             </div>
 
+                            <div style="margin-top: 16px; border-top: 1px solid rgba(15, 23, 42, 0.08); padding-top: 16px; margin-bottom: 16px;">
+                                <a href="${pageContext.request.contextPath}/staff/login" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 11px 16px; border-radius: 12px; background: rgba(30, 41, 59, 0.05); border: 1px solid rgba(30, 41, 59, 0.12); color: #1e293b; font-weight: 600; font-size: 13.5px; text-decoration: none; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(58, 134, 255, 0.1)'; this.style.borderColor='#3a86ff';" onmouseout="this.style.background='rgba(30, 41, 59, 0.05)'; this.style.borderColor='rgba(30, 41, 59, 0.12)';">
+                                    <i class="fa-solid fa-user-shield" style="color: #3a86ff;"></i> Đăng nhập dành cho Nhân viên
+                                </a>
+                            </div>
 
                             <a href="${pageContext.request.contextPath}/home" class="back-link">
                                 <i class="fa-solid fa-arrow-left"></i>Quay lại trang chủ

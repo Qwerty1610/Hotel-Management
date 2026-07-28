@@ -268,14 +268,6 @@
                                         renderRow: function (service) {
                                             const priceFormatted = new Intl.NumberFormat('vi-VN').format(service.price);
 
-                                            const deleteBtnHtml = service.hasUsage
-                                                ? `<button class="btn-action delete" style="opacity: 0.35; cursor: not-allowed;" title="Không thể xóa dịch vụ đang có khách hàng đăng ký hoặc sử dụng">
-                                                       <i class="fa-solid fa-trash-can"></i>
-                                                   </button>`
-                                                : `<button class="btn-action delete" onclick="deleteService(\${service.id})" title="Xóa">
-                                                       <i class="fa-solid fa-trash-can"></i>
-                                                   </button>`;
-
                                             return `
                         <td>
                             <div class="service-name-cell">
@@ -301,7 +293,6 @@
                                 <button class="btn-action edit" onclick="openEditModal(\${service.id})" title="Chỉnh sửa">
                                     <i class="fa-solid fa-pencil"></i>
                                 </button>
-                                \${deleteBtnHtml}
                             </div>
                         </td>
                     `;
@@ -403,20 +394,6 @@
                                 function closeModal() {
                                     clearServiceErrors();
                                     document.getElementById("serviceModal").style.display = "none";
-                                }
-
-                                // Delete Service
-                                function deleteService(id) {
-                                    const table = ManagerTable.tables.servicesTable;
-                                    if (table && table.items) {
-                                        const service = table.items.find(s => s.id === id);
-                                        if (service && service.hasUsage) {
-                                            return;
-                                        }
-                                    }
-                                    if (confirm("Bạn có chắc chắn muốn xóa dịch vụ này không?")) {
-                                        window.location.href = `${pageContext.request.contextPath}/manager/services?action=delete&id=` + id;
-                                    }
                                 }
 
                                 // Input listeners

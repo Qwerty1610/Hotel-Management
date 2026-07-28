@@ -82,7 +82,10 @@
                         </button>
                     </form>
 
-                    <div style="margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+                    <div style="margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 16px; display: flex; flex-direction: column; gap: 10px;">
+                        <a href="${pageContext.request.contextPath}/home/login" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px 16px; border-radius: 12px; background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(0, 0, 0, 0.08); color: #475569; font-weight: 600; font-size: 13.5px; text-decoration: none; transition: all 0.2s ease;">
+                            <i class="fa-solid fa-user" style="color: #64748b;"></i> Cổng đăng nhập Khách hàng
+                        </a>
                         <a href="${pageContext.request.contextPath}/home" class="back-link" style="margin-top: 0;">
                             <i class="fa-solid fa-arrow-left"></i>Quay lại trang chủ
                         </a>

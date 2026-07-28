@@ -8,7 +8,7 @@
         <title>Cập nhật & Duyệt đặt phòng #${booking.bookingId} - HotelOps Pro</title>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/receptionist.css?v=4" />
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/receptionist.css?v=7" />
     </head>
     <fmt:setLocale value="vi_VN" />
 
@@ -163,29 +163,28 @@
                                                 <h3><i class="fa-solid fa-user"></i> Thông tin khách hàng</h3>
                                             </div>
                                             <div class="card-body">
-                                                <div class="modal-form-group"
-                                                     style="margin-bottom:0">
-                                                    <label>Họ và tên khách <span
-                                                            style="color:#ef4444">*</span></label>
-                                                    <input type="text" name="customerName"
-                                                           id="editCustomerName"
-                                                           value="${booking.customerName}"
-                                                           class="modal-input" required maxlength="100"
-                                                           />
-                                                </div>
-                                                <div class="info-row"
-                                                     style="margin-top:12px">
-                                                    <label>Email:</label>
-                                                    <span>
-                                                        <c:out value="${not empty booking.email ? booking.email : (not empty customer ? customer.email : '—')}" />
-                                                    </span>
-                                                </div>
-                                                <div class="info-row"
-                                                     style="border-bottom:none; padding-bottom:0">
-                                                    <label>Số điện thoại:</label>
-                                                    <span>
-                                                        <c:out value="${not empty booking.phone ? booking.phone : (not empty customer and not empty customer.phone ? customer.phone : '—')}" />
-                                                    </span>
+                                                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px;">
+                                                    <div class="modal-form-group" style="margin-bottom:0">
+                                                        <label>Họ và tên khách <span style="color:#ef4444">*</span></label>
+                                                        <input type="text" name="customerName"
+                                                               id="editCustomerName"
+                                                               value="${booking.customerName}"
+                                                               class="modal-input" required maxlength="100" />
+                                                    </div>
+                                                    <div class="modal-form-group" style="margin-bottom:0">
+                                                        <label>Số điện thoại <span style="color:#ef4444">*</span></label>
+                                                        <input type="text" name="customerPhone"
+                                                               id="editCustomerPhone"
+                                                               value="${not empty booking.phone ? booking.phone : (not empty customer and not empty customer.phone ? customer.phone : '')}"
+                                                               class="modal-input" required maxlength="20" />
+                                                    </div>
+                                                    <div class="modal-form-group" style="margin-bottom:0">
+                                                        <label>Email</label>
+                                                        <input type="email" name="customerEmail"
+                                                               id="editCustomerEmail"
+                                                               value="${not empty booking.email ? booking.email : (not empty customer ? customer.email : '')}"
+                                                               class="modal-input" maxlength="100" />
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -199,70 +198,79 @@
                                                 </h3>
                                             </div>
                                             <div class="card-body">
-                                                <div class="info-row">
-                                                    <label>Mã Đặt Phòng:</label>
-                                                    <span class="booking-id-badge">#${booking.bookingId}</span>
-                                                    <c:choose>
-                                                        <c:when test="${!isDepositPaid}">
-                                                            <span class="badge-status badge-occupied" style="margin-left: 8px; font-size: 11px;"><i class="fa-solid fa-circle-exclamation"></i> Chưa cọc</span>
-                                                        </c:when>
-                                                        <c:otherwise>
-                                                            <span class="badge-status badge-avail" style="margin-left: 8px; font-size: 11px;"><i class="fa-solid fa-circle-check"></i> Đã cọc</span>
-                                                        </c:otherwise>
-                                                    </c:choose>
+                                                <div class="info-row" style="font-size: 15px; justify-content: flex-start; gap: 16px;">
+                                                    <label style="font-size: 15px; width: 180px; margin-bottom: 0;">Mã Đặt Phòng:</label>
+                                                    <span class="booking-id-badge" style="font-size: 16px;">#${booking.bookingId}</span>
                                                 </div>
-                                                <div class="info-row">
-                                                    <label>Trạng thái đặt phòng:</label>
+                                                <div class="info-row" style="font-size: 15px; justify-content: flex-start; gap: 16px;">
+                                                    <label style="font-size: 15px; width: 180px; margin-bottom: 0;">Trạng thái cọc:</label>
                                                     <span>
-                                                        <span class="status-pill pill-pending"><i class="fa-solid fa-circle"></i> Chờ xử lý</span>
+                                                        <c:choose>
+                                                            <c:when test="${!isDepositPaid}">
+                                                                <span class="badge-status badge-occupied" style="font-size: 13px; padding: 4px 10px;"><i class="fa-solid fa-circle-exclamation"></i> Chưa cọc</span>
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <span class="badge-status badge-avail" style="font-size: 13px; padding: 4px 10px;"><i class="fa-solid fa-circle-check"></i> Đã cọc</span>
+                                                            </c:otherwise>
+                                                        </c:choose>
                                                     </span>
                                                 </div>
-                                                <div style="border-bottom:1px solid #e2e8f0; margin-bottom:16px; padding-bottom:12px;">
-                                                    <div style="font-weight:600; color:var(--text-navy); margin-bottom:8px;">Loại phòng 1 (Parent)</div>
-                                                    <div class="modal-form-group">
-                                                        <label>Loại phòng yêu cầu <span style="color:#ef4444">*</span></label>
-                                                        <select id="editRoomTypeId_parent" 
-                                                                name="roomTypeId" 
-                                                                class="modal-select" 
-                                                                onchange="onParentRoomTypeChange()">
-                                                            <c:forEach var="rt" items="${roomTypesList}">
-                                                                <option value="${rt.typeId}" data-price="${rt.basePrice}" data-type-name="${rt.typeName}" ${rt.typeId eq booking.roomTypeId ? 'selected' : ''}>
-                                                                    <c:out value="${rt.typeName}" /> — <fmt:formatNumber value="${rt.basePrice}" type="number" />đ/đêm
-                                                                </option>
-                                                            </c:forEach>
-                                                        </select>
-                                                    </div>
-                                                    <div class="modal-form-group">
-                                                        <label>Số lượng phòng <span style="color:#ef4444">*</span></label>
-                                                        <input type="number" id="editRoomQuantity_parent" name="roomQuantity" class="modal-input" min="1" max="100" value="${booking.roomQuantity}" onchange="recalcAmount(); updateSelection('parent');" required />
+                                                <div class="info-row" style="font-size: 15px; justify-content: flex-start; gap: 16px;">
+                                                    <label style="font-size: 15px; width: 180px; margin-bottom: 0;">Trạng thái đặt phòng:</label>
+                                                    <span>
+                                                        <span class="status-pill pill-pending" style="font-size: 13px; padding: 6px 12px;"><i class="fa-solid fa-circle"></i> Chờ xử lý</span>
+                                                    </span>
+                                                </div>
+                                                <div style="border-bottom:1px solid #e2e8f0; margin-bottom:16px; padding-bottom:12px; margin-top:20px;">
+                                                    <div style="font-weight:600; color:var(--text-navy); margin-bottom:12px; font-size: 15px;">Loại phòng 1</div>
+                                                    <div style="display:grid; grid-template-columns: 3fr 1fr; gap:16px;">
+                                                        <div class="modal-form-group" style="margin-bottom:0">
+                                                            <label>Loại phòng yêu cầu <span style="color:#ef4444">*</span></label>
+                                                            <select id="editRoomTypeId_parent" 
+                                                                    name="roomTypeId" 
+                                                                    class="modal-select" 
+                                                                    onchange="onParentRoomTypeChange()">
+                                                                <c:forEach var="rt" items="${roomTypesList}">
+                                                                    <option value="${rt.typeId}" data-price="${rt.basePrice}" data-type-name="${rt.typeName}" ${rt.typeId eq booking.roomTypeId ? 'selected' : ''}>
+                                                                        <c:out value="${rt.typeName}" /> — <fmt:formatNumber value="${rt.basePrice}" type="number" />đ/đêm
+                                                                    </option>
+                                                                </c:forEach>
+                                                            </select>
+                                                        </div>
+                                                        <div class="modal-form-group" style="margin-bottom:0">
+                                                            <label>Số lượng phòng <span style="color:#ef4444">*</span></label>
+                                                            <input type="number" id="editRoomQuantity_parent" name="roomQuantity" class="modal-input" min="1" max="100" value="${booking.roomQuantity}" onchange="recalcAmount(); updateSelection('parent');" required />
+                                                        </div>
                                                     </div>
                                                 </div>
 
                                                 <c:forEach var="child" items="${childBookings}" varStatus="status">
-                                                    <div style="border-bottom:1px solid #e2e8f0; margin-bottom:16px; padding-bottom:12px;">
-                                                        <div style="font-weight:600; color:var(--text-navy); margin-bottom:8px;">Loại phòng ${status.index + 2}</div>
-                                                        <div class="modal-form-group">
-                                                            <label>Loại phòng yêu cầu</label>
-                                                            <select id="editRoomTypeId_${child.bookingId}"
-                                                                    name="childRoomTypeId_${child.bookingId}"
-                                                                    class="modal-select"
-                                                                    onchange="onChildRoomTypeChange('${child.bookingId}')">
+                                                    <div style="border-bottom:1px solid #e2e8f0; margin-bottom:16px; padding-bottom:12px; margin-top:20px;">
+                                                        <div style="font-weight:600; color:var(--text-navy); margin-bottom:12px; font-size: 15px;">Loại phòng ${status.index + 2}</div>
+                                                        <div style="display:grid; grid-template-columns: 3fr 1fr; gap:16px;">
+                                                            <div class="modal-form-group" style="margin-bottom:0">
+                                                                <label>Loại phòng yêu cầu</label>
+                                                                <select id="editRoomTypeId_${child.bookingId}"
+                                                                        name="childRoomTypeId_${child.bookingId}"
+                                                                        class="modal-select"
+                                                                        onchange="onChildRoomTypeChange('${child.bookingId}')">
 
-                                                                <c:forEach var="rt" items="${roomTypesList}">
-                                                                    <option value="${rt.typeId}"
-                                                                            data-price="${rt.basePrice}"
-                                                                            data-type-name="${rt.typeName}"
-                                                                            ${rt.typeId eq child.roomTypeId ? 'selected' : ''}>
-                                                                        <c:out value="${rt.typeName}" /> — 
-                                                                        <fmt:formatNumber value="${rt.basePrice}" type="number" />đ/đêm
-                                                                    </option>
-                                                                </c:forEach>
+                                                                    <c:forEach var="rt" items="${roomTypesList}">
+                                                                        <option value="${rt.typeId}"
+                                                                                data-price="${rt.basePrice}"
+                                                                                data-type-name="${rt.typeName}"
+                                                                                ${rt.typeId eq child.roomTypeId ? 'selected' : ''}>
+                                                                            <c:out value="${rt.typeName}" /> — 
+                                                                            <fmt:formatNumber value="${rt.basePrice}" type="number" />đ/đêm
+                                                                        </option>
+                                                                    </c:forEach>
 
-                                                            </select>
-                                                        </div>
-                                                        <div class="modal-form-group">
-                                                            <label>Số lượng phòng <span style="color:#ef4444">*</span></label>
-                                                            <input type="number" id="editRoomQuantity_${child.bookingId}" name="childRoomQuantity_${child.bookingId}" class="modal-input" min="1" max="100" value="${child.roomQuantity}" onchange="recalcAmount(); updateSelection('${child.bookingId}');" required />
+                                                                </select>
+                                                            </div>
+                                                            <div class="modal-form-group" style="margin-bottom:0">
+                                                                <label>Số lượng phòng <span style="color:#ef4444">*</span></label>
+                                                                <input type="number" id="editRoomQuantity_${child.bookingId}" name="childRoomQuantity_${child.bookingId}" class="modal-input" min="1" max="100" value="${child.roomQuantity}" onchange="recalcAmount(); updateSelection('${child.bookingId}');" required />
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </c:forEach>
@@ -288,14 +296,13 @@
                                                                required />
                                                     </div>
                                                 </div>
-                                                <div class="info-row">
-                                                    <label>Số đêm lưu trú:</label>
-                                                    <span id="displayNights">${booking.nights}
-                                                        đêm</span>
+                                                <div class="info-row" style="font-size: 15px; justify-content: flex-start; gap: 16px;">
+                                                    <label style="font-size: 15px; width: 180px; margin-bottom: 0;">Số đêm lưu trú:</label>
+                                                    <span id="displayNights" style="font-size: 15px; font-weight: 600; color: var(--text-navy);">${booking.nights} đêm</span>
                                                 </div>
-                                                <div class="modal-form-group">
-                                                    <label>Tổng số tiền</label>
-                                                    <div id="displayTotalAmount" class="total-amount-display">
+                                                <div class="modal-form-group" style="margin-top: 16px;">
+                                                    <label style="font-size: 14px;">Tổng số tiền</label>
+                                                    <div id="displayTotalAmount" class="total-amount-display" style="font-size: 18px; padding: 12px 14px;">
                                                         0 VND
                                                     </div>
                                                     <input
@@ -329,7 +336,7 @@
                                                 <div id="gridsContainer">
                                                     <%-- Parent Grid --%>
                                                     <div class="booking-grid-section" id="sectionGrid_parent" style="margin-bottom:20px;">
-                                                        <h4 style="font-size: 13px; color: var(--text-navy); margin-bottom: 8px;"><i class="fa-solid fa-bed"></i> Loại 1 (Parent): <span id="typeName_parent"><c:out value="${booking.roomTypeName}" /></span></h4>
+                                                        <h4 style="font-size: 13px; color: var(--text-navy); margin-bottom: 8px;"><i class="fa-solid fa-bed"></i> Loại 1: <span id="typeName_parent"><c:out value="${booking.roomTypeName}" /></span></h4>
                                                         <div class="room-grid" id="roomGrid_parent">
                                                             <c:forEach var="rm" items="${rooms}">
                                                                 <c:set var="isAssigned" value="false" />
@@ -419,6 +426,7 @@
                                                      style="display:none; margin-top:10px"></div>
                                             </div>
                                         </div>
+
 
                                         <!-- Phê duyệt -->
                                         <div class="detail-card" style="margin-top:24px">
@@ -774,7 +782,7 @@
                                                             <label>Lý do hủy đặt phòng (Tùy chọn)</label>
                                                             <textarea name="reason" class="modal-textarea"
                                                                       placeholder="Ví dụ: Khách gọi báo hủy..."
-                                                                      maxlength="500"></textarea>
+                                                                      maxlength="500"><c:if test="${param.cancelReason eq 'overdue'}">Đơn đã quá hạn nhận phòng</c:if></textarea>
                                                         </div>
                                                         <button type="submit" class="btn-modal-save"
                                                                 style="width:100%; height:44px; background:#64748b; font-size:14px"

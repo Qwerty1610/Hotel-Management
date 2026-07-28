@@ -12,7 +12,7 @@
               rel="stylesheet" />
         <link rel="stylesheet"
               href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/receptionist.css?v=6" />
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/receptionist.css?v=7" />
     </head>
     <fmt:setLocale value="vi_VN" />
 
@@ -694,7 +694,9 @@
                                                            items="${entry.value}">
 
                                                     <div
-                                                        class="room-card status-${room.displayStatus}">
+                                                        class="room-card status-${room.displayStatus}"
+                                                        style="cursor:pointer;"
+                                                        onclick="window.location.href='${pageContext.request.contextPath}/receptionist/roomDetail?roomId=${room.roomId}';">
 
                                                         <c:if test="${room.displayStatus eq 'Maintenance'}">
                                                             <div class="room-maintenance-dot"></div>
@@ -935,12 +937,24 @@
                                                     <c:when
                                                         test="${b.status eq 'Confirmed'}">
 
-                                                        <a class="btn-action-icon btn-checkin"
-                                                           href="${pageContext.request.contextPath}/receptionist/checkin-detail?bookingId=${b.bookingId}">
-                                                            <i
-                                                                class="fa-solid fa-key"></i>
-                                                            Check In
-                                                        </a>
+                                                        <c:choose>
+                                                            <c:when test="${b.checkOutDate lt todayDate}">
+                                                                <a class="btn-action-icon btn-overdue"
+                                                                   href="${pageContext.request.contextPath}/receptionist/booking/process?bookingId=${b.bookingId}&cancelReason=overdue"
+                                                                   title="Đơn đã quá hạn nhận phòng — bấm để hủy đặt phòng">
+                                                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                                                    Đã quá hạn
+                                                                </a>
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <a class="btn-action-icon btn-checkin"
+                                                                   href="${pageContext.request.contextPath}/receptionist/checkin-detail?bookingId=${b.bookingId}">
+                                                                    <i
+                                                                        class="fa-solid fa-key"></i>
+                                                                    Check In
+                                                                </a>
+                                                            </c:otherwise>
+                                                        </c:choose>
                                                     </c:when>
 
                                                     <c:when test="${b.status eq 'CheckedIn'}">

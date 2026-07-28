@@ -402,6 +402,63 @@
                 </div>
 
                 <div class="table-card">
+                    <!-- BỘ LỌC BÁO CÁO CỦA NHÂN VIÊN (GET, server-side) -->
+                    <form class="table-filter-bar" method="get"
+                          action="${pageContext.request.contextPath}/manager/requests"
+                          style="display:grid; grid-template-columns: 1.5fr 1fr 1fr 1fr auto; gap:16px; align-items:end;">
+                        <div class="modal-form-group" style="margin-bottom:0;">
+                            <label>Tìm kiếm</label>
+                            <div class="search-wrapper" style="max-width:100%;">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" name="riQ" class="input-search-service"
+                                       placeholder="Số phòng hoặc tên nhân viên..." value="<c:out value='${riQ}' />" />
+                            </div>
+                        </div>
+                        <div class="modal-form-group" style="margin-bottom:0;">
+                            <label>Mức độ</label>
+                            <select name="riSeverity" class="status-select" onchange="this.form.submit()"
+                                    style="width:100%;">
+                                <option value="all" ${riSeverityFilter eq 'all' ? 'selected' : '' }>Tất cả mức
+                                    độ</option>
+                                <option value="High" ${riSeverityFilter eq 'High' ? 'selected' : '' }>Cao
+                                </option>
+                                <option value="Medium" ${riSeverityFilter eq 'Medium' ? 'selected' : '' }>
+                                    Trung bình</option>
+                                <option value="Low" ${riSeverityFilter eq 'Low' ? 'selected' : '' }>Thấp
+                                </option>
+                            </select>
+                        </div>
+                        <div class="modal-form-group" style="margin-bottom:0;">
+                            <label>Nhân viên báo cáo</label>
+                            <select name="riStaff" class="status-select" onchange="this.form.submit()"
+                                    style="width:100%;">
+                                <option value="all" ${riStaffFilter eq 'all' ? 'selected' : '' }>Tất cả
+                                    nhân viên</option>
+                                <c:forEach var="s" items="${staffList}">
+                                    <c:set var="sidStr">${s.accountId}</c:set>
+                                    <option value="${s.accountId}" ${riStaffFilter eq sidStr ? 'selected'
+                                                     : '' }>
+                                            <c:out value="${s.fullName}" />
+                                    </option>
+                                </c:forEach>
+                            </select>
+                        </div>
+                        <div class="modal-form-group" style="margin-bottom:0;">
+                            <label>Trạng thái</label>
+                            <select name="riStatus" class="status-select" onchange="this.form.submit()"
+                                    style="width:100%;">
+                                <option value="all" ${riStatusFilter eq 'all' ? 'selected' : '' }>Tất cả trạng
+                                    thái</option>
+                                <option value="Pending" ${riStatusFilter eq 'Pending' ? 'selected' : '' }>Đang
+                                    chờ</option>
+                                <option value="Success" ${riStatusFilter eq 'Success' ? 'selected' : '' }>
+                                    Đã xử lý</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-add-service" style="height:40px;"><i
+                                class="fa-solid fa-magnifying-glass"></i> Lọc</button>
+                    </form>
+
                     <table class="services-table-element">
                         <thead>
                             <tr>
