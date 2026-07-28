@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.mycompany.hotelmanagement.config.DBContext;
+import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.BookingServiceRequest;
 import com.mycompany.hotelmanagement.entity.RoomInfo;
 
@@ -444,6 +445,43 @@ public class BookingServiceRequestDAO {
             e.printStackTrace();
         }
 
+        return list;
+    }
+
+    public List<Booking> getCheckedInBookingsByCustomer(int accountId) {
+        List<Booking> list = new ArrayList<>();
+        String sql = """
+            SELECT
+                b.booking_id,
+                b.room_type_id,
+                rt.type_name,
+                STRING_AGG(r.room_number, ', ') AS assigned_rooms
+            FROM Booking b
+            JOIN RoomAssignment ra ON b.booking_id = ra.booking_id
+            JOIN Room r ON ra.room_id = r.room_id
+            LEFT JOIN RoomType rt ON b.room_type_id = rt.type_id
+            WHERE b.account_id = ? AND b.status = N'CheckedIn'
+            GROUP BY b.booking_id, b.room_type_id, rt.type_name
+            ORDER BY b.booking_id DESC
+        """;
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, accountId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        Booking b = new Booking();
+                        b.setBookingId(rs.getInt("booking_id"));
+                        b.setRoomTypeId(rs.getInt("room_type_id"));
+                        b.setRoomTypeName(rs.getString("type_name"));
+                        b.setAssignedRoomsStr(rs.getString("assigned_rooms"));
+                        list.add(b);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return list;
     }
 
