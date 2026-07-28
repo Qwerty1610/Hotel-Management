@@ -40,6 +40,11 @@
                 font-weight: 600;
                 color: var(--text-navy);
             }
+            /* Mỗi thao tác trên một dòng phòng của đơn nhiều loại phòng */
+            .bcr-detail .bcr-item {
+                display: block;
+                margin-top: 2px;
+            }
         </style>
     </head>
     <fmt:setLocale value="vi_VN" />
@@ -140,7 +145,7 @@
                         <div class="toast-notify toast-success">
                             <i class="fa-solid fa-circle-check"></i>
                             <c:choose>
-                                <c:when test="${param.action eq 'approve'}">Đã duyệt yêu cầu và cập nhật đơn đặt phòng thành công!</c:when>
+                                <c:when test="${param.action eq 'approve'}">Đã duyệt yêu cầu. Với yêu cầu thay đổi, một đơn mới đã được tạo ở trạng thái Chờ duyệt — hãy xác nhận và xếp phòng cho đơn đó (xem mã đơn mới ở cột Mã đơn).</c:when>
                                 <c:when test="${param.action eq 'reject'}">Đã từ chối yêu cầu thành công!</c:when>
                                 <c:otherwise>Thao tác thành công!</c:otherwise>
                             </c:choose>
@@ -155,6 +160,8 @@
                                 <c:when test="${param.error eq 'not_pending'}">Yêu cầu này đã được xử lý trước đó.</c:when>
                                 <c:when test="${param.error eq 'not_eligible'}">Đơn đặt phòng không còn đủ điều kiện để áp dụng yêu cầu này.</c:when>
                                 <c:when test="${param.error eq 'no_room'}">Không còn phòng trống phù hợp cho lựa chọn / khoảng ngày mới.</c:when>
+                                <c:when test="${param.error eq 'stale'}">Đơn đặt phòng đã bị thay đổi sau khi khách gửi yêu cầu. Vui lòng kiểm tra lại đơn và đề nghị khách gửi yêu cầu mới.</c:when>
+                                <c:when test="${param.error eq 'invoice_locked'}">Hoá đơn của đơn này đang trong quy trình hoàn tiền nên không thể tạo đơn thay thế tự động. Vui lòng xử lý hoá đơn trước.</c:when>
                                 <c:otherwise>Đã xảy ra lỗi. Vui lòng thử lại sau.</c:otherwise>
                             </c:choose>
                         </div>
@@ -266,7 +273,17 @@
                                             <tr>
                                                 <td><span class="req-id-link">#${r.requestId}</span></td>
 
-                                                <td style="font-weight: 700;">#${r.bookingId}</td>
+                                                <%-- Duyệt yêu cầu thay đổi tạo một đơn mới thay cho đơn
+                                                     cũ, nên cần chỉ rõ đơn nào đang có hiệu lực. --%>
+                                                <td style="font-weight: 700;">
+                                                    #${r.bookingId}
+                                                    <c:if test="${not empty r.newBookingId}">
+                                                        <br/>
+                                                        <small style="color: var(--text-muted); font-weight: 500;">
+                                                            &rarr; <strong>#${r.newBookingId}</strong>
+                                                        </small>
+                                                    </c:if>
+                                                </td>
 
                                                 <td>
                                                     <div class="customer-cell">
@@ -301,7 +318,42 @@
                                                                 &rarr;
                                                                 <span class="new"><fmt:formatDate value="${r.newCheckIn}" pattern="dd/MM" /> - <fmt:formatDate value="${r.newCheckOut}" pattern="dd/MM/yyyy" /></span>
                                                                 <br/>
-                                                                <span class="new"><c:out value="${r.newRoomTypeName}" /> · ${r.newRoomQuantity} phòng</span>
+                                                                <%-- Đơn nhiều loại phòng có nhiều dòng: liệt kê từng thao tác
+                                                                     để lễ tân thấy đúng những gì sẽ được áp khi duyệt. --%>
+                                                                <c:choose>
+                                                                    <c:when test="${not empty r.items}">
+                                                                        <c:forEach var="it" items="${r.items}">
+                                                                            <span class="bcr-item">
+                                                                                <c:choose>
+                                                                                    <c:when test="${it.remove}">
+                                                                                        <i class="fa-solid fa-minus" style="color:#dc2626"></i>
+                                                                                        Bỏ <span class="old"><c:out value="${it.oldRoomTypeName}" /> · ${it.oldRoomQuantity} phòng</span>
+                                                                                    </c:when>
+                                                                                    <c:when test="${it.add}">
+                                                                                        <i class="fa-solid fa-plus" style="color:#16a34a"></i>
+                                                                                        Thêm <span class="new"><c:out value="${it.newRoomTypeName}" /> · ${it.newRoomQuantity} phòng</span>
+                                                                                    </c:when>
+                                                                                    <c:when test="${it.unchanged}">
+                                                                                        <span style="color:var(--text-muted)">
+                                                                                            Giữ <c:out value="${it.newRoomTypeName}" /> · ${it.newRoomQuantity} phòng
+                                                                                        </span>
+                                                                                    </c:when>
+                                                                                    <c:otherwise>
+                                                                                        <span class="old"><c:out value="${it.oldRoomTypeName}" /> · ${it.oldRoomQuantity}</span>
+                                                                                        &rarr;
+                                                                                        <span class="new"><c:out value="${it.newRoomTypeName}" /> · ${it.newRoomQuantity} phòng</span>
+                                                                                    </c:otherwise>
+                                                                                </c:choose>
+                                                                            </span>
+                                                                        </c:forEach>
+                                                                    </c:when>
+                                                                    <c:when test="${not empty r.newRoomTypeName}">
+                                                                        <span class="new"><c:out value="${r.newRoomTypeName}" /> · ${r.newRoomQuantity} phòng</span>
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        <span class="new">Giữ nguyên loại phòng, chỉ đổi ngày</span>
+                                                                    </c:otherwise>
+                                                                </c:choose>
                                                             </c:otherwise>
                                                         </c:choose>
                                                     </div>
@@ -311,7 +363,13 @@
                                                 <td style="font-weight: 700; color: var(--brand-blue);">
                                                     <c:choose>
                                                         <c:when test="${r.additionalCharge != null && r.additionalCharge > 0}">
-                                                            <fmt:formatNumber value="${r.additionalCharge}" type="number" /> VND
+                                                            +<fmt:formatNumber value="${r.additionalCharge}" type="number" /> VND
+                                                        </c:when>
+                                                        <%-- Thay đổi sang phương án rẻ hơn: khách được hoàn lại chênh lệch --%>
+                                                        <c:when test="${r.additionalCharge != null && r.additionalCharge lt 0}">
+                                                            <span style="color: #16a34a;">
+                                                                Hoàn <fmt:formatNumber value="${-r.additionalCharge}" type="number" /> VND
+                                                            </span>
                                                         </c:when>
                                                         <c:otherwise><span style="color: var(--text-muted);">—</span></c:otherwise>
                                                     </c:choose>

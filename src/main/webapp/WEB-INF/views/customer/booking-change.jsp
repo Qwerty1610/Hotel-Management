@@ -88,7 +88,7 @@
             <div class="error-banner" id="serverValidationError">
                 <i class="fa-solid fa-circle-exclamation" style="font-size: 20px;"></i>
                 <div>
-                    <strong>Yêu cầu thất bại:</strong> ${errorMessage}
+                    <strong>Yêu cầu thất bại:</strong> <c:out value="${errorMessage}" />
                 </div>
             </div>
         </c:if>
@@ -135,8 +135,6 @@
                                 <option value="${b.bookingId}"
                                         data-checkin="<fmt:formatDate value='${b.checkInDate}' pattern='yyyy-MM-dd' />"
                                         data-checkout="<fmt:formatDate value='${b.checkOutDate}' pattern='yyyy-MM-dd' />"
-                                        data-roomtypeid="${b.roomTypeId}"
-                                        data-qty="${b.roomQuantity}"
                                         data-roomtype="<c:out value='${b.groupRoomTypeNames}' />">
                                     #${b.bookingId} • <c:out value="${b.groupRoomTypeNames}" />
                                     (<fmt:formatDate value="${b.checkInDate}" pattern="dd/MM/yyyy" /> - <fmt:formatDate value="${b.checkOutDate}" pattern="dd/MM/yyyy" />)
@@ -149,8 +147,8 @@
                 <div class="req-current" id="changeCurrent">
                     <h4>Thông tin hiện tại</h4>
                     <div class="req-current-grid">
-                        <span>Loại phòng: <b id="curChangeType">—</b></span>
-                        <span>Số phòng: <b id="curChangeQty">—</b></span>
+                        <span>Các loại phòng: <b id="curChangeType">—</b></span>
+                        <span>Tổng số phòng: <b id="curChangeQty">—</b></span>
                         <span>Nhận phòng: <b id="curChangeIn">—</b></span>
                         <span>Trả phòng: <b id="curChangeOut">—</b></span>
                     </div>
@@ -159,30 +157,48 @@
                 <div class="req-grid-2">
                     <div class="req-field">
                         <label>Ngày nhận phòng mới <span class="req-star">*</span></label>
-                        <input type="date" name="newCheckInDate" id="changeNewIn" required />
+                        <input type="date" name="newCheckInDate" id="changeNewIn"
+                               onchange="renderChangeEstimate(); refreshAvailability();" required />
                     </div>
                     <div class="req-field">
                         <label>Ngày trả phòng mới <span class="req-star">*</span></label>
-                        <input type="date" name="newCheckOutDate" id="changeNewOut" required />
+                        <input type="date" name="newCheckOutDate" id="changeNewOut"
+                               onchange="renderChangeEstimate(); refreshAvailability();" required />
                     </div>
                 </div>
-                <div class="req-grid-2">
-                    <div class="req-field">
-                        <label>Loại phòng mong muốn <span class="req-star">*</span></label>
-                        <select name="roomTypeId" id="changeRoomType" required>
-                            <option value="">— Chọn loại phòng —</option>
-                            <c:forEach var="rt" items="${roomTypes}">
-                                <option value="${rt.typeId}" data-price="${rt.basePrice}">
-                                    <c:out value="${rt.typeName}" /> — <fmt:formatNumber value="${rt.basePrice}" type="number" />đ/đêm
-                                </option>
-                            </c:forEach>
-                        </select>
+
+                <%-- Bảng dòng phòng: đơn nhiều loại phòng gồm nhiều dòng, mỗi dòng
+                     sửa được độc lập. Ngày nhận/trả ở trên áp cho cả đơn. --%>
+                <div class="req-field">
+                    <label>Các loại phòng trong đơn <span class="req-star">*</span></label>
+                    <div style="overflow-x: auto;">
+                        <table class="booking-list-table" id="changeRowsTable">
+                            <thead>
+                                <tr>
+                                    <th style="min-width: 220px;">Loại phòng</th>
+                                    <th style="width: 120px;">Số phòng</th>
+                                    <th style="width: 160px;">Thành tiền / đêm</th>
+                                    <th style="width: 60px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="changeRowsBody"></tbody>
+                        </table>
                     </div>
-                    <div class="req-field">
-                        <label>Số phòng <span class="req-star">*</span></label>
-                        <input type="number" name="roomQuantity" id="changeQty" min="1" max="100" required />
-                    </div>
+                    <button type="button" class="btn-secondary" style="margin-top: 10px; padding: 8px 16px;"
+                            onclick="addChangeRow()">
+                        <i class="fa-solid fa-plus"></i> Thêm loại phòng
+                    </button>
                 </div>
+
+                <div class="req-estimate" id="changeEstimate">
+                    Tổng tiền dự kiến cho <span id="changeNights">0</span> đêm:
+                    <strong id="changeNewTotal">0 VND</strong>
+                    <div id="changeDeltaLine" style="margin-top: 6px;"></div>
+                    <small style="display:block; margin-top:6px; color: var(--text-muted);">
+                        Số liệu mang tính tham khảo, chưa gồm khuyến mãi đã áp. Lễ tân sẽ xác nhận số tiền chính thức khi duyệt.
+                    </small>
+                </div>
+
                 <div class="req-field">
                     <label>Lý do thay đổi</label>
                     <textarea name="reason" maxlength="500" placeholder="VD: Thay đổi lịch trình công tác..."></textarea>
@@ -215,8 +231,6 @@
                             <c:if test="${b.status eq 'CheckedIn'}">
                                 <option value="${b.bookingId}"
                                         data-checkout="<fmt:formatDate value='${b.checkOutDate}' pattern='yyyy-MM-dd' />"
-                                        data-roomtypeid="${b.roomTypeId}"
-                                        data-qty="${b.roomQuantity}"
                                         data-roomtype="<c:out value='${b.groupRoomTypeNames}' />">
                                     #${b.bookingId} • <c:out value="${b.groupRoomTypeNames}" />
                                     (Trả: <fmt:formatDate value="${b.checkOutDate}" pattern="dd/MM/yyyy" />)
@@ -278,7 +292,17 @@
                         <tbody>
                             <c:forEach var="r" items="${myRequests}">
                                 <tr>
-                                    <td style="font-weight: 700;">#${r.bookingId}</td>
+                                    <%-- Yêu cầu thay đổi được duyệt sẽ sinh ra một đơn mới thay cho
+                                         đơn cũ, nên mã đơn của khách thay đổi — phải chỉ rõ đơn mới. --%>
+                                    <td style="font-weight: 700;">
+                                        #${r.bookingId}
+                                        <c:if test="${not empty r.newBookingId}">
+                                            <br/>
+                                            <small style="color: var(--text-muted); font-weight: 500;">
+                                                &rarr; đơn mới <strong>#${r.newBookingId}</strong>
+                                            </small>
+                                        </c:if>
+                                    </td>
                                     <td>
                                         <c:choose>
                                             <c:when test="${r.extension}">
@@ -303,16 +327,45 @@
                                                 <strong><fmt:formatDate value="${r.newCheckIn}" pattern="dd/MM/yyyy" /> -
                                                     <fmt:formatDate value="${r.newCheckOut}" pattern="dd/MM/yyyy" /></strong>
                                                 <br/>
-                                                <small style="color: var(--text-muted);">
-                                                    ${r.newRoomTypeName} · ${r.newRoomQuantity} phòng
-                                                </small>
+                                                <c:choose>
+                                                    <c:when test="${not empty r.items}">
+                                                        <c:forEach var="it" items="${r.items}">
+                                                            <small style="color: var(--text-muted); display: block;">
+                                                                <c:choose>
+                                                                    <c:when test="${it.remove}">
+                                                                        Bỏ <c:out value="${it.oldRoomTypeName}" /> (${it.oldRoomQuantity} phòng)
+                                                                    </c:when>
+                                                                    <c:when test="${it.add}">
+                                                                        Thêm <c:out value="${it.newRoomTypeName}" /> · ${it.newRoomQuantity} phòng
+                                                                    </c:when>
+                                                                    <c:when test="${it.unchanged}">
+                                                                        Giữ <c:out value="${it.newRoomTypeName}" /> · ${it.newRoomQuantity} phòng
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        <c:out value="${it.oldRoomTypeName}" /> (${it.oldRoomQuantity})
+                                                                        &rarr; <c:out value="${it.newRoomTypeName}" /> · ${it.newRoomQuantity} phòng
+                                                                    </c:otherwise>
+                                                                </c:choose>
+                                                            </small>
+                                                        </c:forEach>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <small style="color: var(--text-muted);">Giữ nguyên loại phòng, chỉ đổi ngày</small>
+                                                    </c:otherwise>
+                                                </c:choose>
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
                                     <td style="font-weight: 600; color: var(--gold-price);">
                                         <c:choose>
                                             <c:when test="${r.additionalCharge != null && r.additionalCharge > 0}">
-                                                <fmt:formatNumber value="${r.additionalCharge}" type="number" /> VND
+                                                +<fmt:formatNumber value="${r.additionalCharge}" type="number" /> VND
+                                            </c:when>
+                                            <%-- Đổi sang phương án rẻ hơn thì chênh lệch âm: khách được hoàn lại --%>
+                                            <c:when test="${r.additionalCharge != null && r.additionalCharge lt 0}">
+                                                <span style="color: #16a34a;">
+                                                    Hoàn <fmt:formatNumber value="${-r.additionalCharge}" type="number" /> VND
+                                                </span>
                                             </c:when>
                                             <c:otherwise><span style="color: var(--text-muted);">—</span></c:otherwise>
                                         </c:choose>
@@ -392,6 +445,132 @@
             <c:forEach var="rt" items="${roomTypes}">'${rt.typeId}': ${rt.basePrice},</c:forEach>
         };
 
+        // Chi tiết từng dòng phòng của mỗi đơn, do controller dựng sẵn. Đơn nhiều
+        // loại phòng có nhiều dòng nên form phải sửa được từng dòng một.
+        const bookingRows = ${not empty bookingRowsJson ? bookingRowsJson : '{}'};
+
+        // Tên loại phòng, dựng <option> bằng textContent để tên phòng dù chứa ký
+        // tự đặc biệt cũng không phá cấu trúc trang.
+        const roomTypeNames = {
+            <c:forEach var="rt" items="${roomTypes}">'${rt.typeId}': '<c:out value="${rt.typeName}" />',</c:forEach>
+        };
+
+        // Số phòng còn trống theo loại cho khoảng ngày đang chọn, nạp từ
+        // /customer/booking/availability. Rỗng nghĩa là chưa tra được — khi đó
+        // form không tự chặn, cứ để server kiểm tra khi gửi.
+        let availableByType = {};
+
+        function buildRoomTypeSelect(selectedTypeId) {
+            const select = document.createElement('select');
+            select.name = 'itemRoomTypeId[]';
+            select.required = true;
+            Object.keys(roomTypeNames).forEach(id => {
+                const opt = document.createElement('option');
+                opt.value = id;
+                select.appendChild(opt);
+            });
+            if (selectedTypeId) select.value = String(selectedTypeId);
+            return select;
+        }
+
+        /**
+         * Đồng bộ danh sách lựa chọn của mọi dòng:
+         *  - loại phòng đã chọn ở dòng khác thì ẩn đi (mỗi loại chỉ một dòng),
+         *  - loại phòng hết sạch phòng thì khoá lại,
+         *  - nhãn kèm số phòng còn trống, và ô số lượng bị chặn trần theo đó.
+         */
+        /**
+         * Tổng số phòng đang yêu cầu theo từng loại. Một đơn cũ có thể sẵn có
+         * hai dòng cùng loại phòng (form tạo đơn không chặn), nên phải cộng lại
+         * rồi mới so với tồn kho — giống hệt cách server gộp desiredByType.
+         */
+        function requestedByType() {
+            const totals = {};
+            Array.from(document.getElementById('changeRowsBody').children).forEach(tr => {
+                if (tr.dataset.removed) return;
+                const id = tr.querySelector('select').value;
+                const qty = parseInt(tr.querySelector('input[name="itemRoomQuantity[]"]').value || '0', 10);
+                totals[id] = (totals[id] || 0) + (isNaN(qty) ? 0 : qty);
+            });
+            return totals;
+        }
+
+        function syncRowOptions() {
+            const rows = Array.from(document.getElementById('changeRowsBody').children);
+            const totals = requestedByType();
+            const takenElsewhere = new Set();
+            rows.forEach(tr => {
+                if (!tr.dataset.removed) takenElsewhere.add(tr.querySelector('select').value);
+            });
+
+            rows.forEach(tr => {
+                const sel = tr.querySelector('select');
+                const qty = tr.querySelector('input[name="itemRoomQuantity[]"]');
+                const avail = availableByType[sel.value];
+
+                Array.from(sel.options).forEach(opt => {
+                    const isSelf = opt.value === sel.value;
+                    const usedByOtherRow = takenElsewhere.has(opt.value) && !isSelf;
+                    const optAvail = availableByType[opt.value];
+                    const soldOut = optAvail !== undefined && optAvail <= 0;
+
+                    opt.hidden = usedByOtherRow;
+                    opt.disabled = usedByOtherRow || (soldOut && !isSelf);
+
+                    let label = roomTypeNames[opt.value] + ' — ' + fmtVND(roomTypePrices[opt.value] || 0) + '/đêm';
+                    if (optAvail !== undefined) {
+                        label += optAvail > 0 ? ' · còn ' + optAvail + ' phòng' : ' · hết phòng';
+                    }
+                    opt.textContent = label;
+                });
+
+                // Trần số lượng theo số phòng thực còn. So theo TỔNG của loại
+                // phòng đó trên mọi dòng, không so riêng từng dòng.
+                if (!tr.dataset.removed && avail !== undefined) {
+                    qty.max = String(Math.max(1, avail));
+                    const note = tr.querySelector('.row-avail');
+                    const askedForType = totals[sel.value] || 0;
+                    if (avail <= 0) {
+                        note.textContent = 'Hết phòng trong khoảng ngày này';
+                        note.style.color = '#dc2626';
+                    } else if (askedForType > avail) {
+                        note.textContent = 'Chỉ còn ' + avail + ' phòng';
+                        note.style.color = '#dc2626';
+                    } else {
+                        note.textContent = 'Còn ' + avail + ' phòng';
+                        note.style.color = 'var(--text-muted)';
+                    }
+                }
+            });
+        }
+
+        /** Tra số phòng còn trống cho khoảng ngày đang chọn rồi vẽ lại bảng. */
+        function refreshAvailability() {
+            const bookingId = document.getElementById('changeBookingSelect').value;
+            const ci = document.getElementById('changeNewIn').value;
+            const co = document.getElementById('changeNewOut').value;
+            if (!bookingId || !ci || !co || nightsBetween(ci, co) < 1) {
+                availableByType = {};
+                syncRowOptions();
+                return;
+            }
+            const url = '${pageContext.request.contextPath}/customer/booking/availability'
+                + '?bookingId=' + encodeURIComponent(bookingId)
+                + '&checkIn=' + encodeURIComponent(ci)
+                + '&checkOut=' + encodeURIComponent(co);
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    availableByType = (data && data.success) ? data.available : {};
+                    syncRowOptions();
+                })
+                .catch(() => {
+                    // Tra không được thì thôi, server vẫn chặn khi gửi
+                    availableByType = {};
+                    syncRowOptions();
+                });
+        }
+
         function todayISO() {
             const d = new Date();
             const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -436,31 +615,229 @@
             section.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
+        // ===== Bảng dòng phòng của yêu cầu thay đổi =====
+
+        /** Dựng một dòng trong bảng. bookingId rỗng = dòng phòng mới thêm. */
+        function buildChangeRow(bookingId, roomTypeId, quantity) {
+            const tr = document.createElement('tr');
+            const isNew = !bookingId;
+
+            const tdType = document.createElement('td');
+            const select = buildRoomTypeSelect(roomTypeId);
+            // Đổi loại phòng ở một dòng làm thay đổi tập loại còn chọn được ở
+            // các dòng khác, nên phải vẽ lại cả bảng chứ không chỉ tính lại tiền.
+            select.addEventListener('change', () => { syncRowOptions(); renderChangeEstimate(); });
+            tdType.appendChild(select);
+            if (isNew) {
+                const badge = document.createElement('small');
+                badge.style.cssText = 'display:block;margin-top:4px;color:var(--text-muted);';
+                badge.textContent = 'Loại phòng thêm mới';
+                tdType.appendChild(badge);
+            }
+
+            const tdQty = document.createElement('td');
+            const qtyInput = document.createElement('input');
+            qtyInput.type = 'number';
+            qtyInput.name = 'itemRoomQuantity[]';
+            qtyInput.min = '1';
+            qtyInput.max = '100';
+            qtyInput.required = true;
+            qtyInput.value = quantity || 1;
+            qtyInput.addEventListener('input', () => { syncRowOptions(); renderChangeEstimate(); });
+            tdQty.appendChild(qtyInput);
+
+            const availNote = document.createElement('small');
+            availNote.className = 'row-avail';
+            availNote.style.cssText = 'display:block;margin-top:4px;color:var(--text-muted);';
+            tdQty.appendChild(availNote);
+
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = 'itemBookingId[]';
+            hidden.value = bookingId ? String(bookingId) : '';
+            tdQty.appendChild(hidden);
+
+            const tdMoney = document.createElement('td');
+            tdMoney.className = 'row-money';
+            tdMoney.textContent = '—';
+
+            const tdAction = document.createElement('td');
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn-secondary';
+            removeBtn.style.cssText = 'padding:6px 10px;';
+            removeBtn.title = 'Bỏ loại phòng này khỏi đơn';
+            removeBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+            removeBtn.addEventListener('click', () => removeChangeRow(tr));
+            tdAction.appendChild(removeBtn);
+
+            tr.append(tdType, tdQty, tdMoney, tdAction);
+            return tr;
+        }
+
+        /**
+         * Bỏ một dòng phòng. Dòng đã có trong đơn không xoá khỏi DOM mà gửi lên
+         * số lượng 0 — server cần biết dòng nào bị bỏ để huỷ đúng dòng đó.
+         */
+        function removeChangeRow(tr) {
+            const body = document.getElementById('changeRowsBody');
+            const remaining = Array.from(body.children).filter(r => !r.dataset.removed);
+            if (remaining.length <= 1) {
+                alert('Đơn phải còn ít nhất một loại phòng. Nếu không còn nhu cầu, vui lòng huỷ đơn đặt phòng.');
+                return;
+            }
+            const hidden = tr.querySelector('input[name="itemBookingId[]"]');
+            if (!hidden.value) {
+                tr.remove();
+            } else {
+                tr.dataset.removed = '1';
+                tr.style.opacity = '0.45';
+                const qty = tr.querySelector('input[name="itemRoomQuantity[]"]');
+                qty.value = 0;
+                qty.min = '0';
+                qty.readOnly = true;
+                tr.querySelector('td:last-child').innerHTML =
+                    '<span style="color:var(--text-muted);font-size:12px;">Sẽ bỏ</span>';
+                tr.querySelector('.row-avail').textContent = '';
+            }
+            syncRowOptions();
+            renderChangeEstimate();
+        }
+
+        function addChangeRow() {
+            const rows = Array.from(document.getElementById('changeRowsBody').children);
+            const taken = new Set(rows.filter(tr => !tr.dataset.removed)
+                                      .map(tr => tr.querySelector('select').value));
+            // Chọn sẵn loại phòng chưa dùng ở dòng nào và còn phòng trống, để
+            // dòng mới không sinh ra đã trùng hoặc đã hết phòng ngay.
+            const candidates = Object.keys(roomTypeNames).filter(id => !taken.has(id));
+            if (candidates.length === 0) {
+                alert('Bạn đã thêm hết các loại phòng hiện có.');
+                return;
+            }
+            const preferred = candidates.find(id => (availableByType[id] === undefined || availableByType[id] > 0))
+                            || candidates[0];
+            document.getElementById('changeRowsBody').appendChild(buildChangeRow('', preferred, 1));
+            syncRowOptions();
+            renderChangeEstimate();
+        }
+
         function onChangeBookingSelect() {
             const opt = document.getElementById('changeBookingSelect').selectedOptions[0];
             const panel = document.getElementById('changeCurrent');
-            if (!opt || !opt.value) { panel.classList.remove('show'); return; }
+            const body = document.getElementById('changeRowsBody');
+            body.innerHTML = '';
+            if (!opt || !opt.value) {
+                panel.classList.remove('show');
+                renderChangeEstimate();
+                return;
+            }
+
+            const info = bookingRows[opt.value];
+            const rows = info ? info.rows : [];
+            let totalQty = 0;
+            rows.forEach(r => {
+                totalQty += r.quantity;
+                body.appendChild(buildChangeRow(r.bookingId, r.roomTypeId, r.quantity));
+            });
+
             document.getElementById('curChangeType').textContent = opt.dataset.roomtype || '—';
-            document.getElementById('curChangeQty').textContent = opt.dataset.qty || '—';
+            document.getElementById('curChangeQty').textContent = totalQty || '—';
             document.getElementById('curChangeIn').textContent = opt.dataset.checkin || '—';
             document.getElementById('curChangeOut').textContent = opt.dataset.checkout || '—';
             panel.classList.add('show');
-            // Pre-fill the editable fields with the current values
+
             document.getElementById('changeNewIn').value = opt.dataset.checkin || '';
             document.getElementById('changeNewOut').value = opt.dataset.checkout || '';
-            if (opt.dataset.roomtypeid) document.getElementById('changeRoomType').value = opt.dataset.roomtypeid;
-            document.getElementById('changeQty').value = opt.dataset.qty || '1';
+            syncRowOptions();
+            renderChangeEstimate();
+            refreshAvailability();
+        }
+
+        /** Ước tính tổng tiền mới và chênh lệch so với đơn hiện tại. */
+        function renderChangeEstimate() {
+            const box = document.getElementById('changeEstimate');
+            const opt = document.getElementById('changeBookingSelect').selectedOptions[0];
+            const ci = document.getElementById('changeNewIn').value;
+            const co = document.getElementById('changeNewOut').value;
+            const rows = Array.from(document.getElementById('changeRowsBody').children);
+
+            rows.forEach(tr => {
+                const cell = tr.querySelector('.row-money');
+                if (tr.dataset.removed) { cell.textContent = '—'; return; }
+                const price = roomTypePrices[tr.querySelector('select').value] || 0;
+                const qty = parseInt(tr.querySelector('input[name="itemRoomQuantity[]"]').value || '0', 10);
+                cell.textContent = fmtVND(price * qty);
+            });
+
+            if (!opt || !opt.value || !ci || !co) { box.classList.remove('show'); return; }
+            const nights = nightsBetween(ci, co);
+            if (nights < 1) { box.classList.remove('show'); return; }
+
+            let perNight = 0;
+            rows.forEach(tr => {
+                if (tr.dataset.removed) return;
+                const price = roomTypePrices[tr.querySelector('select').value] || 0;
+                const qty = parseInt(tr.querySelector('input[name="itemRoomQuantity[]"]').value || '0', 10);
+                perNight += price * qty;
+            });
+
+            const newTotal = perNight * nights;
+            const oldTotal = (bookingRows[opt.value] || {}).totalAmount || 0;
+            const delta = newTotal - oldTotal;
+
+            document.getElementById('changeNights').textContent = nights;
+            document.getElementById('changeNewTotal').textContent = fmtVND(newTotal);
+            const deltaLine = document.getElementById('changeDeltaLine');
+            if (Math.abs(delta) < 1) {
+                deltaLine.textContent = 'Không thay đổi so với số tiền hiện tại.';
+            } else if (delta > 0) {
+                deltaLine.innerHTML = 'Cần thanh toán thêm: <strong>' + fmtVND(delta) + '</strong>';
+            } else {
+                deltaLine.innerHTML = 'Được hoàn lại: <strong>' + fmtVND(-delta) + '</strong>';
+            }
+            box.classList.add('show');
         }
 
         function validateChange() {
             const bid = document.getElementById('changeBookingSelect').value;
             const ci = document.getElementById('changeNewIn').value;
             const co = document.getElementById('changeNewOut').value;
-            const rt = document.getElementById('changeRoomType').value;
-            const qty = document.getElementById('changeQty').value;
-            if (!bid || !ci || !co || !rt || !qty) {
+            const rows = Array.from(document.getElementById('changeRowsBody').children);
+            if (!bid || !ci || !co) {
                 alert('Vui lòng điền đầy đủ các trường bắt buộc.');
                 return false;
+            }
+            if (!rows.some(tr => !tr.dataset.removed)) {
+                alert('Đơn phải còn ít nhất một loại phòng.');
+                return false;
+            }
+            for (const tr of rows) {
+                if (tr.dataset.removed) continue;
+                const qty = parseInt(tr.querySelector('input[name="itemRoomQuantity[]"]').value || '0', 10);
+                if (!tr.querySelector('select').value || qty < 1) {
+                    alert('Mỗi loại phòng phải có số lượng từ 1 trở lên.');
+                    return false;
+                }
+            }
+            // Chặn sớm khi vượt tồn kho để khách sửa ngay trên form, khỏi phải
+            // gửi đi rồi bị trả về. So theo tổng của từng loại phòng, đúng như
+            // server làm. Server vẫn kiểm tra lại — đây chỉ là tiện ích.
+            const totals = requestedByType();
+            for (const typeId of Object.keys(totals)) {
+                const avail = availableByType[typeId];
+                if (avail === undefined) continue;   // chưa tra được thì để server quyết
+                if (avail <= 0) {
+                    alert('Loại phòng "' + roomTypeNames[typeId] + '" đã hết phòng trong khoảng ngày bạn chọn. '
+                        + 'Vui lòng đổi ngày hoặc chọn loại phòng khác.');
+                    return false;
+                }
+                if (totals[typeId] > avail) {
+                    alert('Loại phòng "' + roomTypeNames[typeId] + '" chỉ còn ' + avail
+                        + ' phòng trống trong khoảng ngày bạn chọn, trong khi bạn đang yêu cầu '
+                        + totals[typeId] + ' phòng.');
+                    return false;
+                }
             }
             if (nightsBetween(ci, co) < 1) {
                 alert('Ngày trả phòng phải sau ngày nhận phòng.');
@@ -473,12 +850,26 @@
             return true;
         }
 
+        /** Tổng số phòng và tiền phòng mỗi đêm của cả đơn (gồm mọi loại phòng). */
+        function groupTotals(bookingId) {
+            const info = bookingRows[bookingId];
+            let quantity = 0, perNight = 0;
+            if (info) {
+                info.rows.forEach(r => {
+                    quantity += r.quantity;
+                    perNight += (roomTypePrices[r.roomTypeId] || 0) * r.quantity;
+                });
+            }
+            return { quantity, perNight };
+        }
+
         function onExtBookingSelect() {
             const opt = document.getElementById('extBookingSelect').selectedOptions[0];
             const panel = document.getElementById('extCurrent');
             if (!opt || !opt.value) { panel.classList.remove('show'); return; }
+            const totals = groupTotals(opt.value);
             document.getElementById('curExtType').textContent = opt.dataset.roomtype || '—';
-            document.getElementById('curExtQty').textContent = opt.dataset.qty || '—';
+            document.getElementById('curExtQty').textContent = totals.quantity || '—';
             document.getElementById('curExtOut').textContent = opt.dataset.checkout || '—';
             panel.classList.add('show');
             // New check-out must be after the current one
@@ -495,10 +886,10 @@
             if (!opt || !opt.value || !newOut) { box.classList.remove('show'); return; }
             const nights = nightsBetween(opt.dataset.checkout, newOut);
             if (nights < 1) { box.classList.remove('show'); return; }
-            const price = roomTypePrices[opt.dataset.roomtypeid] || 0;
-            const qty = parseInt(opt.dataset.qty || '1', 10);
+            // Phụ phí tính trên MỌI phòng của đơn, không chỉ loại phòng đầu tiên
+            const totals = groupTotals(opt.value);
             document.getElementById('extNights').textContent = nights;
-            document.getElementById('extCharge').textContent = fmtVND(price * qty * nights);
+            document.getElementById('extCharge').textContent = fmtVND(totals.perNight * nights);
             box.classList.add('show');
         }
 
@@ -515,6 +906,23 @@
             }
             return true;
         }
+
+        <%-- Vào trang từ nút "Thay đổi đặt phòng" ở màn hình chi tiết đơn: tự
+             chọn sẵn đơn và mở form. Chỉ cần một mã đơn — mọi dữ liệu prefill
+             (ngày, bảng dòng phòng) đã nằm trong bookingRows và các data-* của
+             <option>, nên tái dùng luôn hai hàm sẵn có. --%>
+        <c:if test="${not empty booking}">
+        (function () {
+            const sel = document.getElementById('changeBookingSelect');
+            const preselectId = '${booking.bookingId}';
+            if (!sel || !Array.from(sel.options).some(o => o.value === preselectId)) {
+                return;   // đơn không nằm trong danh sách đủ điều kiện
+            }
+            sel.value = preselectId;
+            showRequestSection('change');
+            onChangeBookingSelect();
+        })();
+        </c:if>
     </script>
 </body>
 </html>

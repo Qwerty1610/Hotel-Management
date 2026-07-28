@@ -156,7 +156,9 @@ public class ReceptionistRequestController extends HttpServlet {
                         );
 
                         if (!itemAdded) {
-                            // Invoice đã Paid / Cancelled / Closed — từ chối approve
+                            // Hóa đơn đã chốt (khách đã trả phòng / đơn hủy) — từ chối approve.
+                            // Hóa đơn đã Paid nhưng khách còn đang ở thì VẪN thêm được:
+                            // addServiceItem sẽ tự đưa hóa đơn về Pending.
                             LOGGER.log(Level.WARNING,
                                     "Cannot add service item to invoice {0} (status closed) for request {1}",
                                     new Object[]{invoice.getInvoiceId(), requestId});

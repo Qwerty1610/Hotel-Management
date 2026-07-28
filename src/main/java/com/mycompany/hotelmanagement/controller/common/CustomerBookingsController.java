@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -11,6 +12,7 @@ import java.util.logging.Logger;
 
 import com.mycompany.hotelmanagement.dal.AccountDAO;
 import com.mycompany.hotelmanagement.entity.Booking;
+import com.mycompany.hotelmanagement.entity.BookingRequestItem;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 import com.mycompany.hotelmanagement.service.BookingRequestService;
 import com.mycompany.hotelmanagement.service.BookingService;
@@ -64,6 +66,13 @@ public class CustomerBookingsController extends HttpServlet {
         ERROR_MESSAGES.put("NOT_ELIGIBLE", "Đơn đặt phòng này không đủ điều kiện để thực hiện yêu cầu.");
         ERROR_MESSAGES.put("ROOM_TAKEN",
                 "Phòng bạn đang ở đã có khách khác đặt ngay sau ngày trả phòng hiện tại nên không thể gia hạn.");
+        ERROR_MESSAGES.put("PENDING_EXISTS",
+                "Đơn này đang có một yêu cầu chờ duyệt. Vui lòng đợi lễ tân xử lý xong rồi gửi yêu cầu mới.");
+        ERROR_MESSAGES.put("EMPTY_GROUP",
+                "Bạn không thể bỏ hết phòng khỏi đơn. Nếu không còn nhu cầu, vui lòng huỷ đơn đặt phòng.");
+        ERROR_MESSAGES.put("STALE",
+                "Đơn đặt phòng vừa được cập nhật. Vui lòng tải lại trang và chọn lại thông tin mới.");
+        ERROR_MESSAGES.put("NO_CHANGE", "Bạn chưa thay đổi thông tin nào so với đơn hiện tại.");
         ERROR_MESSAGES.put("MSG55", "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau.");
     }
 
@@ -88,6 +97,8 @@ public class CustomerBookingsController extends HttpServlet {
                 showCreateForm(request, response);
             } else if ("/change".equals(pathInfo)) {
                 showBookingChangePage(request, response, accountId);
+            } else if ("/availability".equals(pathInfo)) {
+                handleCheckAvailability(request, response, accountId);
             } else if ("/detail".equals(pathInfo) || "detail".equalsIgnoreCase(action)) {
                 showBookingDetail(request, response, accountId);
             } else {
@@ -188,20 +199,24 @@ public class CustomerBookingsController extends HttpServlet {
      */
     private String buildSuccessMessage(String success, String charge) {
         switch (success) {
-            case "change_requested":
-                return "Đã gửi yêu cầu thay đổi đặt phòng. Vui lòng chờ lễ tân/quản lý duyệt.";
-            case "ext_requested":
-                String base = "Đã gửi yêu cầu gia hạn lưu trú. Vui lòng chờ duyệt.";
-                if (charge != null && !charge.isBlank()) {
-                    try {
-                        double c = Double.parseDouble(charge);
-                        java.text.NumberFormat nf = java.text.NumberFormat
-                                .getInstance(new java.util.Locale("vi", "VN"));
-                        base += " Phụ phí dự kiến: " + nf.format(c) + " VND.";
-                    } catch (NumberFormatException ignored) {
-                    }
+            case "change_requested": {
+                String base = "Đã gửi yêu cầu thay đổi đặt phòng. Vui lòng chờ lễ tân/quản lý duyệt.";
+                Double delta = parseCharge(charge);
+                if (delta != null && Math.abs(delta) >= 1) {
+                    base += delta > 0
+                            ? " Bạn sẽ cần thanh toán thêm " + formatVnd(delta) + " VND."
+                            : " Bạn sẽ được hoàn lại " + formatVnd(-delta) + " VND.";
                 }
                 return base;
+            }
+            case "ext_requested": {
+                String base = "Đã gửi yêu cầu gia hạn lưu trú. Vui lòng chờ duyệt.";
+                Double c = parseCharge(charge);
+                if (c != null) {
+                    base += " Phụ phí dự kiến: " + formatVnd(c) + " VND.";
+                }
+                return base;
+            }
             case "created":
                 return "Đặt phòng thành công!";
             case "cancelled":
@@ -209,6 +224,21 @@ public class CustomerBookingsController extends HttpServlet {
             default:
                 return "Thao tác thực hiện thành công!";
         }
+    }
+
+    private Double parseCharge(String charge) {
+        if (charge == null || charge.isBlank()) {
+            return null;
+        }
+        try {
+            return Double.parseDouble(charge);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private String formatVnd(double amount) {
+        return java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN")).format(amount);
     }
 
     private void showBookingDetail(HttpServletRequest request, HttpServletResponse response, int accountId)
@@ -266,6 +296,15 @@ public class CustomerBookingsController extends HttpServlet {
             // Temporarily update totalAmount on parent booking object for JSP presentation
             booking.setTotalAmount(overallTotal);
 
+            // Nút "Thay đổi đặt phòng" chỉ hiện khi đơn thực sự gửi được yêu
+            // cầu — cùng điều kiện requestBookingChange sẽ kiểm. Tính ở đây vì
+            // so sánh ngày trong JSTL rất vướng.
+            String st = booking.getStatus();
+            boolean canRequestChange = ("Pending".equalsIgnoreCase(st) || "Confirmed".equalsIgnoreCase(st))
+                    && booking.getCheckInDate() != null
+                    && java.time.LocalDate.now().isBefore(booking.getCheckInDate().toLocalDate());
+            request.setAttribute("canRequestChange", canRequestChange);
+
             request.setAttribute("booking", booking);
             request.setAttribute("rooms", roomsList);
             request.getRequestDispatcher("/WEB-INF/views/customer/booking-detail.jsp").forward(request, response);
@@ -276,12 +315,21 @@ public class CustomerBookingsController extends HttpServlet {
 
     private void showBookingChangePage(HttpServletRequest request, HttpServletResponse response, int accountId)
             throws ServletException, IOException {
+        // ?id= đến từ nút "Thay đổi đặt phòng" ở trang chi tiết. Attribute này
+        // được JSP dùng để tự chọn sẵn đơn trong dropdown và mở form, nên chỉ
+        // set khi đơn là dòng cha, đúng chủ sở hữu và đủ điều kiện thay đổi —
+        // đúng tập mà dropdown liệt kê.
         String idStr = request.getParameter("id");
         if (idStr != null && !idStr.trim().isEmpty()) {
             try {
                 int bookingId = Integer.parseInt(idStr);
                 Booking booking = bookingService.getBookingById(bookingId);
-                if (booking != null && booking.getAccountId() != null && booking.getAccountId() == accountId) {
+                if (booking != null && booking.getGroupBookingId() != null) {
+                    booking = bookingService.getBookingById(booking.getGroupBookingId());
+                }
+                if (booking != null && booking.getAccountId() != null && booking.getAccountId() == accountId
+                        && ("Pending".equalsIgnoreCase(booking.getStatus())
+                                || "Confirmed".equalsIgnoreCase(booking.getStatus()))) {
                     request.setAttribute("booking", booking);
                 }
             } catch (NumberFormatException ignored) {
@@ -292,7 +340,17 @@ public class CustomerBookingsController extends HttpServlet {
         String error = request.getParameter("error");
         if (error != null) {
             request.setAttribute("errorCode", error);
-            request.setAttribute("errorMessage", ERROR_MESSAGES.getOrDefault(error, ERROR_MESSAGES.get("MSG55")));
+            request.setAttribute("errorMessage",
+                    ERROR_MESSAGES.getOrDefault(error, ERROR_MESSAGES.get("MSG55")));
+
+            // Thiếu phòng: nói rõ loại phòng nào và còn bao nhiêu, để khách biết
+            // phải sửa dòng nào thay vì đoán.
+            if ("MSG16".equals(error)) {
+                String detailed = buildOutOfRoomsMessage(request);
+                if (detailed != null) {
+                    request.setAttribute("errorMessage", detailed);
+                }
+            }
         }
 
         List<RoomTypeInfo> roomTypes = roomTypeService.getAllRoomTypes();
@@ -304,10 +362,146 @@ public class CustomerBookingsController extends HttpServlet {
         List<Booking> bookings = bookingService.getBookingsByAccount(accountId, "All", null);
         request.setAttribute("bookings", bookings);
 
+        // Chi tiết từng dòng phòng của mỗi đơn: form thay đổi phải cho khách sửa
+        // được từng loại phòng của đơn nhiều phòng, chứ không chỉ một cặp
+        // (loại phòng, số lượng) của dòng cha.
+        request.setAttribute("bookingRowsJson", buildBookingRowsJson(bookings));
+
         // Customer's change/extension requests, for the status-tracking table.
         request.setAttribute("myRequests", bookingRequestService.getRequestsByAccount(accountId));
 
         request.getRequestDispatcher("/WEB-INF/views/customer/booking-change.jsp").forward(request, response);
+    }
+
+    /**
+     * Dựng JSON mô tả từng đơn kèm danh sách dòng phòng của nó, cho form thay
+     * đổi đặt phòng dựng bảng dòng phía client. Chỉ lấy chi tiết của các đơn đủ
+     * điều kiện gửi yêu cầu để không truy vấn thừa.
+     */
+    private String buildBookingRowsJson(List<Booking> bookings) {
+        Map<String, Object> byBooking = new LinkedHashMap<>();
+        for (Booking b : bookings) {
+            String status = b.getStatus();
+            boolean eligible = "Pending".equalsIgnoreCase(status)
+                    || "Confirmed".equalsIgnoreCase(status)
+                    || "CheckedIn".equalsIgnoreCase(status);
+            if (!eligible) {
+                continue;
+            }
+
+            List<Map<String, Object>> rows = new ArrayList<>();
+            rows.add(describeRow(b));
+            for (Booking child : bookingService.getChildBookings(b.getBookingId())) {
+                rows.add(describeRow(child));
+            }
+
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("checkIn", b.getCheckInDate() != null ? b.getCheckInDate().toString() : null);
+            entry.put("checkOut", b.getCheckOutDate() != null ? b.getCheckOutDate().toString() : null);
+            entry.put("status", status);
+            entry.put("totalAmount", b.getOverallTotalAmount());
+            entry.put("rows", rows);
+            byBooking.put(String.valueOf(b.getBookingId()), entry);
+        }
+        return new com.google.gson.Gson().toJson(byBooking);
+    }
+
+    /**
+     * Dựng thông báo thiếu phòng cụ thể từ ba tham số số nguyên trên URL
+     * (rt / need / have). Tên loại phòng được tra từ CSDL chứ không lấy từ URL,
+     * nên không có nội dung nào do người dùng kiểm soát lọt vào trang.
+     *
+     * @return null nếu tham số không hợp lệ (khi đó dùng thông báo chung)
+     */
+    private String buildOutOfRoomsMessage(HttpServletRequest request) {
+        try {
+            int typeId = Integer.parseInt(request.getParameter("rt").trim());
+            int need = Integer.parseInt(request.getParameter("need").trim());
+            int have = Integer.parseInt(request.getParameter("have").trim());
+
+            String name = "#" + typeId;
+            for (RoomTypeInfo rt : roomTypeService.getAllRoomTypes()) {
+                if (rt.getTypeId() == typeId) {
+                    name = rt.getTypeName();
+                    break;
+                }
+            }
+
+            if (have <= 0) {
+                return "Loại phòng \"" + name + "\" đã hết phòng trong khoảng ngày bạn chọn. "
+                        + "Vui lòng đổi ngày hoặc chọn loại phòng khác.";
+            }
+            return "Loại phòng \"" + name + "\" chỉ còn " + have + " phòng trống trong khoảng ngày bạn chọn, "
+                    + "trong khi yêu cầu của bạn cần " + need + " phòng. "
+                    + "Vui lòng giảm số phòng hoặc đổi ngày.";
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Trả về số phòng còn trống của từng loại phòng cho khoảng ngày khách đang
+     * chọn, đã loại chính nhóm đặt phòng này khỏi phép đếm (đơn của khách không
+     * tự chặn mình).
+     * <p>
+     * Có endpoint này thì form thay đổi mới chặn được ngay tại chỗ: khách thấy
+     * "còn mấy phòng" trước khi bấm gửi, thay vì điền xong mới bị trả về với
+     * một thông báo chung chung. Server vẫn kiểm tra lại khi nhận yêu cầu —
+     * đây chỉ là lớp hiển thị, không phải lớp bảo vệ.
+     */
+    private void handleCheckAvailability(HttpServletRequest request, HttpServletResponse response, int accountId)
+            throws IOException {
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        Map<String, Object> payload = new LinkedHashMap<>();
+        try {
+            int bookingId = Integer.parseInt(request.getParameter("bookingId").trim());
+            Date checkIn = Date.valueOf(request.getParameter("checkIn").trim());
+            Date checkOut = Date.valueOf(request.getParameter("checkOut").trim());
+            if (!checkIn.before(checkOut)) {
+                throw new IllegalArgumentException("checkOut must be after checkIn");
+            }
+
+            Booking root = bookingService.getBookingById(bookingId);
+            if (root != null && root.getGroupBookingId() != null) {
+                root = bookingService.getBookingById(root.getGroupBookingId());
+            }
+            if (root == null || root.getAccountId() == null || root.getAccountId() != accountId) {
+                payload.put("success", false);
+                response.getWriter().write(new com.google.gson.Gson().toJson(payload));
+                return;
+            }
+
+            List<Integer> exclude = new ArrayList<>();
+            exclude.add(root.getBookingId());
+            for (Booking child : bookingService.getChildBookings(root.getBookingId())) {
+                exclude.add(child.getBookingId());
+            }
+
+            Map<String, Integer> available = new LinkedHashMap<>();
+            for (RoomTypeInfo rt : roomTypeService.getAllRoomTypes()) {
+                available.put(String.valueOf(rt.getTypeId()),
+                        bookingService.checkRoomAvailability(rt.getTypeId(), checkIn, checkOut, exclude));
+            }
+
+            payload.put("success", true);
+            payload.put("available", available);
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Invalid availability lookup", e);
+            payload.clear();
+            payload.put("success", false);
+        }
+        response.getWriter().write(new com.google.gson.Gson().toJson(payload));
+    }
+
+    private Map<String, Object> describeRow(Booking b) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("bookingId", b.getBookingId());
+        row.put("roomTypeId", b.getRoomTypeId());
+        row.put("roomTypeName", b.getRoomTypeName());
+        row.put("quantity", b.getRoomQuantity());
+        return row;
     }
 
     private void handleCreateBooking(HttpServletRequest request, HttpServletResponse response, int accountId)
@@ -504,17 +698,79 @@ public class CustomerBookingsController extends HttpServlet {
                     bookingId,
                     request.getParameter("newCheckInDate"),
                     request.getParameter("newCheckOutDate"),
-                    request.getParameter("roomTypeId"),
-                    request.getParameter("roomQuantity"),
+                    parseItemChanges(request),
                     request.getParameter("reason"));
             if (res.isSuccess()) {
-                response.sendRedirect(ctx + "/customer/bookings?success=change_requested");
+                response.sendRedirect(ctx + "/customer/bookings?success=change_requested&charge="
+                        + Math.round(res.additionalCharge));
+            } else if (res.shortRoomTypeId != null) {
+                // Chỉ đẩy số nguyên qua URL; tên loại phòng được tra lại ở
+                // server khi dựng thông báo, nên không có chữ nào của người
+                // dùng bị phản chiếu ngược ra trang.
+                response.sendRedirect(ctx + "/customer/booking/change?error=" + res.code
+                        + "&rt=" + res.shortRoomTypeId
+                        + "&need=" + res.requestedRooms
+                        + "&have=" + res.availableRooms);
             } else {
                 response.sendRedirect(ctx + "/customer/booking/change?error=" + res.code);
             }
         } catch (NumberFormatException e) {
             response.sendRedirect(ctx + "/customer/booking/change?error=MSG02");
         }
+    }
+
+    /**
+     * Đọc bảng dòng phòng mà khách gửi lên. Mỗi dòng gồm ba tham số song song:
+     * {@code itemBookingId[]} (rỗng = dòng phòng mới thêm), {@code itemRoomTypeId[]}
+     * và {@code itemRoomQuantity[]} (0 = bỏ dòng đó khỏi đơn).
+     * <p>
+     * Form cũ chỉ có một cặp loại phòng / số lượng; nếu gặp dạng đó thì coi như
+     * một thao tác Update lên chính dòng khách đang chọn.
+     */
+    private List<BookingService.ItemChange> parseItemChanges(HttpServletRequest request) {
+        List<BookingService.ItemChange> items = new ArrayList<>();
+
+        String[] rowBookingIds = request.getParameterValues("itemBookingId[]");
+        String[] rowTypeIds = request.getParameterValues("itemRoomTypeId[]");
+        String[] rowQuantities = request.getParameterValues("itemRoomQuantity[]");
+
+        if (rowTypeIds == null || rowQuantities == null || rowTypeIds.length != rowQuantities.length) {
+            String typeId = request.getParameter("roomTypeId");
+            String qty = request.getParameter("roomQuantity");
+            String bookingId = request.getParameter("bookingId");
+            if (typeId != null && !typeId.isBlank() && qty != null && !qty.isBlank()) {
+                items.add(BookingService.ItemChange.of(BookingRequestItem.ACTION_UPDATE,
+                        Integer.parseInt(bookingId.trim()),
+                        Integer.parseInt(typeId.trim()), Integer.parseInt(qty.trim())));
+            }
+            return items;
+        }
+
+        for (int i = 0; i < rowTypeIds.length; i++) {
+            if (rowTypeIds[i] == null || rowTypeIds[i].isBlank()) {
+                continue;
+            }
+            int typeId = Integer.parseInt(rowTypeIds[i].trim());
+            int quantity = Integer.parseInt(rowQuantities[i].trim());
+
+            Integer targetBookingId = null;
+            if (rowBookingIds != null && i < rowBookingIds.length
+                    && rowBookingIds[i] != null && !rowBookingIds[i].isBlank()) {
+                targetBookingId = Integer.parseInt(rowBookingIds[i].trim());
+            }
+
+            if (targetBookingId == null) {
+                if (quantity > 0) {
+                    items.add(BookingService.ItemChange.of(BookingRequestItem.ACTION_ADD, null, typeId, quantity));
+                }
+            } else if (quantity <= 0) {
+                items.add(BookingService.ItemChange.of(BookingRequestItem.ACTION_REMOVE, targetBookingId, null, null));
+            } else {
+                items.add(BookingService.ItemChange.of(BookingRequestItem.ACTION_UPDATE, targetBookingId,
+                        typeId, quantity));
+            }
+        }
+        return items;
     }
 
     private void handleStayExtensionRequest(HttpServletRequest request, HttpServletResponse response, int accountId)

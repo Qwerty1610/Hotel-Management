@@ -1312,6 +1312,128 @@ BEGIN
 END
 GO
 
+/* ------------------------------------------------------------
+   12.1 CHI TIET YEU CAU THAY DOI (theo tung dong phong)
+   Mot don dat phong nhieu loai phong = 1 dong cha + N dong con
+   (Booking.group_booking_id). Bang BookingChangeRequest chi mo ta
+   duoc MOT cap (loai phong, so luong) nen khong the dien ta yeu cau
+   "giu 2 Deluxe, doi 3 Suite thanh Family". Moi thao tac tren tung
+   dong phong duoc luu o day; cac cot new_room_type_id /
+   new_room_quantity o bang cha chi con giu lai cho don 1 dong (tuong
+   thich nguoc voi du lieu cu).
+     action = 'Update' -> doi loai/so luong cua dong target_booking_id
+     action = 'Add'    -> them mot dong phong moi vao nhom
+     action = 'Remove' -> bo dong target_booking_id khoi nhom
+   old_* la anh chup tai thoi diem gui yeu cau, dung de le tan doi
+   chieu va de phat hien yeu cau da "oi" (don bi sua boi luong khac).
+   ------------------------------------------------------------ */
+IF OBJECT_ID(N'dbo.BookingChangeRequestItem', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.BookingChangeRequestItem (
+        item_id           INT IDENTITY(1,1) PRIMARY KEY,
+        request_id        INT NOT NULL,
+        target_booking_id INT NULL,                       -- NULL khi action = 'Add'
+        action            NVARCHAR(10) NOT NULL,
+        old_room_type_id  INT NULL,
+        old_room_quantity INT NULL,
+        new_room_type_id  INT NULL,                       -- NULL khi action = 'Remove'
+        new_room_quantity INT NULL,
+        CONSTRAINT FK_BCRI_Request FOREIGN KEY (request_id)
+            REFERENCES dbo.BookingChangeRequest(request_id) ON DELETE CASCADE,
+        CONSTRAINT FK_BCRI_Booking  FOREIGN KEY (target_booking_id) REFERENCES dbo.Booking(booking_id),
+        CONSTRAINT FK_BCRI_NewType  FOREIGN KEY (new_room_type_id)  REFERENCES dbo.RoomType(type_id),
+        CONSTRAINT CK_BCRI_Action CHECK (action IN (N'Update', N'Add', N'Remove'))
+    );
+
+    CREATE INDEX IX_BCRI_Request ON dbo.BookingChangeRequestItem(request_id);
+END
+GO
+
+/* ------------------------------------------------------------
+   12.2 TRUY VET "DON CU <-> DON THAY THE"
+   Khi le tan duyet mot yeu cau THAY DOI, he thong khong sua don tai
+   cho ma tao mot nhom Booking MOI (Pending) mang cau hinh khach yeu
+   cau, roi huy nhom cu. Hai cot duoi day noi hai nhom lai:
+     replaces_booking_id    : tren MOI dong cua nhom MOI -> tro ve dong cha cu
+     replaced_by_booking_id : tren MOI dong cua nhom CU  -> tro sang dong cha moi
+   Vi sao can ca hai chieu: KPI Dashboard loc nguoc nhau. "So don tao
+   moi" phai loai don thay the (khong phai nhu cau dat phong moi), con
+   "so don huy" phai loai don bi thay (khach khong bo cuoc, don chi
+   nhuong cho cho don thay the). Danh dau tren MOI dong chu khong chi
+   dong cha, vi hai KPI do dem ca dong con cua don nhieu loai phong.
+   (Gia han luu tru khong dung co che nay - van sua tai cho.)
+   ------------------------------------------------------------ */
+IF COL_LENGTH(N'dbo.Booking', N'replaces_booking_id') IS NULL
+BEGIN
+    ALTER TABLE dbo.Booking ADD replaces_booking_id INT NULL;
+END
+GO
+
+IF COL_LENGTH(N'dbo.Booking', N'replaced_by_booking_id') IS NULL
+BEGIN
+    ALTER TABLE dbo.Booking ADD replaced_by_booking_id INT NULL;
+END
+GO
+
+/* FK dat o batch RIENG: trong cung mot batch, SQL Server bien dich
+   ALTER ... ADD CONSTRAINT truoc khi cot vua them co hieu luc. */
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Booking_Replaces')
+BEGIN
+    ALTER TABLE dbo.Booking ADD CONSTRAINT FK_Booking_Replaces
+        FOREIGN KEY (replaces_booking_id) REFERENCES dbo.Booking(booking_id);
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Booking_ReplacedBy')
+BEGIN
+    ALTER TABLE dbo.Booking ADD CONSTRAINT FK_Booking_ReplacedBy
+        FOREIGN KEY (replaced_by_booking_id) REFERENCES dbo.Booking(booking_id);
+END
+GO
+
+/* Hai cot gan nhu luon NULL (chi don da tung doi moi co gia tri) nen
+   filtered index vua nho vua phuc vu dung phep loc cua KPI.
+   SET QUOTED_IDENTIFIER ON la BAT BUOC voi filtered index: SSMS bat san
+   nhung sqlcmd thi khong, va thieu no lenh CREATE INDEX se loi 1934. */
+SET QUOTED_IDENTIFIER ON;
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Booking_ReplacedBy'
+               AND object_id = OBJECT_ID(N'dbo.Booking'))
+BEGIN
+    CREATE INDEX IX_Booking_ReplacedBy ON dbo.Booking(replaced_by_booking_id)
+        WHERE replaced_by_booking_id IS NOT NULL;
+END
+GO
+
+/* Le tan va khach can nhin thay "yeu cau nay da sinh ra don nao". */
+IF COL_LENGTH(N'dbo.BookingChangeRequest', N'new_booking_id') IS NULL
+BEGIN
+    ALTER TABLE dbo.BookingChangeRequest ADD new_booking_id INT NULL;
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_BCR_NewBooking')
+BEGIN
+    ALTER TABLE dbo.BookingChangeRequest ADD CONSTRAINT FK_BCR_NewBooking
+        FOREIGN KEY (new_booking_id) REFERENCES dbo.Booking(booking_id);
+END
+GO
+
+/* Moi don chi duoc co toi da MOT yeu cau dang cho duyet. Khong co rang
+   buoc nay, khach gui lien tiep 2 yeu cau chong nhau va le tan duyet
+   lan luot ca hai -> don bi doi 2 lan ngoai y muon. Chi tao index khi
+   du lieu hien tai khong vi pham. (Filtered index -> can QUOTED_IDENTIFIER
+   ON, da bat o muc 12.2 phia tren.) */
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UX_BCR_OnePendingPerBooking')
+   AND NOT EXISTS (SELECT booking_id FROM dbo.BookingChangeRequest
+                   WHERE status = N'Pending' GROUP BY booking_id HAVING COUNT(*) > 1)
+BEGIN
+    CREATE UNIQUE INDEX UX_BCR_OnePendingPerBooking
+        ON dbo.BookingChangeRequest(booking_id)
+        WHERE status = N'Pending';
+END
+GO
+
 /* Seed a CheckedIn stay for the demo customer so Stay Extension is testable */
 IF NOT EXISTS (SELECT 1 FROM dbo.Booking WHERE account_id = 5 AND customer_name = N'Customer User' AND check_in_date = '2026-06-22')
 BEGIN

@@ -117,6 +117,15 @@ public class CustomerPaymentController extends HttpServlet {
         } else if (bookingId != null) {
             Booking booking = paymentService.getPayableDepositBooking(bookingId, accountId);
             if (booking == null) {
+                // Đơn có thể đã được thay bằng đơn mới khi lễ tân duyệt một yêu
+                // cầu thay đổi; liên kết cũ trong lịch sử trình duyệt của khách
+                // vẫn trỏ mã đơn cũ nên dẫn tiếp sang đơn đang có hiệu lực.
+                Integer active = paymentService.resolveActiveBookingId(bookingId);
+                if (active != null && !active.equals(bookingId)) {
+                    response.sendRedirect(request.getContextPath()
+                            + "/customer/payments/pay?bookingId=" + active);
+                    return;
+                }
                 response.sendRedirect(request.getContextPath() + "/customer/payments?error=notpayable");
                 return;
             }

@@ -107,6 +107,19 @@
                                     <span>Thực thu</span>
                                     <span><fmt:formatNumber value="${invoice.netAmount}" type="number" maxFractionDigits="0" /> đ</span>
                                 </div>
+                                <%-- Khách có thể trả hết giữa kỳ lưu trú rồi phát sinh thêm dịch vụ/phụ phí.
+                                     Tách riêng phần đã trả và phần còn nợ để hóa đơn quay lại "Chưa thanh toán"
+                                     không bị đọc nhầm thành khách chưa trả đồng nào. --%>
+                                <c:if test="${invoice.paidAmount gt 0}">
+                                    <div class="total-row">
+                                        <span>Đã thanh toán trước đó</span>
+                                        <span style="color:#dc2626;">- <fmt:formatNumber value="${invoice.paidAmount}" type="number" maxFractionDigits="0" /> đ</span>
+                                    </div>
+                                    <div class="total-row total-net">
+                                        <span>Còn phải trả</span>
+                                        <span><fmt:formatNumber value="${invoice.remainingAmount}" type="number" maxFractionDigits="0" /> đ</span>
+                                    </div>
+                                </c:if>
                             </div>
                         </div>
 
@@ -186,11 +199,11 @@
                     <!-- CỘT PHẢI: thao tác -->
                     <div class="invoice-actions-col">
 
-                        <!-- Thêm phụ phí (mọi hóa đơn trừ đã thanh toán) -->
+                        <!-- Thêm phụ phí (mở tới khi khách trả phòng) -->
                         <div class="action-card">
                             <div class="card-section-title"><i class="fa-solid fa-plus"></i> Thêm phụ phí</div>
                             <c:choose>
-                                <c:when test="${invoice.status ne 'Paid'}">
+                                <c:when test="${invoiceOpen}">
                                     <form action="${pageContext.request.contextPath}/manager/invoices" method="post">
                                         <input type="hidden" name="action" value="surcharge" />
                                         <input type="hidden" name="invoiceId" value="${invoice.invoiceId}" />
@@ -215,7 +228,7 @@
                                 </c:when>
                                 <c:otherwise>
                                     <p style="padding:4px 24px 20px; color:var(--text-muted); font-style:italic;">
-                                        Hóa đơn đã thanh toán — không thể thêm phụ phí.
+                                        Hóa đơn đã chốt (khách đã trả phòng) — không thể thêm phụ phí.
                                     </p>
                                 </c:otherwise>
                             </c:choose>
@@ -225,8 +238,8 @@
                         <div class="action-card">
                             <div class="card-section-title"><i class="fa-solid fa-rotate-left"></i> Thêm khoản cần hoàn tiền</div>
                             <c:choose>
-                                <c:when test="${invoice.status eq 'Paid'}">
-                                    <p style="padding:4px 24px 20px; color:var(--text-muted); font-style:italic;">Hóa đơn đã thanh toán — không thể hoàn tiền.</p>
+                                <c:when test="${not invoiceOpen}">
+                                    <p style="padding:4px 24px 20px; color:var(--text-muted); font-style:italic;">Hóa đơn đã chốt (khách đã trả phòng) — không thể hoàn tiền.</p>
                                 </c:when>
                                 <c:when test="${invoice.refundableAmount le 0}">
                                     <p style="padding:4px 24px 20px; color:var(--text-muted); font-style:italic;">Đã tạo đủ các khoản hoàn cho hóa đơn này.</p>

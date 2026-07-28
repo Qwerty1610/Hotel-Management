@@ -25,6 +25,8 @@ public class Invoice {
     private double depositAmount;  // dẫn xuất: tiền cọc = 30% tiền phòng
     private double refundedAmount; // dẫn xuất: tổng đã hoàn (Refund status = Done)
     private double pendingRefundAmount; // dẫn xuất: tổng đang chờ hoàn (Refund status = Pending)
+    private double paidAmount;     // dẫn xuất: tổng đã thanh toán vào hóa đơn (Payment.invoice_id)
+    private boolean open;          // dẫn xuất: khách chưa trả phòng -> còn ghi thêm khoản được
 
     public Invoice() {}
 
@@ -59,10 +61,31 @@ public class Invoice {
     public double getPendingRefundAmount()       { return pendingRefundAmount; }
     public void setPendingRefundAmount(double v) { this.pendingRefundAmount = v; }
 
+    public double getPaidAmount()          { return paidAmount; }
+    public void setPaidAmount(double v)    { this.paidAmount = v; }
+
+    /**
+     * Hóa đơn còn mở: khách chưa trả phòng nên quầy vẫn ghi thêm phụ phí / khoản hoàn
+     * được, kể cả khi đã thanh toán hết. Tính bởi InvoiceDAO.OPEN_EXPR.
+     */
+    public boolean isOpen()                { return open; }
+    public void setOpen(boolean v)         { this.open = v; }
+
     /** Thực thu = tổng cộng − tiền cọc đã trả − phần đã hoàn (không nhỏ hơn 0). */
     public double getNetAmount() {
         double net = totalAmount - depositAmount - refundedAmount;
         return net > 0 ? net : 0;
+    }
+
+    /**
+     * Số tiền khách CÒN phải trả = Thực thu − phần đã thanh toán vào hóa đơn (kẹp về 0).
+     * Đây là con số quyết định hóa đơn được coi là đã tất toán hay chưa: khách có thể
+     * trả hết ngay trong lúc lưu trú, rồi phát sinh thêm dịch vụ/phụ phí làm nó dương trở lại.
+     * Cùng công thức với PaymentService.getRemainingAmount(Invoice).
+     */
+    public double getRemainingAmount() {
+        double r = getNetAmount() - paidAmount;
+        return r > 0 ? r : 0;
     }
 
     /**

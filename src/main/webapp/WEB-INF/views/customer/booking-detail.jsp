@@ -317,14 +317,26 @@
                                                     <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
                                                 </a>
 
-                                                <c:if
-                                                    test="${booking.status eq 'Pending' || booking.status eq 'Confirmed'}">
-                                                    <button type="button" class="btn-danger"
-                                                        style="padding: 10px 20px; width: auto; max-width: none; height: auto;"
-                                                        onclick="confirmCancel(${booking.bookingId})">
-                                                        <i class="fa-solid fa-calendar-xmark"></i> Hủy đặt phòng này
-                                                    </button>
-                                                </c:if>
+                                                <%-- Gom hai nút bên phải vào một nhóm: nếu để rời,
+                                                     justify-content: space-between sẽ dàn đều ba phần tử. --%>
+                                                <div style="display: flex; gap: 12px; align-items: center;">
+                                                    <c:if test="${canRequestChange}">
+                                                        <a href="${pageContext.request.contextPath}/customer/booking/change?id=${booking.bookingId}"
+                                                            class="btn-secondary"
+                                                            style="text-decoration: none; padding: 10px 20px;">
+                                                            <i class="fa-solid fa-pen-to-square"></i> Thay đổi đặt phòng
+                                                        </a>
+                                                    </c:if>
+
+                                                    <c:if
+                                                        test="${booking.status eq 'Pending' || booking.status eq 'Confirmed'}">
+                                                        <button type="button" class="btn-danger"
+                                                            style="padding: 10px 20px; width: auto; max-width: none; height: auto;"
+                                                            onclick="confirmCancel(${booking.bookingId})">
+                                                            <i class="fa-solid fa-calendar-xmark"></i> Hủy đặt phòng này
+                                                        </button>
+                                                    </c:if>
+                                                </div>
                                             </div>
 
                                 </div>
