@@ -2,7 +2,7 @@
     <%@ include file="../../includes/taglibs.jsp" %>
         <%@ include file="../../includes/header.jsp" %>
 
-            <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/customer_booking.css?v=21" />
+            <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/customer_booking.css?v=22" />
             <fmt:setLocale value="vi_VN" />
 
             <body>
@@ -223,6 +223,7 @@
                                                 <th style="width: 50px;">STT</th>
                                                 <th>Loại phòng</th>
                                                 <th style="text-align: center;">Số lượng</th>
+                                                <th style="text-align: center;">Số phòng</th>
                                                 <th style="text-align: right;">Đơn giá / đêm</th>
                                                 <th>Họ tên khách nghỉ</th>
                                             </tr>
@@ -237,6 +238,16 @@
                                                             <td
                                                                 style="text-align: center; font-weight: 600; color: var(--primary-indigo);">
                                                                 ${r.quantity}</td>
+                                                            <td style="text-align: center; font-weight: 600; color: var(--text-dark);">
+                                                                <c:choose>
+                                                                    <c:when test="${not empty r.assignedRooms}">
+                                                                        Phòng ${r.assignedRooms}
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        -
+                                                                    </c:otherwise>
+                                                                </c:choose>
+                                                            </td>
                                                             <td style="text-align: right;">
                                                                 <fmt:formatNumber value="${r.price}" type="currency"
                                                                     currencySymbol="" /> VND

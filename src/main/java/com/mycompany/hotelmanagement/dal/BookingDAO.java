@@ -57,7 +57,7 @@ public class BookingDAO {
             + "       (SELECT STRING_AGG(r.room_number, ', ') "
             + "        FROM dbo.RoomAssignment br "
             + "        JOIN dbo.Room r ON br.room_id = r.room_id "
-            + "        WHERE br.booking_id = b.booking_id) AS assigned_rooms, "
+            + "        WHERE br.booking_id IN (SELECT sb.booking_id FROM dbo.Booking sb WHERE sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id)) AS assigned_rooms, "
             + "       (SELECT SUM(sb.room_quantity) "
             + "        FROM dbo.Booking sb "
             + "        WHERE sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) AS total_room_quantity, "
@@ -529,6 +529,27 @@ public class BookingDAO {
             LOGGER.log(Level.SEVERE, "Error in getChildBookings: " + parentBookingId, e);
         }
         return list;
+    }
+
+    public String getAssignedRoomsForBookingSelf(int bookingId) {
+        String sql = "SELECT STRING_AGG(r.room_number, ', ') "
+                   + "FROM dbo.RoomAssignment br "
+                   + "JOIN dbo.Room r ON br.room_id = r.room_id "
+                   + "WHERE br.booking_id = ?";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, bookingId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getString(1);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error getting assigned rooms for self: " + bookingId, e);
+        }
+        return null;
     }
 
     public BookingDAO() {

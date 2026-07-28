@@ -336,12 +336,17 @@ body.dashboard-body {
     color: var(--text-muted); cursor: pointer;
 }
 .modal-body    { padding: 24px; }
-.modal-form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
-.modal-form-group label { font-size: 12px; font-weight: 700; color: #475569; }
+.modal-form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.modal-form-group label { font-size: 14px; font-weight: 700; color: #475569; }
 .modal-input, .modal-select, .modal-textarea {
-    width: 100%; border: 1px solid var(--border-color);
-    border-radius: 8px; padding: 10px 12px; font-size: 14px;
-    outline: none; background: #f8fafc; box-sizing: border-box;
+    width: 100%; border: 1px solid #cbd5e1;
+    border-radius: 10px; padding: 14px 16px; font-size: 15px;
+    outline: none; background: #fff; box-sizing: border-box;
+    transition: all 0.2s ease;
+}
+.modal-input:focus, .modal-select:focus, .modal-textarea:focus {
+    border-color: var(--brand-blue);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
 .total-amount-display{
     min-height:44px;
@@ -470,29 +475,30 @@ button:disabled,
 
 .process-grid {
     display: grid;
-    grid-template-columns: 1fr 1.2fr;
+    grid-template-columns: 7fr 3fr;
     gap: 24px;
     align-items: start;
     margin-top: 10px;
 }
 
 .detail-card {
-    background: #fff;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 20px -4px rgba(0,0,0,.05);
     overflow: hidden;
+    transition: box-shadow 0.2s ease;
 }
 
 .detail-card .card-header {
-    background: #f8fafc;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border-color);
+    background: #ffffff;
+    padding: 20px 24px;
+    border-bottom: 1px solid #f1f5f9;
 }
 
 .detail-card .card-header h3 {
     margin: 0;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--text-navy);
     display: flex;
@@ -509,9 +515,9 @@ button:disabled,
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 0;
+    padding: 14px 0;
     border-bottom: 1px solid #f1f5f9;
-    font-size: 14px;
+    font-size: 14.5px;
 }
 
 .info-row:last-of-type {

@@ -2,9 +2,8 @@ package com.mycompany.hotelmanagement.controller.common;
 
 import java.io.IOException;
 import java.sql.Date;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,6 +21,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Project: Hotel Management System
@@ -245,7 +246,8 @@ public class CustomerBookingsController extends HttpServlet {
             Map<String, Object> parentMap = new HashMap<>();
             parentMap.put("roomTypeName", booking.getRoomTypeName());
             parentMap.put("quantity", booking.getRoomQuantity());
-            parentMap.put("price", booking.getTotalAmount() / booking.getRoomQuantity() / booking.getNights());
+            parentMap.put("price", booking.getTotalAmount() / booking.getNights());
+            parentMap.put("assignedRooms", bookingService.getAssignedRoomsForBookingSelf(booking.getBookingId()));
             parentMap.put("guestName", booking.getCustomerName() + " (Theo đơn đặt)");
             roomsList.add(parentMap);
 
@@ -256,7 +258,8 @@ public class CustomerBookingsController extends HttpServlet {
                 Map<String, Object> childMap = new HashMap<>();
                 childMap.put("roomTypeName", child.getRoomTypeName());
                 childMap.put("quantity", child.getRoomQuantity());
-                childMap.put("price", child.getTotalAmount() / child.getRoomQuantity() / child.getNights());
+                childMap.put("price", child.getTotalAmount() / child.getNights());
+                childMap.put("assignedRooms", child.getAssignedRoomsStr());
                 childMap.put("guestName", child.getCustomerName() + " (Theo đơn đặt)");
                 roomsList.add(childMap);
 
@@ -319,16 +322,6 @@ public class CustomerBookingsController extends HttpServlet {
         String checkInStr = request.getParameter("checkInDate");
         String checkOutStr = request.getParameter("checkOutDate");
         String note = request.getParameter("note");
-        String bookingType = request.getParameter("bookingType"); // "single" or "multi"
-
-        System.out.println("DEBUG handleCreateBooking:");
-        System.out.println("  bookingType: " + bookingType);
-        System.out.println("  roomTypeId: " + request.getParameter("roomTypeId"));
-        System.out.println("  roomQuantity: " + request.getParameter("roomQuantity"));
-        String[] rtIds = request.getParameterValues("roomTypeId[]");
-        System.out.println("  roomTypeId[]: " + (rtIds == null ? "null" : java.util.Arrays.toString(rtIds)));
-        String[] rtQs = request.getParameterValues("roomQuantity[]");
-        System.out.println("  roomQuantity[]: " + (rtQs == null ? "null" : java.util.Arrays.toString(rtQs)));
 
         Booking booking = new Booking();
 
@@ -346,29 +339,48 @@ public class CustomerBookingsController extends HttpServlet {
                 booking.setCheckOutDate(Date.valueOf(checkOutStr));
             }
 
-            if ("multi".equalsIgnoreCase(bookingType)) {
-                String[] roomTypeIds = request.getParameterValues("roomTypeId[]");
-                String[] roomQuantities = request.getParameterValues("roomQuantity[]");
+            String[] roomTypeIds = request.getParameterValues("roomTypeId[]");
+            String[] roomQuantities = request.getParameterValues("roomQuantity[]");
 
-                if (roomTypeIds == null || roomQuantities == null || roomTypeIds.length == 0
-                        || roomTypeIds.length != roomQuantities.length) {
-                    throw new Exception("MSG55");
+            if (roomTypeIds == null || roomQuantities == null || roomTypeIds.length == 0
+                    || roomTypeIds.length != roomQuantities.length) {
+                throw new Exception("MSG55");
+            }
+
+            // Group duplicate room types
+            Map<Integer, Integer> groupedRooms = new LinkedHashMap<>();
+            for (int i = 0; i < roomTypeIds.length; i++) {
+                int rtId = Integer.parseInt(roomTypeIds[i].trim());
+                int qty = Integer.parseInt(roomQuantities[i].trim());
+                groupedRooms.put(rtId, groupedRooms.getOrDefault(rtId, 0) + qty);
+            }
+            
+            List<Integer> finalRtIds = new java.util.ArrayList<>(groupedRooms.keySet());
+
+            // 1. Pre-validate availability for all selected room types
+            for (int rtId : finalRtIds) {
+                int qty = groupedRooms.get(rtId);
+                int available = bookingService.checkRoomAvailability(rtId, booking.getCheckInDate(),
+                        booking.getCheckOutDate());
+                if (qty > available) {
+                    throw new Exception("MSG19"); // Rooms not available
                 }
+            }
 
-                // 1. Pre-validate availability for all selected room types
-                for (int i = 0; i < roomTypeIds.length; i++) {
-                    int rtId = Integer.parseInt(roomTypeIds[i].trim());
-                    int qty = Integer.parseInt(roomQuantities[i].trim());
-                    int available = bookingService.checkRoomAvailability(rtId, booking.getCheckInDate(),
-                            booking.getCheckOutDate());
-                    if (qty > available) {
-                        throw new Exception("MSG19"); // Rooms not available
-                    }
-                }
+            if (finalRtIds.size() == 1) {
+                // Single booking creation flow
+                int roomTypeId = finalRtIds.get(0);
+                int quantity = groupedRooms.get(roomTypeId);
 
+                booking.setRoomTypeId(roomTypeId);
+                booking.setRoomQuantity(quantity);
+                booking.setGroupBookingId(null);
+
+                bookingService.createBooking(booking);
+            } else {
                 // 2. Insert main (parent) booking
-                int parentRoomTypeId = Integer.parseInt(roomTypeIds[0].trim());
-                int parentQty = Integer.parseInt(roomQuantities[0].trim());
+                int parentRoomTypeId = finalRtIds.get(0);
+                int parentQty = groupedRooms.get(parentRoomTypeId);
                 booking.setRoomTypeId(parentRoomTypeId);
                 booking.setRoomQuantity(parentQty);
                 booking.setGroupBookingId(null); // Parent is root
@@ -377,7 +389,7 @@ public class CustomerBookingsController extends HttpServlet {
                 int parentBookingId = booking.getBookingId();
 
                 // 3. Insert subsequent bookings as child bookings
-                for (int i = 1; i < roomTypeIds.length; i++) {
+                for (int i = 1; i < finalRtIds.size(); i++) {
                     Booking childBooking = new Booking();
                     childBooking.setAccountId(accountId);
                     childBooking.setCustomerName(customerName);
@@ -389,33 +401,13 @@ public class CustomerBookingsController extends HttpServlet {
                     childBooking.setNote(note);
                     childBooking.setGroupBookingId(parentBookingId);
 
-                    int childRoomTypeId = Integer.parseInt(roomTypeIds[i].trim());
-                    int childQty = Integer.parseInt(roomQuantities[i].trim());
+                    int childRoomTypeId = finalRtIds.get(i);
+                    int childQty = groupedRooms.get(childRoomTypeId);
                     childBooking.setRoomTypeId(childRoomTypeId);
                     childBooking.setRoomQuantity(childQty);
 
                     bookingService.createBooking(childBooking);
                 }
-            } else {
-                // Single booking creation flow
-                String roomTypeIdStr = request.getParameter("roomTypeId");
-                String quantityStr = request.getParameter("roomQuantity");
-
-                if (roomTypeIdStr == null || roomTypeIdStr.trim().isEmpty()) {
-                    throw new Exception("MSG55");
-                }
-
-                int roomTypeId = Integer.parseInt(roomTypeIdStr);
-                int quantity = 1;
-                if (quantityStr != null && !quantityStr.trim().isEmpty()) {
-                    quantity = Integer.parseInt(quantityStr);
-                }
-
-                booking.setRoomTypeId(roomTypeId);
-                booking.setRoomQuantity(quantity);
-                booking.setGroupBookingId(null);
-
-                bookingService.createBooking(booking);
             }
 
             // ===== BINHHD START - Apply Promotion =====
@@ -458,7 +450,6 @@ public class CustomerBookingsController extends HttpServlet {
             request.setAttribute("checkInDate", checkInStr);
             request.setAttribute("checkOutDate", checkOutStr);
             request.setAttribute("note", note);
-            request.setAttribute("bookingType", bookingType);
 
             // Reload room types list
             List<RoomTypeInfo> roomTypes = roomTypeService.getAllRoomTypes();
