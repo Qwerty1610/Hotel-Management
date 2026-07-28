@@ -292,8 +292,6 @@
                                                 <th>Khách hàng</th>
                                                 <th>Email</th>
                                                 <th>Số điện thoại</th>
-                                                <th>Hạng thành viên</th>
-                                                <th>Điểm tích lũy</th>
                                                 <th>Trạng thái</th>
                                                 <th>Ngày tạo</th>
                                                 <th style="text-align: right;">Hành động</th>
@@ -303,7 +301,7 @@
                                             <c:choose>
                                                 <c:when test="${empty customerList}">
                                                     <tr>
-                                                        <td colspan="8"
+                                                        <td colspan="6"
                                                             style="text-align: center; color: var(--text-muted); padding: 40px;">
                                                             <i class="fa-solid fa-users-slash"
                                                                 style="font-size: 32px; margin-bottom: 12px; display: block;"></i>
@@ -331,34 +329,6 @@
                                                             </td>
                                                             <td>
                                                                 <c:choose>
-                                                                    <c:when
-                                                                        test="${customer.membershipLevel eq 'VIP'}">
-                                                                        <span class="badge-vip"><i
-                                                                                class="fa-solid fa-crown"></i>
-                                                                            VIP</span>
-                                                                    </c:when>
-                                                                    <c:when
-                                                                        test="${customer.membershipLevel eq 'Gold'}">
-                                                                        <span class="badge-gold"><i
-                                                                                class="fa-solid fa-medal"></i>
-                                                                            Gold</span>
-                                                                    </c:when>
-                                                                    <c:when
-                                                                        test="${customer.membershipLevel eq 'Silver'}">
-                                                                        <span class="badge-silver"><i
-                                                                                class="fa-solid fa-award"></i>
-                                                                            Silver</span>
-                                                                    </c:when>
-                                                                    <c:otherwise>
-                                                                        <span
-                                                                            class="badge-standard">Standard</span>
-                                                                    </c:otherwise>
-                                                                </c:choose>
-                                                            </td>
-                                                            <td style="font-weight: 600;">
-                                                                ${customer.loyaltyPoints}đ</td>
-                                                            <td>
-                                                                <c:choose>
                                                                     <c:when test="${customer.active}">
                                                                         <span
                                                                             class="status-pill status-available"><i
@@ -382,7 +352,7 @@
                                                                 <div class="table-actions"
                                                                     style="justify-content: flex-end;">
                                                                     <button class="btn-action edit"
-                                                                        onclick="openEditCustomerModal('${customer.accountId}', '${customer.email}', '${customer.fullName}', '${customer.phone}', '${customer.loyaltyPoints}', '${customer.membershipLevel}')"
+                                                                        onclick="openEditCustomerModal('${customer.accountId}', '${customer.email}', '${customer.fullName}', '${customer.phone}')"
                                                                         title="Chỉnh sửa tài khoản khách hàng">
                                                                         <i
                                                                             class="fa-solid fa-pen-to-square"></i>
@@ -625,25 +595,6 @@
                                 <span class="validation-msg" id="editCustomerPhone-validation-msg"
                                     style="color: #ef4444; font-size: 12.5px; margin-top: 5px; font-weight: 500; display: none;"></span>
                             </div>
-                            <div class="modal-grid-2">
-                                <div class="modal-form-group">
-                                    <label for="editCustomerMembership">Hạng thành viên <span
-                                            style="color:#ef4444;">*</span></label>
-                                    <select id="editCustomerMembership" name="membershipLevel"
-                                        class="modal-select" required>
-                                        <option value="Standard">Standard</option>
-                                        <option value="Silver">Silver</option>
-                                        <option value="Gold">Gold</option>
-                                        <option value="VIP">VIP</option>
-                                    </select>
-                                </div>
-                                <div class="modal-form-group">
-                                    <label for="editCustomerLoyaltyPoints">Điểm tích lũy <span
-                                            style="color:#ef4444;">*</span></label>
-                                    <input type="number" id="editCustomerLoyaltyPoints"
-                                        name="loyaltyPoints" class="modal-input" min="0" required />
-                                </div>
-                            </div>
                             <div class="modal-footer-row">
                                 <button type="button" class="btn-modal-cancel"
                                     onclick="closeEditCustomerModal()">Hủy bỏ</button>
@@ -822,7 +773,7 @@
                     if (modal) modal.style.display = 'none';
                 }
 
-                function openEditCustomerModal(id, email, name, phone, loyaltyPoints, membershipLevel) {
+                function openEditCustomerModal(id, email, name, phone) {
                     const modal = document.getElementById('editCustomerModal');
                     if (!modal) return;
                     document.getElementById('editCustomerAccountId').value = id;
@@ -834,8 +785,6 @@
                         displayPhone = '';
                     }
                     document.getElementById('editCustomerPhone').value = displayPhone;
-                    document.getElementById('editCustomerLoyaltyPoints').value = loyaltyPoints;
-                    document.getElementById('editCustomerMembership').value = membershipLevel;
                     modal.style.display = 'flex';
                 }
                 function closeEditCustomerModal() {
@@ -1161,17 +1110,11 @@
 
                                 const name = document.getElementById('editCustomerFullName').value.trim();
                                 const email = document.getElementById('editCustomerEmail').value.trim();
-                                const points = parseInt(document.getElementById('editCustomerLoyaltyPoints').value) || 0;
                                 const phoneField = document.getElementById('editCustomerPhone');
 
                                 if (!name || !email) {
                                     e.preventDefault();
                                     alert('Vui lòng điền đầy đủ Họ tên và Email.');
-                                    return;
-                                }
-                                if (points < 0) {
-                                    e.preventDefault();
-                                    alert('Điểm tích lũy không được nhỏ hơn 0.');
                                     return;
                                 }
                                 if (!validatePhoneField(phoneField)) {

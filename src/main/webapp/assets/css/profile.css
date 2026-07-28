@@ -17,7 +17,6 @@
     --pf-card: #ffffff;
     --pf-green: #10b981;
     --pf-red: #ef4444;
-    --pf-amber: #f59e0b;
 }
 
 /* ---------- Page shell ---------- */
@@ -204,62 +203,6 @@
     color: #94a3b8;
     font-style: italic;
     font-weight: 400;
-}
-
-/* Loyalty highlight chips (customer only) */
-.profile-loyalty {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-top: 24px;
-    padding-top: 24px;
-    border-top: 1px dashed var(--pf-border);
-}
-
-.profile-chip {
-    flex: 1;
-    min-width: 180px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 16px 18px;
-    border-radius: 12px;
-    background: #f8fafc;
-    border: 1px solid var(--pf-border);
-}
-
-.profile-chip .chip-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    color: #fff;
-    flex-shrink: 0;
-}
-
-.profile-chip.points .chip-icon {
-    background: linear-gradient(135deg, var(--pf-amber), #d97706);
-}
-
-.profile-chip.member .chip-icon {
-    background: linear-gradient(135deg, var(--pf-blue), var(--pf-blue-dark));
-}
-
-.profile-chip .chip-text small {
-    display: block;
-    font-size: 12px;
-    color: var(--pf-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    font-weight: 600;
-}
-
-.profile-chip .chip-text strong {
-    font-size: 18px;
-    color: var(--pf-navy);
 }
 
 /* ---------- Action row ---------- */

@@ -270,22 +270,19 @@ public class AdminService {
     }
 
     /**
-     * Cập nhật thông tin tài khoản khách hàng (điểm thưởng, hạng thành viên, mật khẩu).
-     * 
+     * Cập nhật thông tin tài khoản khách hàng (email, họ tên, điện thoại, mật khẩu).
+     *
      * @param accountId ID tài khoản
      * @param email Email
      * @param fullName Họ tên
      * @param phone Số điện thoại
-     * @param password Mật khẩu mới (nếu đổi)
-     * @param loyaltyPoints Điểm tích lũy
-     * @param membershipLevel Hạng thành viên
      * @return Chuỗi mã kết quả
      */
-    public String updateCustomerAccount(int accountId, String email, String fullName, String phone, int loyaltyPoints, String membershipLevel) {
-        return updateCustomerAccount(accountId, email, fullName, phone, null, loyaltyPoints, membershipLevel);
+    public String updateCustomerAccount(int accountId, String email, String fullName, String phone) {
+        return updateCustomerAccount(accountId, email, fullName, phone, null);
     }
 
-    public String updateCustomerAccount(int accountId, String email, String fullName, String phone, String password, int loyaltyPoints, String membershipLevel) {
+    public String updateCustomerAccount(int accountId, String email, String fullName, String phone, String password) {
         if (email == null || email.trim().isEmpty() || fullName == null || fullName.trim().isEmpty()) {
             return "invalid_input";
         }
@@ -302,7 +299,7 @@ public class AdminService {
         if (phone != null && accountRepository.existsByPhoneExcept(phone, accountId)) {
             return "phone_exists";
         }
-        
+
         String passwordHash = null;
         if (password != null && !password.trim().isEmpty()) {
             if (isWeakPassword(password)) {
@@ -310,45 +307,35 @@ public class AdminService {
             }
             passwordHash = BCrypt.hashpw(password.trim(), BCrypt.gensalt(12));
         }
-        
-        CustomerInfo oldCustomer = accountRepository.getCustomerByAccountId(accountId);
-        int oldPoints = (oldCustomer != null) ? oldCustomer.getLoyaltyPoints() : loyaltyPoints;
-        String oldMembership = (oldCustomer != null && oldCustomer.getMembershipLevel() != null) ? oldCustomer.getMembershipLevel() : membershipLevel;
 
-        boolean success = accountRepository.updateCustomerAccount(accountId, email.trim(), fullName.trim(), phone, loyaltyPoints, membershipLevel, passwordHash);
+        boolean success = accountRepository.updateCustomerAccount(accountId, email.trim(), fullName.trim(), phone, passwordHash);
         if (success) {
-            sendCustomerUpdateEmail(email.trim(), fullName.trim(), phone, oldPoints, loyaltyPoints, oldMembership, membershipLevel);
+            sendCustomerUpdateEmail(email.trim(), fullName.trim(), phone);
             return "success";
         }
         return "update_failed";
     }
 
     /**
-     * Gửi email tự động thông báo cập nhật thông tin tài khoản (Hạng thành viên & Điểm tích lũy) cho khách hàng.
+     * Gửi email tự động thông báo cập nhật thông tin tài khoản cho khách hàng.
      */
-    private void sendCustomerUpdateEmail(String email, String fullName, String phone, int oldPoints, int newPoints, String oldMembership, String newMembership) {
+    private void sendCustomerUpdateEmail(String email, String fullName, String phone) {
         if (email == null || email.trim().isEmpty()) {
             return;
         }
         final String safeEmail = email.trim();
         final String safeName = (fullName != null) ? fullName.trim() : "";
         final String safePhone = (phone != null) ? phone.trim() : "";
-        final String safeOldMem = (oldMembership != null) ? oldMembership.trim() : "Standard";
-        final String safeNewMem = (newMembership != null) ? newMembership.trim() : "Standard";
 
         new Thread(() -> {
             try {
                 String hotelName = ConfigUtil.get("hotel.name", "HotelOps Pro");
-                boolean isLevelOrPointsChanged = (!safeOldMem.equalsIgnoreCase(safeNewMem) || oldPoints != newPoints);
-                String subject = isLevelOrPointsChanged
-                        ? "[" + hotelName + "] Cập nhật Hạng thành viên & Điểm tích lũy"
-                        : "[" + hotelName + "] Thông tin tài khoản của bạn đã được cập nhật";
-                
-                String htmlBody = EmailUtil.buildCustomerUpdateEmail(safeName, safeEmail, safePhone, oldPoints, newPoints, safeOldMem, safeNewMem);
+                String subject = "[" + hotelName + "] Thông tin tài khoản của bạn đã được cập nhật";
+                String htmlBody = EmailUtil.buildCustomerUpdateEmail(safeName, safeEmail, safePhone);
 
                 boolean sent = EmailUtil.sendEmail(safeEmail, subject, htmlBody);
                 if (sent) {
-                    logger.info("Đã gửi email thông báo cập nhật tài khoản/điểm/hạng tới khách hàng: {}", safeEmail);
+                    logger.info("Đã gửi email thông báo cập nhật tài khoản tới khách hàng: {}", safeEmail);
                 } else {
                     logger.warn("Không thể gửi email cập nhật tài khoản tới khách hàng: {}", safeEmail);
                 }

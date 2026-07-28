@@ -235,64 +235,27 @@ public class EmailUtil {
     }
 
     /**
-     * Mẫu Email thông báo thông tin tài khoản khách hàng (Hạng thành viên & Điểm tích lũy) được cập nhật.
+     * Mẫu Email thông báo thông tin tài khoản khách hàng được cập nhật.
      */
-    public static String buildCustomerUpdateEmail(String fullName, String email, String phone,
-                                                  Integer oldPoints, Integer newPoints,
-                                                  String oldMembership, String newMembership) {
+    public static String buildCustomerUpdateEmail(String fullName, String email, String phone) {
         String nameStr = (fullName != null && !fullName.trim().isEmpty()) ? fullName.trim() : "Khách hàng";
-        boolean membershipChanged = (oldMembership != null && newMembership != null && !oldMembership.trim().equalsIgnoreCase(newMembership.trim()));
-        boolean pointsChanged = (oldPoints != null && newPoints != null && !oldPoints.equals(newPoints));
 
         StringBuilder content = new StringBuilder();
         content.append("<h3 style=\"margin-top: 0; color: #0b132b; font-size: 18px;\">Cập nhật thông tin tài khoản khách hàng</h3>");
         content.append("<p style=\"font-size: 15px; color: #334155;\">Xin chào <strong>").append(nameStr).append("</strong>,</p>");
-        
-        if (membershipChanged || pointsChanged) {
-            content.append("<p style=\"font-size: 15px; color: #334155;\">Tài khoản của bạn vừa được Quản trị viên cập nhật thay đổi <strong>Hạng thành viên / Điểm tích lũy</strong> thành công.</p>");
-        } else {
-            content.append("<p style=\"font-size: 15px; color: #334155;\">Thông tin tài khoản khách hàng của bạn trên hệ thống <strong>HotelOps Pro</strong> vừa được cập nhật thành công với các thông số sau:</p>");
-        }
+        content.append("<p style=\"font-size: 15px; color: #334155;\">Thông tin tài khoản khách hàng của bạn trên hệ thống <strong>HotelOps Pro</strong> vừa được cập nhật thành công với các thông số sau:</p>");
 
         content.append("<div style=\"background-color: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid #c29a30; border-radius: 6px; padding: 18px; margin: 24px 0;\">");
         content.append("  <p style=\"margin: 4px 0; font-size: 14px;\"><strong>Họ và tên:</strong> ").append(nameStr).append("</p>");
         content.append("  <p style=\"margin: 4px 0; font-size: 14px;\"><strong>Email tài khoản:</strong> ").append(email).append("</p>");
-        
+
         if (phone != null && !phone.trim().isEmpty()) {
             content.append("  <p style=\"margin: 4px 0; font-size: 14px;\"><strong>Số điện thoại:</strong> ").append(phone.trim()).append("</p>");
-        }
-
-        if (membershipChanged) {
-            content.append("  <p style=\"margin: 6px 0; font-size: 14px;\"><strong>Hạng thành viên:</strong> ");
-            content.append("<span style=\"text-decoration: line-through; color: #64748b;\">").append(oldMembership.trim()).append("</span> ");
-            content.append("&rarr; <span style=\"font-weight: 700; color: #c29a30; background: #fef3c7; padding: 2px 8px; border-radius: 4px;\">").append(newMembership.trim()).append("</span></p>");
-        } else if (newMembership != null && !newMembership.trim().isEmpty()) {
-            content.append("  <p style=\"margin: 4px 0; font-size: 14px;\"><strong>Hạng thành viên:</strong> <span style=\"font-weight: 700; color: #c29a30;\">").append(newMembership.trim()).append("</span></p>");
-        }
-
-        if (pointsChanged) {
-            int diff = newPoints - oldPoints;
-            String diffStr = (diff > 0) ? (" (+" + diff + " điểm)") : (" (" + diff + " điểm)");
-            content.append("  <p style=\"margin: 6px 0; font-size: 14px;\"><strong>Điểm tích lũy:</strong> ");
-            content.append("<span style=\"text-decoration: line-through; color: #64748b;\">").append(oldPoints).append("</span> ");
-            content.append("&rarr; <span style=\"font-weight: 700; color: #0b132b; background: #e2e8f0; padding: 2px 8px; border-radius: 4px;\">").append(newPoints).append(" điểm</span> ");
-            content.append("<span style=\"color: ").append(diff > 0 ? "#16a34a" : "#dc2626").append("; font-weight: 600;\">").append(diffStr).append("</span></p>");
-        } else if (newPoints != null) {
-            content.append("  <p style=\"margin: 4px 0; font-size: 14px;\"><strong>Điểm tích lũy:</strong> <span style=\"font-weight: 700; color: #0b132b;\">").append(newPoints).append(" điểm</span></p>");
         }
 
         content.append("</div>");
         content.append("<p style=\"font-size: 14px; color: #64748b; margin-bottom: 0;\">Cảm ơn bạn đã luôn sử dụng dịch vụ của <strong>HotelOps Pro</strong>. Nếu bạn có bất kỳ thắc mắc nào, vui lòng liên hệ bộ phận Chăm sóc khách hàng.</p>");
 
-        String title = (membershipChanged || pointsChanged) ? "Cập nhật Hạng thành viên & Điểm tích lũy" : "Cập nhật thông tin tài khoản khách hàng";
-        return buildEmailWrapper(title, content.toString());
-    }
-
-    public static String buildCustomerUpdateEmail(String fullName, String email, String phone, Integer loyaltyPoints, String membershipLevel) {
-        return buildCustomerUpdateEmail(fullName, email, phone, loyaltyPoints, loyaltyPoints, membershipLevel, membershipLevel);
-    }
-
-    public static String buildCustomerUpdateEmail(String fullName, String email, Integer loyaltyPoints, String membershipLevel) {
-        return buildCustomerUpdateEmail(fullName, email, null, loyaltyPoints, loyaltyPoints, membershipLevel, membershipLevel);
+        return buildEmailWrapper("Cập nhật thông tin tài khoản khách hàng", content.toString());
     }
 }

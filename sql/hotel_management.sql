@@ -229,18 +229,29 @@ BEGIN
     CREATE TABLE dbo.Customer (
         customer_id INT IDENTITY(1,1) PRIMARY KEY,
         account_id INT NOT NULL UNIQUE,
-        loyalty_points INT NOT NULL DEFAULT 0,
-        membership_level NVARCHAR(50) NOT NULL DEFAULT N'Standard',
         CONSTRAINT FK_Customer_Account FOREIGN KEY (account_id) REFERENCES dbo.Account(account_id)
     );
+END
+GO
+
+/* Xóa loyalty_points/membership_level khỏi Customer trên DB cũ đã có sẵn
+   bảng này từ trước (CREATE TABLE ở trên bị bỏ qua vì OBJECT_ID đã tồn tại). */
+IF COL_LENGTH(N'dbo.Customer', N'loyalty_points') IS NOT NULL
+BEGIN
+    ALTER TABLE dbo.Customer DROP COLUMN loyalty_points;
+END
+GO
+IF COL_LENGTH(N'dbo.Customer', N'membership_level') IS NOT NULL
+BEGIN
+    ALTER TABLE dbo.Customer DROP COLUMN membership_level;
 END
 GO
 
 /* Seed Customer rows for existing seeded accounts if missing */
 IF NOT EXISTS (SELECT 1 FROM dbo.Customer WHERE account_id = (SELECT account_id FROM dbo.Account WHERE email = N'customer@hotel.com'))
 BEGIN
-    INSERT INTO dbo.Customer (account_id, loyalty_points, membership_level)
-    VALUES ((SELECT account_id FROM dbo.Account WHERE email = N'customer@hotel.com'), 0, N'Standard');
+    INSERT INTO dbo.Customer (account_id)
+    VALUES ((SELECT account_id FROM dbo.Account WHERE email = N'customer@hotel.com'));
 END
 GO
 
@@ -1001,41 +1012,40 @@ BEGIN
         bstatus NVARCHAR(50), istatus NVARCHAR(20),
         bf BIT, air BIT,
         surcharge DECIMAL(18,2), surcharge_desc NVARCHAR(200),
-        refund DECIMAL(18,2), refund_reason NVARCHAR(500),
-        loyalty INT, membership NVARCHAR(50)
+        refund DECIMAL(18,2), refund_reason NVARCHAR(500)
     );
 
-    INSERT INTO @seed (email, full_name, phone, type_id, room_number, qty, check_in, check_out, bstatus, istatus, bf, air, surcharge, surcharge_desc, refund, refund_reason, loyalty, membership) VALUES
-    (N'cust01@hotel.com', N'Trần Anh Khoa',    N'0901000001', 1, N'103', 1, '2026-05-07','2026-05-09', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                          120, N'Silver'),
-    (N'cust02@hotel.com', N'Nguyễn Bảo Châu',  N'0901000002', 2, N'203', 1, '2026-05-07','2026-05-10', N'CheckedOut', N'Paid',      1,1, 0,      NULL,                                  0,      NULL,                                          300, N'Gold'),
-    (N'cust03@hotel.com', N'Lê Gia Bảo',       N'0901000003', 3, N'302', 1, '2026-05-08','2026-05-11', N'CheckedOut', N'Paid',      0,0, 200000, N'Trả phòng muộn (late check-out)',     0,      NULL,                                           50, N'Standard'),
-    (N'cust04@hotel.com', N'Phạm Thuỳ Dung',   N'0901000004', 1, N'104', 2, '2026-05-08','2026-05-09', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                           80, N'Standard'),
-    (N'cust05@hotel.com', N'Hoàng Minh Tuấn',  N'0901000005', 4, N'402', 1, '2026-05-09','2026-05-12', N'CheckedOut', N'Paid',      0,1, 0,      NULL,                                  0,      NULL,                                          500, N'Gold'),
-    (N'cust06@hotel.com', N'Vũ Khánh Linh',    N'0901000006', 2, N'205', 2, '2026-05-10','2026-05-13', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                          210, N'Silver'),
-    (N'cust07@hotel.com', N'Đỗ Hải Nam',       N'0901000007', 1, N'106', 1, '2026-05-11','2026-05-12', N'CheckedOut', N'Paid',      0,0, 0,      NULL,                                  0,      NULL,                                           30, N'Standard'),
-    (N'cust08@hotel.com', N'Bùi Thanh Hà',     N'0901000008', 3, N'303', 1, '2026-05-12','2026-05-15', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                          260, N'Silver'),
-    (N'cust09@hotel.com', N'Đặng Quốc Việt',   N'0901000009', 2, N'206', 1, '2026-05-13','2026-05-16', N'CheckedOut', N'Paid',      0,1, 0,      NULL,                                  0,      NULL,                                           95, N'Standard'),
-    (N'cust10@hotel.com', N'Mai Phương Thảo',  N'0901000010', 4, N'403', 1, '2026-05-14','2026-05-17', N'CheckedOut', N'Paid',      1,0, 300000, N'Hư hỏng nội thất (vỡ kính)',          0,      NULL,                                          600, N'Gold'),
-    (N'cust11@hotel.com', N'Ngô Văn Sơn',      N'0901000011', 1, N'107', 1, '2026-05-15','2026-05-16', N'CheckedOut', N'Paid',      0,0, 0,      NULL,                                  0,      NULL,                                           40, N'Standard'),
-    (N'cust12@hotel.com', N'Lý Thị Hồng',      N'0901000012', 3, N'304', 1, '2026-05-16','2026-05-19', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                          180, N'Silver'),
-    (N'cust13@hotel.com', N'Trịnh Đức Anh',    N'0901000013', 2, N'207', 2, '2026-05-18','2026-05-21', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                          220, N'Silver'),
-    (N'cust14@hotel.com', N'Cao Mỹ Linh',      N'0901000014', 4, N'404', 1, '2026-05-20','2026-05-23', N'CheckedOut', N'Paid',      0,1, 0,      NULL,                                  0,      NULL,                                          410, N'Gold'),
-    (N'cust15@hotel.com', N'Phan Văn Đạt',     N'0901000015', 1, N'108', 1, '2026-05-21','2026-05-22', N'CheckedOut', N'Paid',      0,0, 0,      NULL,                                  0,      NULL,                                           25, N'Standard'),
-    (N'cust16@hotel.com', N'Hồ Ngọc Mai',      N'0901000016', 3, N'306', 1, '2026-05-22','2026-05-25', N'CheckedOut', N'Paid',      1,0, 150000, N'Giặt ủi phát sinh',                   0,      NULL,                                          200, N'Silver'),
-    (N'cust17@hotel.com', N'Dương Quốc Huy',   N'0901000017', 2, N'208', 1, '2026-05-25','2026-05-28', N'CheckedOut', N'Paid',      1,1, 0,      NULL,                                  0,      NULL,                                          130, N'Standard'),
-    (N'cust18@hotel.com', N'Tô Thanh Tùng',    N'0901000018', 4, N'405', 1, '2026-05-26','2026-05-29', N'CheckedOut', N'Paid',      0,0, 0,      NULL,                                  0,      NULL,                                          350, N'Gold'),
-    (N'cust19@hotel.com', N'Lưu Thị Cẩm',      N'0901000019', 3, N'307', 1, '2026-05-28','2026-05-31', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                          160, N'Silver'),
-    (N'cust20@hotel.com', N'Hà Văn Phúc',      N'0901000020', 2, N'209', 2, '2026-05-29','2026-06-01', N'CheckedOut', N'Refunded',  1,0, 0,      NULL,                                  500000, N'Hoàn phí dịch vụ khách không sử dụng',        240, N'Silver'),
-    (N'cust21@hotel.com', N'Quách Bảo Ngọc',   N'0901000021', 1, N'109', 1, '2026-06-03','2026-06-06', N'CheckedIn',  N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                           70, N'Standard'),
-    (N'cust22@hotel.com', N'Vương Tuấn Kiệt',  N'0901000022', 2, N'210', 2, '2026-06-04','2026-06-07', N'CheckedIn',  N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                          150, N'Silver'),
-    (N'cust23@hotel.com', N'Đoàn Thị Yến',     N'0901000023', 4, N'406', 1, '2026-06-04','2026-06-06', N'CheckedIn',  N'Paid',      0,1, 0,      NULL,                                  0,      NULL,                                          320, N'Gold'),
-    (N'cust24@hotel.com', N'Lâm Chí Thành',    N'0901000024', 3, N'308', 1, '2026-06-05','2026-06-08', N'CheckedIn',  N'Paid',      1,0, 0,      NULL,                                  0,      NULL,                                          110, N'Standard'),
-    (N'cust25@hotel.com', N'Trương Khải Minh', N'0901000025', 2, N'211', 1, '2026-06-08','2026-06-11', N'Confirmed',  N'Pending',   0,0, 0,      NULL,                                  0,      NULL,                                           60, N'Standard'),
-    (N'cust26@hotel.com', N'Kiều Anh Thư',     N'0901000026', 3, N'309', 1, '2026-06-10','2026-06-13', N'Confirmed',  N'Pending',   0,0, 0,      NULL,                                  0,      NULL,                                           90, N'Standard'),
-    (N'cust27@hotel.com', N'Tạ Quang Dũng',    N'0901000027', 4, N'407', 1, '2026-06-12','2026-06-15', N'Confirmed',  N'Pending',   0,0, 0,      NULL,                                  0,      NULL,                                          280, N'Silver'),
-    (N'cust28@hotel.com', N'Phùng Mỹ Duyên',   N'0901000028', 1, N'110', 1, '2026-06-09','2026-06-11', N'Pending',    N'Pending',   0,0, 0,      NULL,                                  0,      NULL,                                           20, N'Standard'),
-    (N'cust29@hotel.com', N'Châu Văn Lộc',     N'0901000029', 2, N'212', 1, '2026-06-14','2026-06-16', N'Rejected',   N'Refunding', 0,0, 0,      NULL,                                  0,      NULL,                                           45, N'Standard'),
-    (N'cust30@hotel.com', N'Đinh Thị Bích',    N'0901000030', 3, N'310', 1, '2026-06-07','2026-06-09', N'Cancelled',  N'Cancelled', 0,0, 0,      NULL,                                  0,      NULL,                                           15, N'Standard');
+    INSERT INTO @seed (email, full_name, phone, type_id, room_number, qty, check_in, check_out, bstatus, istatus, bf, air, surcharge, surcharge_desc, refund, refund_reason) VALUES
+    (N'cust01@hotel.com', N'Trần Anh Khoa',    N'0901000001', 1, N'103', 1, '2026-05-07','2026-05-09', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL),
+    (N'cust02@hotel.com', N'Nguyễn Bảo Châu',  N'0901000002', 2, N'203', 1, '2026-05-07','2026-05-10', N'CheckedOut', N'Paid',      1,1, 0,      NULL,                                  0,      NULL),
+    (N'cust03@hotel.com', N'Lê Gia Bảo',       N'0901000003', 3, N'302', 1, '2026-05-08','2026-05-11', N'CheckedOut', N'Paid',      0,0, 200000, N'Trả phòng muộn (late check-out)',     0,      NULL),
+    (N'cust04@hotel.com', N'Phạm Thuỳ Dung',   N'0901000004', 1, N'104', 2, '2026-05-08','2026-05-09', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL),
+    (N'cust05@hotel.com', N'Hoàng Minh Tuấn',  N'0901000005', 4, N'402', 1, '2026-05-09','2026-05-12', N'CheckedOut', N'Paid',      0,1, 0,      NULL,                                  0,      NULL),
+    (N'cust06@hotel.com', N'Vũ Khánh Linh',    N'0901000006', 2, N'205', 2, '2026-05-10','2026-05-13', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL),
+    (N'cust07@hotel.com', N'Đỗ Hải Nam',       N'0901000007', 1, N'106', 1, '2026-05-11','2026-05-12', N'CheckedOut', N'Paid',      0,0, 0,      NULL,                                  0,      NULL),
+    (N'cust08@hotel.com', N'Bùi Thanh Hà',     N'0901000008', 3, N'303', 1, '2026-05-12','2026-05-15', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL),
+    (N'cust09@hotel.com', N'Đặng Quốc Việt',   N'0901000009', 2, N'206', 1, '2026-05-13','2026-05-16', N'CheckedOut', N'Paid',      0,1, 0,      NULL,                                  0,      NULL),
+    (N'cust10@hotel.com', N'Mai Phương Thảo',  N'0901000010', 4, N'403', 1, '2026-05-14','2026-05-17', N'CheckedOut', N'Paid',      1,0, 300000, N'Hư hỏng nội thất (vỡ kính)',          0,      NULL),
+    (N'cust11@hotel.com', N'Ngô Văn Sơn',      N'0901000011', 1, N'107', 1, '2026-05-15','2026-05-16', N'CheckedOut', N'Paid',      0,0, 0,      NULL,                                  0,      NULL),
+    (N'cust12@hotel.com', N'Lý Thị Hồng',      N'0901000012', 3, N'304', 1, '2026-05-16','2026-05-19', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL),
+    (N'cust13@hotel.com', N'Trịnh Đức Anh',    N'0901000013', 2, N'207', 2, '2026-05-18','2026-05-21', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL),
+    (N'cust14@hotel.com', N'Cao Mỹ Linh',      N'0901000014', 4, N'404', 1, '2026-05-20','2026-05-23', N'CheckedOut', N'Paid',      0,1, 0,      NULL,                                  0,      NULL),
+    (N'cust15@hotel.com', N'Phan Văn Đạt',     N'0901000015', 1, N'108', 1, '2026-05-21','2026-05-22', N'CheckedOut', N'Paid',      0,0, 0,      NULL,                                  0,      NULL),
+    (N'cust16@hotel.com', N'Hồ Ngọc Mai',      N'0901000016', 3, N'306', 1, '2026-05-22','2026-05-25', N'CheckedOut', N'Paid',      1,0, 150000, N'Giặt ủi phát sinh',                   0,      NULL),
+    (N'cust17@hotel.com', N'Dương Quốc Huy',   N'0901000017', 2, N'208', 1, '2026-05-25','2026-05-28', N'CheckedOut', N'Paid',      1,1, 0,      NULL,                                  0,      NULL),
+    (N'cust18@hotel.com', N'Tô Thanh Tùng',    N'0901000018', 4, N'405', 1, '2026-05-26','2026-05-29', N'CheckedOut', N'Paid',      0,0, 0,      NULL,                                  0,      NULL),
+    (N'cust19@hotel.com', N'Lưu Thị Cẩm',      N'0901000019', 3, N'307', 1, '2026-05-28','2026-05-31', N'CheckedOut', N'Paid',      1,0, 0,      NULL,                                  0,      NULL),
+    (N'cust20@hotel.com', N'Hà Văn Phúc',      N'0901000020', 2, N'209', 2, '2026-05-29','2026-06-01', N'CheckedOut', N'Refunded',  1,0, 0,      NULL,                                  500000, N'Hoàn phí dịch vụ khách không sử dụng'),
+    (N'cust21@hotel.com', N'Quách Bảo Ngọc',   N'0901000021', 1, N'109', 1, '2026-06-03','2026-06-06', N'CheckedIn',  N'Paid',      1,0, 0,      NULL,                                  0,      NULL),
+    (N'cust22@hotel.com', N'Vương Tuấn Kiệt',  N'0901000022', 2, N'210', 2, '2026-06-04','2026-06-07', N'CheckedIn',  N'Paid',      1,0, 0,      NULL,                                  0,      NULL),
+    (N'cust23@hotel.com', N'Đoàn Thị Yến',     N'0901000023', 4, N'406', 1, '2026-06-04','2026-06-06', N'CheckedIn',  N'Paid',      0,1, 0,      NULL,                                  0,      NULL),
+    (N'cust24@hotel.com', N'Lâm Chí Thành',    N'0901000024', 3, N'308', 1, '2026-06-05','2026-06-08', N'CheckedIn',  N'Paid',      1,0, 0,      NULL,                                  0,      NULL),
+    (N'cust25@hotel.com', N'Trương Khải Minh', N'0901000025', 2, N'211', 1, '2026-06-08','2026-06-11', N'Confirmed',  N'Pending',   0,0, 0,      NULL,                                  0,      NULL),
+    (N'cust26@hotel.com', N'Kiều Anh Thư',     N'0901000026', 3, N'309', 1, '2026-06-10','2026-06-13', N'Confirmed',  N'Pending',   0,0, 0,      NULL,                                  0,      NULL),
+    (N'cust27@hotel.com', N'Tạ Quang Dũng',    N'0901000027', 4, N'407', 1, '2026-06-12','2026-06-15', N'Confirmed',  N'Pending',   0,0, 0,      NULL,                                  0,      NULL),
+    (N'cust28@hotel.com', N'Phùng Mỹ Duyên',   N'0901000028', 1, N'110', 1, '2026-06-09','2026-06-11', N'Pending',    N'Pending',   0,0, 0,      NULL,                                  0,      NULL),
+    (N'cust29@hotel.com', N'Châu Văn Lộc',     N'0901000029', 2, N'212', 1, '2026-06-14','2026-06-16', N'Rejected',   N'Refunding', 0,0, 0,      NULL,                                  0,      NULL),
+    (N'cust30@hotel.com', N'Đinh Thị Bích',    N'0901000030', 3, N'310', 1, '2026-06-07','2026-06-09', N'Cancelled',  N'Cancelled', 0,0, 0,      NULL,                                  0,      NULL);
 
     /* 1) Tài khoản khách hàng (role Customer) — mật khẩu: customer123 */
     INSERT INTO dbo.Account (email, password, full_name, role_id, is_active, phone)
@@ -1048,8 +1058,8 @@ BEGIN
     WHERE NOT EXISTS (SELECT 1 FROM dbo.Account a WHERE a.email = s.email);
 
     /* 2) Hồ sơ Customer */
-    INSERT INTO dbo.Customer (account_id, loyalty_points, membership_level)
-    SELECT a.account_id, s.loyalty, s.membership
+    INSERT INTO dbo.Customer (account_id)
+    SELECT a.account_id
     FROM @seed s
     JOIN dbo.Account a ON a.email = s.email
     WHERE NOT EXISTS (SELECT 1 FROM dbo.Customer c WHERE c.account_id = a.account_id);

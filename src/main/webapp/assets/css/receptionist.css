@@ -552,19 +552,6 @@ button:disabled,
     font-size: 14px;
 }
 
-/* Membership Badges */
-.badge-membership {
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-.badge-membership.Standard { background: #f1f5f9; color: #475569; }
-.badge-membership.Silver   { background: #e2e8f0; color: #475569; border: 1px solid #cbd5e1; }
-.badge-membership.Gold     { background: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
-.badge-membership.Platinum { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
-
 /* Room Grid */
 .room-grid {
     display: grid;
