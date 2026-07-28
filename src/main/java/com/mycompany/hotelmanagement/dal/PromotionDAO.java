@@ -297,40 +297,4 @@ public class PromotionDAO {
             return false;
         }
     }
-
-    /**
-     * Xóa khuyến mãi. Chỉ cho phép xóa khi UsedCount = 0.
-     * Kiểm tra bắt buộc ở phía Server.
-     *
-     * @return true nếu xóa thành công, false nếu UsedCount > 0 hoặc không tìm thấy hoặc có lỗi DB
-     */
-    public boolean deletePromotion(int promotionId) {
-        String checkSql = "SELECT UsedCount FROM Promotion WHERE PromotionID = ?";
-        String deleteSql = "DELETE FROM Promotion WHERE PromotionID = ? AND UsedCount = 0";
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement psCheck = conn.prepareStatement(checkSql)) {
-            useDatabase(conn);
-            psCheck.setInt(1, promotionId);
-            try (ResultSet rs = psCheck.executeQuery()) {
-                if (rs.next()) {
-                    int usedCount = rs.getInt("UsedCount");
-                    if (usedCount > 0) {
-                        LOGGER.warning("Block delete for promotion ID " + promotionId + " because UsedCount = " + usedCount);
-                        return false;
-                    }
-                } else {
-                    return false; // Not found
-                }
-            }
-
-            try (PreparedStatement psDelete = conn.prepareStatement(deleteSql)) {
-                psDelete.setInt(1, promotionId);
-                int affected = psDelete.executeUpdate();
-                return affected > 0;
-            }
-        } catch (Exception e) {
-            LOGGER.log(java.util.logging.Level.SEVERE, "Error deleting promotion " + promotionId, e);
-            return false;
-        }
-    }
 }
