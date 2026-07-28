@@ -12,7 +12,7 @@
               rel="stylesheet" />
         <link rel="stylesheet"
               href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/receptionist.css?v=6" />
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/receptionist.css?v=7" />
     </head>
     <fmt:setLocale value="vi_VN" />
 
@@ -939,11 +939,12 @@
 
                                                         <c:choose>
                                                             <c:when test="${b.checkOutDate lt todayDate}">
-                                                                <span class="btn-action-icon"
-                                                                      style="color:#dc2626;border-color:#fecaca;background:#fef2f2;cursor:not-allowed;">
+                                                                <a class="btn-action-icon btn-overdue"
+                                                                   href="${pageContext.request.contextPath}/receptionist/booking/process?bookingId=${b.bookingId}&cancelReason=overdue"
+                                                                   title="Đơn đã quá hạn nhận phòng — bấm để hủy đặt phòng">
                                                                     <i class="fa-solid fa-triangle-exclamation"></i>
                                                                     Đã quá hạn
-                                                                </span>
+                                                                </a>
                                                             </c:when>
                                                             <c:otherwise>
                                                                 <a class="btn-action-icon btn-checkin"

@@ -172,13 +172,16 @@ public class RoomIssueDAO {
     }
 
     // ==========================
-    // GET ALL ISSUES FOR MANAGER (kèm số phòng + tên người báo cáo)
+    // GET ALL ISSUES FOR MANAGER (kèm số phòng + tên người báo cáo), có lọc
+    // theo mức độ / trạng thái / nhân viên báo cáo + tìm kiếm số phòng hoặc
+    // tên nhân viên.
     // ==========================
-    public List<RoomIssue> getAllForManager() {
+    public List<RoomIssue> getAllForManager(String keyword, String severity, String status, String staffFilter) {
 
         List<RoomIssue> list = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
 
-        String sql = """
+        StringBuilder sql = new StringBuilder("""
         SELECT
             ri.issue_id,
             ri.room_id,
@@ -194,11 +197,44 @@ public class RoomIssueDAO {
         FROM RoomIssue ri
         LEFT JOIN Room r ON ri.room_id = r.room_id
         LEFT JOIN Account a ON ri.reported_by = a.account_id
-        ORDER BY ri.reported_at DESC, ri.issue_id DESC
-    """;
+        WHERE 1 = 1
+        """);
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append(" AND (r.room_number LIKE ? OR a.full_name LIKE ?) ");
+            String like = "%" + keyword.trim() + "%";
+            params.add(like);
+            params.add(like);
+        }
+
+        if (severity != null && !severity.trim().isEmpty() && !"all".equalsIgnoreCase(severity)) {
+            sql.append(" AND ri.severity = ? ");
+            params.add(severity);
+        }
+
+        if (status != null && !status.trim().isEmpty() && !"all".equalsIgnoreCase(status)) {
+            sql.append(" AND ri.status = ? ");
+            params.add(status);
+        }
+
+        if (staffFilter != null && !staffFilter.trim().isEmpty() && !"all".equalsIgnoreCase(staffFilter)) {
+            try {
+                int staffId = Integer.parseInt(staffFilter.trim());
+                sql.append(" AND ri.reported_by = ? ");
+                params.add(staffId);
+            } catch (NumberFormatException ignored) {
+                // Giá trị lọc nhân viên không hợp lệ -> bỏ qua điều kiện này
+            }
+        }
+
+        sql.append(" ORDER BY ri.reported_at DESC, ri.issue_id DESC");
 
         try (
-                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
 
             ResultSet rs = ps.executeQuery();
 

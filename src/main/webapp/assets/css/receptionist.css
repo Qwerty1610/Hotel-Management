@@ -293,6 +293,18 @@ body.dashboard-body {
     background: #d1fae5;
     color: #059669 !important;
 }
+
+/* OVERDUE CHECK-IN BUTTON */
+.btn-overdue {
+    background: #dc2626;
+    color: #fff !important;
+    border-color: #dc2626;
+}
+
+.btn-overdue:hover {
+    background: #fee2e2;
+    color: #dc2626 !important;
+}
 .btn-confirm  { color: var(--success-green); }
 .btn-confirm:hover  { background: #f0fdf4; transform: scale(1.1); }
 .btn-reject   { color: var(--danger-red); }
