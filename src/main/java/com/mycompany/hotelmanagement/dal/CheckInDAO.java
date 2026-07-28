@@ -25,8 +25,7 @@ public class CheckInDAO {
             String imageUrl,
             BigDecimal extraFee,
             String[] companions,
-            List<String> companionImageUrls,
-            String[] ageRanges
+            List<String> companionImageUrls
     ) {
 
         Connection conn = null;
@@ -78,12 +77,11 @@ public class CheckInDAO {
                     (
                         check_in_id,
                         full_name,
-                        age_range,
                         image_url
                     )
                     VALUES
                     (
-                        ?, ?, ?, ?
+                        ?, ?, ?
                     )
                     """;
                 PreparedStatement ps2 = conn.prepareStatement(sql2);
@@ -97,14 +95,9 @@ public class CheckInDAO {
                     if (companionImageUrls != null && i < companionImageUrls.size()) {
                         image = companionImageUrls.get(i);
                     }
-                    String age = null;
-                    if (ageRanges != null && i < ageRanges.length) {
-                        age = ageRanges[i];
-                    }
                     ps2.setInt(1, checkInId);
                     ps2.setString(2, name.trim());
-                    ps2.setString(3, age);
-                    ps2.setString(4, image);
+                    ps2.setString(3, image);
 
                     ps2.addBatch();
                 }
@@ -201,7 +194,6 @@ public class CheckInDAO {
             companion_id,
             check_in_id,
             full_name,
-            age_range,
             image_url
         FROM CheckInCompanion
         WHERE check_in_id = ?
@@ -222,7 +214,6 @@ public class CheckInDAO {
                 c.setCompanionId(rs.getInt("companion_id"));
                 c.setCheckInId(rs.getInt("check_in_id"));
                 c.setFullName(rs.getString("full_name"));
-                c.setAgeRange(rs.getString("age_range"));
                 c.setImageUrl(rs.getString("image_url"));
 
                 list.add(c);

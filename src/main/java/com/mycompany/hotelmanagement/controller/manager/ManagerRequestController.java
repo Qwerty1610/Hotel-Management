@@ -1,5 +1,6 @@
 package com.mycompany.hotelmanagement.controller.manager;
 
+import com.mycompany.hotelmanagement.entity.StaffInfo;
 import com.mycompany.hotelmanagement.service.RequestManagementService;
 
 import jakarta.servlet.ServletException;
@@ -9,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * ManagerRequestController
@@ -53,11 +55,27 @@ public class ManagerRequestController extends HttpServlet {
         int offset = (page - 1) * pageSize;
 
         request.setAttribute("requests", service.getRequests(roomKw, priority, staffFilter, status, offset, pageSize));
-        request.setAttribute("staffList", service.getHousekeepingStaff());
+        List<StaffInfo> staffList = service.getHousekeepingStaff();
+        request.setAttribute("staffList", staffList);
         request.setAttribute("pendingCount", service.countPending());
         request.setAttribute("inProgressCount", service.countInProgress());
         request.setAttribute("activeStaffCount", service.countActiveStaff());
-        request.setAttribute("roomIssues", service.getAllRoomIssues());
+
+        // Bộ lọc riêng cho bảng "Báo cáo của nhân viên" (RoomIssue) — dùng
+        // tiếp đầu ngữ "ri" để không đụng với bộ lọc yêu cầu khách hàng ở trên.
+        String riKw = request.getParameter("riQ");
+        String riSeverity = request.getParameter("riSeverity");
+        String riStatus = request.getParameter("riStatus");
+        String riStaff = request.getParameter("riStaff");
+        if (riSeverity == null || riSeverity.trim().isEmpty()) riSeverity = "all";
+        if (riStatus == null || riStatus.trim().isEmpty()) riStatus = "all";
+        if (riStaff == null || riStaff.trim().isEmpty()) riStaff = "all";
+
+        request.setAttribute("roomIssues", service.getAllRoomIssues(riKw, riSeverity, riStatus, riStaff));
+        request.setAttribute("riQ", riKw == null ? "" : riKw);
+        request.setAttribute("riSeverityFilter", riSeverity);
+        request.setAttribute("riStatusFilter", riStatus);
+        request.setAttribute("riStaffFilter", riStaff);
 
         request.setAttribute("q", roomKw == null ? "" : roomKw);
         request.setAttribute("priorityFilter", priority);

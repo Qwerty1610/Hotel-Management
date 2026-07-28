@@ -417,6 +417,7 @@ public class ReceptionistDashboardController extends HttpServlet {
                 = dao.getCheckInBookings(status, keyword, offset, PAGE_SIZE);
 
         request.setAttribute("checkInList", checkInList);
+        request.setAttribute("todayDate", java.sql.Date.valueOf(java.time.LocalDate.now()));
         request.setAttribute("keyword", keyword == null ? "" : keyword);
         request.setAttribute("currentStatus", status);
 
