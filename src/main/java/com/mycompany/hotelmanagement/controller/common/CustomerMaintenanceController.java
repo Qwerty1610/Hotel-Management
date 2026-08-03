@@ -7,6 +7,7 @@ package com.mycompany.hotelmanagement.controller.common;
 import com.mycompany.hotelmanagement.dal.MaintenanceRequestDAO;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -103,8 +104,20 @@ public class CustomerMaintenanceController extends HttpServlet {
 
         int customerId = (Integer) session.getAttribute("accountId");
 
-        int bookingId = Integer.parseInt(
-                request.getParameter("bookingId"));
+        String bookingIdParam = request.getParameter("bookingId");
+
+        int bookingId;
+        try {
+            bookingId = Integer.parseInt(bookingIdParam);
+        } catch (NumberFormatException e) {
+            session.setAttribute(
+                    "errorMessage",
+                    "Bạn cần có phòng đang lưu trú để gửi yêu cầu sửa chữa.");
+            response.sendRedirect(
+                    request.getContextPath()
+                    + "/customer/maintenance");
+            return;
+        }
 
         String[] issueTypeIds
                 = request.getParameterValues("issueTypeId");
@@ -114,6 +127,18 @@ public class CustomerMaintenanceController extends HttpServlet {
 
         MaintenanceRequestDAO dao
                 = new MaintenanceRequestDAO();
+
+        List<String> openIssues = dao.findOpenIssueNames(bookingId, issueTypeIds);
+        if (!openIssues.isEmpty()) {
+            session.setAttribute(
+                    "errorMessage",
+                    "Sự cố \"" + String.join(", ", openIssues)
+                    + "\" đã được gửi và đang chờ xử lý, vui lòng đợi xử lý xong trước khi gửi lại.");
+            response.sendRedirect(
+                    request.getContextPath()
+                    + "/customer/maintenance");
+            return;
+        }
 
         boolean success = dao.submitMaintenanceRequest(
                 bookingId,

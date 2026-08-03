@@ -586,9 +586,9 @@ public class BookingDAO {
 
     public String getAssignedRoomsForBookingSelf(int bookingId) {
         String sql = "SELECT STRING_AGG(r.room_number, ', ') "
-                   + "FROM dbo.RoomAssignment br "
-                   + "JOIN dbo.Room r ON br.room_id = r.room_id "
-                   + "WHERE br.booking_id = ?";
+                + "FROM dbo.RoomAssignment br "
+                + "JOIN dbo.Room r ON br.room_id = r.room_id "
+                + "WHERE br.booking_id = ?";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -1813,29 +1813,29 @@ public class BookingDAO {
         }
         return list;
     }
+
     public boolean updateGroupBookingStatus(int rootBookingId, String status) {
 
-    String sql = """
+        String sql = """
         UPDATE Booking
         SET status = ?
         WHERE booking_id = ?
            OR group_booking_id = ?
         """;
 
-    try (
-            Connection conn = DBContext.getConnection();
-            PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (
+                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        ps.setString(1, status);
-        ps.setInt(2, rootBookingId);
-        ps.setInt(3, rootBookingId);
+            ps.setString(1, status);
+            ps.setInt(2, rootBookingId);
+            ps.setInt(3, rootBookingId);
 
-        return ps.executeUpdate() > 0;
+            return ps.executeUpdate() > 0;
 
-    } catch (Exception e) {
-        e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
-
-    return false;
-}
 }
