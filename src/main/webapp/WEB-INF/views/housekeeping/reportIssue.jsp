@@ -329,8 +329,7 @@
 
             <textarea name="description"
                       rows="2"
-                      placeholder="Mô tả chi tiết sự cố...">
-            </textarea>
+                      placeholder="Mô tả chi tiết sự cố..."></textarea>
         </div>
         <button type="button"
                 class="remove-btn"

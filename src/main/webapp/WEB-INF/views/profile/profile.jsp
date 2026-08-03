@@ -205,26 +205,6 @@
                             </div>
                         </div>
 
-                        <%-- Customer-only loyalty info (AF-2) --%>
-                        <c:if test="${profile.customer}">
-                            <div class="profile-loyalty">
-                                <div class="profile-chip points">
-                                    <div class="chip-icon"><i class="fa-solid fa-star"></i></div>
-                                    <div class="chip-text">
-                                        <small>Điểm tích luỹ</small>
-                                        <strong><fmt:formatNumber value="${profile.loyaltyPoints}" type="number" /></strong>
-                                    </div>
-                                </div>
-                                <div class="profile-chip member">
-                                    <div class="chip-icon"><i class="fa-solid fa-gem"></i></div>
-                                    <div class="chip-text">
-                                        <small>Hạng thành viên</small>
-                                        <strong><c:out value="${empty profile.membershipLevel ? 'Standard' : profile.membershipLevel}" /></strong>
-                                    </div>
-                                </div>
-                            </div>
-                        </c:if>
-
                         <div class="profile-actions" style="display: flex; gap: 12px; flex-wrap: wrap;">
                             <button type="button" class="profile-btn profile-btn-primary" onclick="profileShowEdit()">
                                 <i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa hồ sơ

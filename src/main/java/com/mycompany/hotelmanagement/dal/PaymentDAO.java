@@ -33,6 +33,11 @@ public class PaymentDAO {
         ERROR
     }
 
+    public PaymentDAO() {
+        // resolveActiveBookingId đọc cột replaced_by_booking_id
+        BookingDAO.ensureChangeTrackingColumns();
+    }
+
     private void useDatabase(Connection conn) {
         try (Statement stmt = conn.createStatement()) {
             stmt.execute("USE HotelManagementDB");
@@ -257,10 +262,27 @@ public class PaymentDAO {
      */
     public List<Booking> getPendingBookingsByAccount(int accountId) {
         List<Booking> list = new ArrayList<>();
+        // Chỉ lấy dòng CHA (group_booking_id IS NULL) -> mỗi đơn đúng MỘT dòng cọc, số
+        // tiền là 30% tổng CẢ NHÓM. Các cột dẫn xuất phải gom cả nhóm cho khớp:
+        //   overall_total          - tổng tiền phòng của cả nhóm
+        //   group_room_type_names  - mọi loại phòng trong nhóm ("test, test123"); thiếu
+        //                            cột này thì cột "Loại phòng" chỉ hiện loại của dòng
+        //                            cha, khách tưởng đơn chỉ có một phòng.
+        // Dòng con đã Cancelled (bị gỡ khi khách đổi đặt phòng) không còn thuộc đơn nữa.
         String sql = "SELECT b.booking_id, b.customer_name, b.room_quantity, b.check_in_date, b.check_out_date, "
                 + "  b.total_amount, b.status, rt.type_name, "
                 + "  b.total_amount + ISNULL((SELECT SUM(c.total_amount) FROM dbo.Booking c "
-                + "                           WHERE c.group_booking_id = b.booking_id), 0) AS overall_total "
+                + "                           WHERE c.group_booking_id = b.booking_id "
+                + "                             AND c.status <> N'Cancelled'), 0) AS overall_total, "
+                + "  (SELECT STRING_AGG(dt.type_name, N', ') FROM ( "
+                + "       SELECT DISTINCT srt.type_name "
+                + "       FROM dbo.Booking sb "
+                + "       JOIN dbo.RoomType srt ON srt.type_id = sb.room_type_id "
+                + "       WHERE (sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) "
+                + "         AND sb.status <> N'Cancelled') AS dt) AS group_room_type_names, "
+                + "  (SELECT SUM(sb.room_quantity) FROM dbo.Booking sb "
+                + "    WHERE (sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) "
+                + "      AND sb.status <> N'Cancelled') AS total_room_quantity "
                 + "FROM dbo.Booking b "
                 + "LEFT JOIN dbo.RoomType rt ON rt.type_id = b.room_type_id "
                 + "WHERE b.account_id = ? AND b.status = N'Pending' AND b.group_booking_id IS NULL "
@@ -281,6 +303,8 @@ public class PaymentDAO {
                         b.setStatus(rs.getString("status"));
                         b.setRoomTypeName(rs.getString("type_name"));
                         b.setOverallTotalAmount(rs.getDouble("overall_total"));
+                        b.setGroupRoomTypeNames(rs.getString("group_room_type_names"));
+                        b.setTotalRoomQuantity(rs.getInt("total_room_quantity"));
                         list.add(b);
                     }
                 }
@@ -296,10 +320,22 @@ public class PaymentDAO {
      * Trả về null nếu không tồn tại / không thuộc về khách / là booking con.
      */
     public Booking getBookingForCustomer(int bookingId, int accountId) {
+        // Các cột dẫn xuất gom cả nhóm, khớp với getPendingBookingsByAccount: trang QR
+        // phải hiện đúng những gì bảng "Đặt phòng chờ thanh toán cọc" đã hiện.
         String sql = "SELECT b.booking_id, b.customer_name, b.room_quantity, b.check_in_date, b.check_out_date, "
                 + "  b.total_amount, b.status, rt.type_name, "
                 + "  b.total_amount + ISNULL((SELECT SUM(c.total_amount) FROM dbo.Booking c "
-                + "                           WHERE c.group_booking_id = b.booking_id), 0) AS overall_total "
+                + "                           WHERE c.group_booking_id = b.booking_id "
+                + "                             AND c.status <> N'Cancelled'), 0) AS overall_total, "
+                + "  (SELECT STRING_AGG(dt.type_name, N', ') FROM ( "
+                + "       SELECT DISTINCT srt.type_name "
+                + "       FROM dbo.Booking sb "
+                + "       JOIN dbo.RoomType srt ON srt.type_id = sb.room_type_id "
+                + "       WHERE (sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) "
+                + "         AND sb.status <> N'Cancelled') AS dt) AS group_room_type_names, "
+                + "  (SELECT SUM(sb.room_quantity) FROM dbo.Booking sb "
+                + "    WHERE (sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) "
+                + "      AND sb.status <> N'Cancelled') AS total_room_quantity "
                 + "FROM dbo.Booking b "
                 + "LEFT JOIN dbo.RoomType rt ON rt.type_id = b.room_type_id "
                 + "WHERE b.booking_id = ? AND b.account_id = ? AND b.group_booking_id IS NULL";
@@ -320,8 +356,49 @@ public class PaymentDAO {
                         b.setStatus(rs.getString("status"));
                         b.setRoomTypeName(rs.getString("type_name"));
                         b.setOverallTotalAmount(rs.getDouble("overall_total"));
+                        b.setGroupRoomTypeNames(rs.getString("group_room_type_names"));
+                        b.setTotalRoomQuantity(rs.getInt("total_room_quantity"));
                         return b;
                     }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Đơn còn hiệu lực ở cuối chuỗi thay thế bắt đầu từ {@code bookingId}.
+     * <p>
+     * Khi lễ tân duyệt một yêu cầu thay đổi, đơn cũ bị huỷ và một đơn mới ra
+     * đời, nên mã đơn của khách thay đổi. Mã QR đặt cọc ({@code COC<id>}) mà
+     * khách đã lưu vẫn mang id cũ, và tiền chuyển trễ phải chảy về đơn đang
+     * thực sự có hiệu lực chứ không phải đơn đã huỷ. Khách có thể đổi nhiều lần
+     * nên phải đi hết chuỗi.
+     *
+     * @return id đơn đích, hoặc null nếu {@code bookingId} không tồn tại
+     */
+    public Integer resolveActiveBookingId(int bookingId) {
+        // depth < 20 và MAXRECURSION 20 là hai lớp chặn độc lập: nếu dữ liệu
+        // hỏng tạo thành vòng lặp thì truy vấn dừng chứ không treo connection.
+        String sql = "WITH chain AS ("
+                + "    SELECT booking_id, replaced_by_booking_id, 0 AS depth "
+                + "    FROM dbo.Booking WHERE booking_id = ? "
+                + "    UNION ALL "
+                + "    SELECT b.booking_id, b.replaced_by_booking_id, c.depth + 1 "
+                + "    FROM dbo.Booking b "
+                + "    JOIN chain c ON b.booking_id = c.replaced_by_booking_id "
+                + "    WHERE c.depth < 20"
+                + ") "
+                + "SELECT TOP 1 booking_id FROM chain ORDER BY depth DESC "
+                + "OPTION (MAXRECURSION 20)";
+        try (Connection conn = DBContext.getConnection()) {
+            useDatabase(conn);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, bookingId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getInt(1);
                 }
             }
         } catch (Exception e) {

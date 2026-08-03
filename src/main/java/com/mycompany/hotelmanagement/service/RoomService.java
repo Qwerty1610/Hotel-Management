@@ -126,13 +126,6 @@ public class RoomService {
             if (roomRepository.isRoomNumberDuplicate(num, 0)) {
                 return "duplicateNumber";
             }
-            // Check soft-deleted duplicates
-            RoomInfo softDeleted = roomRepository.getSoftDeletedRoomByNumber(num);
-            if (softDeleted != null) {
-                // Restore and update attributes
-                boolean ok = roomRepository.restoreRoom(softDeleted.getRoomId(), room);
-                return ok ? "success" : "error";
-            }
             // Normal insert
             boolean ok = roomRepository.insertRoom(room);
             return ok ? "success" : "error";
@@ -150,11 +143,6 @@ public class RoomService {
 
             // Check active duplicates excluding self
             if (roomRepository.isRoomNumberDuplicate(num, id)) {
-                return "duplicateNumber";
-            }
-            // Check if there is another room with this number that is soft-deleted
-            RoomInfo softDeleted = roomRepository.getSoftDeletedRoomByNumber(num);
-            if (softDeleted != null && softDeleted.getRoomId() != id) {
                 return "duplicateNumber";
             }
             // Normal update

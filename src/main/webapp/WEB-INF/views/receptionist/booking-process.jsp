@@ -782,7 +782,7 @@
                                                             <label>Lý do hủy đặt phòng (Tùy chọn)</label>
                                                             <textarea name="reason" class="modal-textarea"
                                                                       placeholder="Ví dụ: Khách gọi báo hủy..."
-                                                                      maxlength="500"></textarea>
+                                                                      maxlength="500"><c:if test="${param.cancelReason eq 'overdue'}">Đơn đã quá hạn nhận phòng</c:if></textarea>
                                                         </div>
                                                         <button type="submit" class="btn-modal-save"
                                                                 style="width:100%; height:44px; background:#64748b; font-size:14px"

@@ -52,21 +52,10 @@ public class ServiceController extends HttpServlet {
             return;
         }
 
-        if ("delete".equalsIgnoreCase(action) && serviceId != -1) {
-            boolean success = hotelServiceService.deleteService(serviceId);
-            if (success) {
-                response.sendRedirect(request.getContextPath() + "/manager/services?success=deleted");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/manager/services?error=hasUsage");
-            }
-            return;
-        } else if ("toggle".equalsIgnoreCase(action) && serviceId != -1) {
+        if ("toggle".equalsIgnoreCase(action) && serviceId != -1) {
             String statusParam = request.getParameter("status");
             boolean isActive = "true".equalsIgnoreCase(statusParam);
             hotelServiceService.toggleServiceStatus(serviceId, isActive);
-            // Since toggle is called via AJAX fetch, we can just return a redirect or 200
-            // OK.
-            // Redirecting to list path works fine and is consistent.
             response.sendRedirect(request.getContextPath() + "/manager/services");
             return;
         }

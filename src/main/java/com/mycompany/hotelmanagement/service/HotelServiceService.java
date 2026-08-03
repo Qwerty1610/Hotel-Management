@@ -37,20 +37,7 @@ public class HotelServiceService {
      * @return danh sách đối tượng HotelService
      */
     public List<HotelService> getAllServices() {
-        List<HotelService> services = hotelServiceRepository.getAllServices();
-        java.util.Set<Integer> usedIds = hotelServiceRepository.getUsedServiceIds();
-        for (HotelService service : services) {
-            service.setHasUsage(usedIds.contains(service.getServiceId()));
-        }
-        return services;
-    }
-
-    public boolean deleteService(int serviceId) {
-        java.util.Set<Integer> usedIds = hotelServiceRepository.getUsedServiceIds();
-        if (usedIds.contains(serviceId)) {
-            return false;
-        }
-        return hotelServiceRepository.deleteService(serviceId);
+        return hotelServiceRepository.getAllServices();
     }
 
     public boolean toggleServiceStatus(int serviceId, boolean isActive) {

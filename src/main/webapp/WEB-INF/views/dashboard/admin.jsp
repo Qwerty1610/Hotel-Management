@@ -292,8 +292,6 @@
                                                 <th>Khách hàng</th>
                                                 <th>Email</th>
                                                 <th>Số điện thoại</th>
-                                                <th>Hạng thành viên</th>
-                                                <th>Điểm tích lũy</th>
                                                 <th>Trạng thái</th>
                                                 <th>Ngày tạo</th>
                                                 <th style="text-align: right;">Hành động</th>
@@ -303,7 +301,7 @@
                                             <c:choose>
                                                 <c:when test="${empty customerList}">
                                                     <tr>
-                                                        <td colspan="8"
+                                                        <td colspan="6"
                                                             style="text-align: center; color: var(--text-muted); padding: 40px;">
                                                             <i class="fa-solid fa-users-slash"
                                                                 style="font-size: 32px; margin-bottom: 12px; display: block;"></i>
@@ -331,34 +329,6 @@
                                                             </td>
                                                             <td>
                                                                 <c:choose>
-                                                                    <c:when
-                                                                        test="${customer.membershipLevel eq 'VIP'}">
-                                                                        <span class="badge-vip"><i
-                                                                                class="fa-solid fa-crown"></i>
-                                                                            VIP</span>
-                                                                    </c:when>
-                                                                    <c:when
-                                                                        test="${customer.membershipLevel eq 'Gold'}">
-                                                                        <span class="badge-gold"><i
-                                                                                class="fa-solid fa-medal"></i>
-                                                                            Gold</span>
-                                                                    </c:when>
-                                                                    <c:when
-                                                                        test="${customer.membershipLevel eq 'Silver'}">
-                                                                        <span class="badge-silver"><i
-                                                                                class="fa-solid fa-award"></i>
-                                                                            Silver</span>
-                                                                    </c:when>
-                                                                    <c:otherwise>
-                                                                        <span
-                                                                            class="badge-standard">Standard</span>
-                                                                    </c:otherwise>
-                                                                </c:choose>
-                                                            </td>
-                                                            <td style="font-weight: 600;">
-                                                                ${customer.loyaltyPoints}đ</td>
-                                                            <td>
-                                                                <c:choose>
                                                                     <c:when test="${customer.active}">
                                                                         <span
                                                                             class="status-pill status-available"><i
@@ -381,13 +351,6 @@
                                                             <td style="text-align: right;">
                                                                 <div class="table-actions"
                                                                     style="justify-content: flex-end;">
-                                                                    <button class="btn-action edit"
-                                                                        onclick="openEditCustomerModal('${customer.accountId}', '${customer.email}', '${customer.fullName}', '${customer.phone}', '${customer.loyaltyPoints}', '${customer.membershipLevel}')"
-                                                                        title="Chỉnh sửa tài khoản khách hàng">
-                                                                        <i
-                                                                            class="fa-solid fa-pen-to-square"></i>
-                                                                    </button>
-
                                                                     <form
                                                                         action="${pageContext.request.contextPath}/admin/dashboard?action=toggle-customer"
                                                                         method="post"
@@ -589,71 +552,7 @@
             </div>
         </c:if>
 
-        <c:if test="${currentTab eq 'customers'}">
-            <div id="editCustomerModal" class="modal-overlay">
-                <div class="modal-container">
-                    <div class="modal-header">
-                        <h3><i class="fa-solid fa-user-pen"></i> Chỉnh sửa Tài khoản Khách hàng</h3>
-                        <button class="btn-close-modal"
-                            onclick="closeEditCustomerModal()">&times;</button>
-                    </div>
-                    <form
-                        action="${pageContext.request.contextPath}/admin/dashboard?action=update-customer"
-                        method="post">
-                        <input type="hidden" id="editCustomerAccountId" name="accountId" />
-                        <div class="modal-body">
-                            <div class="modal-form-group">
-                                <label for="editCustomerFullName">Họ và Tên <span
-                                        style="color:#ef4444;">*</span></label>
-                                <input type="text" id="editCustomerFullName" name="fullName"
-                                    class="modal-input" required />
-                            </div>
-                            <div class="modal-form-group">
-                                <label for="editCustomerEmail">Địa chỉ Email <span
-                                        style="color:#ef4444;">*</span></label>
-                                <input type="email" id="editCustomerEmail" name="email"
-                                    class="modal-input" required />
-                                <span class="validation-msg" id="editCustomerEmail-validation-msg"
-                                    style="color: #ef4444; font-size: 12.5px; margin-top: 5px; font-weight: 500; display: none;"></span>
-                            </div>
-                            <div class="modal-form-group">
-                                <label for="editCustomerPhone">Số điện thoại</label>
-                                <input type="tel" id="editCustomerPhone" name="phone"
-                                    class="modal-input" placeholder="Ví dụ: 0912345678"
-                                    pattern="^0[35789][0-9]{8}$"
-                                    title="Số điện thoại phải bắt đầu bằng số 0, theo sau là đầu số 3, 5, 7, 8, 9 và có đúng 10 chữ số" />
-                                <span class="validation-msg" id="editCustomerPhone-validation-msg"
-                                    style="color: #ef4444; font-size: 12.5px; margin-top: 5px; font-weight: 500; display: none;"></span>
-                            </div>
-                            <div class="modal-grid-2">
-                                <div class="modal-form-group">
-                                    <label for="editCustomerMembership">Hạng thành viên <span
-                                            style="color:#ef4444;">*</span></label>
-                                    <select id="editCustomerMembership" name="membershipLevel"
-                                        class="modal-select" required>
-                                        <option value="Standard">Standard</option>
-                                        <option value="Silver">Silver</option>
-                                        <option value="Gold">Gold</option>
-                                        <option value="VIP">VIP</option>
-                                    </select>
-                                </div>
-                                <div class="modal-form-group">
-                                    <label for="editCustomerLoyaltyPoints">Điểm tích lũy <span
-                                            style="color:#ef4444;">*</span></label>
-                                    <input type="number" id="editCustomerLoyaltyPoints"
-                                        name="loyaltyPoints" class="modal-input" min="0" required />
-                                </div>
-                            </div>
-                            <div class="modal-footer-row">
-                                <button type="button" class="btn-modal-cancel"
-                                    onclick="closeEditCustomerModal()">Hủy bỏ</button>
-                                <button type="submit" class="btn-modal-submit">Lưu thay đổi</button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </c:if>
+
 
         <div id="customConfirmModal" class="modal-overlay">
             <div class="modal-container" style="max-width: 440px;">
@@ -822,7 +721,7 @@
                     if (modal) modal.style.display = 'none';
                 }
 
-                function openEditCustomerModal(id, email, name, phone, loyaltyPoints, membershipLevel) {
+                function openEditCustomerModal(id, email, name, phone) {
                     const modal = document.getElementById('editCustomerModal');
                     if (!modal) return;
                     document.getElementById('editCustomerAccountId').value = id;
@@ -834,8 +733,6 @@
                         displayPhone = '';
                     }
                     document.getElementById('editCustomerPhone').value = displayPhone;
-                    document.getElementById('editCustomerLoyaltyPoints').value = loyaltyPoints;
-                    document.getElementById('editCustomerMembership').value = membershipLevel;
                     modal.style.display = 'flex';
                 }
                 function closeEditCustomerModal() {
@@ -1161,17 +1058,11 @@
 
                                 const name = document.getElementById('editCustomerFullName').value.trim();
                                 const email = document.getElementById('editCustomerEmail').value.trim();
-                                const points = parseInt(document.getElementById('editCustomerLoyaltyPoints').value) || 0;
                                 const phoneField = document.getElementById('editCustomerPhone');
 
                                 if (!name || !email) {
                                     e.preventDefault();
                                     alert('Vui lòng điền đầy đủ Họ tên và Email.');
-                                    return;
-                                }
-                                if (points < 0) {
-                                    e.preventDefault();
-                                    alert('Điểm tích lũy không được nhỏ hơn 0.');
                                     return;
                                 }
                                 if (!validatePhoneField(phoneField)) {

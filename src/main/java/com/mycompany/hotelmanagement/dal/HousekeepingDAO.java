@@ -37,7 +37,6 @@ public class HousekeepingDAO {
     FROM Room r
     JOIN RoomType rt ON r.type_id = rt.type_id
     LEFT JOIN RoomImage ri ON ri.type_id = rt.type_id
-    WHERE r.is_deleted = 0
 """;
 
         try (
@@ -131,9 +130,8 @@ public class HousekeepingDAO {
         FROM Room r
         JOIN RoomType rt 
              ON r.type_id = rt.type_id
-        WHERE r.status IN (%s)
-          AND r.is_deleted = 0
-        """.formatted(placeholders);
+         WHERE r.status IN (%s)
+         """.formatted(placeholders);
 
         try (
                 Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
@@ -164,7 +162,18 @@ public class HousekeepingDAO {
     // =========================
     // UPDATE STATUS
     // =========================
+    /**
+     * Housekeeping chỉ được phép đổi status phòng qua các trạng thái vận
+     * hành bình thường (Cleaning/Refilling/Available). Nếu phòng đang ở
+     * Maintenance (bảo trì), housekeeping KHÔNG được tự đổi sang status khác
+     * — chỉ Manager mới có quyền đưa phòng ra khỏi Maintenance (qua
+     * RoomDAO/RoomService riêng của Manager, không dùng method này).
+     */
     public boolean updateRoomStatus(int roomId, String status) {
+
+        if ("Maintenance".equals(getCurrentRoomStatus(roomId)) && !"Maintenance".equals(status)) {
+            return false;
+        }
 
         String sql = """
         UPDATE Room
@@ -185,6 +194,23 @@ public class HousekeepingDAO {
         }
 
         return false;
+    }
+
+    private String getCurrentRoomStatus(int roomId) {
+        String sql = "SELECT status FROM Room WHERE room_id = ?";
+        try (
+                Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, roomId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("status");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     // =========================
@@ -222,7 +248,7 @@ public class HousekeepingDAO {
             }
         }
 
-        sql.append(") AND is_deleted = 0");
+        sql.append(")");
 
         try (
                 Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql.toString())) {
@@ -256,7 +282,7 @@ SELECT r.room_id,
 FROM Room r
 JOIN RoomType rt ON r.type_id = rt.type_id
 LEFT JOIN RoomImage ri ON ri.type_id = rt.type_id
-WHERE r.room_id = ? AND r.is_deleted = 0
+WHERE r.room_id = ?
 """;
 
         try (
@@ -284,6 +310,14 @@ WHERE r.room_id = ? AND r.is_deleted = 0
     }
 
     public boolean refreshRoomStatusByPendingIssues(int roomId) {
+
+        // Phòng đang Maintenance (bảo trì) thì dù xử lý xong hết các sự cố đã
+        // report, status vẫn PHẢI giữ nguyên Maintenance — không tự động rơi
+        // về Available/Cleaning/Refilling. Chỉ Manager mới được đổi Maintenance
+        // sang trạng thái khác (qua trang quản lý phòng riêng của Manager).
+        if ("Maintenance".equals(getCurrentRoomStatus(roomId))) {
+            return true;
+        }
 
         String getIssueSql = """
         SELECT TOP 1

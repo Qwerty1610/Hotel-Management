@@ -103,9 +103,16 @@ public class PromotionService {
     }
 
     /**
-     * Xác thực mã khuyến mãi và tính toán số tiền giảm.
+     * Xác thực mã khuyến mãi và tính toán số tiền giảm (không kiểm tra tài khoản).
      */
     public PromotionResult validateAndCalculateDiscount(String code, double totalBookingAmount) {
+        return validateAndCalculateDiscount(code, totalBookingAmount, null);
+    }
+
+    /**
+     * Xác thực mã khuyến mãi, tính toán số tiền giảm và kiểm tra giới hạn 1 lần/người dùng đối với tài khoản accountId.
+     */
+    public PromotionResult validateAndCalculateDiscount(String code, double totalBookingAmount, Integer accountId) {
         if (code == null || code.trim().isEmpty()) {
             return new PromotionResult(false, "Vui lòng nhập mã khuyến mãi.", 0, null);
         }
@@ -135,6 +142,13 @@ public class PromotionService {
 
         if (p.getMinBookingAmount() != null && totalBookingAmount < p.getMinBookingAmount().doubleValue()) {
             return new PromotionResult(false, "Đơn đặt phòng không đạt giá trị tối thiểu để áp dụng mã này.", 0, p);
+        }
+
+        // Kiểm tra xem tài khoản này đã từng áp dụng mã này ở đơn đặt phòng khác hay chưa
+        if (accountId != null && accountId > 0) {
+            if (promotionRepository.hasUserUsedPromotion(accountId, p.getPromotionId())) {
+                return new PromotionResult(false, "Bạn đã sử dụng mã khuyến mãi này cho một đơn đặt phòng khác.", 0, p);
+            }
         }
 
         double discountAmount = calculateDiscountAmount(p, totalBookingAmount);

@@ -3,6 +3,8 @@ package com.mycompany.hotelmanagement.entity;
 import java.io.Serializable;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A customer-initiated request against an existing booking. Covers two use
@@ -35,6 +37,14 @@ public class BookingRequest implements Serializable {
     private String status;
     private Timestamp createdAt;
 
+    /**
+     * Đơn được sinh ra khi yêu cầu thay đổi này được duyệt. Luồng thay đổi
+     * không sửa đơn tại chỗ mà tạo đơn mới rồi huỷ đơn cũ, nên mã đơn của khách
+     * thay đổi — cả khách lẫn lễ tân cần thấy "#cũ → #mới". Null với yêu cầu
+     * gia hạn lưu trú (sửa tại chỗ) và với yêu cầu chưa được duyệt.
+     */
+    private Integer newBookingId;
+
     // Display-only fields (joined for the tracking list)
     private String newRoomTypeName;
     private String currentRoomTypeName;
@@ -42,6 +52,12 @@ public class BookingRequest implements Serializable {
     // Display-only fields for the staff processing list (UC 2.4.5 Process Booking Change)
     private String customerName;
     private String bookingStatus;
+
+    /**
+     * Các thao tác trên từng dòng phòng của nhóm (xem {@link BookingRequestItem}).
+     * Yêu cầu Change luôn có ít nhất 1 item; yêu cầu Extension không dùng tới.
+     */
+    private List<BookingRequestItem> items = new ArrayList<>();
 
     public int getRequestId() { return requestId; }
     public void setRequestId(int requestId) { this.requestId = requestId; }
@@ -85,6 +101,9 @@ public class BookingRequest implements Serializable {
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
 
+    public Integer getNewBookingId() { return newBookingId; }
+    public void setNewBookingId(Integer newBookingId) { this.newBookingId = newBookingId; }
+
     public String getNewRoomTypeName() { return newRoomTypeName; }
     public void setNewRoomTypeName(String newRoomTypeName) { this.newRoomTypeName = newRoomTypeName; }
 
@@ -96,6 +115,11 @@ public class BookingRequest implements Serializable {
 
     public String getBookingStatus() { return bookingStatus; }
     public void setBookingStatus(String bookingStatus) { this.bookingStatus = bookingStatus; }
+
+    public List<BookingRequestItem> getItems() { return items; }
+    public void setItems(List<BookingRequestItem> items) {
+        this.items = items != null ? items : new ArrayList<>();
+    }
 
     public boolean isExtension() { return TYPE_EXTENSION.equalsIgnoreCase(requestType); }
     public boolean isChange() { return TYPE_CHANGE.equalsIgnoreCase(requestType); }

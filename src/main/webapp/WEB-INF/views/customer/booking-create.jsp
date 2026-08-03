@@ -550,6 +550,8 @@
             const container = document.getElementById('multiRoomRowsContainer');
             const rows = container.querySelectorAll('.room-row');
             
+            let selectedRoomTypes = new Set();
+            
             for (let i = 0; i < rows.length; i++) {
                 const row = rows[i];
                 const roomSelect = row.querySelector('select[name="roomTypeId[]"]');
@@ -557,12 +559,20 @@
                 const guestInput = row.querySelector('input[name="guestCount[]"]');
                 
                 if (roomSelect && qtyInput && guestInput) {
+                    const selectedTypeId = roomSelect.value;
                     const selectedOpt = roomSelect.options[roomSelect.selectedIndex];
                     const capacity = parseInt(selectedOpt.getAttribute('data-capacity')) || 2;
                     const qty = parseInt(qtyInput.value) || 0;
                     const guests = parseInt(guestInput.value) || 0;
                     const totalCapacity = capacity * qty;
                     const roomTypeName = selectedOpt.text.split('(')[0].trim();
+                    
+                    if (selectedRoomTypes.has(selectedTypeId)) {
+                        isValid = false;
+                        errorMsg = 'Loại phòng "' + roomTypeName + '" đã được chọn. Vui lòng tăng "Số lượng" thay vì thêm một dòng mới.';
+                        break;
+                    }
+                    selectedRoomTypes.add(selectedTypeId);
                     
                     if (qty <= 0) {
                         isValid = false;

@@ -53,17 +53,12 @@ public class AccountDAO {
         return null;
     }
 
-    /**
-     * Load the full personal profile of one account (any role). For Customer
-     * accounts the loyalty fields are populated via the LEFT JOIN; for other
-     * roles they remain at their defaults.
-     */
+    /** Load the full personal profile of one account (any role). */
     public ProfileView getProfileByAccountId(int accountId) {
         String sql = "SELECT a.account_id, a.email, a.full_name, a.phone, a.is_active, a.created_at, " +
-                     "       r.role_name, c.loyalty_points, c.membership_level " +
+                     "       r.role_name " +
                      "FROM Account a " +
                      "JOIN Role r ON a.role_id = r.role_id " +
-                     "LEFT JOIN Customer c ON a.account_id = c.account_id " +
                      "WHERE a.account_id = ?";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -78,13 +73,7 @@ public class AccountDAO {
                     p.setActive(rs.getBoolean("is_active"));
                     p.setCreatedAt(rs.getTimestamp("created_at"));
                     p.setRoleName(rs.getString("role_name"));
-                    String membership = rs.getString("membership_level");
-                    boolean isCustomer = "Customer".equalsIgnoreCase(rs.getString("role_name"));
-                    p.setCustomer(isCustomer);
-                    if (membership != null) {
-                        p.setMembershipLevel(membership);
-                        p.setLoyaltyPoints(rs.getInt("loyalty_points"));
-                    }
+                    p.setCustomer("Customer".equalsIgnoreCase(rs.getString("role_name")));
                     return p;
                 }
             }
@@ -259,7 +248,7 @@ public class AccountDAO {
      */
     public boolean registerCustomer(String email, String passwordHash, String fullName, String phone, int roleId) {
         String insertAccountSql = "INSERT INTO Account (email, password, full_name, phone, role_id, is_active, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)";
-        String insertCustomerSql = "INSERT INTO Customer (account_id, loyalty_points, membership_level) VALUES (?, 0, 'Standard')";
+        String insertCustomerSql = "INSERT INTO Customer (account_id) VALUES (?)";
         
         Connection conn = null;
         PreparedStatement insertAccountPs = null;
@@ -354,17 +343,15 @@ public class AccountDAO {
     }
 
     /**
-     * Lấy danh sách tất cả tài khoản khách hàng kèm thông tin điểm tích lũy và hạng thành viên.
-     * 
+     * Lấy danh sách tất cả tài khoản khách hàng.
+     *
      * @return Danh sách đối tượng CustomerInfo
      */
     public List<CustomerInfo> getAllCustomerAccounts() {
         List<CustomerInfo> list = new ArrayList<>();
-        String sql = "SELECT a.account_id, a.email, a.full_name, a.phone, a.is_active, a.created_at, " +
-                     "       c.loyalty_points, c.membership_level " +
+        String sql = "SELECT a.account_id, a.email, a.full_name, a.phone, a.is_active, a.created_at " +
                      "FROM Account a " +
                      "JOIN Role r ON a.role_id = r.role_id " +
-                     "LEFT JOIN Customer c ON a.account_id = c.account_id " +
                      "WHERE r.role_name = 'Customer' " +
                      "ORDER BY a.account_id DESC";
         try (Connection conn = DBContext.getConnection();
@@ -378,46 +365,12 @@ public class AccountDAO {
                 customer.setPhone(rs.getString("phone"));
                 customer.setActive(rs.getBoolean("is_active"));
                 customer.setCreatedAt(rs.getTimestamp("created_at"));
-                customer.setLoyaltyPoints(rs.getInt("loyalty_points"));
-                customer.setMembershipLevel(rs.getString("membership_level"));
                 list.add(customer);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
         return list;
-    }
-
-    /**
-     * Lấy thông tin tài khoản khách hàng theo account_id.
-     */
-    public CustomerInfo getCustomerByAccountId(int accountId) {
-        String sql = "SELECT a.account_id, a.email, a.full_name, a.phone, a.is_active, a.created_at, " +
-                     "       c.loyalty_points, c.membership_level " +
-                     "FROM Account a " +
-                     "LEFT JOIN Customer c ON a.account_id = c.account_id " +
-                     "WHERE a.account_id = ?";
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, accountId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    CustomerInfo customer = new CustomerInfo();
-                    customer.setAccountId(rs.getInt("account_id"));
-                    customer.setEmail(rs.getString("email"));
-                    customer.setFullName(rs.getString("full_name"));
-                    customer.setPhone(rs.getString("phone"));
-                    customer.setActive(rs.getBoolean("is_active"));
-                    customer.setCreatedAt(rs.getTimestamp("created_at"));
-                    customer.setLoyaltyPoints(rs.getInt("loyalty_points"));
-                    customer.setMembershipLevel(rs.getString("membership_level"));
-                    return customer;
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     /**
@@ -531,18 +484,16 @@ public class AccountDAO {
     }
 
     /**
-     * Cập nhật thông tin tài khoản khách hàng (bảng Account và Customer trong 1 Transaction).
-     * 
+     * Cập nhật thông tin tài khoản khách hàng (bảng Account).
+     *
      * @param accountId ID tài khoản
      * @param email Email mới
      * @param fullName Họ tên mới
      * @param phone Số điện thoại mới
-     * @param loyaltyPoints Điểm tích lũy mới
-     * @param membershipLevel Hạng thành viên mới
      * @param passwordHash Mật khẩu mới đã băm (hoặc null/rỗng nếu không đổi)
      * @return true nếu cập nhật thành công, false nếu thất bại
      */
-    public boolean updateCustomerAccount(int accountId, String email, String fullName, String phone, int loyaltyPoints, String membershipLevel, String passwordHash) {
+    public boolean updateCustomerAccount(int accountId, String email, String fullName, String phone, String passwordHash) {
         String updateAccountSql;
         boolean hasPassword = passwordHash != null && !passwordHash.isEmpty();
         if (hasPassword) {
@@ -550,18 +501,10 @@ public class AccountDAO {
         } else {
             updateAccountSql = "UPDATE Account SET email = ?, full_name = ?, phone = ? WHERE account_id = ?";
         }
-        
-        String updateCustomerSql = "UPDATE Customer SET loyalty_points = ?, membership_level = ? WHERE account_id = ?";
-        
-        Connection conn = null;
-        PreparedStatement accountPs = null;
-        PreparedStatement customerPs = null;
-        
-        try {
-            conn = DBContext.getConnection();
-            conn.setAutoCommit(false);
-            
-            accountPs = conn.prepareStatement(updateAccountSql);
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement accountPs = conn.prepareStatement(updateAccountSql)) {
+
             accountPs.setString(1, email);
             accountPs.setString(2, fullName);
             accountPs.setString(3, phone);
@@ -571,43 +514,10 @@ public class AccountDAO {
             } else {
                 accountPs.setInt(4, accountId);
             }
-            accountPs.executeUpdate();
-            
-            customerPs = conn.prepareStatement(updateCustomerSql);
-            customerPs.setInt(1, loyaltyPoints);
-            customerPs.setString(2, membershipLevel);
-            customerPs.setInt(3, accountId);
-            int affected = customerPs.executeUpdate();
-            if (affected == 0) {
-                try (PreparedStatement insertPs = conn.prepareStatement(
-                        "INSERT INTO Customer (account_id, loyalty_points, membership_level) VALUES (?, ?, ?)")) {
-                    insertPs.setInt(1, accountId);
-                    insertPs.setInt(2, loyaltyPoints);
-                    insertPs.setString(3, membershipLevel);
-                    insertPs.executeUpdate();
-                }
-            }
-            
-            conn.commit();
-            return true;
+            return accountPs.executeUpdate() > 0;
         } catch (Exception e) {
-            if (conn != null) {
-                try {
-                    conn.rollback();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
             e.printStackTrace();
             return false;
-        } finally {
-            try {
-                if (accountPs != null) accountPs.close();
-                if (customerPs != null) customerPs.close();
-                if (conn != null) conn.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
         }
     }
 

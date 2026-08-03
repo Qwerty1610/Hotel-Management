@@ -1,4 +1,4 @@
-﻿-- =====================================================================
+-- =====================================================================
 -- Script: insert_mock_checkout_10.sql
 -- Muc dich: Them 10 booking CheckedOut hoan chinh cho account
 --           customer@hotel.com de test chuc nang Feedback (UC-35).
@@ -41,7 +41,7 @@ BEGIN
     RETURN;
 END
 
--- Bang tam: danh sach phong (lay 10 phong khac nhau, is_deleted = 0)
+-- Bang tam: danh sach phong (lay 10 phong khac nhau)
 DECLARE @Rooms TABLE (
     idx         INT IDENTITY(1,1),
     room_id     INT,
@@ -58,7 +58,6 @@ SELECT TOP 10
     rt.base_price
 FROM dbo.Room r
 JOIN dbo.RoomType rt ON r.type_id = rt.type_id
-WHERE r.is_deleted = 0
 ORDER BY r.room_id;
 
 -- Vong lap them 10 booking

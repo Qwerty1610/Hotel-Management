@@ -48,6 +48,9 @@ public class ManagerInvoiceController extends HttpServlet {
                     return;
                 }
                 request.setAttribute("invoice", invoice);
+                // Hai thao tác "thêm phụ phí" / "khoản cần hoàn" mở tới khi khách trả
+                // phòng, không đóng lại ngay khi hóa đơn chuyển Paid.
+                request.setAttribute("invoiceOpen", service.isInvoiceOpen(id));
                 request.setAttribute("items", service.getItems(id));
                 request.setAttribute("refunds", service.getRefunds(id));
                 request.setAttribute("pendingRefunds", service.getPendingRefunds(id));
@@ -64,22 +67,26 @@ public class ManagerInvoiceController extends HttpServlet {
         String keyword = request.getParameter("q");
         String status = request.getParameter("status");
         if (status == null || status.trim().isEmpty()) status = "all";
+        // Tình trạng lưu trú: all | open (khách chưa trả phòng) | closed (đã trả phòng)
+        String stay = request.getParameter("stay");
+        if (stay == null || stay.trim().isEmpty()) stay = "all";
 
         final int pageSize = 8;
         int page = parseIntOr(request.getParameter("page"), 1);
         if (page < 1) page = 1;
 
-        int totalItems = service.countInvoices(keyword, status);
+        int totalItems = service.countInvoices(keyword, status, stay);
         int totalPages = (int) Math.ceil(totalItems / (double) pageSize);
         if (totalPages < 1) totalPages = 1;
         if (page > totalPages) page = totalPages;
         int offset = (page - 1) * pageSize;
 
-        request.setAttribute("invoices", service.getInvoices(keyword, status, offset, pageSize));
+        request.setAttribute("invoices", service.getInvoices(keyword, status, stay, offset, pageSize));
         request.setAttribute("unpaidTotal", service.getUnpaidTotal());
         request.setAttribute("refundingTotal", service.getRefundingTotal());
         request.setAttribute("q", keyword == null ? "" : keyword);
         request.setAttribute("statusFilter", status);
+        request.setAttribute("stayFilter", stay);
         request.setAttribute("page", page);
         request.setAttribute("totalPages", totalPages);
         request.setAttribute("totalItems", totalItems);

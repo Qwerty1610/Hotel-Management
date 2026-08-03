@@ -5,8 +5,7 @@ import java.sql.Timestamp;
 
 /**
  * Read-only view model representing the personal profile of the currently
- * logged-in user (any role). For Customer accounts it also carries the
- * loyalty information; for other roles those fields stay null/zero.
+ * logged-in user (any role).
  */
 public class ProfileView implements Serializable {
     private int accountId;
@@ -16,11 +15,7 @@ public class ProfileView implements Serializable {
     private String roleName;
     private boolean active;
     private Timestamp createdAt;
-
-    // Customer-only fields (null/0 for staff & admin accounts)
     private boolean customer;
-    private int loyaltyPoints;
-    private String membershipLevel;
 
     public int getAccountId() {
         return accountId;
@@ -84,21 +79,5 @@ public class ProfileView implements Serializable {
 
     public void setCustomer(boolean customer) {
         this.customer = customer;
-    }
-
-    public int getLoyaltyPoints() {
-        return loyaltyPoints;
-    }
-
-    public void setLoyaltyPoints(int loyaltyPoints) {
-        this.loyaltyPoints = loyaltyPoints;
-    }
-
-    public String getMembershipLevel() {
-        return membershipLevel;
-    }
-
-    public void setMembershipLevel(String membershipLevel) {
-        this.membershipLevel = membershipLevel;
     }
 }

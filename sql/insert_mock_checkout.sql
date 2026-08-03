@@ -24,8 +24,7 @@ SELECT TOP 1
     @RoomId = room_id, 
     @RoomNumber = room_number, 
     @RoomTypeId = type_id
-FROM dbo.Room 
-WHERE is_deleted = 0;
+FROM dbo.Room;
 
 -- 2. Thêm đơn Booking với trạng thái CheckedOut (đã trả phòng)
 INSERT INTO dbo.Booking (

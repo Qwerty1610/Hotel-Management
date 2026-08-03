@@ -34,6 +34,87 @@ import com.mycompany.hotelmanagement.entity.RoomInfo;
  */
 public class RoomDAO {
 
+    // -------------------------------------------------------------------------
+    // SQL Fragments — tái sử dụng giữa các method truy vấn phòng
+    // -------------------------------------------------------------------------
+
+    /**
+     * Tính display_status theo khoảng ngày (fromDate, toDate).
+     * Params: ? = toDate, ? = fromDate (CheckedIn), ? = toDate, ? = fromDate (Confirmed)
+     */
+    private static final String SQL_DISPLAY_STATUS_BY_RANGE = """
+        CASE
+            WHEN r.status IN ('OutOfService', 'Maintenance', 'Cleaning', 'Refilling') THEN r.status
+            WHEN EXISTS (
+                SELECT 1 FROM RoomAssignment ra
+                JOIN Booking b ON ra.booking_id = b.booking_id
+                WHERE ra.room_id = r.room_id
+                  AND b.status = 'CheckedIn'
+                  AND b.check_in_date < ? AND b.check_out_date > ?
+            ) THEN 'Occupied'
+            WHEN EXISTS (
+                SELECT 1 FROM RoomAssignment ra
+                JOIN Booking b ON ra.booking_id = b.booking_id
+                WHERE ra.room_id = r.room_id
+                  AND b.status = 'Confirmed'
+                  AND b.check_in_date < ? AND b.check_out_date > ?
+            ) THEN 'Confirmed'
+            ELSE 'Available'
+        END AS display_status
+        """;
+
+    /**
+     * Kiểm tra phòng có khách đang check-in ngay hôm nay không (0/1).
+     * Không cần tham số động (dùng SYSDATETIME()).
+     */
+    private static final String SQL_CURRENTLY_OCCUPIED_FLAG = """
+        CASE
+            WHEN EXISTS (
+                SELECT 1 FROM RoomAssignment ra
+                JOIN Booking b ON ra.booking_id = b.booking_id
+                WHERE ra.room_id = r.room_id
+                  AND b.status = 'CheckedIn'
+                  AND CAST(SYSDATETIME() AS DATE) >= b.check_in_date
+                  AND CAST(SYSDATETIME() AS DATE) < b.check_out_date
+            ) THEN 1
+            ELSE 0
+        END AS currently_occupied
+        """;
+
+    /**
+     * Kiểm tra phòng có booking còn hiệu lực (Confirmed/CheckedIn) trong tương lai (0/1).
+     * Không cần tham số động.
+     */
+    private static final String SQL_HAS_ACTIVE_BOOKING_FLAG = """
+        CASE
+            WHEN EXISTS (
+                SELECT 1 FROM RoomAssignment ra
+                JOIN Booking b ON ra.booking_id = b.booking_id
+                WHERE ra.room_id = r.room_id
+                  AND b.status IN ('Confirmed', 'CheckedIn')
+                  AND b.check_out_date > CAST(SYSDATETIME() AS DATE)
+            ) THEN 1
+            ELSE 0
+        END AS has_active_or_future_booking
+        """;
+
+    /**
+     * Đếm số booking overlap trong khoảng (fromDate, toDate).
+     * Params: ? = toDate, ? = fromDate
+     */
+    private static final String SQL_OVERLAPPING_BOOKING_COUNT = """
+        (
+            SELECT COUNT(*)
+            FROM RoomAssignment ra
+            JOIN Booking b ON ra.booking_id = b.booking_id
+            WHERE ra.room_id = r.room_id
+              AND b.status IN ('Confirmed', 'CheckedIn')
+              AND b.check_in_date < ? AND b.check_out_date > ?
+        ) AS overlapping_booking_count
+        """;
+
+    // -------------------------------------------------------------------------
+
     private void useDatabase(Connection conn) {
         try (Statement stmt = conn.createStatement()) {
             stmt.execute("USE HotelManagementDB");
@@ -50,115 +131,46 @@ public class RoomDAO {
 
     public List<RoomInfo> getRoomsByDateRange(java.sql.Date fromDate, java.sql.Date toDate) {
         List<RoomInfo> list = new ArrayList<>();
-        String sql = """
-            SELECT 
-                r.room_id,
-                r.room_number,
-                r.type_id,
-                r.status AS operational_status,
-                r.floor,
-                rt.type_name,
-                rt.base_price,
-                rt.bed_type,
-                rt.area,
-                CASE 
-                    WHEN r.status IN ('OutOfService', 'Maintenance') THEN r.status
-                    WHEN EXISTS (
-                        SELECT 1 
-                        FROM RoomAssignment ra
-                        JOIN Booking b ON ra.booking_id = b.booking_id
-                        WHERE ra.room_id = r.room_id
-                          AND b.status = 'CheckedIn'
-                          AND b.check_in_date < ?
-                          AND b.check_out_date > ?
-                    ) THEN 'Occupied'
-                    WHEN EXISTS (
-                        SELECT 1 
-                        FROM RoomAssignment ra
-                        JOIN Booking b ON ra.booking_id = b.booking_id
-                        WHERE ra.room_id = r.room_id
-                          AND b.status = 'Confirmed'
-                          AND b.check_in_date < ?
-                          AND b.check_out_date > ?
-                    ) THEN 'Confirmed'
-                    WHEN r.status IN ('Cleaning', 'Refilling') THEN r.status
-                    ELSE 'Available'
-                END AS display_status,
-                CASE 
-                    WHEN EXISTS (
-                        SELECT 1 
-                        FROM RoomAssignment ra
-                        JOIN Booking b ON ra.booking_id = b.booking_id
-                        WHERE ra.room_id = r.room_id
-                          AND b.status = 'CheckedIn'
-                          AND CAST(SYSDATETIME() AS DATE) >= b.check_in_date
-                          AND CAST(SYSDATETIME() AS DATE) < b.check_out_date
-                    ) THEN 1
-                    ELSE 0
-                END AS currently_occupied,
-                CASE 
-                    WHEN EXISTS (
-                        SELECT 1 
-                        FROM RoomAssignment ra
-                        JOIN Booking b ON ra.booking_id = b.booking_id
-                        WHERE ra.room_id = r.room_id
-                          AND b.status IN ('Confirmed', 'CheckedIn')
-                          AND b.check_out_date > CAST(SYSDATETIME() AS DATE)
-                    ) THEN 1
-                    ELSE 0
-                END AS has_active_or_future_booking,
-                (
-                    SELECT COUNT(*)
-                    FROM RoomAssignment ra
-                    JOIN Booking b ON ra.booking_id = b.booking_id
-                    WHERE ra.room_id = r.room_id
-                      AND b.status IN ('Confirmed', 'CheckedIn')
-                      AND b.check_in_date < ?
-                      AND b.check_out_date > ?
-                ) AS overlapping_booking_count
-            FROM Room r
-            JOIN RoomType rt ON r.type_id = rt.type_id
-            WHERE r.is_deleted = 0
-            ORDER BY TRY_CAST(REPLACE(r.floor, N'Tầng ', '') AS INT), r.room_number
-            """;
 
-        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        // Ghép SQL từ các fragment riêng — xem khai báo private static final ở đầu class
+        String sql = "SELECT"
+                + "  r.room_id, r.room_number, r.type_id,"
+                + "  r.status AS operational_status, r.floor,"
+                + "  rt.type_name, rt.base_price, rt.bed_type, rt.area,"
+                + SQL_DISPLAY_STATUS_BY_RANGE + ","
+                + SQL_CURRENTLY_OCCUPIED_FLAG + ","
+                + SQL_HAS_ACTIVE_BOOKING_FLAG + ","
+                + SQL_OVERLAPPING_BOOKING_COUNT
+                + " FROM Room r"
+                + " JOIN RoomType rt ON r.type_id = rt.type_id"
+                + " ORDER BY TRY_CAST(REPLACE(r.floor, N'Tầng ', '') AS INT), r.room_number";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
             useDatabase(conn);
+            // display_status: CheckedIn (toDate, fromDate), Confirmed (toDate, fromDate)
             ps.setDate(1, toDate);
             ps.setDate(2, fromDate);
             ps.setDate(3, toDate);
             ps.setDate(4, fromDate);
+            // overlapping_booking_count: (toDate, fromDate)
             ps.setDate(5, toDate);
             ps.setDate(6, fromDate);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    RoomInfo room = new RoomInfo();
-                    room.setRoomId(rs.getInt("room_id"));
-                    room.setRoomNumber(rs.getString("room_number"));
-                    room.setTypeId(rs.getInt("type_id"));
-                    String opStatus = rs.getString("operational_status");
-                    String dispStatus = rs.getString("display_status");
+                    RoomInfo room = mapRoomFromResultSet(rs);
                     int overlapCount = rs.getInt("overlapping_booking_count");
+                    String opStatus = room.getOperationalStatus();
 
-                    room.setStatus(opStatus);
-                    room.setOperationalStatus(opStatus);
-                    room.setDisplayStatus(dispStatus);
-                    room.setCurrentlyOccupied(rs.getInt("currently_occupied") == 1);
-                    room.setHasActiveOrFutureBooking(rs.getInt("has_active_or_future_booking") == 1);
-                    room.setFloor(rs.getString("floor"));
-                    room.setTypeName(rs.getString("type_name"));
-                    room.setBasePrice(rs.getDouble("base_price"));
-                    room.setBedType(rs.getString("bed_type"));
-                    room.setArea(rs.getString("area"));
-
-                    if (("Maintenance".equalsIgnoreCase(opStatus) || "OutOfService".equalsIgnoreCase(opStatus)) && overlapCount > 0) {
+                    if (("Maintenance".equalsIgnoreCase(opStatus) || "OutOfService".equalsIgnoreCase(opStatus))
+                            && overlapCount > 0) {
                         LOGGER.warning(String.format(
-                            "DATA CONFLICT WARNING: Room %s (ID: %d, Operational Status: %s) has %d overlapping booking(s) between %s and %s",
-                            room.getRoomNumber(), room.getRoomId(), opStatus, overlapCount, fromDate.toString(), toDate.toString()
-                        ));
+                                "DATA CONFLICT WARNING: Room %s (ID: %d, Status: %s) has %d overlapping booking(s) [%s -> %s]",
+                                room.getRoomNumber(), room.getRoomId(), opStatus,
+                                overlapCount, fromDate, toDate));
                     }
-
                     list.add(room);
                 }
             }
@@ -168,9 +180,92 @@ public class RoomDAO {
         return list;
     }
 
+    /**
+     * Ánh xạ một hàng ResultSet sang đối tượng RoomInfo.
+     * Dùng chung cho getRoomsByDateRange và các query trả về cùng cột cơ bản.
+     */
+    private RoomInfo mapRoomFromResultSet(ResultSet rs) throws SQLException {
+        RoomInfo room = new RoomInfo();
+        room.setRoomId(rs.getInt("room_id"));
+        room.setRoomNumber(rs.getString("room_number"));
+        room.setTypeId(rs.getInt("type_id"));
+
+        String opStatus = rs.getString("operational_status");
+        room.setStatus(opStatus);
+        room.setOperationalStatus(opStatus);
+        room.setDisplayStatus(rs.getString("display_status"));
+        room.setFloor(rs.getString("floor"));
+        room.setTypeName(rs.getString("type_name"));
+        room.setBasePrice(rs.getDouble("base_price"));
+        room.setBedType(rs.getString("bed_type"));
+        room.setArea(rs.getString("area"));
+
+        // Các cột tuỳ chọn — chỉ set nếu tồn tại trong ResultSet
+        trySetCurrentlyOccupied(room, rs);
+        trySetHasActiveBooking(room, rs);
+        trySetImageUrl(room, rs);
+        return room;
+    }
+
+    private void trySetCurrentlyOccupied(RoomInfo room, ResultSet rs) {
+        try { room.setCurrentlyOccupied(rs.getInt("currently_occupied") == 1); }
+        catch (SQLException ignored) { }
+    }
+
+    private void trySetHasActiveBooking(RoomInfo room, ResultSet rs) {
+        try { room.setHasActiveOrFutureBooking(rs.getInt("has_active_or_future_booking") == 1); }
+        catch (SQLException ignored) { }
+    }
+
+    private void trySetImageUrl(RoomInfo room, ResultSet rs) {
+        try { room.setImageUrl(rs.getString("image_url")); }
+        catch (SQLException ignored) { }
+    }
+
     public List<RoomInfo> getRoomsByDate(java.sql.Date selectedDate) {
         java.sql.Date nextDate = java.sql.Date.valueOf(selectedDate.toLocalDate().plusDays(1));
         return getRoomsByDateRange(selectedDate, nextDate);
+    }
+
+    /**
+     * Giống getRoomsByDateRange nhưng chỉ lấy 1 phòng theo roomId, kèm ảnh
+     * phòng (image_url) — dùng cho trang chi tiết phòng ở sơ đồ phòng của
+     * lễ tân, để display_status hiển thị giống HỆT với sơ đồ phòng (cùng
+     * công thức tính theo khoảng ngày đang lọc), thay vì chỉ đọc status thô.
+     */
+    public RoomInfo getRoomByIdForDateRange(int roomId, java.sql.Date fromDate, java.sql.Date toDate) {
+        // Ghép SQL từ các fragment riêng — xem khai báo private static final ở đầu class
+        String sql = "SELECT"
+                + "  r.room_id, r.room_number, r.type_id,"
+                + "  r.status AS operational_status, r.floor,"
+                + "  rt.type_name, rt.base_price, rt.bed_type, rt.area,"
+                + "  ri.image_url,"
+                + SQL_DISPLAY_STATUS_BY_RANGE
+                + " FROM Room r"
+                + " JOIN RoomType rt ON r.type_id = rt.type_id"
+                + " LEFT JOIN RoomImage ri ON ri.type_id = rt.type_id"
+                + " WHERE r.room_id = ?";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            useDatabase(conn);
+            // display_status: CheckedIn (toDate, fromDate), Confirmed (toDate, fromDate)
+            ps.setDate(1, toDate);
+            ps.setDate(2, fromDate);
+            ps.setDate(3, toDate);
+            ps.setDate(4, fromDate);
+            ps.setInt(5, roomId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRoomFromResultSet(rs);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public boolean isRoomCurrentlyOccupied(int roomId) {
@@ -199,7 +294,7 @@ public class RoomDAO {
     }
 
     public String getRoomOperationalStatus(int roomId) {
-        String sql = "SELECT status FROM Room WHERE room_id = ? AND is_deleted = 0";
+        String sql = "SELECT status FROM Room WHERE room_id = ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setInt(1, roomId);
@@ -213,54 +308,6 @@ public class RoomDAO {
         }
         return null;
     }
-
-    public String deleteRoom(int roomId) {
-        String checkSql = """
-            SELECT r.status,
-                   (SELECT COUNT(*) 
-                    FROM RoomAssignment ra 
-                    JOIN Booking b ON ra.booking_id = b.booking_id 
-                    WHERE ra.room_id = r.room_id 
-                      AND b.status IN ('Confirmed', 'CheckedIn')
-                      AND b.check_out_date > CAST(SYSDATETIME() AS DATE)
-                   ) AS active_or_future_booking_count
-            FROM Room r 
-            WHERE r.room_id = ? AND r.is_deleted = 0
-            """;
-        try (Connection conn = DBContext.getConnection(); PreparedStatement psCheck = conn.prepareStatement(checkSql)) {
-            useDatabase(conn);
-            psCheck.setInt(1, roomId);
-            try (ResultSet rs = psCheck.executeQuery()) {
-                if (rs.next()) {
-                    String status = rs.getString("status");
-                    int activeOrFutureCount = rs.getInt("active_or_future_booking_count");
-                    if (!"Available".equalsIgnoreCase(status) && !"OutOfService".equalsIgnoreCase(status)) {
-                        return "roomNotAvailableForDelete";
-                    }
-                    if (activeOrFutureCount > 0) {
-                        return "roomHasActiveOrFutureBooking";
-                    }
-                } else {
-                    return "error";
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "error";
-        }
-
-        String sql = "UPDATE Room SET is_deleted = 1 WHERE room_id = ?";
-        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            useDatabase(conn);
-            ps.setInt(1, roomId);
-            boolean ok = ps.executeUpdate() > 0;
-            return ok ? "success" : "error";
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "error";
-        }
-    }
-
     public boolean updateRoomStatus(int roomId, String status) {
         String sql = "UPDATE Room SET status = ? WHERE room_id = ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -275,7 +322,7 @@ public class RoomDAO {
     }
 
     public boolean isRoomNumberDuplicate(String roomNumber, int excludeRoomId) {
-        String sql = "SELECT COUNT(*) FROM Room WHERE room_number = ? AND room_id <> ? AND is_deleted = 0";
+        String sql = "SELECT COUNT(*) FROM Room WHERE room_number = ? AND room_id <> ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setString(1, roomNumber);
@@ -291,45 +338,8 @@ public class RoomDAO {
         return false;
     }
 
-    public RoomInfo getSoftDeletedRoomByNumber(String roomNumber) {
-        String sql = "SELECT room_id, room_number, type_id, status, floor FROM Room WHERE room_number = ? AND is_deleted = 1";
-        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            useDatabase(conn);
-            ps.setString(1, roomNumber);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    RoomInfo room = new RoomInfo();
-                    room.setRoomId(rs.getInt("room_id"));
-                    room.setRoomNumber(rs.getString("room_number"));
-                    room.setTypeId(rs.getInt("type_id"));
-                    room.setStatus(rs.getString("status"));
-                    room.setFloor(rs.getString("floor"));
-                    return room;
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public boolean restoreRoom(int roomId, RoomInfo room) {
-        String sql = "UPDATE Room SET is_deleted = 0, floor = ?, type_id = ?, status = ? WHERE room_id = ?";
-        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            useDatabase(conn);
-            ps.setString(1, room.getFloor());
-            ps.setInt(2, room.getTypeId());
-            ps.setString(3, room.getOperationalStatus());
-            ps.setInt(4, roomId);
-            return ps.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
     public boolean insertRoom(RoomInfo room) {
-        String sql = "INSERT INTO Room (room_number, floor, type_id, status, is_deleted) VALUES (?, ?, ?, ?, 0)";
+        String sql = "INSERT INTO Room (room_number, floor, type_id, status) VALUES (?, ?, ?, ?)";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
             ps.setString(1, room.getRoomNumber());
@@ -369,8 +379,7 @@ public class RoomDAO {
             room_number,
             status
         FROM Room
-        WHERE is_deleted = 0
-          AND status <> 'OutOfService'
+        WHERE status <> 'OutOfService'
         ORDER BY
             TRY_CAST(floor AS INT),
             room_number
@@ -485,8 +494,10 @@ public class RoomDAO {
             return 3;
         }
 
+        // Cleaning ở mức độ Low, thấp hơn Refill (thiếu vật tư, mức Medium)
+        // nên phải có số ưu tiên LỚN hơn (ít khẩn cấp hơn) Refill.
         if ("Cleaning".equals(issueType)) {
-            return 3;
+            return 4;
         }
 
         return Integer.MAX_VALUE;
@@ -503,7 +514,7 @@ public class RoomDAO {
                 return 3;
 
             case "Cleaning":
-                return 3;
+                return 4;
 
             case "Available":
                 return 4;

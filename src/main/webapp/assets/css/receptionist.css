@@ -293,6 +293,18 @@ body.dashboard-body {
     background: #d1fae5;
     color: #059669 !important;
 }
+
+/* OVERDUE CHECK-IN BUTTON */
+.btn-overdue {
+    background: #dc2626;
+    color: #fff !important;
+    border-color: #dc2626;
+}
+
+.btn-overdue:hover {
+    background: #fee2e2;
+    color: #dc2626 !important;
+}
 .btn-confirm  { color: var(--success-green); }
 .btn-confirm:hover  { background: #f0fdf4; transform: scale(1.1); }
 .btn-reject   { color: var(--danger-red); }
@@ -539,19 +551,6 @@ button:disabled,
     padding: 10px 0;
     font-size: 14px;
 }
-
-/* Membership Badges */
-.badge-membership {
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-.badge-membership.Standard { background: #f1f5f9; color: #475569; }
-.badge-membership.Silver   { background: #e2e8f0; color: #475569; border: 1px solid #cbd5e1; }
-.badge-membership.Gold     { background: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
-.badge-membership.Platinum { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
 
 /* Room Grid */
 .room-grid {
@@ -1237,47 +1236,6 @@ WALK-IN BOOKING
 ===================================================== */
 
 /* =====================================================
-MODE SWITCH
-===================================================== */
-
-.walkin-mode-card{
-display:flex;
-gap:12px;
-margin-bottom:20px;
-}
-
-.mode-option{
-cursor:pointer;
-}
-
-.mode-option input{
-display:none;
-}
-
-.mode-option span{
-min-width:160px;
-height:48px;
-display:flex;
-align-items:center;
-justify-content:center;
-padding:0 20px;
-border:1px solid var(--border-color);
-border-radius:12px;
-background:#fff;
-color:var(--text-muted);
-font-size:14px;
-font-weight:700;
-transition:.2s;
-}
-
-.mode-option.active span,
-.mode-option input:checked + span{
-background:var(--brand-blue);
-border-color:var(--brand-blue);
-color:#fff;
-}
-
-/* =====================================================
 CARD
 ===================================================== */
 .customer-info-message {
@@ -1354,7 +1312,7 @@ WALK-IN LAYOUT: FORM (trái) + TÓM TẮT DÍNH (phải)
 
 .walkin-notes-grid{
     display:grid;
-    grid-template-columns:1fr 1fr;
+    grid-template-columns:1fr;
     gap:24px;
 }
 
@@ -1389,9 +1347,6 @@ WALK-IN LAYOUT: FORM (trái) + TÓM TẮT DÍNH (phải)
     .walkin-sidebar{
         position:static;
         top:auto;
-    }
-    .walkin-notes-grid{
-        grid-template-columns:1fr;
     }
 }
 
@@ -1579,41 +1534,6 @@ cursor:pointer;
 transition:.2s;
 }
 
-.btn-delete-row:hover
-
-.btn-remove-companion{
-    width:44px;
-    height:44px;
-
-    border:none;
-    border-radius:12px;
-
-    background:#fef3c7;
-    color:#d97706;
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    cursor:pointer;
-    transition:all .2s ease;
-
-    font-size:15px;
-}
-
-.btn-remove-companion:hover{
-    background:#fde68a;
-    color:#b45309;
-
-    transform:translateY(-1px);
-
-    box-shadow:0 6px 14px rgba(217,119,6,.18);
-}
-
-.btn-remove-companion:active{
-    transform:scale(.96);
-}
-
 /* =====================================================
 ROOM MAP
 ===================================================== */
@@ -1658,51 +1578,6 @@ font-size:14px;
 .room-selection-message.hidden{
     display:none;
 }
-/* =====================================================
-COMPANION
-===================================================== */
-
-#companionCard{
-margin-top:20px;
-}
-
-.btn-add-companion{
-height:42px;
-padding:0 18px;
-border:none;
-border-radius:10px;
-
-display:flex;
-align-items:center;
-gap:8px;
-
-background:linear-gradient(
-135deg,
-#10b981,
-#059669
-);
-
-color:#fff;
-font-size:13px;
-font-weight:700;
-
-cursor:pointer;
-transition:.2s;
-}
-.btn-add-companion:hover{
-transform:translateY(-1px);
-box-shadow:0 6px 16px rgba(16,185,129,.25);
-}
-.companion-row{
-display:grid;
-grid-template-columns:
-    1fr
-    48px;
-gap:12px;
-align-items:center;
-margin-bottom:12px;
-}
-
 /* =====================================================
 TEXTAREA
 ===================================================== */
@@ -1964,8 +1839,7 @@ RESPONSIVE
 @media(max-width:992px){
 .walkin-row-3,
 .walkin-row-2,
-.room-row,
-.companion-row{
+.room-row{
     grid-template-columns:1fr;
 }
 .room-header-row{
@@ -1974,9 +1848,6 @@ RESPONSIVE
 }
 
 @media(max-width:768px){
-.walkin-mode-card{
-    flex-direction:column;
-}
 .walkin-footer{
     flex-direction:column;
     align-items:stretch;
@@ -2119,67 +1990,6 @@ RESPONSIVE
 .toast-close:hover {
     opacity: 1;
 }
-.mode-popup{
-    position:fixed;
-    top:25px;
-    right:25px;
-    width:360px;
-    display:flex;
-    align-items:flex-start;
-    gap:14px;
-    padding:16px 18px;
-    background:#eff6ff;
-    border:1px solid #60a5fa;
-    border-left:5px solid #2563eb;
-    border-radius:12px;
-    box-shadow:0 12px 35px rgba(0,0,0,.15);
-    z-index:99999;
-    opacity:0;
-    transform:translateY(-20px);
-    pointer-events:none;
-    transition:.25s;
-}
-
-.mode-popup.show{
-    opacity:1;
-    transform:translateY(0);
-    pointer-events:auto;
-}
-
-.mode-popup.hidden{
-    display:none;
-}
-
-.mode-popup-icon{
-    font-size:22px;
-    color:#2563eb;
-}
-
-.mode-popup-title{
-    font-size:15px;
-    font-weight:700;
-    color:#1d4ed8;
-    margin-bottom:3px;
-}
-
-#modePopupMessage{
-    color:#1e3a8a;
-    font-weight:600;
-}
-
-.mode-popup-close{
-    margin-left:auto;
-    border:none;
-    background:none;
-    cursor:pointer;
-    color:#2563eb;
-    font-size:18px;
-}
-
-.mode-popup-close:hover{
-    color:#1e40af;
-}
-
 .walkin-toast{
     position:fixed;
     right:30px;
