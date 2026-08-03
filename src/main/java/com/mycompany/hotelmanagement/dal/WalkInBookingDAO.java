@@ -1,14 +1,19 @@
 package com.mycompany.hotelmanagement.dal;
 
-import com.mycompany.hotelmanagement.config.DBContext;
-import com.mycompany.hotelmanagement.entity.Account;
-import com.mycompany.hotelmanagement.entity.Booking;
-import com.mycompany.hotelmanagement.entity.RoomInfo;
-import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.mycompany.hotelmanagement.config.DBContext;
+import com.mycompany.hotelmanagement.entity.Account;
+import com.mycompany.hotelmanagement.entity.RoomInfo;
+import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
 
 public class WalkInBookingDAO {
 
@@ -34,7 +39,6 @@ public class WalkInBookingDAO {
         JOIN RoomType rt
             ON r.type_id = rt.type_id
         WHERE r.type_id = ?
-        AND r.is_deleted = 0
         AND r.status NOT IN
         (
             'Maintenance',
@@ -90,7 +94,6 @@ public class WalkInBookingDAO {
         JOIN RoomType rt
             ON r.type_id = rt.type_id
         WHERE r.type_id = ?
-        AND r.is_deleted = 0
         AND r.status NOT IN
         (
             'Maintenance',
@@ -149,7 +152,7 @@ public class WalkInBookingDAO {
         String sql = """
         SELECT COUNT(*)
         FROM Room
-        WHERE type_id=? AND is_deleted = 0
+        WHERE type_id=?
         AND status NOT IN
         (
             'Maintenance',
@@ -614,7 +617,7 @@ public class WalkInBookingDAO {
         String roomSql = """
             SELECT status
             FROM Room
-            WHERE room_id=? AND is_deleted = 0
+            WHERE room_id=?
         """;
 
         try (PreparedStatement ps
@@ -705,7 +708,6 @@ public class WalkInBookingDAO {
                 SELECT 1
                 FROM Room r
                 WHERE r.type_id = rt.type_id
-                AND r.is_deleted = 0
                 AND r.status NOT IN
                 (
                     'Maintenance',

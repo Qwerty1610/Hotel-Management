@@ -67,7 +67,7 @@ public class DashboardDAO {
 
     /** Tổng số phòng vật lý của khách sạn (mẫu số khi tính công suất / RevPAR). */
     public int getTotalRooms() {
-        return scalarInt("SELECT COUNT(*) FROM dbo.Room WHERE is_deleted = 0");
+        return scalarInt("SELECT COUNT(*) FROM dbo.Room");
     }
 
     /** Năm có đơn đặt phòng sớm nhất (dựng danh sách năm cho bộ lọc kỳ). */

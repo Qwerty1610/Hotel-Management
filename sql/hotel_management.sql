@@ -464,7 +464,6 @@ BEGIN
         type_id INT NOT NULL,
         status NVARCHAR(50) NOT NULL DEFAULT N'Available',
         floor NVARCHAR(50) NOT NULL DEFAULT N'Tầng 1',
-        is_deleted BIT NOT NULL DEFAULT 0,
         CONSTRAINT FK_Room_RoomType FOREIGN KEY (type_id) REFERENCES dbo.RoomType(type_id) ON DELETE CASCADE
     );
 END
@@ -1745,19 +1744,15 @@ BEGIN
 END
 GO
 
-/* Đảm bảo tính DUY NHẤT của promotion_id (FK 1-1: mỗi Promotion chỉ gắn được
-   với đúng 1 Booking, chỉ dùng cho booking cha / root). Dùng FILTERED UNIQUE
-   INDEX thay vì UNIQUE constraint: với filter WHERE promotion_id IS NOT NULL,
-   ta cho phép NHIỀU booking không khuyến mãi (NULL) nhưng vẫn đảm bảo mỗi
-   promotion chỉ được dùng đúng 1 lần. Áp dụng cho cả DB mới lẫn DB cũ. */
-IF NOT EXISTS (
+/* Cho phép nhiều Booking của các khách hàng khác nhau dùng chung 1 mã Promotion
+   (bỏ UNIQUE INDEX trên promotion_id). Giới hạn 1 người dùng 1 lần được kiểm tra
+   ở tầng Service Java. */
+IF EXISTS (
     SELECT 1 FROM sys.indexes
     WHERE name = 'UX_Booking_Promotion' AND object_id = OBJECT_ID(N'dbo.Booking')
 )
 BEGIN
-    CREATE UNIQUE INDEX UX_Booking_Promotion
-        ON dbo.Booking(promotion_id)
-        WHERE promotion_id IS NOT NULL;
+    DROP INDEX UX_Booking_Promotion ON dbo.Booking;
 END
 GO
 

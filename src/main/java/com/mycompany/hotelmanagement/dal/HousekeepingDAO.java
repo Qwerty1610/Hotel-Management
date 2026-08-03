@@ -37,7 +37,6 @@ public class HousekeepingDAO {
     FROM Room r
     JOIN RoomType rt ON r.type_id = rt.type_id
     LEFT JOIN RoomImage ri ON ri.type_id = rt.type_id
-    WHERE r.is_deleted = 0
 """;
 
         try (
@@ -131,9 +130,8 @@ public class HousekeepingDAO {
         FROM Room r
         JOIN RoomType rt 
              ON r.type_id = rt.type_id
-        WHERE r.status IN (%s)
-          AND r.is_deleted = 0
-        """.formatted(placeholders);
+         WHERE r.status IN (%s)
+         """.formatted(placeholders);
 
         try (
                 Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
@@ -250,7 +248,7 @@ public class HousekeepingDAO {
             }
         }
 
-        sql.append(") AND is_deleted = 0");
+        sql.append(")");
 
         try (
                 Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql.toString())) {
@@ -284,7 +282,7 @@ SELECT r.room_id,
 FROM Room r
 JOIN RoomType rt ON r.type_id = rt.type_id
 LEFT JOIN RoomImage ri ON ri.type_id = rt.type_id
-WHERE r.room_id = ? AND r.is_deleted = 0
+WHERE r.room_id = ?
 """;
 
         try (

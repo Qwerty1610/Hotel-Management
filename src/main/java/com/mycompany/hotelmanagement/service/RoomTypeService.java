@@ -40,6 +40,7 @@ public class RoomTypeService {
     private final RoomService roomService = new RoomService();
 
     /**
+     * UC-29 Browse Available Room Types
      * Lấy toàn bộ danh sách loại phòng với số phòng khả dụng được tính theo khoảng ngày checkIn / checkOut.
      */
     public List<RoomTypeInfo> getAllRoomTypes(LocalDate checkIn, LocalDate checkOut) {

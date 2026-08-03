@@ -524,7 +524,6 @@
                                 <select name="paymentMethod" class="form-control" required>
                                     <option value="">-- Chọn phương thức --</option>
                                     <option value="Cash">Tiền mặt (Cash)</option>
-                                    <option value="Credit Card">Thẻ tín dụng/Ghi nợ (Card)</option>
                                     <option value="Bank Transfer">Chuyển khoản ngân hàng (QRPay)</option>
                                 </select>
                             </div>

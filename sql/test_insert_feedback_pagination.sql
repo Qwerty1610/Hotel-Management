@@ -77,7 +77,6 @@ SELECT TOP 10
 FROM dbo.Room r
 JOIN dbo.RoomType rt ON r.type_id = rt.type_id
 WHERE r.type_id = @RoomTypeId
-  AND r.is_deleted = 0
 ORDER BY r.room_id;
 
 -- Neu loai phong nay co it hon 10 phong, moi phong se duoc dung nhieu lan
