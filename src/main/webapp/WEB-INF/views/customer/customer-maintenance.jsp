@@ -219,25 +219,32 @@
         flex:1;
         margin-bottom:0;
     }
-    .issue-row{
-        display:grid;
-        grid-template-columns:1fr 44px;
-        align-items:center;
+    .issue-two-col{
+        display:flex;
         gap:12px;
-        margin-bottom:14px;
+        align-items:flex-start;
     }
-    .issue-row select{
+    .issue-select-col{
+        flex:1;
+        min-width:0;
+        display:flex;
+        flex-direction:column;
+        gap:14px;
+    }
+    .issue-select-col select{
         width:100%;
         min-width:0;
     }
-    .issue-row .btn-remove-row{
-        justify-self:stretch;
+    .issue-remove-col{
+        width:44px;
+        flex-shrink:0;
+        display:flex;
+        flex-direction:column;
+        gap:14px;
     }
-    .issue-row:first-child{
-        grid-template-columns:1fr;
-    }
-    .issue-row:first-child .btn-remove-row{
-        display:none;
+    .issue-remove-col .btn-remove-row{
+        width:44px;
+        height:44px;
     }
     /* =========================
         SUBMIT BUTTON
@@ -456,7 +463,7 @@
                                 <select
                                     name="bookingId"
                                     class="form-control"
-                                    required>
+                                    <c:if test="${not empty bookings}">required</c:if>>
 
                                     <option value="">
                                         -- Chọn phòng --
@@ -505,9 +512,9 @@
 
                             <label>Loại sự cố</label>
 
-                            <div id="issueContainer">
+                            <div class="issue-two-col">
 
-                                <div class="issue-row">
+                                <div id="issueSelectContainer" class="issue-select-col">
 
                                     <select
                                         name="issueTypeId"
@@ -527,6 +534,10 @@
                                         </c:forEach>
 
                                     </select>
+
+                                </div>
+
+                                <div id="issueRemoveContainer" class="issue-remove-col">
 
                                     <button
                                         type="button"
@@ -609,13 +620,15 @@
     <script>
         function addIssueRow() {
 
-            const container = document.getElementById("issueContainer");
+            const selectContainer = document.getElementById("issueSelectContainer");
+            const removeContainer = document.getElementById("issueRemoveContainer");
 
-            const row = container.querySelector(".issue-row").cloneNode(true);
+            const newSelect = selectContainer.querySelector("select").cloneNode(true);
+            newSelect.selectedIndex = 0;
+            selectContainer.appendChild(newSelect);
 
-            row.querySelector("select").selectedIndex = 0;
-
-            container.appendChild(row);
+            const newButton = removeContainer.querySelector(".btn-remove-row").cloneNode(true);
+            removeContainer.appendChild(newButton);
 
             updateRemoveButton();
 
@@ -623,9 +636,11 @@
 
         function removeIssueRow(button) {
 
-            const container = document.getElementById("issueContainer");
+            const selectContainer = document.getElementById("issueSelectContainer");
+            const removeContainer = document.getElementById("issueRemoveContainer");
+            const buttons = Array.from(removeContainer.querySelectorAll(".btn-remove-row"));
 
-            if (container.querySelectorAll(".issue-row").length == 1) {
+            if (buttons.length == 1) {
 
                 alert("Phải có ít nhất một sự cố.");
 
@@ -633,7 +648,13 @@
 
             }
 
-            button.parentElement.remove();
+            const index = buttons.indexOf(button);
+            const selects = selectContainer.querySelectorAll("select");
+
+            if (selects[index]) {
+                selects[index].remove();
+            }
+            button.remove();
 
             updateRemoveButton();
 
@@ -641,13 +662,12 @@
 
         function updateRemoveButton() {
 
-            const rows = document.querySelectorAll(".issue-row");
+            const buttons = document.querySelectorAll("#issueRemoveContainer .btn-remove-row");
 
-            rows.forEach((row, index) => {
+            buttons.forEach((btn, index) => {
 
-                const btn = row.querySelector(".btn-remove-row");
-
-                btn.style.display = index == 0 ? "none" : "flex";
+                btn.style.visibility = index == 0 ? "hidden" : "visible";
+                btn.style.pointerEvents = index == 0 ? "none" : "auto";
 
             });
 

@@ -21,15 +21,43 @@
                 object-fit:cover;
                 border-radius:12px;
                 border:1px solid #e2e8f0;
-                margin-bottom:16px;
             }
 
             .room-detail-header{
                 display:flex;
-                justify-content:space-between;
                 align-items:flex-start;
-                gap:16px;
-                flex-wrap:wrap;
+                gap:24px;
+            }
+
+            .room-detail-image-col{
+                flex-shrink:0;
+                width:320px;
+                max-width:100%;
+            }
+
+            .room-detail-info-col{
+                flex:1;
+                min-width:0;
+                display:flex;
+                flex-direction:column;
+                gap:0;
+            }
+
+            .room-detail-info-col .badge-status{
+                align-self:flex-start;
+                margin-top:12px;
+            }
+
+            @media(max-width:768px){
+                .room-detail-header{
+                    flex-direction:column;
+                }
+                .room-detail-image-col{
+                    width:100%;
+                }
+                .room-detail-image{
+                    max-width:100%;
+                }
             }
 
             .empty-history{
@@ -162,11 +190,13 @@
                         </div>
                         <div class="card-body">
                             <div class="room-detail-header">
-                                <div>
+                                <div class="room-detail-image-col">
                                     <c:if test="${not empty room.imageUrl}">
                                         <img src="${room.imageUrl}" class="room-detail-image" alt="Room Image" />
                                     </c:if>
+                                </div>
 
+                                <div class="room-detail-info-col">
                                     <div class="info-row">
                                         <label>Số phòng:</label>
                                         <span class="booking-id-badge">${room.roomNumber}</span>
@@ -179,27 +209,27 @@
                                         <label>Tầng:</label>
                                         <span>${room.floor}</span>
                                     </div>
-                                </div>
 
-                                <span class="badge-status
-                                      ${room.displayStatus eq 'Available' ? 'badge-Available' : ''}
-                                      ${room.displayStatus eq 'Confirmed' ? 'badge-Confirmed' : ''}
-                                      ${room.displayStatus eq 'Occupied' ? 'badge-Occupied' : ''}
-                                      ${room.displayStatus eq 'Cleaning' ? 'badge-Cleaning' : ''}
-                                      ${room.displayStatus eq 'Refilling' ? 'badge-Refilling' : ''}
-                                      ${room.displayStatus eq 'Maintenance' ? 'badge-Maintenance' : ''}"
-                                      style="font-size:13px;padding:8px 16px;">
-                                    <c:choose>
-                                        <c:when test="${room.displayStatus eq 'Available'}">Trống</c:when>
-                                        <c:when test="${room.displayStatus eq 'Confirmed'}">Đã đặt</c:when>
-                                        <c:when test="${room.displayStatus eq 'Occupied'}">Đang sử dụng</c:when>
-                                        <c:when test="${room.displayStatus eq 'Cleaning'}">Đang dọn</c:when>
-                                        <c:when test="${room.displayStatus eq 'Refilling'}">Đang bổ sung vật dụng</c:when>
-                                        <c:when test="${room.displayStatus eq 'Maintenance'}">Bảo trì</c:when>
-                                        <c:when test="${room.displayStatus eq 'OutOfService'}">Ngừng hoạt động</c:when>
-                                        <c:otherwise>${room.displayStatus}</c:otherwise>
-                                    </c:choose>
-                                </span>
+                                    <span class="badge-status
+                                          ${room.displayStatus eq 'Available' ? 'badge-Available' : ''}
+                                          ${room.displayStatus eq 'Confirmed' ? 'badge-Confirmed' : ''}
+                                          ${room.displayStatus eq 'Occupied' ? 'badge-Occupied' : ''}
+                                          ${room.displayStatus eq 'Cleaning' ? 'badge-Cleaning' : ''}
+                                          ${room.displayStatus eq 'Refilling' ? 'badge-Refilling' : ''}
+                                          ${room.displayStatus eq 'Maintenance' ? 'badge-Maintenance' : ''}"
+                                          style="font-size:13px;padding:8px 16px;">
+                                        <c:choose>
+                                            <c:when test="${room.displayStatus eq 'Available'}">Trống</c:when>
+                                            <c:when test="${room.displayStatus eq 'Confirmed'}">Đã đặt</c:when>
+                                            <c:when test="${room.displayStatus eq 'Occupied'}">Đang sử dụng</c:when>
+                                            <c:when test="${room.displayStatus eq 'Cleaning'}">Đang dọn</c:when>
+                                            <c:when test="${room.displayStatus eq 'Refilling'}">Đang bổ sung vật dụng</c:when>
+                                            <c:when test="${room.displayStatus eq 'Maintenance'}">Bảo trì</c:when>
+                                            <c:when test="${room.displayStatus eq 'OutOfService'}">Ngừng hoạt động</c:when>
+                                            <c:otherwise>${room.displayStatus}</c:otherwise>
+                                        </c:choose>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>

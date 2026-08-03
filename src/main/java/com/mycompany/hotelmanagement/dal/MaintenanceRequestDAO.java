@@ -117,6 +117,66 @@ public class MaintenanceRequestDAO {
         return list;
     }
 
+    /**
+     * Trả về tên các loại sự cố (trong issueTypeIds) đã được báo cho booking
+     * này nhưng chưa xử lý xong (status khác Resolved). Dùng để chặn gửi lại
+     * yêu cầu cho một sự cố còn đang chờ xử lý — nếu sự cố cũ đã Resolved thì
+     * không bị chặn nữa.
+     */
+    public List<String> findOpenIssueNames(int bookingId, String[] issueTypeIds) {
+        List<String> result = new ArrayList<>();
+        if (issueTypeIds == null || issueTypeIds.length == 0) {
+            return result;
+        }
+
+        List<Integer> ids = new ArrayList<>();
+        for (String s : issueTypeIds) {
+            if (s == null || s.isBlank()) {
+                continue;
+            }
+            try {
+                ids.add(Integer.parseInt(s));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        if (ids.isEmpty()) {
+            return result;
+        }
+
+        StringBuilder placeholders = new StringBuilder();
+        for (int i = 0; i < ids.size(); i++) {
+            placeholders.append(i == 0 ? "?" : ",?");
+        }
+
+        String sql = """
+        SELECT DISTINCT it.issue_name
+        FROM MaintenanceRequestDetail d
+        JOIN MaintenanceRequest mr ON mr.request_id = d.request_id
+        JOIN IssueType it ON it.issue_type_id = d.issue_type_id
+        WHERE mr.booking_id = ?
+          AND mr.status <> N'Resolved'
+          AND d.issue_type_id IN (""" + placeholders + ")";
+
+        try (Connection con = DBContext.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, bookingId);
+            for (int i = 0; i < ids.size(); i++) {
+                ps.setInt(i + 2, ids.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.add(rs.getString("issue_name"));
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
     public boolean submitMaintenanceRequest(
             int bookingId,
             int customerId,
