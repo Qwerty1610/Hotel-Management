@@ -21,6 +21,7 @@
                 object-fit:cover;
                 border-radius:12px;
                 border:1px solid #e2e8f0;
+                margin-bottom:16px;
             }
 
             .room-detail-header{
