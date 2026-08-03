@@ -382,11 +382,9 @@ let roomRowIndex = 0;
 let maxRoomTypeCount = 0;
 let roomTypeMessageTimer = null;
 let walkInToastTimer = null;
-let modePopupTimer = null;
 let hasSubmittedWalkIn = false;
 let isSubmittingWalkIn = false;
 const WALKIN_STORAGE_KEY = "walkinFormState";
-const WALKIN_MODE_KEY = "walkinMode";
 
 /*
  ==================================================
@@ -410,7 +408,6 @@ function getWalkInState() {
 function saveWalkInState() {
 
     const state = {};
-    state.mode = document.getElementById("bookingMode")?.value || "BOOKING";
     state.customerName = document.getElementById("customerName")?.value || "";
     state.phone = document.getElementById("phone")?.value || "";
     state.email = document.getElementById("email")?.value || "";
@@ -433,31 +430,11 @@ function saveWalkInState() {
     document.querySelectorAll(".room-checkbox:checked").forEach(cb => {
         state.selectedRooms.push(cb.value);
     });
-    state.companions = [];
-    document.querySelectorAll("input[name='companions[]']").forEach(input => {
-
-        state.companions.push(input.value);
-    });
     sessionStorage.setItem(
             WALKIN_STORAGE_KEY,
             JSON.stringify(state)
             );
 }
-function saveWalkInMode() {
-    const selected = document.querySelector('input[name="walkinMode"]:checked')?.value;
-    if (!selected)
-        return;
-    const mode = selected.toUpperCase();
-    sessionStorage.setItem(WALKIN_MODE_KEY, mode);
-    const hidden = document.getElementById("bookingMode");
-    if (hidden)
-        hidden.value = mode;
-}
-document.querySelectorAll('input[name="walkinMode"]').forEach(r => {
-    r.addEventListener("change", () => {
-        saveWalkInMode();
-    });
-});
 function autoSaveWalkIn() {
     document.addEventListener("input", () => {
         if (!isSubmittingWalkIn && document.getElementById("customerName")) {
@@ -484,16 +461,6 @@ async function restoreWalkInState() {
     document.getElementById("note").value = state.note || "";
     document.getElementById("checkInDate").value = state.checkInDate || "";
     document.getElementById("checkOutDate").value = state.checkOutDate || "";
-    if (state.mode) {
-        document.getElementById("bookingMode").value = state.mode;
-        const radio = document.querySelector(
-                `input[name="walkinMode"][value="${state.mode.toLowerCase()}"]`
-                );
-        if (radio) {
-            radio.checked = true;
-            updateModeUI(state.mode.toLowerCase());
-        }
-    }
     await loadRoomTypes();
     const container = document.getElementById("roomRowsContainer");
     container.querySelectorAll(".room-row:not(.first-room-row)")
@@ -533,80 +500,16 @@ async function restoreWalkInState() {
 
     });
 
-    const companionContainer =
-        document.getElementById("companionContainer");
-
-if (companionContainer) {
-    companionContainer.innerHTML = "";
-
-    if (state.companions) {
-        state.companions.forEach(name => {
-            addCompanionRow();
-
-            companionContainer
-                .lastElementChild
-                .querySelector("input")
-                .value = name;
-        });
-    }
-}
-    if (state.companions) {
-        state.companions.forEach(name => {
-            addCompanionRow();
-            companionContainer
-                    .lastElementChild
-                    .querySelector("input")
-                    .value = name;
-        });
-    }
     updateSummary();
-}
-function restoreWalkInMode() {
-    const mode = sessionStorage.getItem(WALKIN_MODE_KEY) || "BOOKING";
-    const radioValue = mode.toLowerCase();
-    const radio = document.querySelector(
-            `input[name="walkinMode"][value="${radioValue}"]`
-            );
-    if (radio) {
-        radio.checked = true;
-        updateModeUI(radioValue);
-    }
-    const hidden = document.getElementById("bookingMode");
-    if (hidden)
-        hidden.value = mode;
 }
 window.addEventListener("pageshow", function () {
     isSubmittingWalkIn = false;
 });
-function updateModeUI(selected) {
-    const companionCard = document.getElementById("companionCard");
-    const bookingBtn = document.getElementById("bookingBtn");
-    const checkinBtn = document.getElementById("checkinBtn");
-    const modeOptions = document.querySelectorAll(".mode-option");
-
-    modeOptions.forEach(o => o.classList.remove("active"));
-
-    document.querySelector(`input[name="walkinMode"][value="${selected}"]`)
-            ?.closest(".mode-option")
-            ?.classList.add("active");
-
-    if (selected === "checkin") {
-        companionCard.style.display = "block";
-        bookingBtn.style.display = "none";
-        checkinBtn.style.display = "inline-flex";
-    } else {
-        companionCard.style.display = "none";
-        bookingBtn.style.display = "inline-flex";
-        checkinBtn.style.display = "none";
-    }
-}
 function clearWalkInAllState() {
     sessionStorage.removeItem(WALKIN_STORAGE_KEY);
-    sessionStorage.removeItem(WALKIN_MODE_KEY);
 }
 function resetWalkInFormKeepMode() {
 
-    const mode = sessionStorage.getItem(WALKIN_MODE_KEY);
     sessionStorage.removeItem(WALKIN_STORAGE_KEY); // FIX QUAN TRỌNG
     document.querySelector("#customerName").value = "";
     document.querySelector("#phone").value = "";
@@ -614,26 +517,15 @@ function resetWalkInFormKeepMode() {
     document.querySelector("#checkInDate").value = "";
     document.querySelector("#checkOutDate").value = "";
     document.querySelector("#note").value = "";
-    document.querySelector("#receptionistNote").value = "";
     const container = document.getElementById("roomRowsContainer");
     container.innerHTML = "";
     addRoomRow();
     document.querySelectorAll(".room-checkbox").forEach(cb => {
         cb.checked = false;
     });
-    document.getElementById("companionContainer").innerHTML = "";
     updateSummary();
-
-    const radio = document.querySelector(
-            `input[name="walkinMode"][value="${mode?.toLowerCase()}"]`
-            );
-    if (radio) {
-        radio.checked = true;
-        updateModeUI(mode?.toLowerCase());
-    }
 }
 document.addEventListener("DOMContentLoaded", async () => {
-    restoreWalkInMode();
     if (document.getElementById("checkInDate")) {
         await initWalkInBooking();
         await restoreWalkInState();
@@ -658,35 +550,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         checkOut.addEventListener("change", loadRoomTypes);
     }
 
-// WALK-IN MODE INIT
-    const modeRadios = document.querySelectorAll('input[name="walkinMode"]');
-    const companionCard = document.getElementById("companionCard");
-    const bookingBtn = document.getElementById("bookingBtn");
-    const checkinBtn = document.getElementById("checkinBtn");
-    const modeOptions = document.querySelectorAll(".mode-option");
-
-    function updateMode() {
-        const selected = document.querySelector('input[name="walkinMode"]:checked')?.value;
-        if (!selected)
-            return;
-        updateModeUI(selected);
-        saveWalkInMode();
-    }
-
-    modeRadios.forEach(r => {
-        r.addEventListener("change", () => {
-            updateMode();
-            const selected = document.querySelector(
-                    'input[name="walkinMode"]:checked'
-                    )?.value;
-            if (selected === "booking") {
-                showModePopup("Bạn đang ở chế độ ĐẶT PHÒNG");
-            } else {
-                showModePopup("Bạn đang ở chế độ CHECK IN");
-            }
-        });
-    });
-    updateMode();
     if (window.walkInSuccessMessage) {
         showWalkInToast(window.walkInSuccessMessage, "success");
     }
@@ -1243,42 +1106,6 @@ function validateWalkInSubmit() {
 
     return true;
 }
-function addCompanionRow() {
-
-    const container =
-            document.getElementById(
-                    "companionContainer"
-                    );
-
-    container.insertAdjacentHTML(
-            "beforeend",
-            `
-        <div class="companion-row">
-
-            <input
-                type="text"
-                name="companions[]"
-                class="walkin-input"
-                placeholder="Tên bạn đồng hành">
-
-            <button
-                type="button"
-                class="btn-remove-companion"
-                onclick="removeCompanion(this)">
-                <i class="fa-solid fa-trash"></i>
-            </button>
-
-        </div>
-        `
-            );
-    saveWalkInState();
-}
-function removeCompanion(btn) {
-    btn.closest(
-            ".companion-row"
-            ).remove();
-    saveWalkInState();
-}
 function refreshRoomTypeOptions() {
     if (!window.roomTypeOptionsHtml)
         return;
@@ -1317,26 +1144,6 @@ function refreshRoomTypeOptions() {
 
         currentSelect.value = currentValue;
     });
-}
-function showModePopup(message) {
-    const popup = document.getElementById("modePopup");
-    document.getElementById("modePopupMessage").textContent = message;
-    popup.classList.remove("hidden");
-    requestAnimationFrame(() => {
-        popup.classList.add("show");
-    });
-    clearTimeout(modePopupTimer);
-    modePopupTimer = setTimeout(() => {
-        hideModePopup();
-    }, 3000);
-}
-
-function hideModePopup() {
-    const popup = document.getElementById("modePopup");
-    popup.classList.remove("show");
-    setTimeout(() => {
-        popup.classList.add("hidden");
-    }, 250);
 }
 function showWalkInToast(message, type = "success") {
     const toast = document.getElementById("walkinToast");
@@ -1557,10 +1364,7 @@ document.addEventListener("DOMContentLoaded", function () {
         checkIn.min = `${yyyy}-${mm}-${dd}`;
     }
 });
-function beforeWalkInSubmit(mode, event) {
-    document.getElementById("bookingMode").value = mode;
-    sessionStorage.setItem(WALKIN_MODE_KEY, mode);
-
+function beforeWalkInSubmit(event) {
     hasSubmittedWalkIn = true;
     isSubmittingWalkIn = true;
 
