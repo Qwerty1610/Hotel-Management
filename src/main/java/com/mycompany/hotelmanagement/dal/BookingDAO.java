@@ -42,7 +42,7 @@ public class BookingDAO {
     private static final Set<String> FILTER_STATUS_WHITELIST = Set.of("All", "Pending", "Confirmed", "Rejected",
             "Cancelled", "CheckedIn", "CheckedOut");
 
-    private void useDatabase(Connection conn) {
+    private static void useDatabase(Connection conn) {
         try (Statement stmt = conn.createStatement()) {
             stmt.execute("USE HotelManagementDB");
         } catch (SQLException e) {
@@ -51,46 +51,42 @@ public class BookingDAO {
     }
 
     /**
-     * Điều kiện phụ dùng trong các subquery gộp theo nhóm đặt phòng. Khi khách
-     * bỏ bớt một loại phòng khỏi đơn nhiều phòng, dòng con tương ứng bị chuyển
-     * sang Cancelled nhưng vẫn nằm lại trong nhóm để phục vụ tra soát — nó
-     * không được tính vào tổng số phòng / tổng tiền của đơn nữa. Ngược lại, khi
-     * cả đơn đã bị huỷ thì mọi dòng đều Cancelled và ta vẫn hiển thị đầy đủ
-     * như trước.
+     * Điều kiện dùng chung cho các subquery gộp theo nhóm đặt phòng trong
+     * {@link #BASE_SELECT}: khớp mọi dòng thuộc cùng nhóm (chính nó hoặc có
+     * group_booking_id trỏ về nó), trừ những dòng con đã bị khách bỏ khỏi đơn
+     * nhiều phòng (Cancelled) trong khi đơn cha vẫn còn hiệu lực — dòng đó vẫn
+     * nằm lại trong nhóm để tra soát nhưng không tính vào tổng số phòng/tổng
+     * tiền nữa. Khi cả đơn đã bị huỷ thì mọi dòng đều Cancelled và vẫn hiển
+     * thị đầy đủ như trước.
      */
-    private static final String GROUP_ROW_ALIVE =
-            " AND (sb.status <> N'Cancelled' OR b.status = N'Cancelled') ";
+    private static final String GROUP_SCOPE =
+            "(sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) "
+            + "AND (sb.status <> N'Cancelled' OR b.status = N'Cancelled')";
 
-    private static final String BASE_SELECT = "SELECT b.booking_id, b.account_id, b.customer_name, b.phone, b.email, "
-            + "       b.room_type_id, ISNULL(rt.type_name, N'Loại phòng cũ') AS room_type_name, "
-            + "       b.room_quantity, b.check_in_date, b.check_out_date, "
-            + "       b.total_amount, b.status, b.note, b.group_booking_id, b.promotion_id, CAST(b.created_at AS DATE) AS created_at, "
-            + "       (SELECT STRING_AGG(r.room_number, ', ') "
-            + "        FROM dbo.RoomAssignment br "
-            + "        JOIN dbo.Room r ON br.room_id = r.room_id "
-            + "        WHERE br.booking_id IN (SELECT sb.booking_id FROM dbo.Booking sb WHERE sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id)) AS assigned_rooms, "
-            + "       (SELECT SUM(sb.room_quantity) "
-            + "        FROM dbo.Booking sb "
-            + "        WHERE (sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) "
-            + GROUP_ROW_ALIVE + ") AS total_room_quantity, "
-            + "       (SELECT STRING_AGG(type_name, ', ') "
-            + "        FROM ( "
-            + "            SELECT DISTINCT srt.type_name "
-            + "            FROM dbo.Booking sb "
-            + "            JOIN dbo.RoomType srt ON sb.room_type_id = srt.type_id "
-            + "            WHERE (sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) "
-            + GROUP_ROW_ALIVE
-            + "        ) AS dt) AS group_room_type_names, "
-            + "       (SELECT COUNT(DISTINCT sb.room_type_id) "
-            + "        FROM dbo.Booking sb "
-            + "        WHERE (sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) "
-            + GROUP_ROW_ALIVE + ") AS total_room_types, "
-            + "       (SELECT SUM(sb.total_amount) "
-            + "        FROM dbo.Booking sb "
-            + "        WHERE (sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) "
-            + GROUP_ROW_ALIVE + ") AS overall_total_amount "
-            + "FROM dbo.Booking b "
-            + "LEFT JOIN dbo.RoomType rt ON b.room_type_id = rt.type_id ";
+    private static final String BASE_SELECT = """
+            SELECT b.booking_id, b.account_id, b.customer_name, b.phone, b.email,
+                   b.room_type_id, ISNULL(rt.type_name, N'Loại phòng cũ') AS room_type_name,
+                   b.room_quantity, b.check_in_date, b.check_out_date,
+                   b.total_amount, b.status, b.note, b.group_booking_id, b.promotion_id,
+                   CAST(b.created_at AS DATE) AS created_at,
+                   (SELECT STRING_AGG(r.room_number, ', ')
+                    FROM dbo.RoomAssignment br
+                    JOIN dbo.Room r ON br.room_id = r.room_id
+                    WHERE br.booking_id IN (
+                        SELECT sb.booking_id FROM dbo.Booking sb
+                        WHERE sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id
+                    )) AS assigned_rooms,
+                   (SELECT SUM(sb.room_quantity) FROM dbo.Booking sb WHERE %1$s) AS total_room_quantity,
+                   (SELECT STRING_AGG(type_name, ', ') FROM (
+                        SELECT DISTINCT srt.type_name FROM dbo.Booking sb
+                        JOIN dbo.RoomType srt ON sb.room_type_id = srt.type_id
+                        WHERE %1$s
+                    ) AS dt) AS group_room_type_names,
+                   (SELECT COUNT(DISTINCT sb.room_type_id) FROM dbo.Booking sb WHERE %1$s) AS total_room_types,
+                   (SELECT SUM(sb.total_amount) FROM dbo.Booking sb WHERE %1$s) AS overall_total_amount
+            FROM dbo.Booking b
+            LEFT JOIN dbo.RoomType rt ON b.room_type_id = rt.type_id
+            """.formatted(GROUP_SCOPE);
 
     private String sanitizeLikeKeyword(String keyword) {
         if (keyword == null) {
@@ -642,20 +638,12 @@ public class BookingDAO {
                 + "IF COL_LENGTH(N'dbo.BookingChangeRequest', N'new_booking_id') IS NULL "
                 + "  EXEC(N'ALTER TABLE dbo.BookingChangeRequest ADD new_booking_id INT NULL');";
         try (Connection conn = DBContext.getConnection()) {
-            useDatabaseStatic(conn);
+            useDatabase(conn);
             try (Statement stmt = conn.createStatement()) {
                 stmt.execute(sql);
             }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error ensuring booking change-tracking columns", e);
-        }
-    }
-
-    private static void useDatabaseStatic(Connection conn) {
-        try (Statement stmt = conn.createStatement()) {
-            stmt.execute("USE HotelManagementDB");
-        } catch (SQLException e) {
-            // Ignore
         }
     }
 
@@ -684,65 +672,49 @@ public class BookingDAO {
         }
     }
 
-    public List<RoomInfo> getRoomsByTypeId(
-            int typeId,
-            Date checkIn,
-            Date checkOut) {
+    /**
+     * Danh sách phòng kèm display_status (Occupied/Maintenance/OutOfService/
+     * Available) theo khoảng ngày, dùng chung cho {@link #getRoomsByTypeId}
+     * và {@link #getAllRooms} — hai method này chỉ khác nhau ở việc có lọc
+     * theo loại phòng hay không.
+     */
+    private List<RoomInfo> queryRoomsWithDisplayStatus(Date checkIn, Date checkOut, Integer typeId) {
         List<RoomInfo> list = new ArrayList<>();
         String sql = """
                 SELECT
                     r.room_id,
                     r.room_number,
-
                     CASE
-
                         WHEN EXISTS (
-
                             SELECT 1
                             FROM RoomAssignment ra
-                            JOIN Booking b
-                                ON ra.booking_id = b.booking_id
-
+                            JOIN Booking b ON ra.booking_id = b.booking_id
                             WHERE ra.room_id = r.room_id
                               AND b.status IN ('Confirmed','CheckedIn')
                               AND b.check_in_date < ?
                               AND b.check_out_date > ?
-
-                        )
-
-                        THEN 'Occupied'
-
-                        WHEN r.status='Maintenance'
-                            THEN 'Maintenance'
-
-                        WHEN r.status='OutOfService'
-                            THEN 'OutOfService'
-
+                        ) THEN 'Occupied'
+                        WHEN r.status='Maintenance' THEN 'Maintenance'
+                        WHEN r.status='OutOfService' THEN 'OutOfService'
                         ELSE 'Available'
-
                     END AS display_status,
-
                     r.floor,
-
                     rt.type_name
-
                 FROM Room r
+                JOIN RoomType rt ON rt.type_id=r.type_id
+                WHERE r.is_deleted = 0
+                """
+                + (typeId != null ? "AND r.type_id = ? " : "")
+                + "ORDER BY r.floor, r.room_number";
 
-                JOIN RoomType rt
-                ON rt.type_id=r.type_id
-
-                 WHERE r.type_id=?
-
-                ORDER BY
-                r.floor,
-                r.room_number
-                """;
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setDate(1, checkOut);
                 ps.setDate(2, checkIn);
-                ps.setInt(3, typeId);
+                if (typeId != null) {
+                    ps.setInt(3, typeId);
+                }
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         RoomInfo r = new RoomInfo();
@@ -756,79 +728,17 @@ public class BookingDAO {
                 }
             }
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error in getRoomsByTypeId: " + typeId, e);
+            LOGGER.log(Level.SEVERE, "Error in queryRoomsWithDisplayStatus: typeId=" + typeId, e);
         }
         return list;
     }
 
+    public List<RoomInfo> getRoomsByTypeId(int typeId, Date checkIn, Date checkOut) {
+        return queryRoomsWithDisplayStatus(checkIn, checkOut, typeId);
+    }
+
     public List<RoomInfo> getAllRooms(Date checkIn, Date checkOut) {
-        List<RoomInfo> list = new ArrayList<>();
-
-        String sql = """
-                SELECT
-                    r.room_id,
-                    r.room_number,
-
-                    CASE
-                        WHEN EXISTS (
-                            SELECT 1
-                            FROM RoomAssignment ra
-                            JOIN Booking b ON ra.booking_id = b.booking_id
-                            WHERE ra.room_id = r.room_id
-                              AND b.status IN ('Confirmed','CheckedIn')
-                              AND b.check_in_date < ?
-                              AND b.check_out_date > ?
-                        )
-                        THEN 'Occupied'
-
-                        WHEN r.status='Maintenance'
-                            THEN 'Maintenance'
-
-                        WHEN r.status='OutOfService'
-                            THEN 'OutOfService'
-
-                        ELSE 'Available'
-                    END AS display_status,
-
-                    r.floor,
-                    rt.type_name
-
-                FROM Room r
-                JOIN RoomType rt ON rt.type_id=r.type_id
-
-                ORDER BY r.floor, r.room_number
-                """;
-
-        try (
-                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setDate(1, checkOut);
-            ps.setDate(2, checkIn);
-            useDatabase(conn);
-
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-
-                RoomInfo room = new RoomInfo();
-
-                room.setRoomId(rs.getInt("room_id"));
-                room.setRoomNumber(rs.getString("room_number"));
-                room.setFloor(rs.getString("floor"));
-                room.setTypeName(rs.getString("type_name"));
-
-                room.setStatus(rs.getString("display_status"));
-
-                list.add(room);
-
-            }
-
-        } catch (Exception e) {
-
-            LOGGER.log(Level.SEVERE,
-                    "Error getAllRooms", e);
-
-        }
-        return list;
+        return queryRoomsWithDisplayStatus(checkIn, checkOut, null);
     }
 
     public CustomerDetails getCustomerDetailsByAccountId(int accountId) {
@@ -1659,6 +1569,27 @@ public class BookingDAO {
         return conflictingRooms;
     }
 
+    /**
+     * Điều kiện lọc status/keyword dùng chung cho {@link #getCheckInBookings}
+     * và {@link #countCheckInBookings} — phải khớp nhau tuyệt đối để phân
+     * trang không bị lệch với tổng số bản ghi.
+     */
+    private void appendCheckInStatusKeywordFilter(StringBuilder sql, List<Object> params, String status,
+            String keyword) {
+        if ("Confirmed".equals(status) || "CheckedIn".equals(status) || "CheckedOut".equals(status)) {
+            sql.append(" AND b.status = ? ");
+            params.add(status);
+        } else {
+            sql.append(" AND b.status IN ('Confirmed','CheckedIn','CheckedOut') ");
+        }
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append(" AND (b.customer_name LIKE ? OR CAST(b.booking_id AS NVARCHAR) LIKE ?) ");
+            String kw = "%" + sanitizeLikeKeyword(keyword.trim()) + "%";
+            params.add(kw);
+            params.add(kw);
+        }
+    }
+
     public List<Booking> getCheckInBookings(
             String status,
             String keyword,
@@ -1669,42 +1600,10 @@ public class BookingDAO {
 
         StringBuilder sql = new StringBuilder(BASE_SELECT);
 
-        sql.append("""
-            WHERE b.group_booking_id IS NULL
-        """);
+        sql.append("WHERE b.group_booking_id IS NULL ");
 
         List<Object> params = new ArrayList<>();
-
-        // Filter status
-        if ("Confirmed".equals(status)
-                || "CheckedIn".equals(status)
-                || "CheckedOut".equals(status)) {
-
-            sql.append(" AND b.status = ? ");
-            params.add(status);
-
-        } else {
-
-            sql.append("""
-                AND b.status IN ('Confirmed','CheckedIn','CheckedOut')
-            """);
-        }
-
-        // Search
-        if (keyword != null && !keyword.trim().isEmpty()) {
-
-            sql.append("""
-                AND (
-                    b.customer_name LIKE ?
-                    OR CAST(b.booking_id AS NVARCHAR) LIKE ?
-                )
-            """);
-
-            String kw = "%" + sanitizeLikeKeyword(keyword.trim()) + "%";
-
-            params.add(kw);
-            params.add(kw);
-        }
+        appendCheckInStatusKeywordFilter(sql, params, status, keyword);
 
         sql.append("""
             ORDER BY
@@ -1748,42 +1647,10 @@ public class BookingDAO {
             String status,
             String keyword) {
 
-        StringBuilder sql = new StringBuilder("""
-        SELECT COUNT(*)
-        FROM dbo.Booking b
-        WHERE b.group_booking_id IS NULL
-    """);
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM dbo.Booking b WHERE b.group_booking_id IS NULL ");
 
         List<Object> params = new ArrayList<>();
-
-        if ("Confirmed".equals(status)
-                || "CheckedIn".equals(status)
-                || "CheckedOut".equals(status)) {
-
-            sql.append(" AND b.status = ? ");
-            params.add(status);
-
-        } else {
-
-            sql.append("""
-            AND b.status IN ('Confirmed','CheckedIn','CheckedOut')
-        """);
-        }
-
-        if (keyword != null && !keyword.trim().isEmpty()) {
-
-            sql.append("""
-            AND (
-                b.customer_name LIKE ?
-                OR CAST(b.booking_id AS NVARCHAR) LIKE ?
-            )
-        """);
-
-            String kw = "%" + sanitizeLikeKeyword(keyword.trim()) + "%";
-
-            params.add(kw);
-            params.add(kw);
-        }
+        appendCheckInStatusKeywordFilter(sql, params, status, keyword);
 
         try (Connection conn = DBContext.getConnection()) {
 
@@ -1882,116 +1749,68 @@ public class BookingDAO {
         return list;
     }
 
-    public int countBookings(String status, String keyword) {
-
-        int total = 0;
-
-        StringBuilder sql = new StringBuilder("""
-                    SELECT COUNT(*)
-                    FROM Booking b
-                    WHERE b.group_booking_id IS NULL
-                """);
-
+    /**
+     * Điều kiện lọc status/keyword dùng chung cho {@link #countBookings} và
+     * {@link #getBookingsPaging} — hai method này luôn phải lọc giống hệt
+     * nhau, nếu không tổng số trang và dữ liệu hiển thị sẽ lệch nhau.
+     */
+    private void appendStatusKeywordFilter(StringBuilder sql, List<Object> params, String status, String keyword) {
         if (!"All".equalsIgnoreCase(status)) {
             sql.append(" AND b.status = ? ");
+            params.add(status);
         }
-
         if (keyword != null && !keyword.trim().isEmpty()) {
-            sql.append("""
-                        AND (
-                            b.customer_name LIKE ?
-                            OR CAST(b.booking_id AS VARCHAR(20)) LIKE ?
-                        )
-                    """);
+            sql.append(" AND (b.customer_name LIKE ? OR CAST(b.booking_id AS VARCHAR(20)) LIKE ?) ");
+            String kw = "%" + keyword.trim() + "%";
+            params.add(kw);
+            params.add(kw);
         }
-
-        try (
-                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-
-            int index = 1;
-
-            if (!"All".equalsIgnoreCase(status)) {
-                ps.setString(index++, status);
-            }
-
-            if (keyword != null && !keyword.trim().isEmpty()) {
-                String k = "%" + keyword.trim() + "%";
-                ps.setString(index++, k);
-                ps.setString(index++, k);
-            }
-
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                total = rs.getInt(1);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return total;
     }
 
-    public List<Booking> getBookingsPaging(
-            String status,
-            String keyword,
-            int offset,
-            int pageSize) {
+    public int countBookings(String status, String keyword) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM dbo.Booking b WHERE b.group_booking_id IS NULL ");
+        List<Object> params = new ArrayList<>();
+        appendStatusKeywordFilter(sql, params, status, keyword);
 
-        List<Booking> list = new ArrayList<>();
-
-        StringBuilder sql = new StringBuilder(BASE_SELECT);
-
-        sql.append(" WHERE b.group_booking_id IS NULL ");
-
-        if (!"All".equalsIgnoreCase(status)) {
-            sql.append(" AND b.status = ? ");
-        }
-
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            sql.append("""
-                        AND (
-                            b.customer_name LIKE ?
-                            OR CAST(b.booking_id AS VARCHAR(20)) LIKE ?
-                        )
-                    """);
-        }
-
-        sql.append("""
-                    ORDER BY b.created_at DESC
-                    OFFSET ? ROWS
-                    FETCH NEXT ? ROWS ONLY
-                """);
-
-        try (
-                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-
-            int index = 1;
-
-            if (!"All".equalsIgnoreCase(status)) {
-                ps.setString(index++, status);
+        try (Connection conn = DBContext.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
             }
-
-            if (keyword != null && !keyword.trim().isEmpty()) {
-                String k = "%" + keyword.trim() + "%";
-                ps.setString(index++, k);
-                ps.setString(index++, k);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
             }
-
-            ps.setInt(index++, offset);
-            ps.setInt(index, pageSize);
-
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                list.add(mapRow(rs));
-            }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return 0;
+    }
 
+    public List<Booking> getBookingsPaging(String status, String keyword, int offset, int pageSize) {
+        List<Booking> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder(BASE_SELECT);
+        sql.append("WHERE b.group_booking_id IS NULL ");
+        List<Object> params = new ArrayList<>();
+        appendStatusKeywordFilter(sql, params, status, keyword);
+        sql.append("ORDER BY b.created_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        params.add(offset);
+        params.add(pageSize);
+
+        try (Connection conn = DBContext.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return list;
     }
     public boolean updateGroupBookingStatus(int rootBookingId, String status) {

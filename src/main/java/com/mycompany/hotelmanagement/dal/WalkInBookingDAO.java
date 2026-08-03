@@ -357,11 +357,7 @@ public class WalkInBookingDAO {
             Date checkOut,
             String[] roomTypeIds,
             String[] quantities,
-            String[] selectedRooms,
-            boolean isCheckIn,
-            String receptionistNote,
-            String customerRequest,
-            String[] companions) {
+            String[] selectedRooms) {
 
         Connection con = null;
 
@@ -383,10 +379,7 @@ public class WalkInBookingDAO {
 
             double grandTotal = 0;
 
-            String bookingStatus
-                    = isCheckIn
-                            ? "CheckedIn"
-                            : "Confirmed";
+            String bookingStatus = "Confirmed";
 
             for (int i = 0; i < roomTypeIds.length; i++) {
 
@@ -501,41 +494,16 @@ public class WalkInBookingDAO {
                             ? parentId
                             : firstBookingId;
 
-            if (isCheckIn) {
-
-                createCheckInData(
+            if (isGroupBooking) {
+                updateGroupBookingStatus(
                         bookingRootId,
-                        receptionistId,
-                        receptionistNote,
-                        customerRequest,
-                        companions,
+                        "Confirmed",
                         con);
-
-                if (isGroupBooking) {
-
-                    updateGroupBookingStatus(
-                            bookingRootId,
-                            "CheckedIn",
-                            con);
-
-                } else {
-                    updateBookingStatus(
-                            bookingRootId,
-                            "CheckedIn",
-                            con);
-                }
             } else {
-                if (isGroupBooking) {
-                    updateGroupBookingStatus(
-                            bookingRootId,
-                            "Confirmed",
-                            con);
-                } else {
-                    updateBookingStatus(
-                            bookingRootId,
-                            "Confirmed",
-                            con);
-                }
+                updateBookingStatus(
+                        bookingRootId,
+                        "Confirmed",
+                        con);
             }
             con.commit();
 
@@ -768,104 +736,6 @@ public class WalkInBookingDAO {
         }
 
         return list;
-    }
-
-    public int createCheckIn(
-            int bookingId,
-            int receptionistId,
-            String notes,
-            String specialRequest,
-            Connection con)
-            throws SQLException {
-
-        String sql = """
-        INSERT INTO CheckIn
-        (
-            booking_id,
-            receptionist_id,
-            notes,
-            special_request
-        )
-        OUTPUT INSERTED.check_in_id
-        VALUES
-        (
-            ?,
-            ?,
-            ?,
-            ?
-        )
-        """;
-
-        try (PreparedStatement ps
-                = con.prepareStatement(sql)) {
-
-            ps.setInt(1, bookingId);
-            ps.setInt(2, receptionistId);
-            ps.setString(3, notes);
-            ps.setString(4, specialRequest);
-
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        }
-        return -1;
-    }
-
-    public void insertCompanion(
-            int checkInId,
-            String fullName,
-            Connection con)
-            throws SQLException {
-        String sql = """
-        INSERT INTO CheckInCompanion
-        (
-            check_in_id,
-            full_name
-        )
-        VALUES
-        (
-            ?,
-            ?
-        )
-        """;
-        try (PreparedStatement ps
-                = con.prepareStatement(sql)) {
-            ps.setInt(1, checkInId);
-            ps.setString(2, fullName);
-            ps.executeUpdate();
-        }
-    }
-
-    public void createCheckInData(
-            int bookingId,
-            int receptionistId,
-            String receptionistNote,
-            String customerRequest,
-            String[] companions,
-            Connection con)
-            throws SQLException {
-        int checkInId
-                = createCheckIn(
-                        bookingId,
-                        receptionistId,
-                        receptionistNote,
-                        customerRequest,
-                        con);
-        if (companions == null) {
-            return;
-        }
-        for (String companion : companions) {
-            if (companion == null
-                    || companion.trim().isEmpty()) {
-                continue;
-            }
-            insertCompanion(
-                    checkInId,
-                    companion.trim(),
-                    con);
-        }
     }
 
     private void updateBookingStatus(

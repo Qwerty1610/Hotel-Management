@@ -63,11 +63,6 @@ public class ReceptionistWalkInBookingController extends HttpServlet {
             String phone = request.getParameter("phone");
             String email = request.getParameter("email");
             String note = request.getParameter("note");
-            String receptionistNote = request.getParameter("receptionistNote");
-            String bookingMode = request.getParameter("bookingMode");
-            boolean isCheckIn = "CHECKIN".equalsIgnoreCase(bookingMode);
-            String[] companions = request.getParameterValues("companions[]");
-            String customerRequest = request.getParameter("note");
 
             String checkInStr = request.getParameter("checkInDate");
             String checkOutStr = request.getParameter("checkOutDate");
@@ -146,11 +141,7 @@ public class ReceptionistWalkInBookingController extends HttpServlet {
                     checkOut,
                     roomTypeIds,
                     quantities,
-                    selectedRooms,
-                    isCheckIn,
-                    receptionistNote,
-                    customerRequest,
-                    companions
+                    selectedRooms
             );
 
             if (bookingId <= 0) {
@@ -164,16 +155,9 @@ public class ReceptionistWalkInBookingController extends HttpServlet {
                 return;
             }
 
-            if (isCheckIn) {
-                session.setAttribute(
-                        "success",
-                        "Check-In thành công");
-
-            } else {
-                session.setAttribute(
-                        "success",
-                        "Đặt phòng thành công");
-            }
+            session.setAttribute(
+                    "success",
+                    "Đặt phòng thành công");
 
             response.sendRedirect(request.getContextPath()
                     + "/receptionist/dashboard?tab=walkin-bookings");

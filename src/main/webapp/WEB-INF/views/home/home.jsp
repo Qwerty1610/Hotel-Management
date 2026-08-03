@@ -301,19 +301,7 @@
         </div>
     </section>
 
-    <section class="testimonial-section text-center">
-        <div class="container">
-            <i class="fa-solid fa-quote-left quote-icon"></i>
-            <p class="testimonial-text"><fmt:message key="testi.quote" /></p>
-            <div class="stars">
-                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-            </div>
-            <div class="client-info">
-                <h4><fmt:message key="testi.author" /></h4>
-                <span><fmt:message key="testi.role" /></span>
-            </div>
-        </div>
-    </section>
+
 
     <%-- Nhúng Footer kết thúc trang --%>
     <%@ include file="../../includes/footer.jsp" %>

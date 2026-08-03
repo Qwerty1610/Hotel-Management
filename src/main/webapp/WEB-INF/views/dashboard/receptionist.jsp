@@ -1027,8 +1027,6 @@
                         <form method="post"
                               action="${pageContext.request.contextPath}/receptionist/walkin-booking"
                               onsubmit="return validateWalkInSubmit()">
-                            <input type="hidden" id="bookingMode"
-                                   name="bookingMode" value="BOOKING">
                             <%--=================HEADER=================--%>
                             <div class="content-header-row">
                                 <div>
@@ -1204,7 +1202,7 @@
                                 </div>
                             </div>
                             <%--=========================================================CARD
-                                3 - YÊU CẦU KHÁCH HÀNG & GHI CHÚ LỄ TÂN (2 cột)
+                                3 - YÊU CẦU KHÁCH HÀNG
                                 =========================================================--%>
                             <div class="walkin-card">
                                 <div class="walkin-notes-grid">
@@ -1220,19 +1218,6 @@
                                                   class="walkin-note"
                                                   rows="5"
                                                   placeholder="Ví dụ: phòng tầng cao, gần thang máy, giường phụ, yên tĩnh..."></textarea>
-                                    </div>
-                                    <div class="walkin-notes-col">
-                                        <div class="walkin-section-header">
-                                            <div>
-                                                <i class="fa-solid fa-clipboard"></i>
-                                                Ghi chú lễ tân
-                                            </div>
-                                        </div>
-                                        <textarea
-                                            name="receptionistNote"
-                                            class="walkin-note"
-                                            rows="5"
-                                            placeholder="Ghi chú nội bộ..."></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -1261,7 +1246,7 @@
                                         type="submit"
                                         id="bookingBtn"
                                         class="btn-booking-submit"
-                                        onclick="return beforeWalkInSubmit('BOOKING')">
+                                        onclick="return beforeWalkInSubmit()">
                                         <i class="fa-solid fa-calendar-check"></i>
                                         Đặt phòng
                                     </button>
@@ -1269,22 +1254,6 @@
                             </div>
                             </div>
                         </form>
-                        <div id="modePopup" class="mode-popup hidden">
-                            <div class="mode-popup-icon">
-                                <i class="fa-solid fa-circle-info"></i>
-                            </div>
-                            <div class="mode-popup-content">
-                                <div class="mode-popup-title">
-                                    Chế độ
-                                </div>
-                                <div id="modePopupMessage">
-                                </div>
-                            </div>
-                            <button type="button" class="mode-popup-close"
-                                    onclick="hideModePopup()">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
-                        </div>
                         <div id="walkinToast" class="walkin-toast">
                             <c:if test="${not empty success}">
                                 <script>
