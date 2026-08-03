@@ -179,6 +179,28 @@ public class PromotionDAO {
     }
 
     /**
+     * Kiểm tra xem một tài khoản (accountId) đã từng sử dụng mã khuyến mãi này ở bất kỳ booking hợp lệ nào (chưa bị Hủy) hay chưa.
+     */
+    public boolean hasUserUsedPromotion(int accountId, int promotionId) {
+        if (accountId <= 0 || promotionId <= 0) return false;
+        String sql = "SELECT COUNT(*) FROM dbo.Booking WHERE account_id = ? AND promotion_id = ? AND UPPER(ISNULL(status, '')) <> 'CANCELLED'";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            useDatabase(conn);
+            ps.setInt(1, accountId);
+            ps.setInt(2, promotionId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error checking user promotion usage for account " + accountId + " & promo " + promotionId, e);
+        }
+        return false;
+    }
+
+    /**
      * Kiểm tra mã khuyến mãi có bị trùng không (bỏ qua chính nó khi update).
      *
      * @param code        Mã cần kiểm tra

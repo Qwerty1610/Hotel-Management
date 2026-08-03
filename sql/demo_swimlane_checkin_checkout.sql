@@ -47,7 +47,7 @@ SELECT TOP 1
     @Price  = rt.base_price
 FROM dbo.RoomType rt
 JOIN dbo.Room r ON r.type_id = rt.type_id
-WHERE r.is_deleted = 0 AND r.status = N'Available'
+WHERE r.status = N'Available'
 GROUP BY rt.type_id, rt.base_price
 ORDER BY COUNT(*) DESC;
 
@@ -65,7 +65,7 @@ BEGIN
     DECLARE @RoomId INT, @RoomNo NVARCHAR(50);
     SELECT TOP 1 @RoomId = r.room_id, @RoomNo = r.room_number
     FROM dbo.Room r
-    WHERE r.type_id = @TypeId AND r.is_deleted = 0 AND r.status = N'Available'
+    WHERE r.type_id = @TypeId AND r.status = N'Available'
       AND NOT EXISTS (
             SELECT 1
             FROM dbo.RoomAssignment ra
