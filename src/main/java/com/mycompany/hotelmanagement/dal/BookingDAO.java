@@ -56,11 +56,11 @@ public class BookingDAO {
      * group_booking_id trỏ về nó), trừ những dòng con đã bị khách bỏ khỏi đơn
      * nhiều phòng (Cancelled) trong khi đơn cha vẫn còn hiệu lực — dòng đó vẫn
      * nằm lại trong nhóm để tra soát nhưng không tính vào tổng số phòng/tổng
-     * tiền nữa. Khi cả đơn đã bị huỷ thì mọi dòng đều Cancelled và vẫn hiển
-     * thị đầy đủ như trước.
+     * tiền nữa. Khi cả đơn đã bị huỷ thì mọi dòng đều Cancelled và vẫn hiển thị
+     * đầy đủ như trước.
      */
-    private static final String GROUP_SCOPE =
-            "(sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) "
+    private static final String GROUP_SCOPE
+            = "(sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) "
             + "AND (sb.status <> N'Cancelled' OR b.status = N'Cancelled')";
 
     private static final String BASE_SELECT = """
@@ -586,9 +586,9 @@ public class BookingDAO {
 
     public String getAssignedRoomsForBookingSelf(int bookingId) {
         String sql = "SELECT STRING_AGG(r.room_number, ', ') "
-                   + "FROM dbo.RoomAssignment br "
-                   + "JOIN dbo.Room r ON br.room_id = r.room_id "
-                   + "WHERE br.booking_id = ?";
+                + "FROM dbo.RoomAssignment br "
+                + "JOIN dbo.Room r ON br.room_id = r.room_id "
+                + "WHERE br.booking_id = ?";
         try (Connection conn = DBContext.getConnection()) {
             useDatabase(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -615,8 +615,8 @@ public class BookingDAO {
      * {@code BookingDAO} được {@code new()} ở hàng chục nơi nên không thể để
      * lệnh ALTER chạy theo từng instance.
      */
-    private static final java.util.concurrent.atomic.AtomicBoolean CHANGE_COLUMNS_ENSURED =
-            new java.util.concurrent.atomic.AtomicBoolean(false);
+    private static final java.util.concurrent.atomic.AtomicBoolean CHANGE_COLUMNS_ENSURED
+            = new java.util.concurrent.atomic.AtomicBoolean(false);
 
     /**
      * Tạo ba cột truy vết "đơn cũ ↔ đơn thay thế" nếu CSDL đang chạy chưa có.
@@ -674,9 +674,9 @@ public class BookingDAO {
 
     /**
      * Danh sách phòng kèm display_status (Occupied/Maintenance/OutOfService/
-     * Available) theo khoảng ngày, dùng chung cho {@link #getRoomsByTypeId}
-     * và {@link #getAllRooms} — hai method này chỉ khác nhau ở việc có lọc
-     * theo loại phòng hay không.
+     * Available) theo khoảng ngày, dùng chung cho {@link #getRoomsByTypeId} và
+     * {@link #getAllRooms} — hai method này chỉ khác nhau ở việc có lọc theo
+     * loại phòng hay không.
      */
     private List<RoomInfo> queryRoomsWithDisplayStatus(Date checkIn, Date checkOut, Integer typeId) {
         List<RoomInfo> list = new ArrayList<>();
@@ -702,9 +702,8 @@ public class BookingDAO {
                     rt.type_name
                 FROM Room r
                 JOIN RoomType rt ON rt.type_id=r.type_id
-                WHERE r.is_deleted = 0
                 """
-                + (typeId != null ? "AND r.type_id = ? " : "")
+                + (typeId != null ? "WHERE r.type_id = ? " : "")
                 + "ORDER BY r.floor, r.room_number";
 
         try (Connection conn = DBContext.getConnection()) {
@@ -829,7 +828,9 @@ public class BookingDAO {
         return false;
     }
 
-    /** Id các phòng vật lý đang được xếp cho một dòng booking. */
+    /**
+     * Id các phòng vật lý đang được xếp cho một dòng booking.
+     */
     public List<Integer> getAssignedRoomIds(int bookingId) {
         List<Integer> list = new ArrayList<>();
         if (bookingId <= 0) {
@@ -853,19 +854,19 @@ public class BookingDAO {
     }
 
     /**
-     * Áp một thay đổi lên TOÀN BỘ nhóm đặt phòng trong một transaction duy nhất:
-     * sửa các dòng hiện có, thêm dòng cho loại phòng mới, huỷ dòng khách đã bỏ,
-     * gỡ xếp phòng của những dòng không còn phù hợp, và (nếu có) chuyển yêu cầu
-     * sang Approved.
+     * Áp một thay đổi lên TOÀN BỘ nhóm đặt phòng trong một transaction duy
+     * nhất: sửa các dòng hiện có, thêm dòng cho loại phòng mới, huỷ dòng khách
+     * đã bỏ, gỡ xếp phòng của những dòng không còn phù hợp, và (nếu có) chuyển
+     * yêu cầu sang Approved.
      * <p>
-     * Gộp vào một transaction là bắt buộc: nếu chỉ dòng cha được ghi mà dòng con
-     * thì không, đơn sẽ có hai khoảng ngày khác nhau; còn nếu đơn đã đổi mà
+     * Gộp vào một transaction là bắt buộc: nếu chỉ dòng cha được ghi mà dòng
+     * con thì không, đơn sẽ có hai khoảng ngày khác nhau; còn nếu đơn đã đổi mà
      * trạng thái yêu cầu chưa chuyển thì lễ tân duyệt lại lần nữa là đơn bị đổi
      * chồng lên.
      *
      * @param requestIdToApprove id yêu cầu cần chuyển sang Approved, hoặc 0 nếu
-     *        không gắn với yêu cầu nào (lễ tân sửa trực tiếp). Nếu yêu cầu đã
-     *        được xử lý bởi người khác, toàn bộ transaction bị huỷ bỏ.
+     * không gắn với yêu cầu nào (lễ tân sửa trực tiếp). Nếu yêu cầu đã được xử
+     * lý bởi người khác, toàn bộ transaction bị huỷ bỏ.
      * @return true nếu đã commit thành công
      */
     public boolean applyGroupChange(List<Booking> updates, List<Booking> inserts,
@@ -1005,7 +1006,10 @@ public class BookingDAO {
         return false;
     }
 
-    /** Kết quả {@link #applyChangeAsNewBooking}: hoá đơn đang trong quy trình hoàn tiền. */
+    /**
+     * Kết quả {@link #applyChangeAsNewBooking}: hoá đơn đang trong quy trình
+     * hoàn tiền.
+     */
     public static final int CHANGE_ERR_INVOICE_LOCKED = -2;
 
     /**
@@ -1016,25 +1020,26 @@ public class BookingDAO {
      * <p>
      * Thứ tự các câu lệnh dưới đây là bắt buộc, không đảo được:
      * <ul>
-     *   <li>Chuyển trạng thái yêu cầu <b>trước tiên</b>: câu UPDATE đó giữ khoá
-     *       trên dòng yêu cầu tới hết transaction nên hai lễ tân bấm duyệt cùng
-     *       lúc chỉ một người thắng; đồng thời fail sớm thì không đốt số
-     *       IDENTITY của bảng Booking.</li>
-     *   <li>Gỡ {@code promotion_id} khỏi nhóm cũ <b>trước khi</b> chèn dòng cha
-     *       mới: {@code UX_Booking_Promotion} là filtered unique index trên
-     *       {@code Booking(promotion_id)}, mà đơn cũ dù đã Cancelled vẫn giữ mã
-     *       — chèn trước sẽ vi phạm ràng buộc và rollback cả transaction.</li>
-     *   <li>Chuyển {@code Payment} và {@code Invoice} <b>cùng nhau</b>:
-     *       {@code InvoiceDAO.DEPOSIT_EXPR} khớp hai bảng qua {@code booking_id},
-     *       nên chuyển một bên thôi là tiền cọc trên hoá đơn sai.</li>
+     * <li>Chuyển trạng thái yêu cầu <b>trước tiên</b>: câu UPDATE đó giữ khoá
+     * trên dòng yêu cầu tới hết transaction nên hai lễ tân bấm duyệt cùng lúc
+     * chỉ một người thắng; đồng thời fail sớm thì không đốt số IDENTITY của
+     * bảng Booking.</li>
+     * <li>Gỡ {@code promotion_id} khỏi nhóm cũ <b>trước khi</b> chèn dòng cha
+     * mới: {@code UX_Booking_Promotion} là filtered unique index trên
+     * {@code Booking(promotion_id)}, mà đơn cũ dù đã Cancelled vẫn giữ mã —
+     * chèn trước sẽ vi phạm ràng buộc và rollback cả transaction.</li>
+     * <li>Chuyển {@code Payment} và {@code Invoice} <b>cùng nhau</b>:
+     * {@code InvoiceDAO.DEPOSIT_EXPR} khớp hai bảng qua {@code booking_id}, nên
+     * chuyển một bên thôi là tiền cọc trên hoá đơn sai.</li>
      * </ul>
      *
      * @param newRoot dòng cha mới (chưa có id, status đã là Pending)
      * @param newChildren các dòng con mới (chưa có id)
      * @param promotionId mã khuyến mãi đang gắn trên đơn cũ, null nếu không có
-     * @param requestIdToApprove yêu cầu cần chuyển sang Approved, 0 nếu không có
+     * @param requestIdToApprove yêu cầu cần chuyển sang Approved, 0 nếu không
+     * có
      * @return booking_id của dòng cha mới, {@link #CHANGE_ERR_INVOICE_LOCKED}
-     *         nếu hoá đơn đang hoàn tiền, hoặc -1 nếu thất bại (đã rollback)
+     * nếu hoá đơn đang hoàn tiền, hoặc -1 nếu thất bại (đã rollback)
      */
     public int applyChangeAsNewBooking(Booking newRoot, List<Booking> newChildren,
             int oldRootBookingId, Integer promotionId, int requestIdToApprove, String cancelNote) {
@@ -1252,7 +1257,9 @@ public class BookingDAO {
         return -1;
     }
 
-    /** Nạp tham số cho câu INSERT dòng Booking của nhóm thay thế. */
+    /**
+     * Nạp tham số cho câu INSERT dòng Booking của nhóm thay thế.
+     */
     private void bindNewBookingRow(PreparedStatement ps, Booking b, Integer groupBookingId,
             Integer promotionId, int replacesBookingId) throws SQLException {
         if (b.getAccountId() != null) {
@@ -1429,7 +1436,8 @@ public class BookingDAO {
      * {@code excludeBookingIds} (nullable) là tập các dòng Booking <b>sẽ bị ghi
      * đè</b> bởi thay đổi đang xét — thường là toàn bộ dòng của một nhóm đặt
      * phòng — nên không được tính là đang chiếm phòng. Lưu ý bắt buộc: đã loại
-     * cả nhóm khỏi phép đếm thì phải so sánh với <b>tổng nhu cầu của cả nhóm</b>
+     * cả nhóm khỏi phép đếm thì phải so sánh với <b>tổng nhu cầu của cả
+     * nhóm</b>
      * theo từng loại phòng, chứ không so theo từng dòng. So theo từng dòng sẽ
      * bỏ sót phần phòng mà các dòng còn lại trong nhóm vẫn đang giữ và dẫn tới
      * nhận quá số phòng thực có.
@@ -1571,8 +1579,8 @@ public class BookingDAO {
 
     /**
      * Điều kiện lọc status/keyword dùng chung cho {@link #getCheckInBookings}
-     * và {@link #countCheckInBookings} — phải khớp nhau tuyệt đối để phân
-     * trang không bị lệch với tổng số bản ghi.
+     * và {@link #countCheckInBookings} — phải khớp nhau tuyệt đối để phân trang
+     * không bị lệch với tổng số bản ghi.
      */
     private void appendCheckInStatusKeywordFilter(StringBuilder sql, List<Object> params, String status,
             String keyword) {
@@ -1751,8 +1759,8 @@ public class BookingDAO {
 
     /**
      * Điều kiện lọc status/keyword dùng chung cho {@link #countBookings} và
-     * {@link #getBookingsPaging} — hai method này luôn phải lọc giống hệt
-     * nhau, nếu không tổng số trang và dữ liệu hiển thị sẽ lệch nhau.
+     * {@link #getBookingsPaging} — hai method này luôn phải lọc giống hệt nhau,
+     * nếu không tổng số trang và dữ liệu hiển thị sẽ lệch nhau.
      */
     private void appendStatusKeywordFilter(StringBuilder sql, List<Object> params, String status, String keyword) {
         if (!"All".equalsIgnoreCase(status)) {
@@ -1772,8 +1780,7 @@ public class BookingDAO {
         List<Object> params = new ArrayList<>();
         appendStatusKeywordFilter(sql, params, status, keyword);
 
-        try (Connection conn = DBContext.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
@@ -1798,8 +1805,7 @@ public class BookingDAO {
         params.add(offset);
         params.add(pageSize);
 
-        try (Connection conn = DBContext.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
@@ -1813,29 +1819,29 @@ public class BookingDAO {
         }
         return list;
     }
+
     public boolean updateGroupBookingStatus(int rootBookingId, String status) {
 
-    String sql = """
+        String sql = """
         UPDATE Booking
         SET status = ?
         WHERE booking_id = ?
            OR group_booking_id = ?
         """;
 
-    try (
-            Connection conn = DBContext.getConnection();
-            PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (
+                Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        ps.setString(1, status);
-        ps.setInt(2, rootBookingId);
-        ps.setInt(3, rootBookingId);
+            ps.setString(1, status);
+            ps.setInt(2, rootBookingId);
+            ps.setInt(3, rootBookingId);
 
-        return ps.executeUpdate() > 0;
+            return ps.executeUpdate() > 0;
 
-    } catch (Exception e) {
-        e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
-
-    return false;
-}
 }
