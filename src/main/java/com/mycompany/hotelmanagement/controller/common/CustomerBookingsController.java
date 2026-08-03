@@ -10,6 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.mycompany.hotelmanagement.dal.AccountDAO;
+import com.mycompany.hotelmanagement.entity.Account;
 import com.mycompany.hotelmanagement.entity.Booking;
 import com.mycompany.hotelmanagement.entity.BookingRequestItem;
 import com.mycompany.hotelmanagement.entity.RoomTypeInfo;
@@ -613,7 +614,7 @@ public class CustomerBookingsController extends HttpServlet {
                 }
 
                 com.mycompany.hotelmanagement.service.PromotionService.PromotionResult promoRes = promotionService
-                        .validateAndCalculateDiscount(promotionCode, totalGroupAmount);
+                        .validateAndCalculateDiscount(promotionCode, totalGroupAmount, accountId);
                 if (promoRes.success && promoRes.discountAmount > 0) {
                     bookingService.applyDiscountToGroup(booking.getBookingId(), promoRes.discountAmount,
                             promoRes.promotion.getPromotionId(), promoRes.promotion.getPromotionCode());
@@ -794,8 +795,12 @@ public class CustomerBookingsController extends HttpServlet {
 
         try {
             double totalAmount = Double.parseDouble(totalAmountStr);
+            HttpSession session = request.getSession(false);
+            Integer currentAccountId = (session != null && session.getAttribute("accountId") != null)
+                    ? (Integer) session.getAttribute("accountId") : null;
+
             com.mycompany.hotelmanagement.service.PromotionService.PromotionResult res = promotionService
-                    .validateAndCalculateDiscount(code, totalAmount);
+                    .validateAndCalculateDiscount(code, totalAmount, currentAccountId);
 
             String json = String.format("{\"success\": %b, \"message\": \"%s\", \"discountAmount\": %.0f}",
                     res.success, res.message.replace("\"", "\\\""), res.discountAmount);

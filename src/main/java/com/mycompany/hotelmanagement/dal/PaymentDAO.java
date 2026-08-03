@@ -262,10 +262,27 @@ public class PaymentDAO {
      */
     public List<Booking> getPendingBookingsByAccount(int accountId) {
         List<Booking> list = new ArrayList<>();
+        // Chỉ lấy dòng CHA (group_booking_id IS NULL) -> mỗi đơn đúng MỘT dòng cọc, số
+        // tiền là 30% tổng CẢ NHÓM. Các cột dẫn xuất phải gom cả nhóm cho khớp:
+        //   overall_total          - tổng tiền phòng của cả nhóm
+        //   group_room_type_names  - mọi loại phòng trong nhóm ("test, test123"); thiếu
+        //                            cột này thì cột "Loại phòng" chỉ hiện loại của dòng
+        //                            cha, khách tưởng đơn chỉ có một phòng.
+        // Dòng con đã Cancelled (bị gỡ khi khách đổi đặt phòng) không còn thuộc đơn nữa.
         String sql = "SELECT b.booking_id, b.customer_name, b.room_quantity, b.check_in_date, b.check_out_date, "
                 + "  b.total_amount, b.status, rt.type_name, "
                 + "  b.total_amount + ISNULL((SELECT SUM(c.total_amount) FROM dbo.Booking c "
-                + "                           WHERE c.group_booking_id = b.booking_id), 0) AS overall_total "
+                + "                           WHERE c.group_booking_id = b.booking_id "
+                + "                             AND c.status <> N'Cancelled'), 0) AS overall_total, "
+                + "  (SELECT STRING_AGG(dt.type_name, N', ') FROM ( "
+                + "       SELECT DISTINCT srt.type_name "
+                + "       FROM dbo.Booking sb "
+                + "       JOIN dbo.RoomType srt ON srt.type_id = sb.room_type_id "
+                + "       WHERE (sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) "
+                + "         AND sb.status <> N'Cancelled') AS dt) AS group_room_type_names, "
+                + "  (SELECT SUM(sb.room_quantity) FROM dbo.Booking sb "
+                + "    WHERE (sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) "
+                + "      AND sb.status <> N'Cancelled') AS total_room_quantity "
                 + "FROM dbo.Booking b "
                 + "LEFT JOIN dbo.RoomType rt ON rt.type_id = b.room_type_id "
                 + "WHERE b.account_id = ? AND b.status = N'Pending' AND b.group_booking_id IS NULL "
@@ -286,6 +303,8 @@ public class PaymentDAO {
                         b.setStatus(rs.getString("status"));
                         b.setRoomTypeName(rs.getString("type_name"));
                         b.setOverallTotalAmount(rs.getDouble("overall_total"));
+                        b.setGroupRoomTypeNames(rs.getString("group_room_type_names"));
+                        b.setTotalRoomQuantity(rs.getInt("total_room_quantity"));
                         list.add(b);
                     }
                 }
@@ -301,10 +320,22 @@ public class PaymentDAO {
      * Trả về null nếu không tồn tại / không thuộc về khách / là booking con.
      */
     public Booking getBookingForCustomer(int bookingId, int accountId) {
+        // Các cột dẫn xuất gom cả nhóm, khớp với getPendingBookingsByAccount: trang QR
+        // phải hiện đúng những gì bảng "Đặt phòng chờ thanh toán cọc" đã hiện.
         String sql = "SELECT b.booking_id, b.customer_name, b.room_quantity, b.check_in_date, b.check_out_date, "
                 + "  b.total_amount, b.status, rt.type_name, "
                 + "  b.total_amount + ISNULL((SELECT SUM(c.total_amount) FROM dbo.Booking c "
-                + "                           WHERE c.group_booking_id = b.booking_id), 0) AS overall_total "
+                + "                           WHERE c.group_booking_id = b.booking_id "
+                + "                             AND c.status <> N'Cancelled'), 0) AS overall_total, "
+                + "  (SELECT STRING_AGG(dt.type_name, N', ') FROM ( "
+                + "       SELECT DISTINCT srt.type_name "
+                + "       FROM dbo.Booking sb "
+                + "       JOIN dbo.RoomType srt ON srt.type_id = sb.room_type_id "
+                + "       WHERE (sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) "
+                + "         AND sb.status <> N'Cancelled') AS dt) AS group_room_type_names, "
+                + "  (SELECT SUM(sb.room_quantity) FROM dbo.Booking sb "
+                + "    WHERE (sb.booking_id = b.booking_id OR sb.group_booking_id = b.booking_id) "
+                + "      AND sb.status <> N'Cancelled') AS total_room_quantity "
                 + "FROM dbo.Booking b "
                 + "LEFT JOIN dbo.RoomType rt ON rt.type_id = b.room_type_id "
                 + "WHERE b.booking_id = ? AND b.account_id = ? AND b.group_booking_id IS NULL";
@@ -325,6 +356,8 @@ public class PaymentDAO {
                         b.setStatus(rs.getString("status"));
                         b.setRoomTypeName(rs.getString("type_name"));
                         b.setOverallTotalAmount(rs.getDouble("overall_total"));
+                        b.setGroupRoomTypeNames(rs.getString("group_room_type_names"));
+                        b.setTotalRoomQuantity(rs.getInt("total_room_quantity"));
                         return b;
                     }
                 }

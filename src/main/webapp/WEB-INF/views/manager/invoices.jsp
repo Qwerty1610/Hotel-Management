@@ -83,8 +83,10 @@
                                     <select name="stay" class="status-select" onchange="this.form.submit()">
                                         <option value="all" ${stayFilter eq 'all' ? 'selected' : '' }>Tất cả lưu
                                             trú</option>
-                                        <option value="open" ${stayFilter eq 'open' ? 'selected' : '' }>Chưa trả
-                                            phòng</option>
+                                        <option value="notin" ${stayFilter eq 'notin' ? 'selected' : '' }>Chưa
+                                            check-in</option>
+                                        <option value="staying" ${stayFilter eq 'staying' ? 'selected' : '' }>Đang
+                                            ở</option>
                                         <option value="closed" ${stayFilter eq 'closed' ? 'selected' : '' }>Đã trả
                                             phòng</option>
                                     </select>
@@ -148,11 +150,12 @@
                                                     </c:choose>
                                                 </td>
                                                 <td>
-                                                    <%-- Hóa đơn "còn mở" = khách chưa trả phòng: vẫn thêm được phụ phí
-                                                         và khoản cần hoàn. Đây là ranh giới chốt hóa đơn, không phải
-                                                         trạng thái đã/chưa thanh toán. --%>
+                                                    <%-- Tình trạng lưu trú (InvoiceDAO.STAY_EXPR). Hóa đơn chưa 'Đã trả
+                                                         phòng' vẫn thêm được phụ phí / khoản hoàn — ranh giới chốt hóa
+                                                         đơn, không phải trạng thái đã/chưa thanh toán. --%>
                                                     <c:choose>
-                                                        <c:when test="${inv.open}"><span class="inv-badge inv-refunded">ĐANG Ở</span></c:when>
+                                                        <c:when test="${inv.stayState eq 'NotCheckedIn'}"><span class="inv-badge inv-pending">CHƯA CHECK-IN</span></c:when>
+                                                        <c:when test="${inv.stayState eq 'Staying'}"><span class="inv-badge inv-refunded">ĐANG Ở</span></c:when>
                                                         <c:otherwise><span class="inv-badge inv-cancelled">ĐÃ TRẢ PHÒNG</span></c:otherwise>
                                                     </c:choose>
                                                 </td>

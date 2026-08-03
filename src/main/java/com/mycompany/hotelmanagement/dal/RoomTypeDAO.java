@@ -44,7 +44,6 @@ public class RoomTypeDAO {
     private void useDatabase(Connection conn) {
         try (Statement stmt = conn.createStatement()) {
             stmt.execute("USE HotelManagementDB;");
-            stmt.execute("IF COL_LENGTH(N'dbo.RoomType', N'is_deleted') IS NULL ALTER TABLE dbo.RoomType ADD is_deleted BIT NOT NULL DEFAULT 0;");
             stmt.execute("IF COL_LENGTH(N'dbo.RoomType', N'is_active') IS NULL ALTER TABLE dbo.RoomType ADD is_active BIT NOT NULL DEFAULT 1;");
         } catch (SQLException e) {
             // Ignore
@@ -138,24 +137,32 @@ public class RoomTypeDAO {
         return amenityDetails;
     }
 
+    /**
+     * Ánh xạ một hàng ResultSet sang RoomTypeInfo.
+     * Dùng chung cho getAllRoomTypes() và getRoomTypeById().
+     */
+    private RoomTypeInfo mapRoomTypeInfo(ResultSet rs) throws SQLException {
+        RoomTypeInfo info = new RoomTypeInfo();
+        info.setTypeId(rs.getInt("type_id"));
+        info.setTypeName(rs.getString("type_name"));
+        info.setBasePrice(rs.getDouble("base_price"));
+        info.setCapacity(rs.getInt("capacity"));
+        info.setDescription(rs.getString("description"));
+        info.setArea(rs.getString("area"));
+        info.setBedType(rs.getString("bed_type"));
+        info.setIsActive(rs.getBoolean("is_active"));
+        return info;
+    }
+
     public List<RoomTypeInfo> getAllRoomTypes() {
         List<RoomTypeInfo> list = new ArrayList<>();
-        String sql = "SELECT type_id, type_name, base_price, capacity, description, area, bed_type, ISNULL(is_active, 1) AS is_active FROM RoomType WHERE ISNULL(is_deleted, 0) = 0 ORDER BY type_id";
+        String sql = "SELECT type_id, type_name, base_price, capacity, description, area, bed_type, ISNULL(is_active, 1) AS is_active FROM RoomType ORDER BY type_id";
         try (Connection conn = DBContext.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {
             useDatabase(conn);
             while (rs.next()) {
-                RoomTypeInfo info = new RoomTypeInfo();
-                info.setTypeId(rs.getInt("type_id"));
-                info.setTypeName(rs.getString("type_name"));
-                info.setBasePrice(rs.getDouble("base_price"));
-                info.setCapacity(rs.getInt("capacity"));
-                info.setDescription(rs.getString("description"));
-                info.setArea(rs.getString("area"));
-                info.setBedType(rs.getString("bed_type"));
-                info.setIsActive(rs.getBoolean("is_active"));
-                list.add(info);
+                list.add(mapRoomTypeInfo(rs));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -171,16 +178,7 @@ public class RoomTypeDAO {
             ps.setInt(1, typeId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    RoomTypeInfo info = new RoomTypeInfo();
-                    info.setTypeId(rs.getInt("type_id"));
-                    info.setTypeName(rs.getString("type_name"));
-                    info.setBasePrice(rs.getDouble("base_price"));
-                    info.setCapacity(rs.getInt("capacity"));
-                    info.setDescription(rs.getString("description"));
-                    info.setArea(rs.getString("area"));
-                    info.setBedType(rs.getString("bed_type"));
-                    info.setIsActive(rs.getBoolean("is_active"));
-                    return info;
+                    return mapRoomTypeInfo(rs);
                 }
             }
         } catch (Exception e) {
@@ -190,7 +188,7 @@ public class RoomTypeDAO {
     }
 
     public int getAvailableRoomCount(int typeId) {
-        String sql = "SELECT COUNT(*) FROM Room r JOIN RoomType rt ON r.type_id = rt.type_id WHERE r.type_id = ? AND r.status NOT IN ('Maintenance', 'OutOfService') AND r.is_deleted = 0 AND ISNULL(rt.is_active, 1) = 1";
+        String sql = "SELECT COUNT(*) FROM Room r JOIN RoomType rt ON r.type_id = rt.type_id WHERE r.type_id = ? AND r.status NOT IN ('Maintenance', 'OutOfService') AND ISNULL(rt.is_active, 1) = 1";
         try (Connection conn = DBContext.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
             useDatabase(conn);
@@ -208,16 +206,24 @@ public class RoomTypeDAO {
 
     // Write operations (transaction-aware)
 
+    /**
+     * Bind 6 tham số chung của RoomTypeInfo vào PreparedStatement (vị trí 1–6).
+     * Dùng chung cho insertRoomType() và updateRoomType().
+     */
+    private void bindRoomTypeParams(PreparedStatement ps, RoomTypeInfo rt) throws SQLException {
+        ps.setString(1, rt.getTypeName());
+        ps.setDouble(2, rt.getBasePrice());
+        ps.setInt(3, rt.getCapacity());
+        ps.setString(4, rt.getDescription());
+        ps.setString(5, rt.getArea());
+        ps.setString(6, rt.getBedType());
+    }
+
     public int insertRoomType(RoomTypeInfo rt, Connection conn) throws SQLException {
         useDatabase(conn);
         String sql = "INSERT INTO RoomType (type_name, base_price, capacity, description, area, bed_type) VALUES (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1, rt.getTypeName());
-            ps.setDouble(2, rt.getBasePrice());
-            ps.setInt(3, rt.getCapacity());
-            ps.setString(4, rt.getDescription());
-            ps.setString(5, rt.getArea());
-            ps.setString(6, rt.getBedType());
+            bindRoomTypeParams(ps, rt);
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
@@ -232,15 +238,9 @@ public class RoomTypeDAO {
         useDatabase(conn);
         String sql = "UPDATE RoomType SET type_name = ?, base_price = ?, capacity = ?, description = ?, area = ?, bed_type = ? WHERE type_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, rt.getTypeName());
-            ps.setDouble(2, rt.getBasePrice());
-            ps.setInt(3, rt.getCapacity());
-            ps.setString(4, rt.getDescription());
-            ps.setString(5, rt.getArea());
-            ps.setString(6, rt.getBedType());
-            ps.setInt(7, rt.getTypeId());
-            int affected = ps.executeUpdate();
-            return affected > 0;
+            bindRoomTypeParams(ps, rt);   // params 1–6
+            ps.setInt(7, rt.getTypeId()); // param 7: WHERE type_id = ?
+            return ps.executeUpdate() > 0;
         }
     }
 
@@ -290,8 +290,7 @@ public class RoomTypeDAO {
             FROM Room r
             LEFT JOIN RoomAssignment ra ON r.room_id = ra.room_id
             LEFT JOIN Booking b ON ra.booking_id = b.booking_id
-            WHERE r.is_deleted = 0
-              AND (
+            WHERE (
                 UPPER(r.status) IN ('OCCUPIED', 'CHECKEDIN', 'CHECKED-IN', 'CONFIRMED')
                 OR UPPER(ISNULL(b.status, '')) IN ('CHECKEDIN', 'CHECKED-IN', 'CONFIRMED', 'IN-HOUSE')
               )
@@ -319,7 +318,7 @@ public class RoomTypeDAO {
             FROM Room r 
             LEFT JOIN RoomAssignment ra ON r.room_id = ra.room_id 
             LEFT JOIN Booking b ON ra.booking_id = b.booking_id 
-            WHERE r.type_id = ? AND r.is_deleted = 0 
+            WHERE r.type_id = ? 
               AND (
                 UPPER(r.status) IN ('OCCUPIED', 'CHECKEDIN', 'CHECKED-IN', 'CONFIRMED')
                 OR UPPER(ISNULL(b.status, '')) IN ('CHECKEDIN', 'CHECKED-IN', 'CONFIRMED', 'IN-HOUSE')

@@ -27,6 +27,7 @@ public class Invoice {
     private double pendingRefundAmount; // dẫn xuất: tổng đang chờ hoàn (Refund status = Pending)
     private double paidAmount;     // dẫn xuất: tổng đã thanh toán vào hóa đơn (Payment.invoice_id)
     private boolean open;          // dẫn xuất: khách chưa trả phòng -> còn ghi thêm khoản được
+    private String stayState;      // dẫn xuất: NotCheckedIn / Staying / Closed (InvoiceDAO.STAY_EXPR)
 
     public Invoice() {}
 
@@ -42,6 +43,21 @@ public class Invoice {
 
     public String getRoomNumber()          { return roomNumber; }
     public void setRoomNumber(String v)    { this.roomNumber = v; }
+
+    /**
+     * Bản rút gọn của roomNumber cho các bảng hẹp: giữ 2 phòng đầu, từ phòng thứ 3
+     * trở đi thay bằng ",..." (vd "103, 104,...").
+     */
+    public String getRoomNumberShort() {
+        if (roomNumber == null) {
+            return null;
+        }
+        String[] parts = roomNumber.split(",");
+        if (parts.length <= 2) {
+            return roomNumber;
+        }
+        return parts[0].trim() + ", " + parts[1].trim() + ",...";
+    }
 
     public String getStatus()              { return status; }
     public void setStatus(String v)        { this.status = v; }
@@ -70,6 +86,10 @@ public class Invoice {
      */
     public boolean isOpen()                { return open; }
     public void setOpen(boolean v)         { this.open = v; }
+
+    /** Tình trạng lưu trú: NotCheckedIn (chưa nhận phòng) / Staying (đang ở) / Closed (đã chốt). */
+    public String getStayState()           { return stayState; }
+    public void setStayState(String v)     { this.stayState = v; }
 
     /** Thực thu = tổng cộng − tiền cọc đã trả − phần đã hoàn (không nhỏ hơn 0). */
     public double getNetAmount() {
