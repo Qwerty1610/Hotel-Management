@@ -214,6 +214,7 @@
                         <label for="modalRoomNumber">Số phòng</label>
                         <input type="text" id="modalRoomNumber" name="roomNumber" class="modal-input" placeholder="Ví dụ: 101" required oninput="this.value = this.value.replace(/\s/g, '')" />
                         <small id="roomNumberError" style="color: #e53e3e; font-size: 12px; display: none; margin-top: 4px;"></small>
+                        <input type="hidden" id="modalRoomNumberHidden" name="roomNumber" value="" disabled />
                     </div>
 
                     <div class="modal-form-group">
@@ -224,6 +225,7 @@
                             <option value="Tầng 3">Tầng 3</option>
                             <option value="Tầng 4">Tầng 4</option>
                         </select>
+                        <input type="hidden" id="modalRoomFloorHidden" name="floor" value="" disabled />
                     </div>
 
                     <div class="modal-form-group">
@@ -235,6 +237,7 @@
                                 </option>
                             </c:forEach>
                         </select>
+                        <input type="hidden" id="modalRoomTypeHidden" name="typeId" value="" disabled />
                     </div>
 
                     <div class="modal-form-group">
@@ -248,7 +251,7 @@
                         </select>
                         <div id="occupiedWarning" class="occupied-warning-note" style="display: none;">
                             <i class="fa-solid fa-triangle-exclamation"></i>
-                            Không thể thay đổi trạng thái vì phòng hiện đang có khách lưu trú.
+                            Không thể thay đổi thông tin phòng vì phòng hiện đang có khách lưu trú.
                         </div>
                         <input type="hidden" id="modalRoomStatusHidden" name="status" value="" disabled />
                     </div>
@@ -367,14 +370,23 @@
             document.getElementById("modalRoomId").value = "";
             document.getElementById("roomForm").reset();
 
+            const numInput = document.getElementById("modalRoomNumber");
+            const floorSelect = document.getElementById("modalRoomFloor");
+            const typeSelect = document.getElementById("modalRoomType");
             const statusSelect = document.getElementById("modalRoomStatus");
             const warningNote = document.getElementById("occupiedWarning");
-            const hiddenStatus = document.getElementById("modalRoomStatusHidden");
 
+            numInput.disabled = false;
+            floorSelect.disabled = false;
+            typeSelect.disabled = false;
             statusSelect.disabled = false;
             statusSelect.value = "Available";
             warningNote.style.display = "none";
-            hiddenStatus.disabled = true;
+
+            document.getElementById("modalRoomNumberHidden").disabled = true;
+            document.getElementById("modalRoomFloorHidden").disabled = true;
+            document.getElementById("modalRoomTypeHidden").disabled = true;
+            document.getElementById("modalRoomStatusHidden").disabled = true;
 
             document.getElementById("roomModal").style.display = "flex";
         }
@@ -387,26 +399,54 @@
             if (room) {
                 document.getElementById("roomModalTitle").innerText = "Chỉnh sửa thông tin phòng";
                 document.getElementById("modalRoomId").value = room.id;
-                document.getElementById("modalRoomNumber").value = room.number;
-                document.getElementById("modalRoomFloor").value = room.floor;
-                document.getElementById("modalRoomType").value = room.typeId;
 
+                const numInput = document.getElementById("modalRoomNumber");
+                const floorSelect = document.getElementById("modalRoomFloor");
+                const typeSelect = document.getElementById("modalRoomType");
                 const statusSelect = document.getElementById("modalRoomStatus");
                 const warningNote = document.getElementById("occupiedWarning");
+
+                const hiddenNumber = document.getElementById("modalRoomNumberHidden");
+                const hiddenFloor = document.getElementById("modalRoomFloorHidden");
+                const hiddenType = document.getElementById("modalRoomTypeHidden");
                 const hiddenStatus = document.getElementById("modalRoomStatusHidden");
+
+                numInput.value = room.number;
+                floorSelect.value = room.floor;
+                typeSelect.value = room.typeId;
 
                 const currentOpStatus = room.operationalStatus || room.status;
 
                 if (room.currentlyOccupied) {
-                    statusSelect.value = currentOpStatus;
+                    numInput.disabled = true;
+                    floorSelect.disabled = true;
+                    typeSelect.disabled = true;
                     statusSelect.disabled = true;
+                    statusSelect.value = currentOpStatus;
                     warningNote.style.display = "flex";
+
+                    hiddenNumber.value = room.number;
+                    hiddenNumber.disabled = false;
+
+                    hiddenFloor.value = room.floor;
+                    hiddenFloor.disabled = false;
+
+                    hiddenType.value = room.typeId;
+                    hiddenType.disabled = false;
+
                     hiddenStatus.value = currentOpStatus;
                     hiddenStatus.disabled = false;
                 } else {
-                    statusSelect.value = currentOpStatus;
+                    numInput.disabled = false;
+                    floorSelect.disabled = false;
+                    typeSelect.disabled = false;
                     statusSelect.disabled = false;
+                    statusSelect.value = currentOpStatus;
                     warningNote.style.display = "none";
+
+                    hiddenNumber.disabled = true;
+                    hiddenFloor.disabled = true;
+                    hiddenType.disabled = true;
                     hiddenStatus.disabled = true;
                 }
 
