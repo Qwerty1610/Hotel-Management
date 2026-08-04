@@ -528,12 +528,6 @@
                                 </select>
                             </div>
 
-                            <div class="form-group">
-                                <label>Ghi chú (Tùy chọn)</label>
-                                <textarea name="notes" class="form-control" rows="3"
-                                          placeholder="Ghi chú về thanh toán, phụ phí..."></textarea>
-                            </div>
-
                             <button type="submit" class="btn-checkout"
                                     onclick="return confirm('Xác nhận hoàn tất trả phòng cho booking #${summary.bookingId}?');">
                                 <i class="fa-solid fa-check-circle"></i> Hoàn tất Check-out

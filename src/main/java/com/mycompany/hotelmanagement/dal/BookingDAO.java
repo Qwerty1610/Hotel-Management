@@ -701,8 +701,7 @@ public class BookingDAO {
                     r.floor,
                     rt.type_name
                 FROM Room r
-                JOIN RoomType rt ON rt.type_id=r.type_id
-                WHERE r.is_deleted = 0
+                JOIN RoomType rt ON rt.type_id=r.type_id               
                 """
                 + (typeId != null ? "AND r.type_id = ? " : "")
                 + "ORDER BY r.floor, r.room_number";
