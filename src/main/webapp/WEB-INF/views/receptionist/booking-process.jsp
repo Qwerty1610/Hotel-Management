@@ -880,12 +880,18 @@
                 if (!grid)
                     return;
 
+                const required = getRequiredQty(suffix);
+                const checked  = grid.querySelectorAll(".room-checkbox:checked").length;
+
                 grid.querySelectorAll(".room-card").forEach(card => {
                     const cb = card.querySelector(".room-checkbox");
-                    if (cb && cb.checked) {
+                    if (!cb) return;
+                    if (cb.checked) {
                         card.classList.add("selected");
+                        cb.disabled = false;        
                     } else {
                         card.classList.remove("selected");
+                        cb.disabled = (checked >= required); 
                     }
                 });
 
